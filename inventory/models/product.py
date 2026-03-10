@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import F
 from modelcluster.contrib.taggit import ClusterTaggableManager
 from modelcluster.fields import ParentalKey
 from modelcluster.models import ClusterableModel
@@ -19,6 +20,32 @@ class UnitOfMeasure(models.TextChoices):
     METERS = "m", "Meters"
     BOXES = "box", "Boxes"
     PACKS = "pack", "Packs"
+
+
+class ProductQuerySet(models.QuerySet):
+    """Custom queryset with inventory-specific filters."""
+
+    def low_stock(self):
+        """Return products where any StockRecord quantity <= reorder_point.
+
+        Products with ``reorder_point = 0`` are excluded (no alert configured).
+        """
+        return self.filter(
+            reorder_point__gt=0,
+            stock_records__quantity__lte=F("reorder_point"),
+        ).distinct()
+
+    def out_of_stock(self):
+        """Return products that have at least one StockRecord with quantity 0."""
+        return self.filter(
+            stock_records__quantity=0,
+        ).distinct()
+
+    def in_stock(self):
+        """Return products where all StockRecords are above reorder_point."""
+        return self.exclude(
+            pk__in=self.low_stock().values_list("pk", flat=True),
+        ).filter(stock_records__quantity__gt=0).distinct()
 
 
 @register_snippet
@@ -58,6 +85,8 @@ class Product(TimeStampedModel, ClusterableModel):
         through="inventory.ProductTag",
         blank=True,
     )
+
+    objects = ProductQuerySet.as_manager()
 
     panels = [
         FieldPanel("sku"),
