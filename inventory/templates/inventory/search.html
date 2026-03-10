@@ -1,0 +1,113 @@
+{% extends "wagtailadmin/generic/base.html" %}
+{% load wagtailadmin_tags i18n %}
+
+{% block main_content %}
+<form method="get" class="w-mb-6">
+    <div style="display: flex; gap: 0.5rem; align-items: center;">
+        <input type="text"
+               name="q"
+               value="{{ search_query }}"
+               placeholder="Search products, categories, locations…"
+               style="flex: 1;"
+               autofocus>
+        <button type="submit" class="button">Search</button>
+    </div>
+</form>
+
+{% if search_query %}
+
+{# ── Products ── #}
+<section class="w-mb-8">
+    <h2>Products ({{ product_results|length }})</h2>
+    {% if product_results %}
+    <table class="listing">
+        <thead>
+            <tr>
+                <th>SKU</th>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Unit Cost</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for product in product_results %}
+            <tr>
+                <td>
+                    <a href="{% url 'wagtailsnippets_inventory_product:edit' product.pk %}">
+                        {{ product.sku }}
+                    </a>
+                </td>
+                <td>{{ product.name }}</td>
+                <td>{{ product.category|default:"—" }}</td>
+                <td>{{ product.unit_cost }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>{% trans "No matching products." %}</p>
+    {% endif %}
+</section>
+
+{# ── Categories ── #}
+<section class="w-mb-8">
+    <h2>Categories ({{ category_results|length }})</h2>
+    {% if category_results %}
+    <table class="listing">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Slug</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cat in category_results %}
+            <tr>
+                <td>
+                    <a href="{% url 'wagtailsnippets_inventory_category:edit' cat.pk %}">
+                        {{ cat.name }}
+                    </a>
+                </td>
+                <td>{{ cat.slug }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>{% trans "No matching categories." %}</p>
+    {% endif %}
+</section>
+
+{# ── Stock Locations ── #}
+<section class="w-mb-8">
+    <h2>Locations ({{ location_results|length }})</h2>
+    {% if location_results %}
+    <table class="listing">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for loc in location_results %}
+            <tr>
+                <td>
+                    <a href="{% url 'wagtailsnippets_inventory_stocklocation:edit' loc.pk %}">
+                        {{ loc.name }}
+                    </a>
+                </td>
+                <td>{{ loc.description|default:"—"|truncatewords:15 }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>{% trans "No matching locations." %}</p>
+    {% endif %}
+</section>
+
+{% elif not search_query %}
+<p>{% trans "Enter a search term above to find products, categories, and stock locations." %}</p>
+{% endif %}
+{% endblock %}
