@@ -84,6 +84,27 @@ django-htmx       # HTMX middleware & template helpers
 
 ---
 
+## Design Conventions
+
+The project uses **object-oriented programming (OOP) as its standard paradigm**. This applies across all layers:
+
+| Layer | Convention | Example |
+|---|---|---|
+| **Models** | Django `Model` / `MP_Node` classes with declarative fields and validation | `Product`, `StockMovement` |
+| **Services** | One `<Domain>Service` class per domain, public methods = operations | `StockService.process_movement()` |
+| **Views** | Class-based views (Django CBVs / Wagtail view classes) preferred | `ListView`, `CreateView` |
+| **Tests** | `TestCase` subclasses grouped by domain | `StockServiceTests` |
+
+**Why OOP?**
+- **Consistency** — contributors can predict how any module is structured.
+- **Encapsulation** — related logic and helpers live together inside a class.
+- **Extensibility** — classes can be subclassed, composed, or injected.
+- **Testability** — classes are easy to mock, stub, and isolate.
+
+> **Rule of thumb:** If you're adding a new module that contains business logic, wrap it in a class. Standalone utility functions are fine for truly stateless helpers (e.g. formatting, pure transformations), but domain operations should live on a service class.
+
+---
+
 ## Project Structure
 
 ```
@@ -128,7 +149,7 @@ the_inventory/              ← Project root
 │   │   └── stock.py        ← StockLocation, StockRecord, StockMovement
 │   ├── services/           ← Business-logic service layer
 │   │   ├── __init__.py
-│   │   └── stock.py        ← process_movement() & stock helpers
+│   │   └── stock.py        ← StockService class
 │   ├── apps.py             ← InventoryConfig
 │   ├── admin.py
 │   ├── views.py
@@ -270,29 +291,33 @@ StockLocation (treebeard tree)
 | **Transfer** | Location A | Location B | Decreases at A, increases at B |
 | **Adjustment** | Location (optional) | Location (optional) | Corrects stock count (write-off, found stock, audit fix) |
 
-Movement processing is transactional: quantity changes to `StockRecord` happen atomically inside `services/stock.py::process_movement()`. The model's `save()` method only enforces immutability (no updates) and runs `full_clean()` — all business logic lives in the **service layer**.
+Movement processing is transactional: quantity changes to `StockRecord` happen atomically inside `StockService.process_movement()`. The model's `save()` method only enforces immutability (no updates) and runs `full_clean()` — all business logic lives in the **service layer**.
 
 ##### Service Layer
 
-Business logic is separated from model definitions into `inventory/services/`. This follows the "fat services, thin models" pattern recommended for larger Django projects:
+Business logic is separated from model definitions into `inventory/services/`. The project adopts **object-oriented programming (OOP) as the standard paradigm** for service layers: each service is a class whose public methods represent domain operations.
 
 ```
 inventory/services/
 ├── __init__.py
-└── stock.py          ← process_movement(), stock helpers
+└── stock.py          ← StockService class
 ```
 
-**Why a service layer?**
-- Models stay purely declarative (fields, validation, `__str__`).
-- Processing logic is independently testable and reusable.
-- Views, management commands, and API endpoints all call the same service function.
-- Easier to review and extend in an open-source context.
+**Why OOP services?**
+- **Consistency** — every service follows the same class-based pattern, making the codebase predictable for contributors.
+- **Encapsulation** — related operations and their private helpers are grouped inside a single class.
+- **Extensibility** — services can be subclassed or composed; shared state (e.g. the requesting user) can be passed via `__init__`.
+- **Testability** — classes are straightforward to mock, stub, or inject in tests.
+- **Separation of concerns** — models stay purely declarative (fields, validation, `__str__`); views, management commands, and API endpoints all call the same service class.
+
+> **Convention:** When adding a new service, create a class named `<Domain>Service` (e.g. `ProcurementService`, `ReportService`) in its own file under `services/`. Keep the class stateless by default — accept request-scoped context via `__init__` only when needed.
 
 **Usage:**
 ```python
-from inventory.services.stock import process_movement
+from inventory.services.stock import StockService
 
-movement = process_movement(
+service = StockService()
+movement = service.process_movement(
     product=widget,
     movement_type="receive",
     quantity=100,
