@@ -150,8 +150,14 @@ the_inventory/              ← Project root
 │   ├── services/           ← Business-logic service layer
 │   │   ├── __init__.py
 │   │   └── stock.py        ← StockService class
+│   ├── panels/             ← Wagtail admin dashboard panels
+│   │   ├── __init__.py     ← Re-exports all panel components
+│   │   ├── stock_summary.py ← StockSummaryPanel (metrics overview)
+│   │   ├── low_stock.py    ← LowStockPanel (critical stock items)
+│   │   └── recent_movements.py ← RecentMovementsPanel (latest activity)
 │   ├── apps.py             ← InventoryConfig
 │   ├── admin.py
+│   ├── filters.py          ← ProductFilterSet, StockStatusFilter
 │   ├── views.py
 │   ├── tests.py
 │   ├── wagtail_hooks.py    ← Wagtail admin customizations
