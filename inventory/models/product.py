@@ -1,6 +1,8 @@
 from django.db import models
+from modelcluster.contrib.taggit import ClusterTaggableManager
 from modelcluster.fields import ParentalKey
 from modelcluster.models import ClusterableModel
+from taggit.models import TaggedItemBase
 from wagtail.admin.panels import FieldPanel, InlinePanel
 from wagtail.fields import RichTextField
 from wagtail.models import Orderable
@@ -52,6 +54,10 @@ class Product(TimeStampedModel, ClusterableModel):
         ),
     )
     is_active = models.BooleanField(default=True)
+    tags = ClusterTaggableManager(
+        through="inventory.ProductTag",
+        blank=True,
+    )
 
     panels = [
         FieldPanel("sku"),
@@ -63,7 +69,7 @@ class Product(TimeStampedModel, ClusterableModel):
         FieldPanel("reorder_point"),
         FieldPanel("is_active"),
         InlinePanel("images", label="Product images"),
-        # FieldPanel("tags") — added by ProductTag (#11)
+        FieldPanel("tags"),
     ]
 
     search_fields = [
@@ -98,6 +104,19 @@ class ProductImage(Orderable):
         FieldPanel("image"),
         FieldPanel("caption"),
     ]
+
+    def __str__(self):
+        return f"Image for {self.product.sku}"
+
+
+class ProductTag(TaggedItemBase):
+    """Free-form tagging for products via django-taggit."""
+
+    content_object = ParentalKey(
+        "inventory.Product",
+        on_delete=models.CASCADE,
+        related_name="tagged_items",
+    )
 
     def __str__(self):
         return f"Image for {self.product.sku}"
