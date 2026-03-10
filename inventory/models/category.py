@@ -1,31 +1,10 @@
-from django.conf import settings
 from django.db import models
 from treebeard.mp_tree import MP_Node
 from wagtail.admin.panels import FieldPanel
 from wagtail.search import index
 from wagtail.snippets.models import register_snippet
 
-
-class TimeStampedModel(models.Model):
-    """Audit fields inherited by all inventory models."""
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    created_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="%(class)s_created",
-    )
-
-    class Meta:
-        abstract = True
-
-
-# ---------------------------------------------------------------------------
-# Category
-# ---------------------------------------------------------------------------
+from .base import TimeStampedModel
 
 
 @register_snippet
