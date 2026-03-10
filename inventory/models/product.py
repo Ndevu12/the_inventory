@@ -1,7 +1,9 @@
 from django.db import models
+from modelcluster.fields import ParentalKey
 from modelcluster.models import ClusterableModel
-from wagtail.admin.panels import FieldPanel
+from wagtail.admin.panels import FieldPanel, InlinePanel
 from wagtail.fields import RichTextField
+from wagtail.models import Orderable
 from wagtail.search import index
 from wagtail.snippets.models import register_snippet
 
@@ -60,7 +62,7 @@ class Product(TimeStampedModel, ClusterableModel):
         FieldPanel("unit_cost"),
         FieldPanel("reorder_point"),
         FieldPanel("is_active"),
-        # InlinePanel("images", ...) — added by ProductImage (#10)
+        InlinePanel("images", label="Product images"),
         # FieldPanel("tags") — added by ProductTag (#11)
     ]
 
@@ -75,3 +77,27 @@ class Product(TimeStampedModel, ClusterableModel):
 
     def __str__(self):
         return f"{self.sku} — {self.name}"
+
+
+class ProductImage(Orderable):
+    """Multiple images per product with ordering and optional captions."""
+
+    product = ParentalKey(
+        "inventory.Product",
+        on_delete=models.CASCADE,
+        related_name="images",
+    )
+    image = models.ForeignKey(
+        "wagtailimages.Image",
+        on_delete=models.CASCADE,
+        related_name="+",
+    )
+    caption = models.CharField(max_length=255, blank=True)
+
+    panels = [
+        FieldPanel("image"),
+        FieldPanel("caption"),
+    ]
+
+    def __str__(self):
+        return f"Image for {self.product.sku}"
