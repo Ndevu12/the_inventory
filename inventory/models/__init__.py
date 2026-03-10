@@ -1,6 +1,7 @@
 from .base import TimeStampedModel
 from .category import Category
 from .product import Product, ProductImage, ProductTag, UnitOfMeasure
+from .stock import StockLocation
 
 __all__ = [
     "TimeStampedModel",
@@ -8,5 +9,6 @@ __all__ = [
     "Product",
     "ProductImage",
     "ProductTag",
+    "StockLocation",
     "UnitOfMeasure",
 ]
