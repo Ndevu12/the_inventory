@@ -126,6 +126,9 @@ the_inventory/              ← Project root
 │   │   ├── category.py     ← Category (treebeard)
 │   │   ├── product.py      ← Product, ProductImage, ProductTag
 │   │   └── stock.py        ← StockLocation, StockRecord, StockMovement
+│   ├── services/           ← Business-logic service layer
+│   │   ├── __init__.py
+│   │   └── stock.py        ← process_movement() & stock helpers
 │   ├── apps.py             ← InventoryConfig
 │   ├── admin.py
 │   ├── views.py
@@ -267,7 +270,39 @@ StockLocation (treebeard tree)
 | **Transfer** | Location A | Location B | Decreases at A, increases at B |
 | **Adjustment** | Location (optional) | Location (optional) | Corrects stock count (write-off, found stock, audit fix) |
 
-Movement processing is transactional: quantity changes to `StockRecord` happen atomically inside `StockMovement.save()`. Validation rules:
+Movement processing is transactional: quantity changes to `StockRecord` happen atomically inside `services/stock.py::process_movement()`. The model's `save()` method only enforces immutability (no updates) and runs `full_clean()` — all business logic lives in the **service layer**.
+
+##### Service Layer
+
+Business logic is separated from model definitions into `inventory/services/`. This follows the "fat services, thin models" pattern recommended for larger Django projects:
+
+```
+inventory/services/
+├── __init__.py
+└── stock.py          ← process_movement(), stock helpers
+```
+
+**Why a service layer?**
+- Models stay purely declarative (fields, validation, `__str__`).
+- Processing logic is independently testable and reusable.
+- Views, management commands, and API endpoints all call the same service function.
+- Easier to review and extend in an open-source context.
+
+**Usage:**
+```python
+from inventory.services.stock import process_movement
+
+movement = process_movement(
+    product=widget,
+    movement_type="receive",
+    quantity=100,
+    to_location=warehouse,
+    unit_cost=Decimal("9.99"),
+    created_by=request.user,
+)
+```
+
+Validation rules:
 
 - **Receive** must have `to_location`; `from_location` must be null
 - **Issue** must have `from_location`; `to_location` must be null; cannot issue more than available

@@ -169,5 +169,21 @@ class StockMovement(TimeStampedModel):
         if errors:
             raise ValidationError(errors)
 
+    def save(self, *args, **kwargs):
+        """Enforce immutability — movements cannot be updated once created.
+
+        To create a movement **and** process stock updates atomically,
+        use :func:`inventory.services.stock.process_movement` instead of
+        calling ``save()`` directly.
+        """
+        if self.pk is not None:
+            raise ValidationError(
+                "Stock movements are immutable and cannot be updated. "
+                "Create a corrective adjustment instead."
+            )
+
+        self.full_clean()
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"{self.movement_type} — {self.product.sku} x{self.quantity}"
