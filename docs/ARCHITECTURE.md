@@ -48,6 +48,40 @@ Users interact with The Inventory primarily through the **Wagtail admin** interf
 | Filtering | `django-filter` | List filtering in admin views |
 | Containerization | Docker | Single-container for now |
 
+### Frontend / UI Stack
+
+The project uses a **server-rendered** approach with lightweight client-side enhancements — no Node.js build step required.
+
+| Layer | Technology | Role |
+|---|---|---|
+| Interactivity | [HTMX](https://htmx.org/) | Server-driven partial page updates, live search, inline editing |
+| Client-side state | [Alpine.js](https://alpinejs.dev/) | Dropdowns, modals, toggles, small reactive state |
+| Styling | [Tailwind CSS](https://tailwindcss.com/) | Utility-first CSS for custom views |
+| Admin CRUD | Wagtail Snippets | Built-in model editing UI with permissions |
+
+**Why this stack?**
+
+- Inventory management is **CRUD-heavy and staff-facing** — naturally fits Django's request-response model.
+- HTMX gives SPA-like responsiveness (partial updates, debounced search, form submissions) without a JavaScript framework.
+- Alpine.js handles the small bits of client-side state (expand/collapse, confirm dialogs) that HTMX doesn't cover.
+- Tailwind CSS provides a modern look for custom views without fighting Django's template system.
+- No npm, no webpack, no Vite — HTMX and Alpine.js are loaded via `<script>` tags (CDN or vendored static files).
+
+**How the two UIs coexist:**
+
+| Surface | Stack | Examples |
+|---|---|---|
+| Wagtail admin (Snippets) | Wagtail's built-in UI (React internals, no customization needed) | Category CRUD, Product editing, Location tree |
+| Custom inventory views | Django templates + HTMX + Alpine.js + Tailwind | Dashboard, stock movement forms, low-stock alerts, search |
+
+**Dependencies added:**
+
+```
+django-htmx       # HTMX middleware & template helpers
+```
+
+> Alpine.js, HTMX, and Tailwind CSS are loaded as static assets — no Python packages needed for them.
+
 ---
 
 ## Project Structure
