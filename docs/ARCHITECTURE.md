@@ -117,9 +117,23 @@ the_inventory/              ← Project root
 │   ├── ARCHITECTURE.md     ← This file
 │   └── ROADMAP.md          ← Development roadmap & phases
 │
-│   ── Planned apps ──
+│   ── Apps ──
 │
 ├── inventory/              ← [Phase 1] Core inventory models & logic
+│   ├── models/             ← Models package (split by domain)
+│   │   ├── __init__.py     ← Re-exports all models
+│   │   ├── base.py         ← TimeStampedModel (abstract)
+│   │   ├── category.py     ← Category (treebeard)
+│   │   ├── product.py      ← Product, ProductImage, ProductTag
+│   │   └── stock.py        ← StockLocation, StockRecord, StockMovement
+│   ├── apps.py             ← InventoryConfig
+│   ├── admin.py
+│   ├── views.py
+│   ├── tests.py
+│   ├── wagtail_hooks.py    ← Wagtail admin customizations
+│   ├── migrations/
+│   └── templates/inventory/
+│
 ├── procurement/            ← [Phase 2] Suppliers & purchase orders
 ├── sales/                  ← [Phase 2] Customers & sales orders
 ├── reports/                ← [Phase 3] Reporting & analytics
@@ -145,6 +159,8 @@ The project uses a **split settings** layout under `the_inventory/settings/`:
 ### `inventory/` — Phase 1 (Building Now)
 
 The core app. All other apps will depend on models defined here.
+
+Models use a **package layout** (`models/` directory with one file per domain) rather than a single `models.py`. This keeps each file focused and navigable as the model count grows. The `models/__init__.py` re-exports all models so Django migrations, admin, and imports work identically to a flat file.
 
 #### Schema Design Decisions
 
