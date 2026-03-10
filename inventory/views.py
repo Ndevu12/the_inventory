@@ -28,7 +28,7 @@ class LowStockAlertView(WagtailAdminTemplateMixin, ListView):
 
     def get_queryset(self):
         """Return low-stock products, applying any active filters."""
-        qs = Product.objects.low_stock().select_related("category")
+        qs = Product.objects.low_stock().select_related("category").order_by("sku")
         self.filterset = ProductFilterSet(self.request.GET, queryset=qs)
         return self.filterset.qs
 
