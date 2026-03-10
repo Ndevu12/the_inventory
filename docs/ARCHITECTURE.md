@@ -159,7 +159,24 @@ the_inventory/              ← Project root
 │   ├── admin.py
 │   ├── filters.py          ← ProductFilterSet, StockStatusFilter
 │   ├── views.py
-│   ├── tests.py
+│   ├── tests/              ← Test suite (mirrors source layout)
+│   │   ├── __init__.py
+│   │   ├── factories.py    ← Shared test data factories
+│   │   ├── test_filters.py ← FilterSet and custom filter tests
+│   │   ├── test_views.py   ← Admin view tests (low-stock, search)
+│   │   ├── test_models/    ← Unit tests for all models
+│   │   │   ├── __init__.py
+│   │   │   ├── test_category.py
+│   │   │   ├── test_product.py
+│   │   │   └── test_stock.py
+│   │   ├── test_services/  ← Integration tests for service layer
+│   │   │   ├── __init__.py
+│   │   │   └── test_stock_service.py
+│   │   └── test_panels/    ← Dashboard panel component tests
+│   │       ├── __init__.py
+│   │       ├── test_stock_summary.py
+│   │       ├── test_low_stock.py
+│   │       └── test_recent_movements.py
 │   ├── wagtail_hooks.py    ← Wagtail admin customizations
 │   ├── migrations/
 │   └── templates/inventory/
