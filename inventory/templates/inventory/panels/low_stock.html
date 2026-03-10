@@ -1,0 +1,53 @@
+{% load i18n %}
+
+<section class="panel" id="low-stock-panel">
+    <h2 class="panel__heading">
+        <svg class="icon icon-warning" aria-hidden="true"><use href="#icon-warning"></use></svg>
+        Low Stock Items
+    </h2>
+    <div class="panel__body">
+        {% if low_stock_records %}
+        <table class="listing">
+            <thead>
+                <tr>
+                    <th>SKU</th>
+                    <th>Product</th>
+                    <th>Location</th>
+                    <th>Current Qty</th>
+                    <th>Reorder Point</th>
+                    <th>Deficit</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in low_stock_records %}
+                <tr>
+                    <td>
+                        <a href="{% url 'wagtailsnippets_inventory_product:edit' record.product.pk %}">
+                            {{ record.product.sku }}
+                        </a>
+                    </td>
+                    <td>{{ record.product.name }}</td>
+                    <td>{{ record.location.name }}</td>
+                    <td>
+                        <strong{% if record.quantity == 0 %} style="color: var(--w-color-critical-200);"{% endif %}>
+                            {{ record.quantity }}
+                        </strong>
+                    </td>
+                    <td>{{ record.product.reorder_point }}</td>
+                    <td style="color: var(--w-color-critical-200);">-{{ record.deficit }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div style="padding: 0.75rem 1rem; text-align: right;">
+            <a href="{% url 'inventory_low_stock' %}" class="button button-small button-secondary">
+                View all low-stock items &rarr;
+            </a>
+        </div>
+        {% else %}
+        <div style="padding: 1.5rem; text-align: center; color: var(--w-color-grey-400);">
+            {% trans "No low-stock items. All products are above their reorder points." %}
+        </div>
+        {% endif %}
+    </div>
+</section>

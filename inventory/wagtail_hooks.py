@@ -1,12 +1,14 @@
 """Wagtail hooks for the inventory app.
 
-Registers admin menu items and URL routes for custom inventory views.
+Registers admin menu items, URL routes, and dashboard panels for
+custom inventory views.
 """
 
 from django.urls import path, reverse
 from wagtail import hooks
 from wagtail.admin.menu import MenuItem
 
+from inventory.panels import LowStockPanel, RecentMovementsPanel, StockSummaryPanel
 from inventory.views import InventorySearchView, LowStockAlertView
 
 
@@ -47,3 +49,11 @@ def register_inventory_search_menu_item():
         icon_name="search",
         order=850,
     )
+
+
+@hooks.register("construct_homepage_panels")
+def add_inventory_dashboard_panels(request, panels):
+    """Add inventory health panels to the Wagtail admin dashboard."""
+    panels.append(StockSummaryPanel())
+    panels.append(LowStockPanel())
+    panels.append(RecentMovementsPanel())

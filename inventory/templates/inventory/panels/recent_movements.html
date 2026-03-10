@@ -1,0 +1,56 @@
+{% load i18n %}
+
+<section class="panel" id="recent-movements-panel">
+    <h2 class="panel__heading">
+        <svg class="icon icon-repeat" aria-hidden="true"><use href="#icon-repeat"></use></svg>
+        Recent Stock Movements
+    </h2>
+    <div class="panel__body">
+        {% if recent_movements %}
+        <table class="listing">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Product</th>
+                    <th>Qty</th>
+                    <th>From</th>
+                    <th>To</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for movement in recent_movements %}
+                <tr>
+                    <td>{{ movement.created_at|date:"M d, H:i" }}</td>
+                    <td>
+                        {% if movement.movement_type == "receive" %}
+                            <span class="w-status w-status--primary" style="background-color: var(--w-color-positive, #28a745);">Receive</span>
+                        {% elif movement.movement_type == "issue" %}
+                            <span class="w-status w-status--primary" style="background-color: var(--w-color-warning, #ffc107); color: #000;">Issue</span>
+                        {% elif movement.movement_type == "transfer" %}
+                            <span class="w-status w-status--primary" style="background-color: var(--w-color-info, #17a2b8);">Transfer</span>
+                        {% elif movement.movement_type == "adjustment" %}
+                            <span class="w-status w-status--primary" style="background-color: var(--w-color-grey-400, #6c757d);">Adjustment</span>
+                        {% else %}
+                            <span class="w-status">{{ movement.movement_type }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'wagtailsnippets_inventory_product:edit' movement.product.pk %}">
+                            {{ movement.product.sku }}
+                        </a>
+                    </td>
+                    <td>{{ movement.quantity }}</td>
+                    <td>{{ movement.from_location.name|default:"—" }}</td>
+                    <td>{{ movement.to_location.name|default:"—" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div style="padding: 1.5rem; text-align: center; color: var(--w-color-grey-400);">
+            {% trans "No stock movements recorded yet." %}
+        </div>
+        {% endif %}
+    </div>
+</section>

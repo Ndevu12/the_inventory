@@ -1,0 +1,32 @@
+<section class="panel" id="stock-summary-panel">
+    <h2 class="panel__heading">
+        <svg class="icon icon-doc-empty" aria-hidden="true"><use href="#icon-doc-empty"></use></svg>
+        Stock Summary
+    </h2>
+    <div class="panel__body" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; padding: 1.5rem;">
+        <div style="text-align: center;">
+            <div style="font-size: 2rem; font-weight: 700; color: var(--w-color-primary);">
+                {{ total_products }}
+            </div>
+            <div style="color: var(--w-color-grey-400); font-size: 0.85rem;">Active Products</div>
+        </div>
+        <div style="text-align: center;">
+            <div style="font-size: 2rem; font-weight: 700; color: var(--w-color-primary);">
+                {{ total_locations }}
+            </div>
+            <div style="color: var(--w-color-grey-400); font-size: 0.85rem;">Stock Locations</div>
+        </div>
+        <div style="text-align: center;">
+            <div style="font-size: 2rem; font-weight: 700; color: var(--w-color-primary);">
+                {{ total_items }}
+            </div>
+            <div style="color: var(--w-color-grey-400); font-size: 0.85rem;">Total Items in Stock</div>
+        </div>
+        <div style="text-align: center;">
+            <div style="font-size: 2rem; font-weight: 700; color: var(--w-color-primary);">
+                {{ total_value|floatformat:2 }}
+            </div>
+            <div style="color: var(--w-color-grey-400); font-size: 0.85rem;">Total Stock Value</div>
+        </div>
+    </div>
+</section>
