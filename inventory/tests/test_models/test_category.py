@@ -87,3 +87,37 @@ class CategoryMetaTests(TestCase):
 
     def test_verbose_name_plural(self):
         self.assertEqual(Category._meta.verbose_name_plural, "categories")
+
+
+class CategorySaveOverrideTests(TestCase):
+    """Test save() override for treebeard MP_Node creation."""
+
+    def test_save_creates_root_node_with_depth(self):
+        """Direct save() on new instance should create a root node via add_root()."""
+        category = Category(name="Direct Save", slug="direct-save")
+        category.save()
+        self.assertEqual(category.depth, 1)
+        self.assertIsNotNone(category.path)
+        self.assertEqual(category.numchild, 0)
+
+    def test_save_multiple_root_nodes(self):
+        """Multiple save() calls should create distinct root nodes, not duplicates."""
+        cat1 = Category(name="Root One", slug="root-one")
+        cat1.save()
+        cat2 = Category(name="Root Two", slug="root-two")
+        cat2.save()
+        self.assertEqual(cat1.depth, 1)
+        self.assertEqual(cat2.depth, 1)
+        self.assertNotEqual(cat1.pk, cat2.pk)
+        self.assertEqual(Category.objects.count(), 2)
+
+    def test_update_existing_category_via_save(self):
+        """Updating an existing category via save() should not create a duplicate."""
+        category = create_category(name="Original", slug="original")
+        original_pk = category.pk
+        category.name = "Updated"
+        category.save()
+        self.assertEqual(category.pk, original_pk)
+        self.assertEqual(category.depth, 1)
+        # Verify no duplicates created
+        self.assertEqual(Category.objects.filter(pk=original_pk).count(), 1)

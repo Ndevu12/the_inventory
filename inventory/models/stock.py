@@ -1,7 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.db import models
 from treebeard.mp_tree import MP_Node
-from wagtail.admin.panels import FieldPanel
+from wagtail.admin.panels import FieldPanel, FieldRowPanel, MultiFieldPanel, TabbedInterface
 from wagtail.search import index
 from wagtail.snippets.models import register_snippet
 
@@ -15,17 +15,40 @@ class StockLocation(TimeStampedModel, MP_Node):
     Examples: Main Warehouse → Aisle A → Shelf 3 → Bin 12.
     """
 
-    name = models.CharField(max_length=255)
-    description = models.TextField(blank=True)
-    is_active = models.BooleanField(default=True)
+    name = models.CharField(
+        max_length=255,
+        help_text="Location name (e.g., 'Bin A1-1', 'Aisle A', 'Main Warehouse').",
+    )
+    description = models.TextField(
+        blank=True,
+        help_text="Detailed description of this location and its purpose.",
+    )
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Inactive locations are excluded from stock operations but preserved for history.",
+    )
 
     # treebeard: alphabetical ordering within each tree level
     node_order_by = ["name"]
 
     panels = [
-        FieldPanel("name"),
-        FieldPanel("description"),
-        FieldPanel("is_active"),
+        TabbedInterface([
+            MultiFieldPanel(
+                [
+                    FieldPanel("name"),
+                    FieldPanel("description"),
+                    FieldPanel("is_active"),
+                ],
+                heading="Location Details",
+            ),
+            MultiFieldPanel(
+                [
+                    FieldPanel("name"),
+                ],
+                heading="Hierarchy Info",
+                classname="collapsed",
+            ),
+        ])
     ]
 
     search_fields = [
@@ -35,6 +58,17 @@ class StockLocation(TimeStampedModel, MP_Node):
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        """Override save to handle treebeard MP_Node creation.
+
+        When a new node is created via admin/form (no depth set yet),
+        use add_root() to properly initialize treebeard fields.
+        """
+        if not self.depth:
+            type(self).add_root(instance=self)
+            return
+        super().save(*args, **kwargs)
 
 
 # ---------------------------------------------------------------------------

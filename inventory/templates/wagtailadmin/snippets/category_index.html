@@ -1,0 +1,151 @@
+{% comment %}
+Snippet list template for Category model
+Enhances the default snippet list display with better hierarchy visualization
+and more detailed information.
+{% endcomment %}
+
+{% extends "wagtailadmin/snippets/type_index.html" %}
+{% load wagtailadmin_tags %}
+
+{% block type_index_header %}
+<div class="header-with-breadcrumbs">
+    <div class="breadcrumbs">
+        <h1 class="icon icon-snippet">
+            Categories
+            <span class="count">({{ page.paginator.count }})</span>
+        </h1>
+    </div>
+    <div class="actions">
+        {% url "wagtailsnippets:add" app_label model_name as add_url %}
+        <a href="{{ add_url }}" class="button bicolor icon icon-plus">Add category</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block type_index_results %}
+<div class="listing">
+    {% if items %}
+        <dl class="listing snippet-listing category-listing">
+            {% for item in items %}
+                <dt>
+                    <a href="{% url 'wagtailsnippets:edit' app_label model_name item.pk %}">
+                        <span class="title">
+                            {% if item.depth > 1 %}
+                                <span class="hierarchy-indent" style="margin-left: {{ item.depth|add:'-1'|mul:'1.5' }}rem;">
+                                    <span class="hierarchy-marker">└─</span>
+                                </span>
+                            {% endif %}
+                            <strong>{{ item.name }}</strong>
+                        </span>
+                        <span class="detail">
+                            {% if item.description %}
+                                <em>{{ item.description|truncatewords:10 }}</em>
+                            {% else %}
+                                <em class="no-description">No description</em>
+                            {% endif %}
+                        </span>
+                    </a>
+                </dt>
+                <dd>
+                    <div class="item-meta">
+                        <span class="meta-item slug-badge">{{ item.slug }}</span>
+                        {% if not item.is_active %}
+                            <span class="meta-item status-badge status-inactive">Inactive</span>
+                        {% else %}
+                            <span class="meta-item status-badge status-active">Active</span>
+                        {% endif %}
+                        {% if item.get_children_count > 0 %}
+                            <span class="meta-item children-count">
+                                {{ item.get_children_count }} subcategorie{{ item.get_children_count|pluralize }}
+                            </span>
+                        {% endif %}
+                    </div>
+                </dd>
+            {% endfor %}
+        </dl>
+    {% else %}
+        <p class="no-results">No categories found. <a href="{% url 'wagtailsnippets:add' app_label model_name %}">Add one now.</a></p>
+    {% endif %}
+</div>
+
+<style>
+    .category-listing dt {
+        padding: 1rem;
+        border-bottom: 1px solid #e5e5e5;
+    }
+
+    .category-listing dt a {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        text-decoration: none;
+    }
+
+    .category-listing .title {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .hierarchy-marker {
+        color: #999;
+        font-weight: bold;
+    }
+
+    .category-listing .detail {
+        color: #666;
+        font-size: 0.95rem;
+    }
+
+    .category-listing .no-description {
+        color: #bbb;
+        font-style: italic;
+    }
+
+    .category-listing dd {
+        padding: 0.75rem 1rem;
+        background-color: #fafafa;
+        border-bottom: 1px solid #e5e5e5;
+    }
+
+    .item-meta {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .meta-item {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        border-radius: 3px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .slug-badge {
+        background-color: #e3f2fd;
+        color: #1976d2;
+        font-family: 'Monaco', monospace;
+    }
+
+    .status-badge {
+        text-transform: uppercase;
+    }
+
+    .status-active {
+        background-color: #c8e6c9;
+        color: #2e7d32;
+    }
+
+    .status-inactive {
+        background-color: #ffccbc;
+        color: #d84315;
+    }
+
+    .children-count {
+        background-color: #f3e5f5;
+        color: #6a1b9a;
+    }
+</style>
+{% endblock %}

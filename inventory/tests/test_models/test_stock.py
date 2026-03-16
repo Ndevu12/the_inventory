@@ -6,6 +6,7 @@ from django.test import TestCase
 
 from inventory.models import (
     MovementType,
+    StockLocation,
     StockMovement,
 )
 
@@ -53,6 +54,40 @@ class StockLocationTreeTests(TestCase):
     def test_root_has_no_parent(self):
         root = create_location(name="Root Location")
         self.assertIsNone(root.get_parent())
+
+
+class StockLocationSaveOverrideTests(TestCase):
+    """Test save() override for treebeard MP_Node creation."""
+
+    def test_save_creates_root_node_with_depth(self):
+        """Direct save() on new instance should create a root node via add_root()."""
+        location = StockLocation(name="Direct Save", description="Test")
+        location.save()
+        self.assertEqual(location.depth, 1)
+        self.assertIsNotNone(location.path)
+        self.assertEqual(location.numchild, 0)
+
+    def test_save_multiple_root_nodes(self):
+        """Multiple save() calls should create distinct root nodes, not duplicates."""
+        loc1 = StockLocation(name="Warehouse A", description="")
+        loc1.save()
+        loc2 = StockLocation(name="Warehouse B", description="")
+        loc2.save()
+        self.assertEqual(loc1.depth, 1)
+        self.assertEqual(loc2.depth, 1)
+        self.assertNotEqual(loc1.pk, loc2.pk)
+        self.assertEqual(StockLocation.objects.count(), 2)
+
+    def test_update_existing_location_via_save(self):
+        """Updating an existing location via save() should not create a duplicate."""
+        location = create_location(name="Original")
+        original_pk = location.pk
+        location.name = "Updated"
+        location.save()
+        self.assertEqual(location.pk, original_pk)
+        self.assertEqual(location.depth, 1)
+        # Verify no duplicates created
+        self.assertEqual(StockLocation.objects.filter(pk=original_pk).count(), 1)
 
 
 # =====================================================================

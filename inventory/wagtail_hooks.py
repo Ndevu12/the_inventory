@@ -1,9 +1,10 @@
 """Wagtail hooks for the inventory app.
 
-Registers admin menu items, URL routes, and dashboard panels for
-custom inventory views.
+Registers admin menu items, URL routes, dashboard panels, and custom CSS
+for inventory management and customization.
 """
 
+from django.templatetags.static import static
 from django.urls import path, reverse
 from wagtail import hooks
 from wagtail.admin.menu import MenuItem
@@ -57,3 +58,9 @@ def add_inventory_dashboard_panels(request, panels):
     panels.append(StockSummaryPanel())
     panels.append(LowStockPanel())
     panels.append(RecentMovementsPanel())
+
+
+@hooks.register("insert_global_admin_css")
+def register_inventory_admin_css():
+    """Register custom CSS for inventory admin styling."""
+    return f'<link rel="stylesheet" href="{static("css/inventory-admin.css")}">'
