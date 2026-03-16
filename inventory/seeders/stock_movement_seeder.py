@@ -1,6 +1,5 @@
 """Seeder for StockMovement model."""
 
-from decimal import Decimal
 from django.utils import timezone
 from datetime import timedelta
 from inventory.models import Product, StockLocation, StockMovement, MovementType

@@ -45,7 +45,7 @@ class StockRecordSeeder(BaseSeeder):
             product = Product.objects.get(sku=sku)
             location = StockLocation.objects.get(name=location_name)
 
-            record = StockRecord.objects.create(
+            StockRecord.objects.create(
                 product=product,
                 location=location,
                 quantity=quantity,

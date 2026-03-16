@@ -13,14 +13,11 @@ class ProductSeeder(BaseSeeder):
         self.log("Creating products...")
 
         # Get categories
-        electronics = Category.objects.get(slug="electronics")
         phones = Category.objects.get(slug="phones")
         laptops = Category.objects.get(slug="laptops")
         accessories = Category.objects.get(slug="accessories")
-        furniture = Category.objects.get(slug="furniture")
         desks = Category.objects.get(slug="desks")
         chairs = Category.objects.get(slug="chairs")
-        office_supplies = Category.objects.get(slug="office-supplies")
         pens = Category.objects.get(slug="pens-pencils")
         paper = Category.objects.get(slug="paper-notepads")
 
