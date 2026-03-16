@@ -1,8 +1,8 @@
 /* ===========================
    Welcome Page Styles
+   ===========================
+   Note: Imports main.css in base.html for CSS variables
    =========================== */
-
-@import url('main.css');
 
 /* Header */
 .inventory-header {
