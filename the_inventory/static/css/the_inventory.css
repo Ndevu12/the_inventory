@@ -1,0 +1,8 @@
+/**
+ * The Inventory - Main Project CSS
+ * Imports the shared main.css for consistent styling across the application
+ */
+
+@import url('main.css');
+
+/* Additional project-level styles can be added here */

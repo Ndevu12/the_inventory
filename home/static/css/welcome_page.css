@@ -2,7 +2,7 @@
    Welcome Page Styles
    =========================== */
 
-@import url('main.css');
+@import url('../../../the_inventory/static/css/main.css');
 
 /* Header */
 .inventory-header {

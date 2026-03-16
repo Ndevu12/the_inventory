@@ -2,7 +2,7 @@
    Home Page Styles
    =========================== */
 
-@import url('main.css');
+@import url('../../../the_inventory/static/css/main.css');
 
 .main-content {
     background: white;
