@@ -84,13 +84,21 @@ Enable full-text search functionality by indexing all searchable models (Product
 python manage.py update_index
 ```
 
-### 6. Create a superuser
+### 6. Seed the database
+
+Seed the database with sample data for testing and development:
+
+```bash
+python manage.py seed_database
+```
+
+### 7. Create a superuser
 
 ```bash
 python manage.py createsuperuser
 ```
 
-### 7. Start the development server
+### 8. Start the development server
 
 ```bash
 python manage.py runserver

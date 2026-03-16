@@ -5,6 +5,7 @@ from .product_seeder import ProductSeeder
 from .stock_location_seeder import StockLocationSeeder
 from .stock_record_seeder import StockRecordSeeder
 from .stock_movement_seeder import StockMovementSeeder
+from .low_stock_seeder import LowStockSeeder
 
 
 class SeederManager:
@@ -16,6 +17,7 @@ class SeederManager:
     3. StockLocations (needed by StockRecords and StockMovements)
     4. StockRecords (depends on Products and StockLocations)
     5. StockMovements (depends on Products and StockLocations)
+    6. LowStockRecords (creates critical/low-stock scenarios for alerts)
     """
 
     def __init__(self, verbose=True, clear_data=False):
@@ -33,6 +35,7 @@ class SeederManager:
             ("Stock Locations", StockLocationSeeder(verbose=verbose)),
             ("Stock Records", StockRecordSeeder(verbose=verbose)),
             ("Stock Movements", StockMovementSeeder(verbose=verbose)),
+            ("Low-Stock Scenarios", LowStockSeeder(verbose=verbose)),
         ]
 
     def clear_all_data(self):
