@@ -30,25 +30,94 @@ def register_inventory_admin_urls():
     ]
 
 
+# Core Inventory Management Items
+@hooks.register("register_admin_menu_item")
+def register_products_menu_item():
+    """Add Products link to the Wagtail admin sidebar."""
+    return MenuItem(
+        "Products",
+        reverse("wagtailadmin_explore_root") + "?model_string=inventory.Product",
+        icon_name="form",
+        order=100,
+    )
+
+
+@hooks.register("register_admin_menu_item")
+def register_categories_menu_item():
+    """Add Categories link to the Wagtail admin sidebar."""
+    return MenuItem(
+        "Categories",
+        reverse("wagtailadmin_explore_root") + "?model_string=inventory.Category",
+        icon_name="folder-open-1",
+        order=110,
+    )
+
+
+@hooks.register("register_admin_menu_item")
+def register_product_tags_menu_item():
+    """Add Product Tags link to the Wagtail admin sidebar."""
+    return MenuItem(
+        "Product Tags",
+        reverse("wagtailadmin_explore_root") + "?model_string=inventory.ProductTag",
+        icon_name="tag",
+        order=120,
+    )
+
+
+# Stock Management Items
+@hooks.register("register_admin_menu_item")
+def register_stock_locations_menu_item():
+    """Add Stock Locations link to the Wagtail admin sidebar."""
+    return MenuItem(
+        "Stock Locations",
+        reverse("wagtailadmin_explore_root") + "?model_string=inventory.StockLocation",
+        icon_name="site",
+        order=130,
+    )
+
+
+@hooks.register("register_admin_menu_item")
+def register_stock_records_menu_item():
+    """Add Stock Records link to the Wagtail admin sidebar."""
+    return MenuItem(
+        "Stock Records",
+        reverse("wagtailadmin_explore_root") + "?model_string=inventory.StockRecord",
+        icon_name="doc-full",
+        order=140,
+    )
+
+
+@hooks.register("register_admin_menu_item")
+def register_stock_movements_menu_item():
+    """Add Stock Movements link to the Wagtail admin sidebar."""
+    return MenuItem(
+        "Stock Movements",
+        reverse("wagtailadmin_explore_root") + "?model_string=inventory.StockMovement",
+        icon_name="arrow-right",
+        order=150,
+    )
+
+
+# Monitoring & Analytics Items
 @hooks.register("register_admin_menu_item")
 def register_low_stock_menu_item():
-    """Add a 'Low Stock Alerts' link to the Wagtail admin sidebar."""
+    """Add Low Stock Alerts link to the Wagtail admin sidebar."""
     return MenuItem(
-        "Low Stock",
+        "Low Stock Alerts",
         reverse("inventory_low_stock"),
         icon_name="warning",
-        order=900,
+        order=160,
     )
 
 
 @hooks.register("register_admin_menu_item")
 def register_inventory_search_menu_item():
-    """Add an 'Inventory Search' link to the Wagtail admin sidebar."""
+    """Add Inventory Search link to the Wagtail admin sidebar."""
     return MenuItem(
         "Inventory Search",
         reverse("inventory_search"),
         icon_name="search",
-        order=850,
+        order=170,
     )
 
 

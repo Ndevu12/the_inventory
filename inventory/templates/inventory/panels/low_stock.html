@@ -23,30 +23,33 @@
                 <tr>
                     <td>
                         <a href="{% url 'wagtailsnippets_inventory_product:edit' record.product.pk %}">
-                            {{ record.product.sku }}
+                            <span class="sku-badge">{{ record.product.sku }}</span>
                         </a>
                     </td>
-                    <td>{{ record.product.name }}</td>
+                    <td><strong>{{ record.product.name }}</strong></td>
                     <td>{{ record.location.name }}</td>
                     <td>
-                        <strong{% if record.quantity == 0 %} style="color: var(--w-color-critical-200);"{% endif %}>
+                        <strong{% if record.quantity == 0 %} style="color: #dc3545; font-weight: 700;"{% endif %}>
                             {{ record.quantity }}
                         </strong>
                     </td>
                     <td>{{ record.product.reorder_point }}</td>
-                    <td style="color: var(--w-color-critical-200);">-{{ record.deficit }}</td>
+                    <td style="color: #dc3545; font-weight: 700;">-{{ record.deficit }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
-        <div style="padding: 0.75rem 1rem; text-align: right;">
-            <a href="{% url 'inventory_low_stock' %}" class="button button-small button-secondary">
+        <div class="panel-actions" style="padding: 1.5rem; text-align: right;">
+            <a href="{% url 'inventory_low_stock' %}" class="button button-primary">
                 View all low-stock items &rarr;
             </a>
         </div>
         {% else %}
-        <div style="padding: 1.5rem; text-align: center; color: var(--w-color-grey-400);">
-            {% trans "No low-stock items. All products are above their reorder points." %}
+        <div class="panel-empty" style="padding: 3rem 1.5rem; text-align: center;">
+            <div style="font-size: 2.5rem; margin-bottom: 1rem;">✓</div>
+            <p style="color: var(--text-secondary); font-weight: 500; margin: 0;">
+                {% trans "All products are above their reorder points." %}
+            </p>
         </div>
         {% endif %}
     </div>
