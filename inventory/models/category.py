@@ -1,6 +1,6 @@
 from django.db import models
 from treebeard.mp_tree import MP_Node
-from wagtail.admin.panels import FieldPanel
+from wagtail.admin.panels import FieldPanel, FieldRowPanel, MultiFieldPanel, TabbedInterface
 from wagtail.search import index
 from wagtail.snippets.models import register_snippet
 
@@ -11,19 +11,48 @@ from .base import TimeStampedModel
 class Category(TimeStampedModel, MP_Node):
     """Hierarchical product category using treebeard materialised path."""
 
-    name = models.CharField(max_length=255)
-    slug = models.SlugField(max_length=255, unique=True)
-    description = models.TextField(blank=True)
-    is_active = models.BooleanField(default=True)
+    name = models.CharField(
+        max_length=255,
+        help_text="The display name of this category (e.g., 'Electronics', 'Furniture')",
+    )
+    slug = models.SlugField(
+        max_length=255,
+        unique=True,
+        help_text="URL-friendly name. Auto-generated from name if left blank.",
+    )
+    description = models.TextField(
+        blank=True,
+        help_text="Optional description to explain what products belong in this category.",
+    )
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Inactive categories are hidden from frontend displays but preserved in the database.",
+    )
 
     # treebeard: alphabetical ordering within each tree level
     node_order_by = ["name"]
 
     panels = [
-        FieldPanel("name"),
-        FieldPanel("slug"),
-        FieldPanel("description"),
-        FieldPanel("is_active"),
+        TabbedInterface([
+            MultiFieldPanel(
+                [
+                    FieldRowPanel([
+                        FieldPanel("name", classname="col6"),
+                        FieldPanel("slug", classname="col6"),
+                    ]),
+                    FieldPanel("description"),
+                    FieldPanel("is_active"),
+                ],
+                heading="Basic Info",
+            ),
+            MultiFieldPanel(
+                [
+                    FieldPanel("slug"),
+                ],
+                heading="Organization",
+                classname="collapsed",
+            ),
+        ])
     ]
 
     search_fields = [
@@ -34,6 +63,17 @@ class Category(TimeStampedModel, MP_Node):
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        """Override save to handle treebeard MP_Node creation.
+
+        When a new node is created via admin/form (no depth set yet),
+        use add_root() to properly initialize treebeard fields.
+        """
+        if not self.depth:
+            type(self).add_root(instance=self)
+            return
+        super().save(*args, **kwargs)
 
     class Meta:
         verbose_name_plural = "categories"

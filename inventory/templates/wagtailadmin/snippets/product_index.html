@@ -1,0 +1,184 @@
+{% comment %}
+Snippet list template for Product model
+Enhanced display showing more product details at a glance
+{% endcomment %}
+
+{% extends "wagtailadmin/snippets/type_index.html" %}
+{% load wagtailadmin_tags %}
+
+{% block type_index_header %}
+<div class="header-with-breadcrumbs">
+    <div class="breadcrumbs">
+        <h1 class="icon icon-snippet">
+            Products
+            <span class="count">({{ page.paginator.count }})</span>
+        </h1>
+    </div>
+    <div class="actions">
+        {% url "wagtailsnippets:add" app_label model_name as add_url %}
+        <a href="{{ add_url }}" class="button bicolor icon icon-plus">Add product</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block type_index_results %}
+<div class="listing">
+    {% if items %}
+        <table class="listing product-listing">
+            <thead>
+                <tr>
+                    <th>SKU</th>
+                    <th>Name</th>
+                    <th>Category</th>
+                    <th>Unit Cost</th>
+                    <th>Reorder Point</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'wagtailsnippets:edit' app_label model_name item.pk %}">
+                                <span class="sku-badge">{{ item.sku }}</span>
+                            </a>
+                        </td>
+                        <td>
+                            <a href="{% url 'wagtailsnippets:edit' app_label model_name item.pk %}" class="title-link">
+                                <strong>{{ item.name }}</strong>
+                            </a>
+                        </td>
+                        <td>
+                            {% if item.category %}
+                                <span class="category-tag">{{ item.category.name }}</span>
+                            {% else %}
+                                <span class="no-category">Uncategorized</span>
+                            {% endif %}
+                        </td>
+                        <td class="numeric">
+                            <span class="currency">${{ item.unit_cost }}</span>
+                        </td>
+                        <td class="numeric">
+                            <span class="reorder-point">{{ item.reorder_point }}</span>
+                        </td>
+                        <td>
+                            {% if item.is_active %}
+                                <span class="status-badge status-active">Active</span>
+                            {% else %}
+                                <span class="status-badge status-inactive">Inactive</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="no-results">No products found. <a href="{% url 'wagtailsnippets:add' app_label model_name %}">Add one now.</a></p>
+    {% endif %}
+</div>
+
+<style>
+    .product-listing {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .product-listing thead {
+        background-color: #f5f5f5;
+        border-bottom: 2px solid #ddd;
+    }
+
+    .product-listing th {
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: #333;
+        font-size: 0.95rem;
+    }
+
+    .product-listing td {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid #eee;
+    }
+
+    .product-listing tbody tr:hover {
+        background-color: #f9f9f9;
+    }
+
+    .sku-badge {
+        display: inline-block;
+        background-color: #e3f2fd;
+        color: #1976d2;
+        padding: 0.25rem 0.75rem;
+        border-radius: 3px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        font-family: 'Monaco', monospace;
+    }
+
+    .title-link {
+        color: #333;
+        text-decoration: none;
+    }
+
+    .title-link:hover {
+        color: #4CAF50;
+    }
+
+    .category-tag {
+        display: inline-block;
+        background-color: #f3e5f5;
+        color: #6a1b9a;
+        padding: 0.25rem 0.75rem;
+        border-radius: 3px;
+        font-size: 0.9rem;
+    }
+
+    .no-category {
+        color: #999;
+        font-style: italic;
+    }
+
+    .numeric {
+        text-align: right;
+        font-family: 'Monaco', monospace;
+        font-size: 0.95rem;
+    }
+
+    .currency {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        background-color: #f0f4c3;
+        color: #827717;
+        border-radius: 3px;
+        font-weight: 600;
+    }
+
+    .reorder-point {
+        color: #666;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 0.35rem 0.75rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .status-active {
+        background-color: #c8e6c9;
+        color: #2e7d32;
+    }
+
+    .status-inactive {
+        background-color: #ffccbc;
+        color: #d84315;
+    }
+</style>
+{% endblock %}
