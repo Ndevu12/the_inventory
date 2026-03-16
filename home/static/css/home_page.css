@@ -1,8 +1,8 @@
 /* ===========================
    Home Page Styles
+   ===========================
+   Note: Imports main.css in base.html for CSS variables
    =========================== */
-
-@import url('../../../the_inventory/static/css/main.css');
 
 .main-content {
     background: white;
