@@ -1,9 +1,13 @@
 from django.conf import settings
 from django.db import models
+from wagtail.search import index
 
 
-class TimeStampedModel(models.Model):
-    """Audit fields inherited by all inventory models."""
+class TimeStampedModel(index.Indexed, models.Model):
+    """Audit fields inherited by all inventory models.
+    
+    Inherits from Indexed to enable Wagtail search functionality.
+    """
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

@@ -76,13 +76,21 @@ pip install -r requirements.txt
 python manage.py migrate
 ```
 
-### 5. Create a superuser
+### 5. Build the search index
+
+Enable full-text search functionality by indexing all searchable models (Products, Categories, Stock Locations):
+
+```bash
+python manage.py update_index
+```
+
+### 6. Create a superuser
 
 ```bash
 python manage.py createsuperuser
 ```
 
-### 6. Start the development server
+### 7. Start the development server
 
 ```bash
 python manage.py runserver
