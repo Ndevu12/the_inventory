@@ -4,18 +4,156 @@
 {% block body_class %}template-homepage{% endblock %}
 
 {% block extra_css %}
-
-{% comment %}
-Delete the line below if you're just getting started and want to remove the welcome screen!
-{% endcomment %}
-<link rel="stylesheet" href="{% static 'css/welcome_page.css' %}">
+<link rel="stylesheet" href="{% static 'css/home_page.css' %}">
 {% endblock extra_css %}
 
 {% block content %}
 
-{% comment %}
-Delete the line below if you're just getting started and want to remove the welcome screen!
-{% endcomment %}
-{% include 'home/welcome_page.html' %}
+<div class="main-content">
+    {% include 'home/welcome_page.html' %}
+
+    <!-- Stats Banner -->
+    <div class="stats-banner">
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-number">100%</div>
+                <div class="stat-label">Open Source</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">∞</div>
+                <div class="stat-label">Scalable</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">Real-time</div>
+                <div class="stat-label">Tracking</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">24/7</div>
+                <div class="stat-label">Support</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Capabilities Section -->
+    <div class="capabilities-section">
+        <h2 class="section-title">Powerful Capabilities</h2>
+        <p class="section-subtitle">Everything you need to manage inventory efficiently and effectively</p>
+        
+        <div class="capabilities-grid">
+            <div class="capability-card">
+                <span class="capability-icon">🏷️</span>
+                <h3>Product Catalog</h3>
+                <p>Create and organize products with SKUs, rich descriptions, multiple images, and hierarchical categories. Support for various units of measure and tagging.</p>
+            </div>
+            <div class="capability-card">
+                <span class="capability-icon">🏢</span>
+                <h3>Warehouse Management</h3>
+                <p>Organize your facilities with hierarchical locations: warehouse → aisle → shelf → bin. Scale from single warehouse to multi-location enterprises.</p>
+            </div>
+            <div class="capability-card">
+                <span class="capability-icon">↔️</span>
+                <h3>Stock Movements</h3>
+                <p>Track every inventory change: receives, issues, transfers, and adjustments. Maintain complete audit trails with timestamps and user tracking.</p>
+            </div>
+            <div class="capability-card">
+                <span class="capability-icon">⚠️</span>
+                <h3>Intelligent Alerts</h3>
+                <p>Set configurable reorder points per location. Get instant notifications when stock falls below thresholds. Never miss a low-stock situation.</p>
+            </div>
+            <div class="capability-card">
+                <span class="capability-icon">🔍</span>
+                <h3>Advanced Search</h3>
+                <p>Full-text search across products, categories, and locations. Advanced filtering and sorting options powered by Wagtail's search backend.</p>
+            </div>
+            <div class="capability-card">
+                <span class="capability-icon">📊</span>
+                <h3>Dashboard Analytics</h3>
+                <p>Real-time widgets showing stock summaries, low-stock alerts, recent movements, and key metrics at a glance.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Workflow Section -->
+    <div class="workflow-section">
+        <div class="workflow-container">
+            <h2 class="section-title">Simple Workflow</h2>
+            <p class="section-subtitle">Get up and running in minutes with our intuitive interface</p>
+            
+            <div class="workflow-steps">
+                <div class="workflow-step">
+                    <span class="step-number">1</span>
+                    <h4>Setup</h4>
+                    <p>Create your warehouse structure and initial categories</p>
+                </div>
+                <div class="workflow-step">
+                    <span class="step-number">2</span>
+                    <h4>Add Products</h4>
+                    <p>Import or create your product catalog with details</p>
+                </div>
+                <div class="workflow-step">
+                    <span class="step-number">3</span>
+                    <h4>Track Stock</h4>
+                    <p>Record movements and maintain accurate inventory levels</p>
+                </div>
+                <div class="workflow-step">
+                    <span class="step-number">4</span>
+                    <h4>Monitor & Report</h4>
+                    <p>View dashboards and generate insights from your data</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tech Stack Section -->
+    <div class="tech-stack">
+        <div class="tech-stack-content">
+            <h2 class="section-title">Built With Modern Technology</h2>
+            <p class="section-subtitle">Leveraging the best open-source tools and frameworks</p>
+            
+            <div class="tech-items">
+                <div class="tech-item">
+                    <div class="tech-icon">🐍</div>
+                    <h4>Python 3.12+</h4>
+                    <p>Modern, robust programming language</p>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-icon">🎯</div>
+                    <h4>Django 6.0</h4>
+                    <p>Powerful web framework with batteries</p>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-icon">🎨</div>
+                    <h4>Wagtail 7.3</h4>
+                    <p>Beautiful, intuitive CMS with admin UI</p>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-icon">🗄️</div>
+                    <h4>PostgreSQL/SQLite</h4>
+                    <p>Reliable, scalable databases</p>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-icon">🐳</div>
+                    <h4>Docker</h4>
+                    <p>Containerized deployments</p>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-icon">🔒</div>
+                    <h4>Open Source</h4>
+                    <p>Transparent and community-driven</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA Banner -->
+    <div class="cta-banner">
+        <h2>Start Managing Your Inventory Today</h2>
+        <p>Join thousands of teams using The Inventory to streamline their operations and reduce stock-outs.</p>
+        <div class="cta-buttons">
+            <a href="{% url 'wagtailadmin_home' %}" class="cta-btn primary">Start Managing Now</a>
+            <a href="https://github.com/Ndevu12/the_inventory" class="cta-btn secondary">View on GitHub</a>
+        </div>
+    </div>
+</div>
 
 {% endblock content %}
