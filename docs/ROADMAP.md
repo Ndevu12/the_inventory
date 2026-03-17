@@ -92,7 +92,7 @@ Provide insight into inventory health, movement trends, and financial summaries.
 
 ---
 
-## Phase 4 — API & Integrations 🚧
+## Phase 4 — API & Integrations ✅
 
 Open up the system for external consumers and third-party integrations.
 
@@ -102,6 +102,7 @@ Open up the system for external consumers and third-party integrations.
 |---|---|
 | RESTful API (Django REST Framework) for products, stock, orders | ✅ |
 | Token authentication (`rest_framework.authtoken`) | ✅ |
+| JWT authentication (`djangorestframework-simplejwt`) | ✅ |
 | Session authentication (for browsable API) | ✅ |
 | Staff-only permission enforcement | ✅ |
 | Pagination (configurable page size, max 100) | ✅ |
@@ -112,10 +113,17 @@ Open up the system for external consumers and third-party integrations.
 | Read-only stock records with low-stock endpoint | ✅ |
 | Immutable movements (no update/delete via API) | ✅ |
 | Nested serializers (order lines, related names) | ✅ |
-| Full test suite for all 11 API endpoints | ✅ |
+| Full test suite for all API endpoints | ✅ |
+| Import via CSV & Excel (products, suppliers, customers) | ✅ |
+| CORS support (`django-cors-headers`) for frontend dev | ✅ |
+| Auth API: login, refresh, /me profile, change-password | ✅ |
+| Reports API: 6 JSON endpoints with CSV/PDF export | ✅ |
+| Dashboard API: summary, stock-by-location, movement-trends, order-status | ✅ |
+| Tenant management API: current tenant, member list/update/delete | ✅ |
+| Import API: file upload endpoint for CSV/Excel | ✅ |
+| OpenAPI schema + Swagger UI + Redoc (`drf-spectacular`) | ✅ |
 | Webhook support for stock events | 📋 |
 | Barcode / QR code scanning support | 📋 |
-| Import via CSV & Excel (products, suppliers, customers) | ✅ |
 | Optional Elasticsearch backend for advanced search | 📋 |
 
 ---
