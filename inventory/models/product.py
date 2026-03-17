@@ -1,5 +1,5 @@
 from django.db import models
-from django.db.models import F, Q, UniqueConstraint
+from django.db.models import F, UniqueConstraint
 from modelcluster.contrib.taggit import ClusterTaggableManager
 from modelcluster.fields import ParentalKey
 from modelcluster.models import ClusterableModel

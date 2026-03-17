@@ -3,7 +3,6 @@
 from rest_framework import status
 from rest_framework.generics import (
     ListAPIView,
-    RetrieveUpdateAPIView,
     RetrieveUpdateDestroyAPIView,
 )
 from rest_framework.permissions import IsAuthenticated

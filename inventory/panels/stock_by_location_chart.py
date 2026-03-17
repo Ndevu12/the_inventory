@@ -5,7 +5,7 @@ import json
 from django.db.models import Sum
 from wagtail.admin.ui.components import Component
 
-from inventory.models import StockLocation, StockRecord
+from inventory.models import StockRecord
 
 
 class StockByLocationChart(Component):

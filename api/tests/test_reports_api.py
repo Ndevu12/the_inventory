@@ -13,7 +13,7 @@ from inventory.tests.factories import (
 )
 from procurement.tests.factories import create_purchase_order, create_supplier
 from sales.tests.factories import create_customer, create_sales_order
-from tenants.models import TenantMembership, TenantRole
+from tenants.models import TenantRole
 from tenants.tests.factories import create_membership, create_tenant
 
 User = get_user_model()

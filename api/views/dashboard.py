@@ -3,7 +3,7 @@
 from datetime import timedelta
 
 from django.db.models import Count, Sum
-from django.db.models.functions import Coalesce, TruncDate
+from django.db.models.functions import TruncDate
 from django.utils import timezone
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response

@@ -7,7 +7,7 @@ from decimal import Decimal
 
 from django.test import TestCase
 
-from inventory.models import Category, Product, StockLocation, StockMovement, StockRecord
+from inventory.models import Category, Product, StockLocation, StockRecord
 from procurement.models import GoodsReceivedNote, PurchaseOrder, PurchaseOrderLine, Supplier
 from sales.models import Customer, Dispatch, SalesOrder, SalesOrderLine
 from tenants.tests.factories import create_tenant, create_user

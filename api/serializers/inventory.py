@@ -9,7 +9,6 @@ from inventory.models import (
     StockLocation,
     StockMovement,
     StockRecord,
-    UnitOfMeasure,
 )
 
 

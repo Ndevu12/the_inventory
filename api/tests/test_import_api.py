@@ -9,7 +9,7 @@ from rest_framework.test import APIClient
 
 from inventory.models import Product
 from procurement.models import Supplier
-from tenants.models import TenantMembership, TenantRole
+from tenants.models import TenantRole
 from tenants.tests.factories import create_membership, create_tenant
 
 User = get_user_model()

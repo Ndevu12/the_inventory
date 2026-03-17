@@ -1,6 +1,6 @@
 """Tests for CSV and Excel file parsing utilities."""
 
-from io import BytesIO, StringIO
+from io import BytesIO
 
 from django.test import TestCase
 from openpyxl import Workbook

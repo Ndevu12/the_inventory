@@ -4,7 +4,6 @@ from django.test import TestCase
 
 from inventory.imports.importers import (
     CustomerImporter,
-    ImportResult,
     ProductImporter,
     SupplierImporter,
 )
