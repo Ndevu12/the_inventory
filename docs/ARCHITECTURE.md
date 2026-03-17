@@ -46,6 +46,9 @@ Users interact with The Inventory primarily through the **Wagtail admin** interf
 | Tagging | `django-taggit` | Bundled with Wagtail |
 | Clustering | `django-modelcluster` | Bundled with Wagtail |
 | Filtering | `django-filter` | List filtering in admin views |
+| PDF Generation | `reportlab` | Styled PDF report export |
+| Excel Parsing | `openpyxl` | CSV/Excel data import |
+| Charts | Chart.js (CDN) | Dashboard visualizations |
 | Containerization | Docker | Single-container for now |
 
 ### Frontend / UI Stack
@@ -181,10 +184,29 @@ the_inventory/              ← Project root
 │   ├── migrations/
 │   └── templates/inventory/
 │
-├── procurement/            ← [Phase 2] Suppliers & purchase orders
-├── sales/                  ← [Phase 2] Customers & sales orders
-├── reports/                ← [Phase 3] Reporting & analytics
-└── api/                    ← [Phase 4] REST API
+├── tenants/               ← [Phase 5] Multi-tenancy & SaaS (built)
+│   ├── models.py          ← Tenant, TenantMembership
+│   ├── middleware.py       ← TenantMiddleware (resolves tenant per request)
+│   ├── context.py          ← Thread-local tenant context
+│   ├── managers.py         ← TenantAwareManager, TenantAwareQuerySet
+│   ├── permissions.py      ← RBAC utilities + DRF permission classes
+│   ├── context_processors.py ← Per-tenant branding for templates
+│   ├── admin.py            ← Django admin for tenants & memberships
+│   ├── wagtail_hooks.py    ← Wagtail admin menu item
+│   ├── migrations/
+│   └── tests/
+│       ├── factories.py
+│       ├── test_models.py
+│       ├── test_middleware.py
+│       ├── test_managers.py
+│       ├── test_permissions.py
+│       ├── test_context.py
+│       └── test_tenant_aware_models.py
+│
+├── procurement/            ← [Phase 2] Suppliers & purchase orders (built)
+├── sales/                  ← [Phase 2] Customers & sales orders (built)
+├── reports/                ← [Phase 3] Reporting & analytics (built)
+└── api/                    ← [Phase 4] REST API (built)
 ```
 
 ---
@@ -215,7 +237,7 @@ These decisions were made upfront to avoid costly migrations later:
 
 | Decision | Choice | Rationale |
 |---|---|---|
-| Audit fields | `TimeStampedModel` abstract base | `created_at`, `updated_at`, `created_by` on all models |
+| Audit + tenant fields | `TimeStampedModel` abstract base | `tenant`, `created_at`, `updated_at`, `created_by` on all models |
 | Soft-delete | `is_active` boolean | Preserves FK integrity; deactivated items remain in history |
 | Unit of measure | Choices on `Product` | Required for mixed inventory (countable + bulk goods) |
 | Pricing | `unit_cost` on Product + StockMovement | Product holds latest cost; movement captures point-in-time cost for valuation |
@@ -228,7 +250,13 @@ These decisions were made upfront to avoid costly migrations later:
 
 ```python
 class TimeStampedModel(models.Model):
-    """Audit fields inherited by all inventory models."""
+    """Audit + tenant fields inherited by all domain models."""
+    tenant = models.ForeignKey(
+        "tenants.Tenant",
+        on_delete=models.CASCADE,
+        null=True, blank=True,
+        related_name="%(app_label)s_%(class)s_set",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(
@@ -242,11 +270,13 @@ class TimeStampedModel(models.Model):
         abstract = True
 ```
 
+> **Phase 5 note:** The `tenant` FK was added to `TimeStampedModel` so that every domain model in the system (`Category`, `Product`, `StockLocation`, `StockRecord`, `StockMovement`, `Supplier`, `PurchaseOrder`, `PurchaseOrderLine`, `GoodsReceivedNote`, `Customer`, `SalesOrder`, `SalesOrderLine`, `Dispatch`) is automatically scoped to a `Tenant`.  The field is nullable during migration; the `TenantMiddleware` and `TenantAwareManager` enforce scoping at runtime.
+
 #### Models
 
 | Model | Type | Key Fields | Purpose |
 |---|---|---|---|
-| `TimeStampedModel` | Abstract base | `created_at`, `updated_at`, `created_by` | Audit trail on all models |
+| `TimeStampedModel` | Abstract base | `tenant` (FK), `created_at`, `updated_at`, `created_by` | Tenant scoping + audit trail on all models |
 | `Category` | Wagtail Snippet (`treebeard.MP_Node`) | `name`, `slug`, `description`, `is_active` | Hierarchical product categories |
 | `Product` | Wagtail Snippet (`ClusterableModel`) | `sku` (unique), `name`, `description`, `category` (FK), `unit_of_measure`, `unit_cost`, `reorder_point`, `is_active` | Items in the catalog |
 | `ProductImage` | `Orderable` inline on Product | `image` (FK → wagtailimages), `caption` | Multiple images per product |
@@ -376,54 +406,129 @@ These notes explain how the Phase 1 schema accommodates future phases without re
 
 ---
 
-> **Note:** The apps below do not exist yet. They are documented here so that Phase 1 schema decisions account for future needs. These designs may change based on Phase 1 learnings.
+> **Note:** All apps below (procurement, sales, reports, API, tenants) are now built.
 
 ---
 
-### `procurement/` — Phase 2 (Future)
+### `procurement/` — Phase 2 (Built)
 
-| Model | Purpose |
+| Model | Type | Purpose |
+|---|---|---|
+| `Supplier` | Wagtail Snippet | Vendor / supplier details (code, contacts, lead times, payment terms, soft-delete) |
+| `PurchaseOrder` | Django Model | Order placed with a supplier (status workflow: draft → confirmed → received / cancelled) |
+| `PurchaseOrderLine` | Django Model | Line items (FK → Product, quantity, unit cost; unique per PO + product) |
+| `GoodsReceivedNote` | Django Model | Confirmation of goods arrival — triggers `receive` StockMovements via `ProcurementService` |
+
+**Service:** `ProcurementService` — `confirm_order()`, `cancel_order()`, `receive_goods()`.  GRN processing creates atomic receive movements for each PO line and transitions the PO to received status.
+
+---
+
+### `sales/` — Phase 2 (Built)
+
+| Model | Type | Purpose |
+|---|---|---|
+| `Customer` | Wagtail Snippet | Customer / client details (code, contacts, soft-delete) |
+| `SalesOrder` | Django Model | Order from a customer (status workflow: draft → confirmed → fulfilled / cancelled) |
+| `SalesOrderLine` | Django Model | Line items (FK → Product, quantity, unit price; unique per SO + product) |
+| `Dispatch` | Django Model | Shipment record — triggers `issue` StockMovements via `SalesService` |
+
+**Service:** `SalesService` — `confirm_order()`, `cancel_order()`, `process_dispatch()`.  Dispatch processing creates atomic issue movements for each SO line and transitions the SO to fulfilled status.
+
+---
+
+### `reports/` — Phase 3 (Built)
+
+No persistent models — read-only views and exports querying data from `inventory`, `procurement`, and `sales`.
+
+**Services:**
+
+| Service | Methods |
 |---|---|
-| `Supplier` | Vendor / supplier details (contacts, lead times, payment terms) |
-| `PurchaseOrder` | Order placed with a supplier (status workflow: draft → confirmed → received) |
-| `PurchaseOrderLine` | Line items (FK → Product, quantity, unit cost) |
-| `GoodsReceivedNote` | Confirmation of goods arrival — triggers a `receive` StockMovement automatically |
+| `InventoryReportService` | `get_stock_valuation()`, `get_valuation_summary()`, `get_low_stock_products()`, `get_overstock_products()`, `get_movement_history()`, `get_movement_summary()` |
+| `OrderReportService` | `get_purchase_summary()`, `get_purchase_totals()`, `get_sales_summary()`, `get_sales_totals()` |
 
----
+**Views (all at `/admin/reports/…`):**
 
-### `sales/` — Phase 2 (Future)
-
-| Model | Purpose |
+| View | Features |
 |---|---|
-| `Customer` | Customer / client details |
-| `SalesOrder` | Order from a customer (status workflow: draft → confirmed → fulfilled) |
-| `SalesOrderLine` | Line items (FK → Product, quantity, unit price) |
-| `Dispatch` | Shipment record — triggers an `issue` StockMovement automatically |
+| Stock Valuation | Weighted average or latest cost method, CSV + PDF export |
+| Movement History | Filterable by date, type, product, location; paginated; CSV + PDF export |
+| Low Stock Report | Products at/below reorder point; CSV + PDF export |
+| Overstock Report | Configurable threshold multiplier; CSV + PDF export |
+| Purchase Summary | Period grouping (daily/weekly/monthly), date range, totals; CSV + PDF export |
+| Sales Summary | Period grouping (daily/weekly/monthly), date range, totals; CSV + PDF export |
+
+**Export:** All views support `?export=csv` and `?export=pdf` via the `ExportMixin` (which combines CSV and PDF export). PDF generation uses ReportLab with styled table layouts.
+
+**Dashboard Charts (Wagtail admin homepage):**
+
+| Panel | Chart Type | Data |
+|---|---|---|
+| Stock by Location | Horizontal bar (Chart.js) | Total quantity per active location |
+| Movement Trends | Line chart (Chart.js) | Movement count per day, last 30 days |
+| Order Status | Doughnut charts (Chart.js) | Purchase and sales order counts by status |
+
+**Data Import:**
+
+The `inventory/imports/` module provides CSV and Excel (.xlsx) import for Products, Suppliers, and Customers via a Wagtail admin view at `/admin/inventory/import/`.  Imports are validated row-by-row with all-or-nothing transactions — if any row fails, no records are created.
 
 ---
 
-### `reports/` — Phase 3 (Future)
+### `api/` — Phase 4 (Built)
 
-No persistent models — this app will provide **read-only views and exports** querying data from `inventory`, `procurement`, and `sales`.
+Built with **Django REST Framework** at `/api/v1/`.  No persistent models — exposes existing models from `inventory`, `procurement`, and `sales`.
 
-- Stock valuation (FIFO / weighted average) — powered by `StockMovement.unit_cost`
-- Movement audit trail — powered by `TimeStampedModel` fields
-- Low-stock / overstock summaries
-- Purchase & sales aggregations
-- CSV / PDF export endpoints
+**Endpoints (11 ViewSets):**
+
+| Endpoint | ViewSet | Key Features |
+|---|---|---|
+| `/api/v1/products/` | `ProductViewSet` | CRUD, search, filter by category/active, `/stock/` and `/movements/` sub-endpoints |
+| `/api/v1/categories/` | `CategoryViewSet` | CRUD, search |
+| `/api/v1/stock-locations/` | `StockLocationViewSet` | CRUD, `/stock/` sub-endpoint |
+| `/api/v1/stock-records/` | `StockRecordViewSet` | Read-only, filter by product/location, `/low_stock/` |
+| `/api/v1/stock-movements/` | `StockMovementViewSet` | List/retrieve/create only (immutable), create routes through `StockService` |
+| `/api/v1/suppliers/` | `SupplierViewSet` | CRUD, search, filter by active/payment terms |
+| `/api/v1/purchase-orders/` | `PurchaseOrderViewSet` | CRUD with nested lines, `/confirm/` and `/cancel/` actions |
+| `/api/v1/goods-received-notes/` | `GoodsReceivedNoteViewSet` | CRUD, `/receive/` action (creates stock movements) |
+| `/api/v1/customers/` | `CustomerViewSet` | CRUD, search, filter by active |
+| `/api/v1/sales-orders/` | `SalesOrderViewSet` | CRUD with nested lines, `/confirm/` and `/cancel/` actions |
+| `/api/v1/dispatches/` | `DispatchViewSet` | CRUD, `/process/` action (creates stock movements) |
+
+**Authentication:** Token (`Authorization: Token <key>`) and session-based.  All endpoints require an authenticated staff user.
+
+**Pagination:** `StandardPagination` — 25 items per page, configurable via `?page_size=N` (max 100).
 
 ---
 
-### `api/` — Phase 4 (Future)
+### `tenants/` — Phase 5 (Built)
 
-Built with **Django REST Framework**. Will expose serialized endpoints for:
+Multi-tenancy infrastructure enabling multiple organizations to share a single deployment with isolated data.
 
-- Products, categories, stock locations
-- Stock levels & movements
-- Purchase orders & sales orders
-- Webhook registration for stock events
+**Models:**
 
-Authentication via token / API key. Pagination, filtering (`django-filter`), and search powered by the same Wagtail search backend.
+| Model | Type | Purpose |
+|---|---|---|
+| `Tenant` | Django Model (indexed) | Organization root — name, slug, active flag, branding (site name, colour, logo), subscription metadata (plan, status, limits) |
+| `TenantMembership` | Django Model | Links a user to a tenant with a role (owner / admin / manager / viewer). `unique_together = ("tenant", "user")` |
+
+**Middleware:** `TenantMiddleware` runs after `AuthenticationMiddleware`.  It resolves the current tenant and stores it in `request.tenant` and thread-local context.  Resolution order: `X-Tenant` header → `?tenant=` query param → default membership → first active membership → `None`.
+
+**Manager:** `TenantAwareManager` overrides `get_queryset()` to auto-filter by the current tenant.  Returns unfiltered results when no tenant is set (safe for management commands and migrations).  `unscoped()` bypasses filtering for cross-tenant operations.
+
+**RBAC Roles:**
+
+| Role | `can_manage` | `can_admin` | `is_owner` |
+|---|---|---|---|
+| Owner | Yes | Yes | Yes |
+| Admin | Yes | Yes | No |
+| Manager | Yes | No | No |
+| Viewer | No | No | No |
+
+**DRF Permission Classes:** `IsTenantMember`, `IsTenantManager`, `IsTenantAdmin`, `IsTenantOwner`, `TenantReadOnlyOrManager`.
+
+**Branding:** `tenant_branding` context processor injects `tenant_site_name`, `tenant_primary_color`, and `tenant_logo` into templates.
+
+**Subscription Hooks:** `Tenant.subscription_plan` (free/starter/professional/enterprise), `subscription_status` (active/trial/past_due/cancelled/suspended), `max_users`, `max_products`.  Helper methods `is_within_user_limit()` and `is_within_product_limit()` enforce plan limits.
 
 ---
 
@@ -437,8 +542,7 @@ Authentication via token / API key. Pagination, filtering (`django-filter`), and
 | `/search/` | `search.views.search` | Site-wide search |
 | `/` (catch-all) | `wagtail.urls` | Wagtail page serving |
 
-Future phases will add:
-- `/api/v1/` — REST API endpoints (Phase 4)
+| `/api/v1/` | DRF `DefaultRouter` | REST API (Phase 4) |
 
 ---
 

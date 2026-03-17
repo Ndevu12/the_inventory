@@ -1,0 +1,74 @@
+{% extends "wagtailadmin/generic/base.html" %}
+{% load wagtailadmin_tags i18n %}
+
+{% block main_content %}
+{# ── Totals ── #}
+<div class="w-mb-4">
+    <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+        <div>
+            <div class="w-label">Total Orders</div>
+            <div style="font-size: 1.5rem; font-weight: bold;">{{ totals.order_count }}</div>
+        </div>
+        <div>
+            <div class="w-label">Total Lines</div>
+            <div style="font-size: 1.5rem; font-weight: bold;">{{ totals.line_count }}</div>
+        </div>
+        <div>
+            <div class="w-label">Total Revenue</div>
+            <div style="font-size: 1.5rem; font-weight: bold;">${{ totals.total_revenue|floatformat:2 }}</div>
+        </div>
+    </div>
+</div>
+
+{# ── Filters ── #}
+<form method="get" class="w-mb-6">
+    <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end;">
+        <div>
+            <label for="period" class="w-label">Group By</label>
+            <select name="period" id="period">
+                <option value="monthly" {% if current_period == "monthly" %}selected{% endif %}>Monthly</option>
+                <option value="weekly" {% if current_period == "weekly" %}selected{% endif %}>Weekly</option>
+                <option value="daily" {% if current_period == "daily" %}selected{% endif %}>Daily</option>
+            </select>
+        </div>
+        <div>
+            <label for="date_from" class="w-label">From</label>
+            <input type="date" name="date_from" id="date_from" value="{% if date_from %}{{ date_from|date:'Y-m-d' }}{% endif %}">
+        </div>
+        <div>
+            <label for="date_to" class="w-label">To</label>
+            <input type="date" name="date_to" id="date_to" value="{% if date_to %}{{ date_to|date:'Y-m-d' }}{% endif %}">
+        </div>
+        <div>
+            <button type="submit" class="button button-small">Apply</button>
+            <a href="{% url 'report_sales_summary' %}" class="button button-small button-secondary">Clear</a>
+            <a href="?{{ request.GET.urlencode }}&export=csv" class="button button-small button-secondary">Export CSV</a>
+            <a href="?{{ request.GET.urlencode }}&export=pdf" class="button button-small button-secondary">Export PDF</a>
+        </div>
+    </div>
+</form>
+
+{# ── Period breakdown table ── #}
+{% if summary %}
+<table class="listing">
+    <thead>
+        <tr>
+            <th>Period</th>
+            <th style="text-align: right;">Orders</th>
+            <th style="text-align: right;">Total Revenue</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in summary %}
+        <tr>
+            <td>{{ row.period|date:"Y-m-d" }}</td>
+            <td style="text-align: right;">{{ row.order_count }}</td>
+            <td style="text-align: right;">${{ row.total_revenue|floatformat:2 }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>{% trans "No sales orders found for the selected period." %}</p>
+{% endif %}
+{% endblock %}

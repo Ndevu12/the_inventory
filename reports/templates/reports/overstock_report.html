@@ -1,0 +1,55 @@
+{% extends "wagtailadmin/generic/base.html" %}
+{% load wagtailadmin_tags i18n %}
+
+{% block main_content %}
+<div class="w-mb-4">
+    <p>
+        <strong>{{ total_count }}</strong> product{{ total_count|pluralize }}
+        with stock exceeding {{ threshold_multiplier }}× reorder point.
+    </p>
+</div>
+
+<form method="get" class="w-mb-6">
+    <div style="display: flex; gap: 1rem; align-items: flex-end;">
+        <div>
+            <label for="threshold" class="w-label">Threshold Multiplier</label>
+            <input type="number" name="threshold" id="threshold"
+                   value="{{ threshold_multiplier }}" min="2" max="20" style="width: 80px;">
+        </div>
+        <div>
+            <button type="submit" class="button button-small">Apply</button>
+            <a href="?threshold={{ threshold_multiplier }}&export=csv" class="button button-small button-secondary">Export CSV</a>
+            <a href="?threshold={{ threshold_multiplier }}&export=pdf" class="button button-small button-secondary">Export PDF</a>
+        </div>
+    </div>
+</form>
+
+{% if products %}
+<table class="listing">
+    <thead>
+        <tr>
+            <th>SKU</th>
+            <th>Product</th>
+            <th>Category</th>
+            <th style="text-align: right;">Reorder Point</th>
+            <th style="text-align: right;">Total Stock</th>
+            <th style="text-align: right;">Threshold</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for product in products %}
+        <tr>
+            <td>{{ product.sku }}</td>
+            <td>{{ product.name }}</td>
+            <td>{{ product.category|default:"—" }}</td>
+            <td style="text-align: right;">{{ product.reorder_point }}</td>
+            <td style="text-align: right;"><strong>{{ product.total_stock }}</strong></td>
+            <td style="text-align: right;">{{ product.reorder_point|default:0 }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>{% trans "No overstocked products found." %}</p>
+{% endif %}
+{% endblock %}

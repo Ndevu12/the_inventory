@@ -1,0 +1,72 @@
+{% extends "wagtailadmin/generic/base.html" %}
+{% load wagtailadmin_tags i18n %}
+
+{% block main_content %}
+<div class="w-mb-4">
+    <p>
+        Stock valuation across <strong>{{ summary.total_products }}</strong> product{{ summary.total_products|pluralize }}
+        — <strong>{{ summary.total_quantity }}</strong> total units
+        valued at <strong>${{ summary.total_value|floatformat:2 }}</strong>
+        ({{ summary.method|title }} method).
+    </p>
+</div>
+
+{# ── Method selector ── #}
+<form method="get" class="w-mb-6">
+    <div style="display: flex; gap: 1rem; align-items: flex-end;">
+        <div>
+            <label for="method" class="w-label">Valuation Method</label>
+            <select name="method" id="method">
+                {% for m in methods %}
+                <option value="{{ m }}" {% if m == current_method %}selected{% endif %}>
+                    {{ m|title }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <button type="submit" class="button button-small">Apply</button>
+            <a href="?method={{ current_method }}&export=csv" class="button button-small button-secondary">Export CSV</a>
+            <a href="?method={{ current_method }}&export=pdf" class="button button-small button-secondary">Export PDF</a>
+        </div>
+    </div>
+</form>
+
+{# ── Results table ── #}
+{% if valuations %}
+<table class="listing">
+    <thead>
+        <tr>
+            <th>SKU</th>
+            <th>Product</th>
+            <th>Category</th>
+            <th style="text-align: right;">Quantity</th>
+            <th style="text-align: right;">Unit Cost</th>
+            <th style="text-align: right;">Total Value</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for v in valuations %}
+        <tr>
+            <td>{{ v.product.sku }}</td>
+            <td>{{ v.product.name }}</td>
+            <td>{{ v.product.category|default:"—" }}</td>
+            <td style="text-align: right;">{{ v.total_quantity }}</td>
+            <td style="text-align: right;">${{ v.unit_cost|floatformat:2 }}</td>
+            <td style="text-align: right;">${{ v.total_value|floatformat:2 }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+    <tfoot>
+        <tr>
+            <th colspan="3">Total</th>
+            <th style="text-align: right;">{{ summary.total_quantity }}</th>
+            <th></th>
+            <th style="text-align: right;">${{ summary.total_value|floatformat:2 }}</th>
+        </tr>
+    </tfoot>
+</table>
+{% else %}
+<p>{% trans "No stock to value." %}</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,39 @@
+<section class="panel" id="stock-by-location-chart-panel">
+    <h2 class="panel__heading">
+        <svg class="icon icon-site" aria-hidden="true"><use href="#icon-site"></use></svg>
+        Stock by Location
+    </h2>
+    <div class="panel__body">
+        <canvas id="stockByLocationChart" height="300"></canvas>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+    <script>
+        (function() {
+            var labels = JSON.parse('{{ labels_json|escapejs }}');
+            var data = JSON.parse('{{ data_json|escapejs }}');
+            new Chart(document.getElementById('stockByLocationChart'), {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Total Quantity',
+                        data: data,
+                        backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: { beginAtZero: true }
+                    }
+                }
+            });
+        })();
+    </script>
+</section>

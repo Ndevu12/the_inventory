@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import UniqueConstraint
 from treebeard.mp_tree import MP_Node
 from wagtail.admin.panels import FieldPanel, FieldRowPanel, MultiFieldPanel, TabbedInterface
 from wagtail.search import index
@@ -17,7 +18,6 @@ class Category(TimeStampedModel, MP_Node):
     )
     slug = models.SlugField(
         max_length=255,
-        unique=True,
         help_text="URL-friendly name. Auto-generated from name if left blank.",
     )
     description = models.TextField(
@@ -77,3 +77,9 @@ class Category(TimeStampedModel, MP_Node):
 
     class Meta:
         verbose_name_plural = "categories"
+        constraints = [
+            UniqueConstraint(
+                fields=["tenant", "slug"],
+                name="unique_category_slug_per_tenant",
+            ),
+        ]

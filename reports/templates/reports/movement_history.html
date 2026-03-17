@@ -1,0 +1,88 @@
+{% extends "wagtailadmin/generic/base.html" %}
+{% load wagtailadmin_tags i18n %}
+
+{% block main_content %}
+<div class="w-mb-4">
+    <p>Showing <strong>{{ total_count }}</strong> movement{{ total_count|pluralize }}.</p>
+</div>
+
+{# ── Filters ── #}
+<form method="get" class="w-mb-6">
+    <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end;">
+        {% for field in filterset.form %}
+        <div>
+            <label for="{{ field.id_for_label }}" class="w-label">{{ field.label }}</label>
+            {{ field }}
+        </div>
+        {% endfor %}
+        <div>
+            <button type="submit" class="button button-small">Filter</button>
+            <a href="{% url 'report_movement_history' %}" class="button button-small button-secondary">Clear</a>
+            <a href="?{{ request.GET.urlencode }}&export=csv" class="button button-small button-secondary">Export CSV</a>
+            <a href="?{{ request.GET.urlencode }}&export=pdf" class="button button-small button-secondary">Export PDF</a>
+        </div>
+    </div>
+</form>
+
+{# ── Results table ── #}
+{% if movements %}
+<table class="listing">
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Type</th>
+            <th>SKU</th>
+            <th>Product</th>
+            <th style="text-align: right;">Qty</th>
+            <th>From</th>
+            <th>To</th>
+            <th style="text-align: right;">Unit Cost</th>
+            <th>Reference</th>
+            <th>By</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for m in movements %}
+        <tr>
+            <td>{{ m.created_at|date:"Y-m-d H:i" }}</td>
+            <td>
+                <span class="w-status">{{ m.get_movement_type_display }}</span>
+            </td>
+            <td>{{ m.product.sku }}</td>
+            <td>{{ m.product.name }}</td>
+            <td style="text-align: right;">{{ m.quantity }}</td>
+            <td>{{ m.from_location|default:"—" }}</td>
+            <td>{{ m.to_location|default:"—" }}</td>
+            <td style="text-align: right;">{% if m.unit_cost %}${{ m.unit_cost|floatformat:2 }}{% else %}—{% endif %}</td>
+            <td>{{ m.reference|default:"—" }}</td>
+            <td>{{ m.created_by|default:"—" }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{# ── Pagination ── #}
+{% if is_paginated %}
+<div class="pagination" style="margin-top: 1rem;">
+    {% if page_obj.has_previous %}
+        <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}"
+           class="button button-small">
+            &laquo; Previous
+        </a>
+    {% endif %}
+    <span class="w-label" style="padding: 0 1rem;">
+        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+    </span>
+    {% if page_obj.has_next %}
+        <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}"
+           class="button button-small">
+            Next &raquo;
+        </a>
+    {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<p>{% trans "No movements found." %}</p>
+{% endif %}
+{% endblock %}

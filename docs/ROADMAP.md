@@ -39,27 +39,35 @@ The foundation: manage products, track stock, and move items between locations. 
 
 ---
 
-## Phase 2 — Procurement & Sales 📋
+## Phase 2 — Procurement & Sales 🚧
 
 Extend the system to track the full lifecycle of goods — from purchase orders to customer sales.
 
 **Apps:** `procurement/`, `sales/`
 
-**Planned models:** `Supplier`, `PurchaseOrder`, `PurchaseOrderLine`, `GoodsReceivedNote`, `Customer`, `SalesOrder`, `SalesOrderLine`, `Dispatch`
+**Models:** `Supplier`, `PurchaseOrder`, `PurchaseOrderLine`, `GoodsReceivedNote`, `Customer`, `SalesOrder`, `SalesOrderLine`, `Dispatch`
 
 | Feature | Status |
 |---|---|
-| Supplier management (contacts, lead times, terms) | 📋 |
-| Purchase orders with line items | 📋 |
-| Goods received notes (GRN) — auto-create `receive` StockMovement | 📋 |
-| Customer / client management | 📋 |
-| Sales orders with line items | 📋 |
-| Dispatch / shipment tracking — auto-create `issue` StockMovement | 📋 |
-| Order status workflows (draft → confirmed → fulfilled) | 📋 |
+| Supplier management (contacts, lead times, terms) | ✅ |
+| Purchase orders with line items | ✅ |
+| Goods received notes (GRN) — auto-create `receive` StockMovement | ✅ |
+| Customer / client management | ✅ |
+| Sales orders with line items | ✅ |
+| Dispatch / shipment tracking — auto-create `issue` StockMovement | ✅ |
+| Order status workflows (draft → confirmed → fulfilled) | ✅ |
+| ProcurementService (confirm, cancel, receive goods) | ✅ |
+| SalesService (confirm, cancel, process dispatch) | ✅ |
+| Unit tests for all procurement models | ✅ |
+| Unit tests for all sales models | ✅ |
+| Integration tests for procurement workflows | ✅ |
+| Integration tests for sales/dispatch workflows | ✅ |
+| Wagtail admin menu items for procurement & sales | ✅ |
+| Django admin for orders, GRNs, and dispatches | ✅ |
 
 ---
 
-## Phase 3 — Reporting & Analytics 📋
+## Phase 3 — Reporting & Analytics 🚧
 
 Provide insight into inventory health, movement trends, and financial summaries.
 
@@ -67,16 +75,24 @@ Provide insight into inventory health, movement trends, and financial summaries.
 
 | Feature | Status |
 |---|---|
-| Stock valuation reports (FIFO / weighted average via `StockMovement.unit_cost`) | 📋 |
-| Movement history & audit trail (via `TimeStampedModel` fields) | 📋 |
-| Low-stock & overstock reports | 📋 |
-| Purchase & sales summaries (daily / weekly / monthly) | 📋 |
-| Exportable reports (CSV, PDF) | 📋 |
-| Dashboard charts (Wagtail admin or standalone) | 📋 |
+| Stock valuation reports (weighted average / latest cost via `StockMovement.unit_cost`) | ✅ |
+| Movement history & audit trail (filterable by date, type, product, location) | ✅ |
+| Low-stock report | ✅ |
+| Overstock report (configurable threshold multiplier) | ✅ |
+| Purchase summaries (daily / weekly / monthly with totals) | ✅ |
+| Sales summaries (daily / weekly / monthly with totals) | ✅ |
+| CSV export on all reports (`?export=csv`) | ✅ |
+| InventoryReportService (valuation, stock levels, movements) | ✅ |
+| OrderReportService (purchase & sales aggregations) | ✅ |
+| Wagtail admin Reports submenu with all 6 report views | ✅ |
+| Unit tests for both report services | ✅ |
+| Integration tests for all report views | ✅ |
+| PDF export on all reports (`?export=pdf`) via ReportLab | ✅ |
+| Dashboard charts — stock by location, movement trends, order status (Chart.js) | ✅ |
 
 ---
 
-## Phase 4 — API & Integrations 📋
+## Phase 4 — API & Integrations 🚧
 
 Open up the system for external consumers and third-party integrations.
 
@@ -84,25 +100,52 @@ Open up the system for external consumers and third-party integrations.
 
 | Feature | Status |
 |---|---|
-| RESTful API (Django REST Framework) for products, stock, orders | 📋 |
-| Token / API-key authentication | 📋 |
-| Webhook support for stock events (low stock, new order) | 📋 |
+| RESTful API (Django REST Framework) for products, stock, orders | ✅ |
+| Token authentication (`rest_framework.authtoken`) | ✅ |
+| Session authentication (for browsable API) | ✅ |
+| Staff-only permission enforcement | ✅ |
+| Pagination (configurable page size, max 100) | ✅ |
+| Filtering via `django-filter` on all list endpoints | ✅ |
+| Search and ordering on products, suppliers, customers | ✅ |
+| Custom actions: confirm/cancel orders, receive goods, process dispatch | ✅ |
+| Stock movement creation via StockService (atomic) | ✅ |
+| Read-only stock records with low-stock endpoint | ✅ |
+| Immutable movements (no update/delete via API) | ✅ |
+| Nested serializers (order lines, related names) | ✅ |
+| Full test suite for all 11 API endpoints | ✅ |
+| Webhook support for stock events | 📋 |
 | Barcode / QR code scanning support | 📋 |
-| Import / export via CSV & Excel | 📋 |
+| Import via CSV & Excel (products, suppliers, customers) | ✅ |
 | Optional Elasticsearch backend for advanced search | 📋 |
 
 ---
 
-## Phase 5 — Multi-tenancy & SaaS (Stretch) 📋
+## Phase 5 — Multi-tenancy & SaaS (Stretch) 🚧
 
 Enable multiple organizations to use a single deployment.
 
+**App:** `tenants/`
+
+**Models:** `Tenant`, `TenantMembership`
+
 | Feature | Status |
 |---|---|
-| Tenant-aware models and queries | 📋 |
-| Per-tenant admin branding | 📋 |
-| Role-based access control (RBAC) | 📋 |
-| Subscription / billing hooks | 📋 |
+| `Tenant` model — org name, slug, active flag, branding fields, subscription metadata | ✅ |
+| `TenantMembership` model — user ↔ tenant link with role (owner/admin/manager/viewer) | ✅ |
+| Tenant FK on `TimeStampedModel` — all 13 domain models scoped to a tenant | ✅ |
+| Data migration — default tenant created, all existing records assigned | ✅ |
+| `TenantMiddleware` — resolves tenant from user membership, header, or query param | ✅ |
+| Thread-local tenant context (`set_current_tenant` / `get_current_tenant`) | ✅ |
+| `TenantAwareManager` with auto-scoping and `unscoped()` escape hatch | ✅ |
+| Per-tenant admin branding (site name, primary colour, logo via context processor) | ✅ |
+| Role-based access control (RBAC) — utility functions and 5 DRF permission classes | ✅ |
+| Subscription / billing hooks (plan, status, user/product limits on `Tenant`) | ✅ |
+| Django admin for tenants and memberships | ✅ |
+| Wagtail admin menu item for tenant management | ✅ |
+| Full test suite (72 tests): models, middleware, context, managers, permissions, cross-app integration | ✅ |
+| Per-tenant unique constraints (sku, code, order_number per tenant) | ✅ |
+| Tenant-scoped Wagtail Snippet querysets (`TenantScopedSnippetViewSet`) | ✅ |
+| Tenant provisioning API / self-service signup | 📋 |
 
 ---
 

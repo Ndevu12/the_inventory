@@ -6,6 +6,7 @@ from django.db import IntegrityError
 from django.test import TestCase
 
 from inventory.models import Category, Product, UnitOfMeasure
+from tenants.tests.factories import create_tenant
 
 from ..factories import (
     create_category,
@@ -54,10 +55,13 @@ class ProductCreationTests(TestCase):
 class ProductSkuUniquenessTests(TestCase):
     """Test SKU uniqueness constraint."""
 
+    def setUp(self):
+        self.tenant = create_tenant()
+
     def test_duplicate_sku_raises_integrity_error(self):
-        create_product(sku="DUP-001")
+        create_product(sku="DUP-001", tenant=self.tenant)
         with self.assertRaises(IntegrityError):
-            create_product(sku="DUP-001", name="Another Product")
+            create_product(sku="DUP-001", name="Another Product", tenant=self.tenant)
 
     def test_different_skus_allowed(self):
         p1 = create_product(sku="SKU-A")

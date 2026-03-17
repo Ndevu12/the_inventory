@@ -1,0 +1,41 @@
+<section class="panel" id="movement-trend-chart-panel">
+    <h2 class="panel__heading">
+        <svg class="icon icon-arrow-right" aria-hidden="true"><use href="#icon-arrow-right"></use></svg>
+        Movement Trend (Last 30 Days)
+    </h2>
+    <div class="panel__body">
+        <canvas id="movementTrendChart" height="250"></canvas>
+    </div>
+    <script>
+        (function() {
+            if (typeof Chart === 'undefined') return;
+            var labels = JSON.parse('{{ labels_json|escapejs }}');
+            var data = JSON.parse('{{ data_json|escapejs }}');
+            new Chart(document.getElementById('movementTrendChart'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Movements',
+                        data: data,
+                        borderColor: 'rgba(16, 185, 129, 0.8)',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 2,
+                        pointHoverRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                    }
+                }
+            });
+        })();
+    </script>
+</section>
