@@ -15,7 +15,6 @@ from django.db import models
 from wagtail.admin.panels import (
     FieldPanel,
     FieldRowPanel,
-    MultiFieldPanel,
     ObjectList,
     TabbedInterface,
 )
