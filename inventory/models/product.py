@@ -1,5 +1,5 @@
 from django.db import models
-from django.db.models import F
+from django.db.models import F, Q, UniqueConstraint
 from modelcluster.contrib.taggit import ClusterTaggableManager
 from modelcluster.fields import ParentalKey
 from modelcluster.models import ClusterableModel
@@ -55,9 +55,8 @@ class Product(TimeStampedModel, ClusterableModel):
     sku = models.CharField(
         "SKU",
         max_length=100,
-        unique=True,
         db_index=True,
-        help_text="Unique Stock Keeping Unit identifier (e.g., PHONE-001). Must be unique across all products.",
+        help_text="Unique Stock Keeping Unit identifier (e.g., PHONE-001). Unique per tenant.",
     )
     name = models.CharField(
         max_length=255,
@@ -155,6 +154,14 @@ class Product(TimeStampedModel, ClusterableModel):
         index.FilterField("is_active"),
         index.FilterField("unit_of_measure"),
     ]
+
+    class Meta:
+        constraints = [
+            UniqueConstraint(
+                fields=["tenant", "sku"],
+                name="unique_product_sku_per_tenant",
+            ),
+        ]
 
     def __str__(self):
         return f"{self.sku} — {self.name}"

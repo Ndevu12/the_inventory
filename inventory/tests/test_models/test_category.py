@@ -4,6 +4,7 @@ from django.db import IntegrityError
 from django.test import TestCase
 
 from inventory.models import Category
+from tenants.tests.factories import create_tenant
 
 from ..factories import create_category
 
@@ -38,10 +39,13 @@ class CategoryCreationTests(TestCase):
 class CategorySlugUniquenessTests(TestCase):
     """Test slug uniqueness constraint."""
 
+    def setUp(self):
+        self.tenant = create_tenant()
+
     def test_duplicate_slug_raises_integrity_error(self):
-        create_category(name="First", slug="unique-slug")
+        create_category(name="First", slug="unique-slug", tenant=self.tenant)
         with self.assertRaises(IntegrityError):
-            create_category(name="Second", slug="unique-slug")
+            create_category(name="Second", slug="unique-slug", tenant=self.tenant)
 
     def test_different_slugs_allowed(self):
         cat1 = create_category(name="First", slug="first")

@@ -1,0 +1,62 @@
+<section class="panel" id="order-status-chart-panel">
+    <h2 class="panel__heading">
+        <svg class="icon icon-form" aria-hidden="true"><use href="#icon-form"></use></svg>
+        Order Status Overview
+    </h2>
+    <div class="panel__body">
+        <div style="display: flex; gap: 2rem; flex-wrap: wrap; justify-content: center;">
+            <div style="flex: 1; min-width: 250px; max-width: 400px; text-align: center;">
+                <h3 style="margin: 0 0 0.5rem;">Purchase Orders</h3>
+                <canvas id="poStatusChart"></canvas>
+            </div>
+            <div style="flex: 1; min-width: 250px; max-width: 400px; text-align: center;">
+                <h3 style="margin: 0 0 0.5rem;">Sales Orders</h3>
+                <canvas id="soStatusChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <script>
+        (function() {
+            if (typeof Chart === 'undefined') return;
+            var palette = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
+
+            var poLabels = JSON.parse('{{ po_labels_json|escapejs }}');
+            var poData = JSON.parse('{{ po_data_json|escapejs }}');
+            new Chart(document.getElementById('poStatusChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: poLabels,
+                    datasets: [{
+                        data: poData,
+                        backgroundColor: palette.slice(0, poLabels.length)
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+
+            var soLabels = JSON.parse('{{ so_labels_json|escapejs }}');
+            var soData = JSON.parse('{{ so_data_json|escapejs }}');
+            new Chart(document.getElementById('soStatusChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: soLabels,
+                    datasets: [{
+                        data: soData,
+                        backgroundColor: palette.slice(0, soLabels.length)
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+        })();
+    </script>
+</section>

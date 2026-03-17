@@ -1,0 +1,51 @@
+{% extends "wagtailadmin/generic/base.html" %}
+{% load wagtailadmin_tags i18n %}
+
+{% block main_content %}
+<div class="w-mb-4">
+    <p>
+        <strong>{{ total_count }}</strong> product{{ total_count|pluralize }}
+        at or below reorder point.
+    </p>
+    <a href="?export=csv" class="button button-small button-secondary">Export CSV</a>
+    <a href="?export=pdf" class="button button-small button-secondary">Export PDF</a>
+</div>
+
+{% if products %}
+<table class="listing">
+    <thead>
+        <tr>
+            <th>SKU</th>
+            <th>Product</th>
+            <th>Category</th>
+            <th style="text-align: right;">Reorder Point</th>
+            <th>Stock by Location</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for product in products %}
+        <tr>
+            <td>{{ product.sku }}</td>
+            <td>{{ product.name }}</td>
+            <td>{{ product.category|default:"—" }}</td>
+            <td style="text-align: right;">{{ product.reorder_point }}</td>
+            <td>
+                {% for record in product.stock_records.all %}
+                    <div>
+                        {{ record.location.name }}:
+                        <strong{% if record.is_low_stock %} style="color: var(--w-color-critical-200);"{% endif %}>
+                            {{ record.quantity }}
+                        </strong>
+                    </div>
+                {% empty %}
+                    <em>No stock records</em>
+                {% endfor %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>{% trans "No low-stock products found." %}</p>
+{% endif %}
+{% endblock %}

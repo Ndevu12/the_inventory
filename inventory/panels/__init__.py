@@ -6,11 +6,17 @@ standard, rendered on the Wagtail admin homepage via the
 """
 
 from .low_stock import LowStockPanel
+from .movement_trend_chart import MovementTrendChart
+from .order_status_chart import OrderStatusChart
 from .recent_movements import RecentMovementsPanel
+from .stock_by_location_chart import StockByLocationChart
 from .stock_summary import StockSummaryPanel
 
 __all__ = [
     "LowStockPanel",
+    "MovementTrendChart",
+    "OrderStatusChart",
     "RecentMovementsPanel",
+    "StockByLocationChart",
     "StockSummaryPanel",
 ]

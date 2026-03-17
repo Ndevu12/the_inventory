@@ -1,0 +1,88 @@
+{% extends "wagtailadmin/generic/base.html" %}
+{% load wagtailadmin_tags i18n %}
+
+{% block main_content %}
+<div class="w-mb-6">
+    <p>
+        Upload a <strong>CSV</strong> or <strong>Excel (.xlsx)</strong> file to bulk-import data.
+        All rows are validated before import — if any errors are found, no records are created.
+    </p>
+</div>
+
+{# ── Upload form ── #}
+<form method="post" enctype="multipart/form-data" class="w-mb-6">
+    {% csrf_token %}
+    <div style="display: flex; gap: 1.5rem; align-items: flex-end; flex-wrap: wrap;">
+        <div>
+            <label for="id_data_type" class="w-label">Data Type</label>
+            {{ form.data_type }}
+        </div>
+        <div>
+            <label for="id_file" class="w-label">File</label>
+            {{ form.file }}
+        </div>
+        <div>
+            <button type="submit" class="button">Import</button>
+        </div>
+    </div>
+    {% if form.errors %}
+    <div class="w-mt-4" style="color: var(--w-color-critical-200);">
+        {% for field_name, errors in form.errors.items %}
+            {% for error in errors %}
+                <p>{{ error }}</p>
+            {% endfor %}
+        {% endfor %}
+    </div>
+    {% endif %}
+</form>
+
+{# ── Result feedback ── #}
+{% if result %}
+    {% if result.success %}
+    <div class="w-mb-6" style="padding: 1rem; background: var(--w-color-positive-50); border-radius: 6px;">
+        <strong>Import successful:</strong> {{ result.created_count }} record{{ result.created_count|pluralize }} created.
+    </div>
+    {% endif %}
+    {% if result.errors %}
+    <div class="w-mb-6" style="padding: 1rem; background: var(--w-color-critical-50); border-radius: 6px;">
+        <strong>Import failed — {{ result.errors|length }} error{{ result.errors|length|pluralize }}:</strong>
+        <table class="listing w-mt-2">
+            <thead>
+                <tr>
+                    <th>Row</th>
+                    <th>Field</th>
+                    <th>Error</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for err in result.errors %}
+                <tr>
+                    <td>{{ err.row }}</td>
+                    <td>{{ err.field|default:"—" }}</td>
+                    <td>{{ err.message }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+{% endif %}
+
+{# ── Column reference ── #}
+<details class="w-mb-6">
+    <summary style="cursor: pointer; font-weight: bold;">Expected column headers</summary>
+    <div class="w-mt-2">
+        <h4>Products</h4>
+        <p><code>{{ template_headers.products|join:", " }}</code></p>
+        <p>Required: <strong>sku</strong>, <strong>name</strong>. Other columns are optional.</p>
+
+        <h4 class="w-mt-4">Suppliers</h4>
+        <p><code>{{ template_headers.suppliers|join:", " }}</code></p>
+        <p>Required: <strong>code</strong>, <strong>name</strong>. Other columns are optional.</p>
+
+        <h4 class="w-mt-4">Customers</h4>
+        <p><code>{{ template_headers.customers|join:", " }}</code></p>
+        <p>Required: <strong>code</strong>, <strong>name</strong>. Other columns are optional.</p>
+    </div>
+</details>
+{% endblock %}

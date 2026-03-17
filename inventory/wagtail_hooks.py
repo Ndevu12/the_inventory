@@ -9,7 +9,15 @@ from django.urls import path, reverse
 from wagtail import hooks
 from wagtail.admin.menu import MenuItem
 
-from inventory.panels import LowStockPanel, RecentMovementsPanel, StockSummaryPanel
+from inventory.imports.views import DataImportView
+from inventory.panels import (
+    LowStockPanel,
+    MovementTrendChart,
+    OrderStatusChart,
+    RecentMovementsPanel,
+    StockByLocationChart,
+    StockSummaryPanel,
+)
 from inventory.views import InventorySearchView, LowStockAlertView
 
 
@@ -26,6 +34,11 @@ def register_inventory_admin_urls():
             "inventory/search/",
             InventorySearchView.as_view(),
             name="inventory_search",
+        ),
+        path(
+            "inventory/import/",
+            DataImportView.as_view(),
+            name="inventory_import",
         ),
     ]
 
@@ -121,12 +134,26 @@ def register_inventory_search_menu_item():
     )
 
 
+@hooks.register("register_admin_menu_item")
+def register_import_menu_item():
+    """Add Data Import link to the Wagtail admin sidebar."""
+    return MenuItem(
+        "Import Data",
+        reverse("inventory_import"),
+        icon_name="upload",
+        order=180,
+    )
+
+
 @hooks.register("construct_homepage_panels")
 def add_inventory_dashboard_panels(request, panels):
     """Add inventory health panels to the Wagtail admin dashboard."""
     panels.append(StockSummaryPanel())
     panels.append(LowStockPanel())
     panels.append(RecentMovementsPanel())
+    panels.append(StockByLocationChart())
+    panels.append(MovementTrendChart())
+    panels.append(OrderStatusChart())
 
 
 @hooks.register("insert_global_admin_css")
