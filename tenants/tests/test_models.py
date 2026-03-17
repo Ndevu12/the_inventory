@@ -47,8 +47,8 @@ class TenantModelTest(TestCase):
         self.assertFalse(t.is_within_user_limit())
 
     def test_ordering(self):
-        t2 = create_tenant(name="Zebra Co")
-        t1 = create_tenant(name="Alpha Co")
+        create_tenant(name="Zebra Co")
+        create_tenant(name="Alpha Co")
         tenants = list(Tenant.objects.all())
         self.assertEqual(tenants[0].name, "Alpha Co")
         self.assertEqual(tenants[-1].name, "Zebra Co")

@@ -5,7 +5,7 @@ from datetime import date
 
 from django.test import TestCase
 
-from inventory.models import MovementType, Product, StockLocation, StockRecord
+from inventory.models import MovementType
 from inventory.panels import MovementTrendChart, OrderStatusChart, StockByLocationChart
 from procurement.models import PurchaseOrder, Supplier
 from sales.models import Customer, SalesOrder

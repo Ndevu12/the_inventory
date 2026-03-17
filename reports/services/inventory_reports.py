@@ -14,7 +14,7 @@ from decimal import Decimal
 from django.db.models import F, Q, Sum
 from django.db.models.functions import Coalesce
 
-from inventory.models import MovementType, Product, StockMovement, StockRecord
+from inventory.models import MovementType, Product, StockMovement
 
 
 @dataclass

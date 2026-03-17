@@ -9,6 +9,19 @@ and this project aims to follow [Semantic Versioning](https://semver.org/spec/v2
 
 ### Added
 
+- **Headless API Server Preparation:**
+  - **JWT authentication** via `djangorestframework-simplejwt` — login, token refresh, and user profile endpoints at `/api/v1/auth/`
+  - **CORS support** via `django-cors-headers` — configured for local frontend dev servers (localhost:3000, localhost:5173)
+  - **OpenAPI documentation** via `drf-spectacular` — schema at `/api/v1/schema/`, Swagger UI at `/api/v1/docs/`, Redoc at `/api/v1/redoc/`
+  - **Auth endpoints:** `/auth/login/` (JWT obtain with user/tenant info), `/auth/refresh/`, `/auth/me/` (GET/PATCH), `/auth/change-password/`
+  - **Reports API:** 6 JSON endpoints at `/api/v1/reports/` (stock valuation, movement history, low-stock, overstock, purchase summary, sales summary) with `?export=csv` and `?export=pdf` support
+  - **Dashboard API:** 4 endpoints at `/api/v1/dashboard/` (summary, stock-by-location, movement-trends, order-status) returning chart-ready data
+  - **Tenant management API:** `/api/v1/tenants/current/` (GET/PATCH), `/api/v1/tenants/members/` (list/detail/update/delete) with RBAC enforcement
+  - **Import API:** `/api/v1/import/` — multipart file upload for CSV/Excel bulk imports
+  - **JWT auth middleware** — pre-authenticates JWT requests before TenantMiddleware for automatic tenant resolution
+  - **Dependencies added:** `djangorestframework-simplejwt>=5.4`, `django-cors-headers>=4.6`, `drf-spectacular>=0.28`
+  - Full test suite for all new endpoints (38 new tests, 462 total passing)
+
 - **Phase 6 — Extended Features & Polish:**
   - **PDF export** on all 6 report views via `?export=pdf`, powered by ReportLab with styled table layouts, alternating row colours, and auto-generated timestamps
   - **Dashboard charts** using Chart.js on the Wagtail admin homepage:

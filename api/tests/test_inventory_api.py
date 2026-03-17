@@ -1,13 +1,11 @@
 """API tests for inventory endpoints."""
 
-from decimal import Decimal
-
 from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase
 
-from inventory.models import MovementType, StockMovement, StockRecord
+from inventory.models import MovementType, StockRecord
 from inventory.services.stock import StockService
 from inventory.tests.factories import (
     create_category,

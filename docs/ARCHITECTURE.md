@@ -46,6 +46,9 @@ Users interact with The Inventory primarily through the **Wagtail admin** interf
 | Tagging | `django-taggit` | Bundled with Wagtail |
 | Clustering | `django-modelcluster` | Bundled with Wagtail |
 | Filtering | `django-filter` | List filtering in admin views |
+| JWT Auth | `djangorestframework-simplejwt` | Stateless token auth for SPA/mobile |
+| CORS | `django-cors-headers` | Cross-origin frontend support |
+| API Docs | `drf-spectacular` | OpenAPI 3.0 schema, Swagger UI, Redoc |
 | PDF Generation | `reportlab` | Styled PDF report export |
 | Excel Parsing | `openpyxl` | CSV/Excel data import |
 | Charts | Chart.js (CDN) | Dashboard visualizations |
@@ -53,7 +56,7 @@ Users interact with The Inventory primarily through the **Wagtail admin** interf
 
 ### Frontend / UI Stack
 
-The project uses a **server-rendered** approach with lightweight client-side enhancements — no Node.js build step required.
+The backend operates as a **headless API server** serving JSON data to a separate modern frontend, while retaining the Wagtail admin UI for staff.  Wagtail admin templates remain for internal CMS use.
 
 | Layer | Technology | Role |
 |---|---|---|
@@ -474,11 +477,25 @@ The `inventory/imports/` module provides CSV and Excel (.xlsx) import for Produc
 
 ---
 
-### `api/` — Phase 4 (Built)
+### `api/` — Phase 4 (Built) — Headless API Server
 
-Built with **Django REST Framework** at `/api/v1/`.  No persistent models — exposes existing models from `inventory`, `procurement`, and `sales`.
+Built with **Django REST Framework** at `/api/v1/`.  Serves as the headless backend for modern frontend applications.
 
-**Endpoints (11 ViewSets):**
+**Authentication:**
+
+| Method | Header | Purpose |
+|---|---|---|
+| JWT (primary) | `Authorization: Bearer <access_token>` | Stateless auth for SPA/mobile frontends |
+| Token | `Authorization: Token <key>` | Backwards-compatible service-to-service auth |
+| Session | Cookie | Browsable API and Wagtail admin |
+
+JWT tokens are obtained via `/api/v1/auth/login/` and refreshed via `/api/v1/auth/refresh/`.  A `JWTAuthMiddleware` pre-authenticates requests before `TenantMiddleware` for automatic tenant resolution.
+
+**CORS:** `django-cors-headers` allows cross-origin requests from configured frontend origins.
+
+**API Documentation:** OpenAPI 3.0 schema at `/api/v1/schema/`, Swagger UI at `/api/v1/docs/`, Redoc at `/api/v1/redoc/` — powered by `drf-spectacular`.
+
+**CRUD Endpoints (11 ViewSets):**
 
 | Endpoint | ViewSet | Key Features |
 |---|---|---|
@@ -494,7 +511,44 @@ Built with **Django REST Framework** at `/api/v1/`.  No persistent models — ex
 | `/api/v1/sales-orders/` | `SalesOrderViewSet` | CRUD with nested lines, `/confirm/` and `/cancel/` actions |
 | `/api/v1/dispatches/` | `DispatchViewSet` | CRUD, `/process/` action (creates stock movements) |
 
-**Authentication:** Token (`Authorization: Token <key>`) and session-based.  All endpoints require an authenticated staff user.
+**Auth Endpoints:**
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/api/v1/auth/login/` | POST | Obtain JWT access + refresh tokens (includes user and tenant info) |
+| `/api/v1/auth/refresh/` | POST | Refresh an expired access token |
+| `/api/v1/auth/me/` | GET/PATCH | Current user profile with tenant context and memberships |
+| `/api/v1/auth/change-password/` | POST | Change password (requires old password) |
+
+**Reports Endpoints:**
+
+| Endpoint | Query Params | Service |
+|---|---|---|
+| `/api/v1/reports/stock-valuation/` | `?method`, `?export` | `InventoryReportService` |
+| `/api/v1/reports/movement-history/` | `?date_from`, `?date_to`, `?type`, `?export` | `InventoryReportService` |
+| `/api/v1/reports/low-stock/` | `?export` | `InventoryReportService` |
+| `/api/v1/reports/overstock/` | `?threshold`, `?export` | `InventoryReportService` |
+| `/api/v1/reports/purchase-summary/` | `?period`, `?date_from`, `?date_to`, `?export` | `OrderReportService` |
+| `/api/v1/reports/sales-summary/` | `?period`, `?date_from`, `?date_to`, `?export` | `OrderReportService` |
+
+**Dashboard Endpoints:**
+
+| Endpoint | Response |
+|---|---|
+| `/api/v1/dashboard/summary/` | KPI counts (products, locations, low stock, orders) |
+| `/api/v1/dashboard/stock-by-location/` | `{labels, data}` for bar charts |
+| `/api/v1/dashboard/movement-trends/` | `{labels, data}` for line charts (30 days) |
+| `/api/v1/dashboard/order-status/` | `{purchase_orders, sales_orders}` for doughnut charts |
+
+**Tenant Endpoints:**
+
+| Endpoint | Method | Permission |
+|---|---|---|
+| `/api/v1/tenants/current/` | GET/PATCH | Member (read) / Admin (write) |
+| `/api/v1/tenants/members/` | GET | Member |
+| `/api/v1/tenants/members/<id>/` | PATCH/DELETE | Admin/Owner |
+
+**Import Endpoint:** POST `/api/v1/import/` — multipart file upload for CSV/Excel bulk imports.
 
 **Pagination:** `StandardPagination` — 25 items per page, configurable via `?page_size=N` (max 100).
 
