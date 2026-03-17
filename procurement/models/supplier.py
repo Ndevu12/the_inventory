@@ -2,8 +2,6 @@ from django.db import models
 from django.db.models import UniqueConstraint
 from wagtail.admin.panels import FieldPanel, FieldRowPanel, MultiFieldPanel, TabbedInterface
 from wagtail.search import index
-from wagtail.snippets.models import register_snippet
-
 from inventory.models.base import TimeStampedModel
 
 
@@ -15,7 +13,6 @@ class PaymentTerms(models.TextChoices):
     PREPAID = "prepaid", "Prepaid"
 
 
-@register_snippet
 class Supplier(TimeStampedModel):
     """Vendor or supplier of goods.
 

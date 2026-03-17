@@ -12,6 +12,13 @@ tenant FK itself) to avoid a circular dependency.
 
 from django.conf import settings
 from django.db import models
+from wagtail.admin.panels import (
+    FieldPanel,
+    FieldRowPanel,
+    MultiFieldPanel,
+    ObjectList,
+    TabbedInterface,
+)
 from wagtail.search import index
 
 
@@ -114,6 +121,42 @@ class Tenant(index.Indexed, models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    edit_handler = TabbedInterface([
+        ObjectList(
+            [
+                FieldRowPanel([
+                    FieldPanel("name", classname="col6"),
+                    FieldPanel("slug", classname="col6"),
+                ]),
+                FieldPanel("is_active"),
+            ],
+            heading="Identity",
+        ),
+        ObjectList(
+            [
+                FieldPanel("branding_site_name"),
+                FieldRowPanel([
+                    FieldPanel("branding_primary_color", classname="col6"),
+                    FieldPanel("branding_logo", classname="col6"),
+                ]),
+            ],
+            heading="Branding",
+        ),
+        ObjectList(
+            [
+                FieldRowPanel([
+                    FieldPanel("subscription_plan", classname="col6"),
+                    FieldPanel("subscription_status", classname="col6"),
+                ]),
+                FieldRowPanel([
+                    FieldPanel("max_users", classname="col6"),
+                    FieldPanel("max_products", classname="col6"),
+                ]),
+            ],
+            heading="Subscription",
+        ),
+    ])
 
     search_fields = [
         index.SearchField("name"),

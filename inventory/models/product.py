@@ -8,8 +8,6 @@ from wagtail.admin.panels import FieldPanel, FieldRowPanel, InlinePanel, MultiFi
 from wagtail.fields import RichTextField
 from wagtail.models import Orderable
 from wagtail.search import index
-from wagtail.snippets.models import register_snippet
-
 from .base import TimeStampedModel
 
 
@@ -48,7 +46,6 @@ class ProductQuerySet(models.QuerySet):
         ).filter(stock_records__quantity__gt=0).distinct()
 
 
-@register_snippet
 class Product(TimeStampedModel, ClusterableModel):
     """Central product model for the inventory system."""
 

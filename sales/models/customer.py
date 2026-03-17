@@ -2,12 +2,9 @@ from django.db import models
 from django.db.models import UniqueConstraint
 from wagtail.admin.panels import FieldPanel, FieldRowPanel, MultiFieldPanel, TabbedInterface
 from wagtail.search import index
-from wagtail.snippets.models import register_snippet
-
 from inventory.models.base import TimeStampedModel
 
 
-@register_snippet
 class Customer(TimeStampedModel):
     """A customer or client who places sales orders.
 

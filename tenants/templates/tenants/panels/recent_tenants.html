@@ -1,0 +1,51 @@
+{% load i18n %}
+
+<section class="panel" id="recent-tenants-panel">
+    <h2 class="panel__heading">
+        <svg class="icon icon-group" aria-hidden="true"><use href="#icon-group"></use></svg>
+        Recent Tenants
+    </h2>
+    <div class="panel__body">
+        {% if recent_tenants %}
+        <table class="listing">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Slug</th>
+                    <th>Plan</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tenant in recent_tenants %}
+                <tr>
+                    <td><strong>{{ tenant.name }}</strong></td>
+                    <td><code>{{ tenant.slug }}</code></td>
+                    <td>
+                        <span class="plan-badge plan-{{ tenant.subscription_plan }}">
+                            {{ tenant.get_subscription_plan_display }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="status-badge status-{{ tenant.subscription_status }}">
+                            {{ tenant.get_subscription_status_display }}
+                        </span>
+                    </td>
+                    <td>
+                        <small>{{ tenant.created_at|date:"M d, Y" }}</small>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="panel-empty" style="padding: 3rem 1.5rem; text-align: center;">
+            <div style="font-size: 2.5rem; margin-bottom: 1rem;">🏢</div>
+            <p style="color: var(--text-secondary); font-weight: 500; margin: 0;">
+                {% trans "No tenants created yet." %}
+            </p>
+        </div>
+        {% endif %}
+    </div>
+</section>

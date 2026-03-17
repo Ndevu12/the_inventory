@@ -3,12 +3,9 @@ from django.db.models import UniqueConstraint
 from treebeard.mp_tree import MP_Node
 from wagtail.admin.panels import FieldPanel, FieldRowPanel, MultiFieldPanel, TabbedInterface
 from wagtail.search import index
-from wagtail.snippets.models import register_snippet
-
 from .base import TimeStampedModel
 
 
-@register_snippet
 class Category(TimeStampedModel, MP_Node):
     """Hierarchical product category using treebeard materialised path."""
 
