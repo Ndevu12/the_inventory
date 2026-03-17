@@ -1,0 +1,290 @@
+/**
+ * Platform Admin Styling
+ * Custom CSS for the SaaS platform management Wagtail admin.
+ *
+ * Uses CSS custom properties for consistent theming.
+ */
+
+:root {
+    --platform-primary: #2563eb;
+    --platform-primary-dark: #1d4ed8;
+    --platform-primary-light: #60a5fa;
+    --platform-accent: #eff6ff;
+    --platform-bg: #f8fafc;
+    --platform-border: #e2e8f0;
+    --platform-text: #1e293b;
+    --platform-text-muted: #64748b;
+    --platform-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+    --platform-shadow-md: 0 4px 12px rgba(37, 99, 235, 0.12);
+}
+
+/* ===================================================================
+   Statistics & Metrics Cards
+   =================================================================== */
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    padding: 1.5rem 0;
+}
+
+.stat-card {
+    background: linear-gradient(135deg, #ffffff 0%, var(--platform-bg) 100%);
+    border: 2px solid var(--platform-border);
+    border-radius: 12px;
+    padding: 2rem 1.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    box-shadow: var(--platform-shadow-sm);
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--platform-primary-dark), var(--platform-primary-light));
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--platform-primary-light);
+    box-shadow: var(--platform-shadow-md);
+}
+
+.stat-card:hover::before {
+    transform: scaleX(1);
+}
+
+.stat-value {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--platform-primary-dark);
+    margin-bottom: 0.75rem;
+    letter-spacing: -1px;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: var(--platform-text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0;
+}
+
+/* ===================================================================
+   Panel Headings
+   =================================================================== */
+
+.panel__heading {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--platform-text);
+    font-size: 1.15rem;
+    font-weight: 700;
+    border-bottom: 3px solid var(--platform-primary-light);
+    padding-bottom: 1rem;
+    margin: 0 0 1.5rem 0;
+}
+
+.panel__heading svg {
+    color: var(--platform-primary);
+    width: 22px;
+    height: 22px;
+}
+
+.panel__body {
+    padding: 0;
+}
+
+/* ===================================================================
+   Subscription Stats Layout
+   =================================================================== */
+
+.subscription-tables {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+}
+
+@media (max-width: 768px) {
+    .subscription-tables {
+        grid-template-columns: 1fr;
+    }
+}
+
+.subscription-section__title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--platform-text);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 1rem 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--platform-border);
+}
+
+/* ===================================================================
+   Table Styling in Panels
+   =================================================================== */
+
+.panel .listing {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.panel .listing thead {
+    background: linear-gradient(135deg, var(--platform-primary-dark) 0%, var(--platform-primary) 100%);
+    color: white;
+}
+
+.panel .listing th {
+    padding: 0.85rem 1.25rem;
+    font-weight: 700;
+    text-align: left;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.panel .listing td {
+    padding: 0.85rem 1.25rem;
+    border-bottom: 1px solid var(--platform-border);
+}
+
+.panel .listing tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+.panel .listing tbody tr:hover {
+    background-color: var(--platform-accent);
+}
+
+.panel .listing tbody tr:nth-child(even) {
+    background-color: rgba(37, 99, 235, 0.02);
+}
+
+/* ===================================================================
+   Plan Badges
+   =================================================================== */
+
+.plan-badge {
+    display: inline-block;
+    padding: 0.3rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.plan-free {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+}
+
+.plan-starter {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #93c5fd;
+}
+
+.plan-professional {
+    background: #f0fdf4;
+    color: #15803d;
+    border: 1px solid #86efac;
+}
+
+.plan-enterprise {
+    background: #faf5ff;
+    color: #7e22ce;
+    border: 1px solid #c4b5fd;
+}
+
+/* ===================================================================
+   Status Badges
+   =================================================================== */
+
+.status-badge {
+    display: inline-block;
+    padding: 0.3rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-active {
+    background: #d1fae5;
+    color: #065f46;
+    border: 1px solid #6ee7b7;
+}
+
+.status-trial {
+    background: #dbeafe;
+    color: #1e40af;
+    border: 1px solid #93c5fd;
+}
+
+.status-past_due {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fcd34d;
+}
+
+.status-cancelled {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+}
+
+.status-suspended {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #94a3b8;
+}
+
+/* ===================================================================
+   Empty State
+   =================================================================== */
+
+.panel-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 150px;
+    color: var(--platform-text-muted);
+}
+
+/* ===================================================================
+   Responsive
+   =================================================================== */
+
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+    }
+
+    .panel .listing th,
+    .panel .listing td {
+        padding: 0.65rem 0.75rem;
+        font-size: 0.85rem;
+    }
+}

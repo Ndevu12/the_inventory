@@ -3,12 +3,9 @@ from django.db import models
 from treebeard.mp_tree import MP_Node
 from wagtail.admin.panels import FieldPanel, MultiFieldPanel, TabbedInterface
 from wagtail.search import index
-from wagtail.snippets.models import register_snippet
-
 from .base import TimeStampedModel
 
 
-@register_snippet
 class StockLocation(TimeStampedModel, MP_Node):
     """Hierarchical physical location using treebeard materialised path.
 

@@ -1,0 +1,52 @@
+<section class="panel" id="subscription-stats-panel">
+    <h2 class="panel__heading">
+        <svg class="icon icon-clipboard-list" aria-hidden="true"><use href="#icon-clipboard-list"></use></svg>
+        Subscription Overview
+    </h2>
+    <div class="panel__body">
+        <div class="subscription-tables">
+            <div class="subscription-section">
+                <h3 class="subscription-section__title">By Plan</h3>
+                <table class="listing">
+                    <thead>
+                        <tr>
+                            <th>Plan</th>
+                            <th>Tenants</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for plan in plan_stats %}
+                        <tr>
+                            <td>
+                                <span class="plan-badge plan-{{ plan.value }}">{{ plan.label }}</span>
+                            </td>
+                            <td><strong>{{ plan.count }}</strong></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="subscription-section">
+                <h3 class="subscription-section__title">By Status</h3>
+                <table class="listing">
+                    <thead>
+                        <tr>
+                            <th>Status</th>
+                            <th>Tenants</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for status in status_stats %}
+                        <tr>
+                            <td>
+                                <span class="status-badge status-{{ status.value }}">{{ status.label }}</span>
+                            </td>
+                            <td><strong>{{ status.count }}</strong></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>
