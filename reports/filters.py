@@ -2,7 +2,7 @@
 
 import django_filters
 
-from inventory.models import Category, MovementType, StockLocation
+from inventory.models import Category, MovementType, Product, StockLocation
 
 
 class DateRangeFilter(django_filters.FilterSet):
@@ -63,6 +63,30 @@ class MovementHistoryFilter(django_filters.FilterSet):
         return queryset.filter(
             Q(from_location=value) | Q(to_location=value),
         )
+
+
+class ExpiryReportFilter(django_filters.FilterSet):
+    """Filters for the lot expiry report."""
+
+    days_ahead = django_filters.NumberFilter(
+        method="filter_noop",
+        label="Days Ahead",
+    )
+    product = django_filters.ModelChoiceFilter(
+        queryset=Product.objects.filter(is_active=True),
+        label="Product",
+        empty_label="All Products",
+    )
+    location = django_filters.ModelChoiceFilter(
+        method="filter_noop",
+        queryset=StockLocation.objects.filter(is_active=True),
+        label="Location",
+        empty_label="All Locations",
+    )
+
+    def filter_noop(self, queryset, name, value):
+        """Filtering is applied in the service layer."""
+        return queryset
 
 
 class OrderSummaryFilter(django_filters.FilterSet):

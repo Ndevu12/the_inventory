@@ -1,8 +1,12 @@
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import Sum
 from treebeard.mp_tree import MP_Node
 from wagtail.admin.panels import FieldPanel, MultiFieldPanel, TabbedInterface
 from wagtail.search import index
+
+from inventory.exceptions import MovementImmutableError
+
 from .base import TimeStampedModel
 
 
@@ -24,6 +28,11 @@ class StockLocation(TimeStampedModel, MP_Node):
         default=True,
         help_text="Inactive locations are excluded from stock operations but preserved for history.",
     )
+    max_capacity = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="Maximum stock units this location can hold. Null = unlimited.",
+    )
 
     # treebeard: alphabetical ordering within each tree level
     node_order_by = ["name"]
@@ -35,6 +44,7 @@ class StockLocation(TimeStampedModel, MP_Node):
                     FieldPanel("name"),
                     FieldPanel("description"),
                     FieldPanel("is_active"),
+                    FieldPanel("max_capacity"),
                 ],
                 heading="Location Details",
             ),
@@ -52,6 +62,24 @@ class StockLocation(TimeStampedModel, MP_Node):
         index.SearchField("name"),
         index.FilterField("is_active"),
     ]
+
+    @property
+    def current_utilization(self):
+        """Total stock units currently held at this location."""
+        return self.stock_records.aggregate(total=Sum("quantity"))["total"] or 0
+
+    @property
+    def remaining_capacity(self):
+        """Units that can still be accepted, or None if unlimited."""
+        if self.max_capacity is None:
+            return None
+        return self.max_capacity - self.current_utilization
+
+    def can_accept(self, quantity):
+        """Return True if this location can receive *quantity* more units."""
+        if self.max_capacity is None:
+            return True
+        return self.current_utilization + quantity <= self.max_capacity
 
     def __str__(self):
         return self.name
@@ -95,9 +123,22 @@ class StockRecord(TimeStampedModel):
         unique_together = ("product", "location")
 
     @property
+    def reserved_quantity(self):
+        """Total quantity held by active (pending/confirmed) reservations."""
+        return self.product.reservations.filter(
+            location=self.location,
+            status__in=["pending", "confirmed"],
+        ).aggregate(total=Sum("quantity"))["total"] or 0
+
+    @property
+    def available_quantity(self):
+        """Physical quantity minus reserved stock."""
+        return self.quantity - self.reserved_quantity
+
+    @property
     def is_low_stock(self):
-        """Return True when quantity is at or below the product's reorder point."""
-        return self.quantity <= self.product.reorder_point
+        """Return True when available quantity is at or below the product's reorder point."""
+        return self.available_quantity <= self.product.reorder_point
 
     def __str__(self):
         return f"{self.product.sku} @ {self.location.name}: {self.quantity}"
@@ -208,7 +249,7 @@ class StockMovement(TimeStampedModel):
         calling ``save()`` directly.
         """
         if self.pk is not None:
-            raise ValidationError(
+            raise MovementImmutableError(
                 "Stock movements are immutable and cannot be updated. "
                 "Create a corrective adjustment instead."
             )

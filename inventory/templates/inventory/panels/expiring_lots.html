@@ -1,0 +1,57 @@
+{% load i18n %}
+
+<section class="panel" id="expiring-lots-panel">
+    <h2 class="panel__heading">
+        <svg class="icon icon-time" aria-hidden="true"><use href="#icon-time"></use></svg>
+        Expiring Lots
+    </h2>
+    <div class="panel__body">
+        {% if not has_lot_data %}
+        <div class="panel-empty" style="padding: 3rem 1.5rem; text-align: center;">
+            <p style="color: var(--text-secondary); font-weight: 500; margin: 0;">
+                {% trans "Lot tracking is not in use." %}
+            </p>
+        </div>
+        {% elif expiring_lots %}
+        <table class="listing">
+            <thead>
+                <tr>
+                    <th>Lot #</th>
+                    <th>Product</th>
+                    <th>Expiry Date</th>
+                    <th>Days Left</th>
+                    <th>Qty Remaining</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for lot in expiring_lots %}
+                <tr>
+                    <td><strong>{{ lot.lot_number }}</strong></td>
+                    <td>
+                        <a href="{% url 'wagtailsnippets_inventory_product:edit' lot.product.pk %}">
+                            {{ lot.product.sku }} — {{ lot.product.name }}
+                        </a>
+                    </td>
+                    <td>{{ lot.expiry_date }}</td>
+                    <td>
+                        {% with days=lot.days_to_expiry %}
+                        <strong{% if days <= 0 %} style="color: #dc3545; font-weight: 700;"{% elif days <= 7 %} style="color: #fd7e14; font-weight: 700;"{% endif %}>
+                            {% if days <= 0 %}Expired{% else %}{{ days }}{% endif %}
+                        </strong>
+                        {% endwith %}
+                    </td>
+                    <td>{{ lot.quantity_remaining }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="panel-empty" style="padding: 3rem 1.5rem; text-align: center;">
+            <div style="font-size: 2.5rem; margin-bottom: 1rem;">✓</div>
+            <p style="color: var(--text-secondary); font-weight: 500; margin: 0;">
+                {% trans "No lots expiring within 30 days." %}
+            </p>
+        </div>
+        {% endif %}
+    </div>
+</section>

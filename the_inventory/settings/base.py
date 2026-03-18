@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import os
 from datetime import timedelta
 from pathlib import Path
 
@@ -36,6 +37,7 @@ INSTALLED_APPS = [
     "rest_framework.authtoken",
     "corsheaders",
     "drf_spectacular",
+    "django_celery_results",
     "wagtail.contrib.forms",
     "wagtail.contrib.redirects",
     "wagtail.embeds",
@@ -167,6 +169,19 @@ STORAGES = {
     },
 }
 
+# Cache
+# Defaults to local-memory cache so the app works without Redis.
+# Override in production.py / local.py to point at a Redis instance.
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "the-inventory-default",
+    }
+}
+
+STOCK_CACHE_TTL = 60 * 10  # 10 minutes
+DASHBOARD_CACHE_TTL = 60 * 5  # 5 minutes
+
 # Django sets a maximum of 1000 fields per form by default, but particularly complex page models
 # can exceed this limit within Wagtail's page editor.
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 10_000
@@ -240,6 +255,11 @@ CORS_ALLOW_CREDENTIALS = True
 
 # drf-spectacular (OpenAPI)
 
+# Tenant access audit trail
+# Set to False to disable logging of tenant switches (useful for high-traffic systems).
+AUDIT_TENANT_ACCESS = True
+
+
 SPECTACULAR_SETTINGS = {
     "TITLE": "The Inventory API",
     "DESCRIPTION": "RESTful API for The Inventory — a multi-tenant inventory management platform.",
@@ -247,3 +267,21 @@ SPECTACULAR_SETTINGS = {
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
 }
+
+
+# Celery
+
+CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379/0")
+CELERY_RESULT_BACKEND = "django-db"
+CELERY_RESULT_EXTENDED = True
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_ALWAYS_EAGER = os.environ.get("CELERY_TASK_ALWAYS_EAGER", "").lower() in (
+    "1",
+    "true",
+    "yes",
+)
+CELERY_TASK_EAGER_PROPAGATES = CELERY_TASK_ALWAYS_EAGER

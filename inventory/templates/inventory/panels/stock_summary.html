@@ -18,6 +18,14 @@
                 <div class="stat-label">Total Items</div>
             </div>
             <div class="stat-card">
+                <div class="stat-value">{{ total_reserved }}</div>
+                <div class="stat-label">Reserved</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ total_available }}</div>
+                <div class="stat-label">Available</div>
+            </div>
+            <div class="stat-card">
                 <div class="stat-value">${{ total_value|floatformat:0 }}</div>
                 <div class="stat-label">Stock Value</div>
             </div>

@@ -2,6 +2,7 @@
 
 from rest_framework import serializers
 
+from inventory.models import StockRecord
 from sales.models import (
     Customer,
     Dispatch,
@@ -48,16 +49,28 @@ class SalesOrderSerializer(serializers.ModelSerializer):
     total_price = serializers.DecimalField(
         max_digits=12, decimal_places=2, read_only=True,
     )
+    can_fulfill = serializers.SerializerMethodField()
 
     class Meta:
         model = SalesOrder
         fields = [
             "id", "order_number", "customer", "customer_name",
             "status", "status_display", "order_date", "notes",
-            "lines", "total_price",
+            "lines", "total_price", "can_fulfill",
             "created_at", "updated_at",
         ]
         read_only_fields = ["status", "created_at", "updated_at"]
+
+    def get_can_fulfill(self, obj):
+        """True when every order line can be met by available stock across all locations."""
+        for line in obj.lines.select_related("product").all():
+            total_available = sum(
+                sr.available_quantity
+                for sr in StockRecord.objects.filter(product=line.product)
+            )
+            if total_available < line.quantity:
+                return False
+        return True
 
 
 class DispatchSerializer(serializers.ModelSerializer):

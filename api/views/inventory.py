@@ -7,17 +7,25 @@ from rest_framework.decorators import action
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.response import Response
 
-from inventory.models import Category, Product, StockLocation, StockMovement, StockRecord
+from inventory.exceptions import InventoryError, InsufficientStockError, MovementImmutableError
+from inventory.models import Category, Product, StockLocation, StockLot, StockMovement, StockRecord
+from inventory.services.cache import (
+    cache_get,
+    cache_set,
+    stock_record_key,
+)
 from inventory.services.stock import StockService
 
 from api.serializers.inventory import (
     CategorySerializer,
     ProductSerializer,
     StockLocationSerializer,
+    StockLotSerializer,
     StockMovementCreateSerializer,
     StockMovementSerializer,
     StockRecordSerializer,
 )
+from api.views.reservation import product_availability_action
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
@@ -45,8 +53,17 @@ class ProductViewSet(viewsets.ModelViewSet):
         records = StockRecord.objects.filter(
             product=product,
         ).select_related("location")
-        serializer = StockRecordSerializer(records, many=True)
-        return Response(serializer.data)
+        data = []
+        for record in records:
+            key = stock_record_key(product.pk, record.location_id)
+            cached = cache_get(key)
+            if cached is not None:
+                data.append(cached)
+            else:
+                serialized = StockRecordSerializer(record).data
+                cache_set(key, serialized)
+                data.append(serialized)
+        return Response(data)
 
     @action(detail=True, methods=["get"])
     def movements(self, request, pk=None):
@@ -56,6 +73,34 @@ class ProductViewSet(viewsets.ModelViewSet):
             product=product,
         ).select_related("from_location", "to_location")[:50]
         serializer = StockMovementSerializer(movements, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=["get"])
+    def availability(self, request, pk=None):
+        """Return per-location availability: quantity, reserved, available."""
+        return product_availability_action(self, request, pk=pk)
+
+    @action(detail=True, methods=["get"])
+    def lots(self, request, pk=None):
+        """Return lots for this product, with optional filtering."""
+        product = self.get_object()
+        qs = StockLot.objects.filter(product=product).select_related("product")
+
+        is_active = request.query_params.get("is_active")
+        if is_active is not None:
+            qs = qs.filter(is_active=is_active.lower() in ("true", "1"))
+
+        expiry_before = request.query_params.get("expiry_date__lte")
+        if expiry_before:
+            qs = qs.filter(expiry_date__lte=expiry_before)
+
+        qs = qs.order_by("received_date")
+        page = self.paginate_queryset(qs)
+        if page is not None:
+            serializer = StockLotSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = StockLotSerializer(qs, many=True)
         return Response(serializer.data)
 
 
@@ -74,8 +119,17 @@ class StockLocationViewSet(viewsets.ModelViewSet):
         records = StockRecord.objects.filter(
             location=location,
         ).select_related("product")
-        serializer = StockRecordSerializer(records, many=True)
-        return Response(serializer.data)
+        data = []
+        for record in records:
+            key = stock_record_key(record.product_id, location.pk)
+            cached = cache_get(key)
+            if cached is not None:
+                data.append(cached)
+            else:
+                serialized = StockRecordSerializer(record).data
+                cache_set(key, serialized)
+                data.append(serialized)
+        return Response(data)
 
 
 class StockRecordViewSet(viewsets.ReadOnlyModelViewSet):
@@ -123,24 +177,76 @@ class StockMovementViewSet(viewsets.GenericViewSet,
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
+        data = serializer.validated_data
         service = StockService()
+        created_by = request.user if request.user.is_authenticated else None
+
         try:
-            movement = service.process_movement(
-                product=serializer.validated_data["product"],
-                movement_type=serializer.validated_data["movement_type"],
-                quantity=serializer.validated_data["quantity"],
-                from_location=serializer.validated_data.get("from_location"),
-                to_location=serializer.validated_data.get("to_location"),
-                unit_cost=serializer.validated_data.get("unit_cost"),
-                reference=serializer.validated_data.get("reference", ""),
-                notes=serializer.validated_data.get("notes", ""),
-                created_by=request.user if request.user.is_authenticated else None,
+            if serializer.has_lot_fields:
+                movement = service.process_movement_with_lots(
+                    product=data["product"],
+                    movement_type=data["movement_type"],
+                    quantity=data["quantity"],
+                    from_location=data.get("from_location"),
+                    to_location=data.get("to_location"),
+                    unit_cost=data.get("unit_cost"),
+                    reference=data.get("reference", ""),
+                    notes=data.get("notes", ""),
+                    lot_number=data.get("lot_number", ""),
+                    serial_number=data.get("serial_number", ""),
+                    manufacturing_date=data.get("manufacturing_date"),
+                    expiry_date=data.get("expiry_date"),
+                    allocation_strategy=data.get("allocation_strategy", "FIFO"),
+                    created_by=created_by,
+                )
+            else:
+                movement = service.process_movement(
+                    product=data["product"],
+                    movement_type=data["movement_type"],
+                    quantity=data["quantity"],
+                    from_location=data.get("from_location"),
+                    to_location=data.get("to_location"),
+                    unit_cost=data.get("unit_cost"),
+                    reference=data.get("reference", ""),
+                    notes=data.get("notes", ""),
+                    created_by=created_by,
+                )
+        except (InsufficientStockError, MovementImmutableError) as e:
+            return Response(
+                {"detail": str(e)},
+                status=status.HTTP_409_CONFLICT,
+            )
+        except InventoryError as e:
+            return Response(
+                {"detail": str(e)},
+                status=status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
         except DjangoValidationError as e:
             return Response(
                 {"detail": e.message if hasattr(e, "message") else str(e)},
-                status=status.HTTP_400_BAD_REQUEST,
+                status=status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
 
         output = StockMovementSerializer(movement)
         return Response(output.data, status=status.HTTP_201_CREATED)
+
+
+class StockLotViewSet(viewsets.ReadOnlyModelViewSet):
+    """Read-only — lots are created via stock movements, not directly."""
+
+    queryset = (
+        StockLot.objects
+        .select_related("product", "supplier", "purchase_order")
+        .all()
+    )
+    serializer_class = StockLotSerializer
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = {
+        "product": ["exact"],
+        "is_active": ["exact"],
+        "expiry_date": ["exact", "lte", "gte"],
+        "lot_number": ["exact"],
+    }
+    search_fields = ["lot_number", "serial_number", "product__sku"]
+    ordering_fields = ["received_date", "expiry_date", "quantity_remaining", "created_at"]
+    ordering = ["-received_date"]

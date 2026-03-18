@@ -10,7 +10,7 @@ from wagtail.admin.views.generic.base import WagtailAdminTemplateMixin
 from inventory.models import StockMovement
 
 from reports.exports import CSVExportMixin
-from reports.filters import MovementHistoryFilter
+from reports.filters import ExpiryReportFilter, MovementHistoryFilter
 from reports.services.inventory_reports import InventoryReportService
 from reports.services.order_reports import OrderReportService
 
@@ -265,6 +265,111 @@ class OverstockReportView(CSVExportMixin, WagtailAdminTemplateMixin, TemplateVie
             headers,
             rows,
             f"Threshold multiplier: {multiplier}x reorder point",
+        )
+
+
+# =====================================================================
+# Lot Expiry
+# =====================================================================
+
+
+class ExpiryReportView(CSVExportMixin, WagtailAdminTemplateMixin, TemplateView):
+    """Lots approaching or past their expiry date."""
+
+    template_name = "reports/expiry_report.html"
+    page_title = "Product Expiry Report"
+    header_icon = "time"
+
+    def _get_params(self):
+        days_ahead = self.request.GET.get("days_ahead", "30")
+        try:
+            days_ahead = max(1, int(days_ahead))
+        except (ValueError, TypeError):
+            days_ahead = 30
+
+        product_id = self.request.GET.get("product") or None
+        location_id = self.request.GET.get("location") or None
+
+        from inventory.models import Product, StockLocation
+        product = None
+        location = None
+        if product_id:
+            try:
+                product = Product.objects.get(pk=product_id)
+            except (Product.DoesNotExist, ValueError):
+                pass
+        if location_id:
+            try:
+                location = StockLocation.objects.get(pk=location_id)
+            except (StockLocation.DoesNotExist, ValueError):
+                pass
+
+        return days_ahead, product, location
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        service = InventoryReportService()
+        days_ahead, product, location = self._get_params()
+
+        expiring = service.get_expiring_lots(
+            days_ahead=days_ahead, product=product, location=location,
+        )
+        expired = service.get_expired_lots(
+            product=product, location=location,
+        )
+
+        self.filterset = ExpiryReportFilter(self.request.GET)
+
+        context["expiring_lots"] = expiring
+        context["expired_lots"] = expired
+        context["days_ahead"] = days_ahead
+        context["expiring_count"] = expiring.count()
+        context["expired_count"] = expired.count()
+        context["filterset"] = self.filterset
+        return context
+
+    def _get_export_data(self):
+        service = InventoryReportService()
+        days_ahead, product, location = self._get_params()
+        expiring = service.get_expiring_lots(
+            days_ahead=days_ahead, product=product, location=location,
+        )
+        expired = service.get_expired_lots(
+            product=product, location=location,
+        )
+        headers = [
+            "Status", "SKU", "Product", "Lot Number", "Expiry Date",
+            "Days Left", "Qty Remaining", "Qty Received", "Supplier",
+        ]
+        rows = []
+        for lot in expired:
+            rows.append([
+                "EXPIRED", lot.product.sku, lot.product.name,
+                lot.lot_number, lot.expiry_date, lot.days_to_expiry(),
+                lot.quantity_remaining, lot.quantity_received,
+                str(lot.supplier or ""),
+            ])
+        for lot in expiring:
+            rows.append([
+                "EXPIRING", lot.product.sku, lot.product.name,
+                lot.lot_number, lot.expiry_date, lot.days_to_expiry(),
+                lot.quantity_remaining, lot.quantity_received,
+                str(lot.supplier or ""),
+            ])
+        return days_ahead, headers, rows
+
+    def get_csv_data(self):
+        days_ahead, headers, rows = self._get_export_data()
+        return f"expiry_report_{days_ahead}d.csv", headers, rows
+
+    def get_pdf_data(self):
+        days_ahead, headers, rows = self._get_export_data()
+        return (
+            f"expiry_report_{days_ahead}d.pdf",
+            "Product Expiry Report",
+            headers,
+            rows,
+            f"Look-ahead: {days_ahead} days | {len(rows)} lot(s)",
         )
 
 
