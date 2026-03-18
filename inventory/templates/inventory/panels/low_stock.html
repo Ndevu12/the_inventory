@@ -13,7 +13,9 @@
                     <th>SKU</th>
                     <th>Product</th>
                     <th>Location</th>
-                    <th>Current Qty</th>
+                    <th>On Hand</th>
+                    <th>Reserved</th>
+                    <th>Available</th>
                     <th>Reorder Point</th>
                     <th>Deficit</th>
                 </tr>
@@ -28,9 +30,11 @@
                     </td>
                     <td><strong>{{ record.product.name }}</strong></td>
                     <td>{{ record.location.name }}</td>
+                    <td>{{ record.quantity }}</td>
+                    <td>{{ record.reserved_qty }}</td>
                     <td>
-                        <strong{% if record.quantity == 0 %} style="color: #dc3545; font-weight: 700;"{% endif %}>
-                            {{ record.quantity }}
+                        <strong{% if record.available_qty <= 0 %} style="color: #dc3545; font-weight: 700;"{% endif %}>
+                            {{ record.available_qty }}
                         </strong>
                     </td>
                     <td>{{ record.product.reorder_point }}</td>

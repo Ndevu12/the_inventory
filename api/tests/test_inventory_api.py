@@ -5,12 +5,13 @@ from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase
 
-from inventory.models import MovementType, StockRecord
+from inventory.models import MovementType, ReservationStatus, StockRecord
 from inventory.services.stock import StockService
 from inventory.tests.factories import (
     create_category,
     create_location,
     create_product,
+    create_reservation,
     create_stock_record,
 )
 
@@ -157,6 +158,41 @@ class StockRecordAPITests(APISetupMixin, APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(len(response.data) > 0)
 
+    def test_stock_record_includes_reservation_fields(self):
+        p = create_product(sku="API-SRF")
+        loc = create_location(name="Loc SRF")
+        create_stock_record(product=p, location=loc, quantity=100)
+        create_reservation(
+            product=p, location=loc, quantity=30,
+            status=ReservationStatus.PENDING,
+        )
+        response = self.client.get("/api/v1/stock-records/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        record = response.data["results"][0]
+        self.assertEqual(record["reserved_quantity"], 30)
+        self.assertEqual(record["available_quantity"], 70)
+
+    def test_stock_record_no_reservations_available_equals_quantity(self):
+        p = create_product(sku="API-SRNR")
+        loc = create_location(name="Loc SRNR")
+        create_stock_record(product=p, location=loc, quantity=50)
+        response = self.client.get("/api/v1/stock-records/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        record = response.data["results"][0]
+        self.assertEqual(record["reserved_quantity"], 0)
+        self.assertEqual(record["available_quantity"], 50)
+
+    def test_low_stock_action_considers_reservations(self):
+        """A record above reorder_point physically but low after reservations."""
+        p = create_product(sku="API-LSR", reorder_point=10)
+        loc = create_location(name="Loc LSR")
+        create_stock_record(product=p, location=loc, quantity=50)
+        create_reservation(product=p, location=loc, quantity=45)
+        response = self.client.get("/api/v1/stock-records/low_stock/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        skus = [r["product_sku"] for r in response.data]
+        self.assertIn("API-LSR", skus)
+
 
 # =====================================================================
 # Stock Movements
@@ -189,7 +225,7 @@ class StockMovementAPITests(APISetupMixin, APITestCase):
             "quantity": 50,
             "from_location": loc.pk,
         })
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
 
     def test_list_movements(self):
         p = create_product(sku="API-MV3")

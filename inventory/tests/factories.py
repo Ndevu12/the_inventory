@@ -12,14 +12,24 @@ from decimal import Decimal
 from django.contrib.auth import get_user_model
 
 from inventory.models import (
+    AllocationStrategy,
     Category,
+    CycleCountLine,
+    CycleStatus,
+    InventoryCycle,
+    InventoryVariance,
     MovementType,
     Product,
+    ReservationRule,
+    ReservationStatus,
     StockLocation,
+    StockLot,
     StockMovement,
     StockRecord,
+    StockReservation,
     UnitOfMeasure,
 )
+from tenants.models import Tenant
 
 User = get_user_model()
 
@@ -48,6 +58,17 @@ def create_admin_user(*, username="admin", password="adminpass123", **kwargs):
     password = defaults.pop("password")
     user = User.objects.create_superuser(password=password, **defaults)
     return user
+
+
+def create_tenant(*, name="Test Corp", slug="test-corp", **kwargs):
+    """Create and return a Tenant."""
+    defaults = {
+        "name": name,
+        "slug": slug,
+        "is_active": True,
+    }
+    defaults.update(kwargs)
+    return Tenant.objects.create(**defaults)
 
 
 def create_category(*, name="Test Category", slug="test-category", **kwargs):
@@ -97,6 +118,106 @@ def create_stock_record(*, product, location, quantity=0, **kwargs):
     return StockRecord.objects.create(**defaults)
 
 
+def create_stock_lot(
+    *,
+    product,
+    lot_number="LOT-001",
+    quantity_received=100,
+    quantity_remaining=100,
+    received_date=None,
+    **kwargs,
+):
+    """Create and return a StockLot with sensible defaults."""
+    from datetime import date
+
+    defaults = {
+        "product": product,
+        "lot_number": lot_number,
+        "quantity_received": quantity_received,
+        "quantity_remaining": quantity_remaining,
+        "received_date": received_date or date.today(),
+        "tenant": product.tenant,
+    }
+    defaults.update(kwargs)
+    return StockLot.objects.create(**defaults)
+
+
+def create_reservation(
+    *,
+    product,
+    location,
+    quantity=10,
+    status=ReservationStatus.PENDING,
+    stock_lot=None,
+    **kwargs,
+):
+    """Create and return a StockReservation with sensible defaults."""
+    defaults = {
+        "product": product,
+        "location": location,
+        "quantity": quantity,
+        "status": status,
+        "stock_lot": stock_lot,
+    }
+    defaults.update(kwargs)
+    return StockReservation.objects.create(**defaults)
+
+
+def create_reservation_rule(*, name="Default Rule", **kwargs):
+    """Create and return a ReservationRule with sensible defaults."""
+    defaults = {
+        "name": name,
+        "auto_reserve_on_order": False,
+        "reservation_expiry_hours": 72,
+        "allocation_strategy": AllocationStrategy.FIFO,
+        "is_active": True,
+    }
+    defaults.update(kwargs)
+    return ReservationRule.objects.create(**defaults)
+
+
+def create_inventory_cycle(
+    *,
+    name="Q1 Cycle Count",
+    scheduled_date=None,
+    status=CycleStatus.SCHEDULED,
+    location=None,
+    **kwargs,
+):
+    """Create and return an InventoryCycle with sensible defaults."""
+    from datetime import date
+
+    defaults = {
+        "name": name,
+        "scheduled_date": scheduled_date or date.today(),
+        "status": status,
+        "location": location,
+    }
+    defaults.update(kwargs)
+    return InventoryCycle.objects.create(**defaults)
+
+
+def create_cycle_count_line(
+    *,
+    cycle,
+    product,
+    location,
+    system_quantity=100,
+    counted_quantity=None,
+    **kwargs,
+):
+    """Create and return a CycleCountLine with sensible defaults."""
+    defaults = {
+        "cycle": cycle,
+        "product": product,
+        "location": location,
+        "system_quantity": system_quantity,
+        "counted_quantity": counted_quantity,
+    }
+    defaults.update(kwargs)
+    return CycleCountLine.objects.create(**defaults)
+
+
 def create_stock_movement(
     *,
     product,
@@ -121,3 +242,33 @@ def create_stock_movement(
     }
     defaults.update(kwargs)
     return StockMovement.objects.create(**defaults)
+
+
+def create_inventory_variance(
+    *,
+    cycle,
+    count_line,
+    product,
+    location,
+    system_quantity,
+    physical_quantity,
+    variance_type=None,
+    **kwargs,
+):
+    """Create and return an InventoryVariance with auto-detected type."""
+    if variance_type is None:
+        variance_type = InventoryVariance.detect_variance_type(
+            system_quantity, physical_quantity
+        )
+    defaults = {
+        "cycle": cycle,
+        "count_line": count_line,
+        "product": product,
+        "location": location,
+        "system_quantity": system_quantity,
+        "physical_quantity": physical_quantity,
+        "variance_type": variance_type,
+        "variance_quantity": physical_quantity - system_quantity,
+    }
+    defaults.update(kwargs)
+    return InventoryVariance.objects.create(**defaults)

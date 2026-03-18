@@ -1,5 +1,7 @@
-from django.test import RequestFactory, TestCase
+from django.contrib.sessions.backends.db import SessionStore
+from django.test import RequestFactory, TestCase, override_settings
 
+from inventory.models.audit import ComplianceAuditLog
 from tenants.context import get_current_tenant
 from tenants.middleware import TenantMiddleware
 from tenants.models import TenantRole
@@ -119,3 +121,115 @@ class TenantMiddlewareTest(TestCase):
         request = self._make_request(user=user2)
         self.mw(request)
         self.assertEqual(request.tenant, t2)
+
+
+@override_settings(AUDIT_TENANT_ACCESS=True)
+class TenantAccessAuditTest(TestCase):
+    """Tests for T-29: Tenant Access Audit Trail."""
+
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.mw = TenantMiddleware(_dummy_response)
+        self.tenant = create_tenant(slug="acme")
+        self.tenant2 = create_tenant(slug="beta")
+        self.user = create_user()
+        create_membership(
+            tenant=self.tenant, user=self.user,
+            role=TenantRole.ADMIN, is_default=True,
+        )
+        create_membership(
+            tenant=self.tenant2, user=self.user,
+            role=TenantRole.VIEWER,
+        )
+
+    def _make_request(self, user=None, session=None, **kwargs):
+        request = self.factory.get("/", **kwargs)
+        if user:
+            request.user = user
+        else:
+            from django.contrib.auth.models import AnonymousUser
+            request.user = AnonymousUser()
+        request.session = session if session is not None else SessionStore()
+        return request
+
+    def test_first_access_creates_audit_log(self):
+        request = self._make_request(user=self.user)
+        self.mw(request)
+
+        self.assertEqual(ComplianceAuditLog.objects.count(), 1)
+        entry = ComplianceAuditLog.objects.first()
+        self.assertEqual(entry.action, "tenant_accessed")
+        self.assertEqual(entry.tenant, self.tenant)
+        self.assertEqual(entry.user, self.user)
+        self.assertEqual(entry.details["tenant_slug"], "acme")
+        self.assertIsNone(entry.details["previous_tenant_slug"])
+
+    def test_same_tenant_does_not_create_duplicate_log(self):
+        session = SessionStore()
+        request = self._make_request(user=self.user, session=session)
+        self.mw(request)
+        self.assertEqual(ComplianceAuditLog.objects.count(), 1)
+
+        request2 = self._make_request(user=self.user, session=session)
+        self.mw(request2)
+        self.assertEqual(ComplianceAuditLog.objects.count(), 1)
+
+    def test_switching_tenant_creates_audit_log(self):
+        session = SessionStore()
+
+        request1 = self._make_request(user=self.user, session=session)
+        self.mw(request1)
+        self.assertEqual(ComplianceAuditLog.objects.count(), 1)
+
+        request2 = self._make_request(
+            user=self.user, session=session, HTTP_X_TENANT="beta",
+        )
+        self.mw(request2)
+
+        self.assertEqual(ComplianceAuditLog.objects.count(), 2)
+        entry = ComplianceAuditLog.objects.first()  # ordered by -timestamp
+        self.assertEqual(entry.details["tenant_slug"], "beta")
+        self.assertEqual(entry.details["previous_tenant_slug"], "acme")
+
+    def test_anonymous_user_no_audit_log(self):
+        request = self._make_request()
+        self.mw(request)
+        self.assertEqual(ComplianceAuditLog.objects.count(), 0)
+
+    @override_settings(AUDIT_TENANT_ACCESS=False)
+    def test_disabled_setting_no_audit_log(self):
+        request = self._make_request(user=self.user)
+        self.mw(request)
+        self.assertEqual(ComplianceAuditLog.objects.count(), 0)
+
+    def test_no_session_no_audit_log(self):
+        request = self.factory.get("/")
+        request.user = self.user
+        self.mw(request)
+        self.assertEqual(ComplianceAuditLog.objects.count(), 0)
+
+    def test_audit_log_records_ip_address(self):
+        request = self._make_request(
+            user=self.user, REMOTE_ADDR="192.168.1.42",
+        )
+        self.mw(request)
+
+        entry = ComplianceAuditLog.objects.first()
+        self.assertEqual(entry.ip_address, "192.168.1.42")
+
+    def test_audit_log_records_forwarded_ip(self):
+        request = self._make_request(
+            user=self.user,
+            HTTP_X_FORWARDED_FOR="10.0.0.1, 172.16.0.1",
+        )
+        self.mw(request)
+
+        entry = ComplianceAuditLog.objects.first()
+        self.assertEqual(entry.ip_address, "10.0.0.1")
+
+    def test_session_tracks_tenant_slug(self):
+        session = SessionStore()
+        request = self._make_request(user=self.user, session=session)
+        self.mw(request)
+
+        self.assertEqual(session.get("_audit_last_tenant_slug"), "acme")

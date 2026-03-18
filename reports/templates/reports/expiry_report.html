@@ -1,0 +1,98 @@
+{% extends "wagtailadmin/generic/base.html" %}
+{% load wagtailadmin_tags i18n %}
+
+{% block main_content %}
+<div class="w-mb-4">
+    <form method="get" class="w-mb-4" style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
+        <div>
+            <label for="id_days_ahead">Days ahead</label>
+            <input type="number" name="days_ahead" id="id_days_ahead" value="{{ days_ahead }}" min="1" class="text-input" style="width: 6rem;">
+        </div>
+        {% for field in filterset.form %}
+            {% if field.name != "days_ahead" %}
+            <div>
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+            </div>
+            {% endif %}
+        {% endfor %}
+        <button type="submit" class="button button-small">Filter</button>
+    </form>
+
+    <p>
+        <strong>{{ expired_count }}</strong> expired lot{{ expired_count|pluralize }},
+        <strong>{{ expiring_count }}</strong> lot{{ expiring_count|pluralize }}
+        expiring within {{ days_ahead }} day{{ days_ahead|pluralize }}.
+    </p>
+    <a href="?export=csv&days_ahead={{ days_ahead }}" class="button button-small button-secondary">Export CSV</a>
+    <a href="?export=pdf&days_ahead={{ days_ahead }}" class="button button-small button-secondary">Export PDF</a>
+</div>
+
+{% if expired_lots %}
+<h3>Expired Lots</h3>
+<table class="listing">
+    <thead>
+        <tr>
+            <th>SKU</th>
+            <th>Product</th>
+            <th>Lot Number</th>
+            <th>Expiry Date</th>
+            <th style="text-align: right;">Days Expired</th>
+            <th style="text-align: right;">Qty Remaining</th>
+            <th>Supplier</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for lot in expired_lots %}
+        <tr>
+            <td>{{ lot.product.sku }}</td>
+            <td>{{ lot.product.name }}</td>
+            <td>{{ lot.lot_number }}</td>
+            <td>{{ lot.expiry_date }}</td>
+            <td style="text-align: right; color: var(--w-color-critical-200);">
+                {{ lot.days_to_expiry }}
+            </td>
+            <td style="text-align: right;">{{ lot.quantity_remaining }}</td>
+            <td>{{ lot.supplier|default:"—" }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+
+{% if expiring_lots %}
+<h3>Expiring Soon (within {{ days_ahead }} day{{ days_ahead|pluralize }})</h3>
+<table class="listing">
+    <thead>
+        <tr>
+            <th>SKU</th>
+            <th>Product</th>
+            <th>Lot Number</th>
+            <th>Expiry Date</th>
+            <th style="text-align: right;">Days Left</th>
+            <th style="text-align: right;">Qty Remaining</th>
+            <th>Supplier</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for lot in expiring_lots %}
+        <tr>
+            <td>{{ lot.product.sku }}</td>
+            <td>{{ lot.product.name }}</td>
+            <td>{{ lot.lot_number }}</td>
+            <td>{{ lot.expiry_date }}</td>
+            <td style="text-align: right;{% if lot.days_to_expiry <= 7 %} color: var(--w-color-warning-200);{% endif %}">
+                {{ lot.days_to_expiry }}
+            </td>
+            <td style="text-align: right;">{{ lot.quantity_remaining }}</td>
+            <td>{{ lot.supplier|default:"—" }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+
+{% if not expired_lots and not expiring_lots %}
+<p>{% trans "No expired or expiring lots found." %}</p>
+{% endif %}
+{% endblock %}

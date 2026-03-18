@@ -1,9 +1,10 @@
 """Stock summary dashboard panel."""
 
 from django.db.models import F, Sum
+from django.db.models.functions import Coalesce
 from wagtail.admin.ui.components import Component
 
-from inventory.models import Product, StockLocation, StockRecord
+from inventory.models import Product, StockLocation, StockRecord, StockReservation
 
 
 class StockSummaryPanel(Component):
@@ -13,6 +14,8 @@ class StockSummaryPanel(Component):
     - Total active products
     - Total stock locations
     - Total items in stock (sum of all StockRecord quantities)
+    - Total reserved items (sum of active reservation quantities)
+    - Total available items (total - reserved)
     - Total stock value (sum of quantity * unit_cost)
     """
 
@@ -31,4 +34,11 @@ class StockSummaryPanel(Component):
         )
         context["total_items"] = aggregates["total_items"] or 0
         context["total_value"] = aggregates["total_value"] or 0
+
+        total_reserved = StockReservation.objects.filter(
+            status__in=["pending", "confirmed"],
+        ).aggregate(total=Coalesce(Sum("quantity"), 0))["total"]
+        context["total_reserved"] = total_reserved
+        context["total_available"] = context["total_items"] - total_reserved
+
         return context

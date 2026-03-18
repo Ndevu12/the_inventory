@@ -7,31 +7,6 @@
 
 An open-source inventory management system built with [Wagtail CMS](https://wagtail.org/) and [Django](https://djangoproject.com/). Manage products, stock levels, warehouses, purchases, and sales — all through Wagtail's powerful admin interface.
 
-## Features
-
-**Core Inventory (Phase 1 — in development)**
-
-> This is what we are actively building. No features are complete yet.
-
-- Product catalog with SKUs, rich descriptions, multiple images, and categories
-- Unit of measure support (pieces, kg, liters, meters, boxes, packs)
-- Unit cost tracking on products and per stock movement (for accurate valuation)
-- Hierarchical categories using Wagtail's built-in treebeard
-- Free-form tagging via `django-taggit`
-- Hierarchical stock locations (warehouse → shelf → bin)
-- Real-time stock level tracking per product per location
-- Stock movements: receive, issue, transfer, and adjustment
-- Low-stock alerts with configurable reorder points
-- Soft-delete (`is_active`) on products, categories, and locations
-- Audit trail (`created_at`, `updated_at`, `created_by`) on all models
-- Full-text search and filtering via Wagtail search backend
-- Wagtail admin dashboard widgets (stock summary, low-stock items, recent movements)
-
-**Future Phases** — See the full [Roadmap](docs/ROADMAP.md) and [Architecture](docs/ARCHITECTURE.md):
-- **Phase 2:** Procurement (suppliers, purchase orders) & Sales (customers, sales orders)
-- **Phase 3:** Reporting & Analytics (stock valuation, audit trails, CSV/PDF exports)
-- **Phase 4:** REST API & Integrations (DRF, webhooks, barcode scanning)
-
 ## Tech Stack
 
 | Layer | Technology |

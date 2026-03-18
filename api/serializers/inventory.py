@@ -7,7 +7,9 @@ from inventory.models import (
     MovementType,
     Product,
     StockLocation,
+    StockLot,
     StockMovement,
+    StockMovementLot,
     StockRecord,
 )
 
@@ -42,10 +44,14 @@ class ProductSerializer(serializers.ModelSerializer):
 
 
 class StockLocationSerializer(serializers.ModelSerializer):
+    current_utilization = serializers.IntegerField(read_only=True)
+    remaining_capacity = serializers.IntegerField(read_only=True, allow_null=True)
+
     class Meta:
         model = StockLocation
         fields = [
             "id", "name", "description", "is_active",
+            "max_capacity", "current_utilization", "remaining_capacity",
             "created_at", "updated_at",
         ]
         read_only_fields = ["created_at", "updated_at"]
@@ -55,19 +61,54 @@ class StockRecordSerializer(serializers.ModelSerializer):
     product_sku = serializers.CharField(source="product.sku", read_only=True)
     product_name = serializers.CharField(source="product.name", read_only=True)
     location_name = serializers.CharField(source="location.name", read_only=True)
+    reserved_quantity = serializers.IntegerField(read_only=True)
+    available_quantity = serializers.IntegerField(read_only=True)
     is_low_stock = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = StockRecord
         fields = [
             "id", "product", "product_sku", "product_name",
-            "location", "location_name", "quantity", "is_low_stock",
+            "location", "location_name", "quantity",
+            "reserved_quantity", "available_quantity", "is_low_stock",
             "created_at", "updated_at",
         ]
         read_only_fields = [
             "id", "product", "location", "quantity",
             "created_at", "updated_at",
         ]
+
+
+class StockLotSerializer(serializers.ModelSerializer):
+    """Read-only serializer for lot/batch records."""
+
+    product_sku = serializers.CharField(source="product.sku", read_only=True)
+    is_expired = serializers.BooleanField(read_only=True)
+    days_to_expiry = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = StockLot
+        fields = [
+            "id", "product", "product_sku", "lot_number", "serial_number",
+            "manufacturing_date", "expiry_date", "received_date",
+            "quantity_received", "quantity_remaining",
+            "is_active", "is_expired", "days_to_expiry",
+            "supplier", "purchase_order",
+            "created_at", "updated_at",
+        ]
+        read_only_fields = fields
+
+
+class StockMovementLotSerializer(serializers.ModelSerializer):
+    """Read-only serializer for lot allocations on a movement."""
+
+    lot_number = serializers.CharField(source="stock_lot.lot_number", read_only=True)
+    lot_id = serializers.IntegerField(source="stock_lot.id", read_only=True)
+
+    class Meta:
+        model = StockMovementLot
+        fields = ["id", "lot_id", "lot_number", "quantity"]
+        read_only_fields = fields
 
 
 class StockMovementSerializer(serializers.ModelSerializer):
@@ -81,6 +122,7 @@ class StockMovementSerializer(serializers.ModelSerializer):
     to_location_name = serializers.CharField(
         source="to_location.name", read_only=True, default=None,
     )
+    lot_allocations = StockMovementLotSerializer(many=True, read_only=True)
 
     class Meta:
         model = StockMovement
@@ -91,13 +133,24 @@ class StockMovementSerializer(serializers.ModelSerializer):
             "from_location", "from_location_name",
             "to_location", "to_location_name",
             "reference", "notes",
+            "lot_allocations",
             "created_at", "created_by",
         ]
         read_only_fields = fields
 
 
 class StockMovementCreateSerializer(serializers.Serializer):
-    """Write serializer for creating stock movements via StockService."""
+    """Write serializer for creating stock movements via StockService.
+
+    When any lot field is provided the view routes through
+    ``StockService.process_movement_with_lots()``; otherwise
+    ``process_movement()`` is used for backward compatibility.
+    """
+
+    LOT_FIELDS = frozenset({
+        "lot_number", "serial_number", "manufacturing_date",
+        "expiry_date", "allocation_strategy",
+    })
 
     product = serializers.PrimaryKeyRelatedField(
         queryset=Product.objects.all(),
@@ -126,3 +179,37 @@ class StockMovementCreateSerializer(serializers.Serializer):
     notes = serializers.CharField(
         required=False, allow_blank=True, default="",
     )
+
+    # Optional lot fields
+    lot_number = serializers.CharField(
+        required=False, allow_blank=True, default="",
+    )
+    serial_number = serializers.CharField(
+        required=False, allow_blank=True, default="",
+    )
+    manufacturing_date = serializers.DateField(
+        required=False, allow_null=True, default=None,
+    )
+    expiry_date = serializers.DateField(
+        required=False, allow_null=True, default=None,
+    )
+    allocation_strategy = serializers.ChoiceField(
+        choices=[("FIFO", "FIFO"), ("LIFO", "LIFO")],
+        required=False,
+        default="FIFO",
+    )
+
+    @property
+    def has_lot_fields(self) -> bool:
+        """Return True if the request explicitly includes lot-related data.
+
+        Checks both ``lot_number`` (for RECEIVE) and whether
+        ``allocation_strategy`` was explicitly sent (for ISSUE/TRANSFER).
+        """
+        data = self.validated_data
+        if bool(data.get("lot_number")):
+            return True
+        raw = self.initial_data
+        if "allocation_strategy" in raw:
+            return True
+        return False

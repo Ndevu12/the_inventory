@@ -4,17 +4,32 @@ These tests exercise the full flow: create a movement via
 :meth:`StockService.process_movement` and verify that StockRecords
 are updated correctly, including edge cases like insufficient stock,
 transaction atomicity, and multi-step movement sequences.
+
+The lot-aware tests (process_movement_with_lots) verify FIFO/LIFO
+allocation, manual lot selection, transfer lineage preservation,
+and tracking_mode enforcement.
 """
 
+from datetime import date, timedelta
 from decimal import Decimal
 
-from django.core.exceptions import ValidationError
 from django.test import TestCase
 
-from inventory.models import MovementType, StockRecord
+from inventory.exceptions import (
+    InsufficientStockError,
+    LocationCapacityExceededError,
+    LotTrackingRequiredError,
+    MovementImmutableError,
+)
+from inventory.models import MovementType, StockLot, StockMovementLot, StockRecord
 from inventory.services.stock import StockService
 
-from ..factories import create_location, create_product, create_stock_record
+from ..factories import (
+    create_location,
+    create_product,
+    create_stock_lot,
+    create_stock_record,
+)
 
 
 class StockServiceSetupMixin:
@@ -139,24 +154,24 @@ class StockServiceIssueTests(StockServiceSetupMixin, TestCase):
         create_stock_record(
             product=self.product, location=self.warehouse, quantity=5,
         )
-        with self.assertRaises(ValidationError) as ctx:
+        with self.assertRaises(InsufficientStockError) as ctx:
             self.service.process_movement(
                 product=self.product,
                 movement_type=MovementType.ISSUE,
                 quantity=10,
                 from_location=self.warehouse,
             )
-        self.assertIn("Insufficient stock", str(ctx.exception.message))
+        self.assertIn("Insufficient stock", str(ctx.exception))
 
     def test_issue_no_record_raises_error(self):
-        with self.assertRaises(ValidationError) as ctx:
+        with self.assertRaises(InsufficientStockError) as ctx:
             self.service.process_movement(
                 product=self.product,
                 movement_type=MovementType.ISSUE,
                 quantity=5,
                 from_location=self.warehouse,
             )
-        self.assertIn("No stock record", str(ctx.exception.message))
+        self.assertIn("No stock record", str(ctx.exception))
 
 
 # =====================================================================
@@ -209,7 +224,7 @@ class StockServiceTransferTests(StockServiceSetupMixin, TestCase):
         create_stock_record(
             product=self.product, location=self.warehouse, quantity=5,
         )
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InsufficientStockError):
             self.service.process_movement(
                 product=self.product,
                 movement_type=MovementType.TRANSFER,
@@ -299,13 +314,222 @@ class StockServiceAdjustmentTests(StockServiceSetupMixin, TestCase):
         create_stock_record(
             product=self.product, location=self.warehouse, quantity=3,
         )
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InsufficientStockError):
             self.service.process_movement(
                 product=self.product,
                 movement_type=MovementType.ADJUSTMENT,
                 quantity=10,
                 from_location=self.warehouse,
             )
+
+
+# =====================================================================
+# Capacity Enforcement
+# =====================================================================
+
+
+class StockServiceCapacityTests(TestCase):
+    """Test that StockService prevents exceeding location capacity."""
+
+    def setUp(self):
+        self.service = StockService()
+        self.product = create_product(sku="CAP-SVC-001")
+        self.limited = create_location(name="Limited Bin", max_capacity=100)
+        self.unlimited = create_location(name="Unlimited Warehouse")
+
+    # -- RECEIVE --
+
+    def test_receive_within_capacity_succeeds(self):
+        self.service.process_movement(
+            product=self.product,
+            movement_type=MovementType.RECEIVE,
+            quantity=80,
+            to_location=self.limited,
+        )
+        record = StockRecord.objects.get(
+            product=self.product, location=self.limited,
+        )
+        self.assertEqual(record.quantity, 80)
+
+    def test_receive_at_exact_capacity_succeeds(self):
+        self.service.process_movement(
+            product=self.product,
+            movement_type=MovementType.RECEIVE,
+            quantity=100,
+            to_location=self.limited,
+        )
+        record = StockRecord.objects.get(
+            product=self.product, location=self.limited,
+        )
+        self.assertEqual(record.quantity, 100)
+
+    def test_receive_exceeding_capacity_raises_error(self):
+        self.service.process_movement(
+            product=self.product,
+            movement_type=MovementType.RECEIVE,
+            quantity=80,
+            to_location=self.limited,
+        )
+        with self.assertRaises(LocationCapacityExceededError) as ctx:
+            self.service.process_movement(
+                product=self.product,
+                movement_type=MovementType.RECEIVE,
+                quantity=30,
+                to_location=self.limited,
+            )
+        self.assertIn("cannot accept", str(ctx.exception))
+
+    def test_receive_unlimited_location_always_succeeds(self):
+        self.service.process_movement(
+            product=self.product,
+            movement_type=MovementType.RECEIVE,
+            quantity=999999,
+            to_location=self.unlimited,
+        )
+        record = StockRecord.objects.get(
+            product=self.product, location=self.unlimited,
+        )
+        self.assertEqual(record.quantity, 999999)
+
+    def test_receive_capacity_check_is_atomic(self):
+        """Failed receive should not partially update stock."""
+        self.service.process_movement(
+            product=self.product,
+            movement_type=MovementType.RECEIVE,
+            quantity=90,
+            to_location=self.limited,
+        )
+        with self.assertRaises(LocationCapacityExceededError):
+            self.service.process_movement(
+                product=self.product,
+                movement_type=MovementType.RECEIVE,
+                quantity=20,
+                to_location=self.limited,
+            )
+        record = StockRecord.objects.get(
+            product=self.product, location=self.limited,
+        )
+        self.assertEqual(record.quantity, 90)
+
+    # -- TRANSFER --
+
+    def test_transfer_within_dest_capacity_succeeds(self):
+        create_stock_record(
+            product=self.product, location=self.unlimited, quantity=200,
+        )
+        self.service.process_movement(
+            product=self.product,
+            movement_type=MovementType.TRANSFER,
+            quantity=50,
+            from_location=self.unlimited,
+            to_location=self.limited,
+        )
+        dest = StockRecord.objects.get(
+            product=self.product, location=self.limited,
+        )
+        self.assertEqual(dest.quantity, 50)
+
+    def test_transfer_exceeding_dest_capacity_raises_error(self):
+        create_stock_record(
+            product=self.product, location=self.unlimited, quantity=200,
+        )
+        with self.assertRaises(LocationCapacityExceededError):
+            self.service.process_movement(
+                product=self.product,
+                movement_type=MovementType.TRANSFER,
+                quantity=150,
+                from_location=self.unlimited,
+                to_location=self.limited,
+            )
+
+    def test_transfer_capacity_failure_preserves_source(self):
+        """Source stock must not change when destination rejects."""
+        create_stock_record(
+            product=self.product, location=self.unlimited, quantity=200,
+        )
+        with self.assertRaises(LocationCapacityExceededError):
+            self.service.process_movement(
+                product=self.product,
+                movement_type=MovementType.TRANSFER,
+                quantity=150,
+                from_location=self.unlimited,
+                to_location=self.limited,
+            )
+        source = StockRecord.objects.get(
+            product=self.product, location=self.unlimited,
+        )
+        self.assertEqual(source.quantity, 200)
+
+    # -- ADJUSTMENT --
+
+    def test_positive_adjustment_within_capacity_succeeds(self):
+        self.service.process_movement(
+            product=self.product,
+            movement_type=MovementType.ADJUSTMENT,
+            quantity=100,
+            to_location=self.limited,
+        )
+        record = StockRecord.objects.get(
+            product=self.product, location=self.limited,
+        )
+        self.assertEqual(record.quantity, 100)
+
+    def test_positive_adjustment_exceeding_capacity_raises_error(self):
+        self.service.process_movement(
+            product=self.product,
+            movement_type=MovementType.RECEIVE,
+            quantity=80,
+            to_location=self.limited,
+        )
+        with self.assertRaises(LocationCapacityExceededError):
+            self.service.process_movement(
+                product=self.product,
+                movement_type=MovementType.ADJUSTMENT,
+                quantity=30,
+                to_location=self.limited,
+            )
+
+    # -- Multiple products share capacity --
+
+    def test_capacity_accounts_for_all_products(self):
+        """Location capacity is shared across all products stored there."""
+        p2 = create_product(sku="CAP-SVC-002")
+        self.service.process_movement(
+            product=self.product,
+            movement_type=MovementType.RECEIVE,
+            quantity=60,
+            to_location=self.limited,
+        )
+        self.service.process_movement(
+            product=p2,
+            movement_type=MovementType.RECEIVE,
+            quantity=30,
+            to_location=self.limited,
+        )
+        with self.assertRaises(LocationCapacityExceededError):
+            self.service.process_movement(
+                product=p2,
+                movement_type=MovementType.RECEIVE,
+                quantity=20,
+                to_location=self.limited,
+            )
+
+    # -- Null capacity (backward compat) --
+
+    def test_null_capacity_allows_unlimited_stock(self):
+        """Existing locations with null max_capacity remain unlimited."""
+        self.assertIsNone(self.unlimited.max_capacity)
+        for _ in range(5):
+            self.service.process_movement(
+                product=self.product,
+                movement_type=MovementType.RECEIVE,
+                quantity=10000,
+                to_location=self.unlimited,
+            )
+        record = StockRecord.objects.get(
+            product=self.product, location=self.unlimited,
+        )
+        self.assertEqual(record.quantity, 50000)
 
 
 # =====================================================================
@@ -324,9 +548,9 @@ class StockServiceImmutabilityTests(StockServiceSetupMixin, TestCase):
             to_location=self.warehouse,
         )
         movement.quantity = 999
-        with self.assertRaises(ValidationError) as ctx:
+        with self.assertRaises(MovementImmutableError) as ctx:
             movement.save()
-        self.assertIn("immutable", str(ctx.exception.message))
+        self.assertIn("immutable", str(ctx.exception))
 
 
 # =====================================================================
@@ -340,7 +564,7 @@ class StockServiceTransactionTests(StockServiceSetupMixin, TestCase):
     def test_failed_issue_does_not_create_movement(self):
         """If processing fails, neither movement nor record changes persist."""
         initial_count = self.product.stock_movements.count()
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InsufficientStockError):
             self.service.process_movement(
                 product=self.product,
                 movement_type=MovementType.ISSUE,
@@ -353,7 +577,7 @@ class StockServiceTransactionTests(StockServiceSetupMixin, TestCase):
         create_stock_record(
             product=self.product, location=self.warehouse, quantity=10,
         )
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InsufficientStockError):
             self.service.process_movement(
                 product=self.product,
                 movement_type=MovementType.TRANSFER,
@@ -432,3 +656,720 @@ class StockServiceSequentialTests(StockServiceSetupMixin, TestCase):
                 to_location=self.warehouse,
             )
         self.assertEqual(self.product.stock_movements.count(), 3)
+
+
+# =====================================================================
+# Lot-Aware: Shared setup
+# =====================================================================
+
+
+class LotServiceSetupMixin:
+    """Shared setUp for lot-aware StockService tests.
+
+    Creates a product with tracking_mode="optional" to enable lot logic.
+    """
+
+    def setUp(self):
+        self.service = StockService()
+        self.product = create_product(
+            sku="LOT-001", unit_cost=Decimal("10.00"),
+            tracking_mode="optional",
+        )
+        self.warehouse = create_location(name="Lot Warehouse")
+        self.store = create_location(name="Lot Store")
+
+
+# =====================================================================
+# Lot-Aware: RECEIVE
+# =====================================================================
+
+
+class LotReceiveTests(LotServiceSetupMixin, TestCase):
+    """Test RECEIVE via process_movement_with_lots."""
+
+    def test_receive_creates_lot_and_link(self):
+        movement = self.service.process_movement_with_lots(
+            product=self.product,
+            movement_type=MovementType.RECEIVE,
+            quantity=100,
+            to_location=self.warehouse,
+            lot_number="BATCH-001",
+        )
+        lot = StockLot.objects.get(
+            product=self.product, lot_number="BATCH-001",
+        )
+        self.assertEqual(lot.quantity_received, 100)
+        self.assertEqual(lot.quantity_remaining, 100)
+        self.assertEqual(lot.received_date, date.today())
+
+        sml = StockMovementLot.objects.get(stock_movement=movement)
+        self.assertEqual(sml.stock_lot, lot)
+        self.assertEqual(sml.quantity, 100)
+
+    def test_receive_increments_existing_lot(self):
+        self.service.process_movement_with_lots(
+            product=self.product,
+            movement_type=MovementType.RECEIVE,
+            quantity=100,
+            to_location=self.warehouse,
+            lot_number="BATCH-001",
+        )
+        self.service.process_movement_with_lots(
+            product=self.product,
+            movement_type=MovementType.RECEIVE,
+            quantity=50,
+            to_location=self.warehouse,
+            lot_number="BATCH-001",
+        )
+        lot = StockLot.objects.get(
+            product=self.product, lot_number="BATCH-001",
+        )
+        self.assertEqual(lot.quantity_received, 150)
+        self.assertEqual(lot.quantity_remaining, 150)
+        self.assertEqual(StockMovementLot.objects.count(), 2)
+
+    def test_receive_stores_serial_and_dates(self):
+        mfg = date(2026, 1, 1)
+        exp = date(2027, 1, 1)
+        self.service.process_movement_with_lots(
+            product=self.product,
+            movement_type=MovementType.RECEIVE,
+            quantity=10,
+            to_location=self.warehouse,
+            lot_number="SN-LOT",
+            serial_number="SN-12345",
+            manufacturing_date=mfg,
+            expiry_date=exp,
+        )
+        lot = StockLot.objects.get(lot_number="SN-LOT")
+        self.assertEqual(lot.serial_number, "SN-12345")
+        self.assertEqual(lot.manufacturing_date, mfg)
+        self.assertEqual(lot.expiry_date, exp)
+
+    def test_receive_without_lot_number_skips_lot_creation(self):
+        movement = self.service.process_movement_with_lots(
+            product=self.product,
+            movement_type=MovementType.RECEIVE,
+            quantity=50,
+            to_location=self.warehouse,
+        )
+        self.assertIsNotNone(movement.pk)
+        self.assertEqual(StockLot.objects.count(), 0)
+        self.assertEqual(StockMovementLot.objects.count(), 0)
+        record = StockRecord.objects.get(
+            product=self.product, location=self.warehouse,
+        )
+        self.assertEqual(record.quantity, 50)
+
+    def test_receive_updates_stock_record(self):
+        self.service.process_movement_with_lots(
+            product=self.product,
+            movement_type=MovementType.RECEIVE,
+            quantity=75,
+            to_location=self.warehouse,
+            lot_number="BATCH-X",
+        )
+        record = StockRecord.objects.get(
+            product=self.product, location=self.warehouse,
+        )
+        self.assertEqual(record.quantity, 75)
+
+
+# =====================================================================
+# Lot-Aware: ISSUE — FIFO
+# =====================================================================
+
+
+class LotIssueFIFOTests(LotServiceSetupMixin, TestCase):
+    """Test ISSUE with FIFO allocation."""
+
+    def _receive_lots(self):
+        """Create three lots with staggered received_dates."""
+        today = date.today()
+        create_stock_record(
+            product=self.product, location=self.warehouse, quantity=250,
+        )
+        self.lot_old = create_stock_lot(
+            product=self.product,
+            lot_number="OLD",
+            quantity_received=100,
+            quantity_remaining=100,
+            received_date=today - timedelta(days=30),
+        )
+        self.lot_mid = create_stock_lot(
+            product=self.product,
+            lot_number="MID",
+            quantity_received=100,
+            quantity_remaining=100,
+            received_date=today - timedelta(days=15),
+        )
+        self.lot_new = create_stock_lot(
+            product=self.product,
+            lot_number="NEW",
+            quantity_received=50,
+            quantity_remaining=50,
+            received_date=today,
+        )
+
+    def test_fifo_allocates_from_oldest_first(self):
+        self._receive_lots()
+        movement = self.service.process_movement_with_lots(
+            product=self.product,
+            movement_type=MovementType.ISSUE,
+            quantity=80,
+            from_location=self.warehouse,
+            allocation_strategy="FIFO",
+        )
+        self.lot_old.refresh_from_db()
+        self.assertEqual(self.lot_old.quantity_remaining, 20)
+
+        allocs = StockMovementLot.objects.filter(stock_movement=movement)
+        self.assertEqual(allocs.count(), 1)
+        self.assertEqual(allocs.first().stock_lot, self.lot_old)
+        self.assertEqual(allocs.first().quantity, 80)
+
+    def test_fifo_spans_multiple_lots(self):
+        self._receive_lots()
+        movement = self.service.process_movement_with_lots(
+            product=self.product,
+            movement_type=MovementType.ISSUE,
+            quantity=150,
+            from_location=self.warehouse,
+            allocation_strategy="FIFO",
+        )
+        self.lot_old.refresh_from_db()
+        self.lot_mid.refresh_from_db()
+        self.assertEqual(self.lot_old.quantity_remaining, 0)
+        self.assertEqual(self.lot_mid.quantity_remaining, 50)
+
+        allocs = list(
+            StockMovementLot.objects
+            .filter(stock_movement=movement)
+            .order_by("stock_lot__received_date")
+        )
+        self.assertEqual(len(allocs), 2)
+        self.assertEqual(allocs[0].stock_lot, self.lot_old)
+        self.assertEqual(allocs[0].quantity, 100)
+        self.assertEqual(allocs[1].stock_lot, self.lot_mid)
+        self.assertEqual(allocs[1].quantity, 50)
+
+    def test_fifo_insufficient_lot_quantity_raises_error(self):
+        create_stock_record(
+            product=self.product, location=self.warehouse, quantity=999,
+        )
+        create_stock_lot(
+            product=self.product,
+            lot_number="SMALL",
+            quantity_received=10,
+            quantity_remaining=10,
+        )
+        with self.assertRaises(InsufficientStockError) as ctx:
+            self.service.process_movement_with_lots(
+                product=self.product,
+                movement_type=MovementType.ISSUE,
+                quantity=50,
+                from_location=self.warehouse,
+            )
+        self.assertIn("lot quantity", str(ctx.exception))
+
+    def test_fifo_decrements_stock_record(self):
+        self._receive_lots()
+        self.service.process_movement_with_lots(
+            product=self.product,
+            movement_type=MovementType.ISSUE,
+            quantity=60,
+            from_location=self.warehouse,
+        )
+        record = StockRecord.objects.get(
+            product=self.product, location=self.warehouse,
+        )
+        self.assertEqual(record.quantity, 190)
+
+
+# =====================================================================
+# Lot-Aware: ISSUE — LIFO
+# =====================================================================
+
+
+class LotIssueLIFOTests(LotServiceSetupMixin, TestCase):
+    """Test ISSUE with LIFO allocation."""
+
+    def test_lifo_allocates_from_newest_first(self):
+        today = date.today()
+        create_stock_record(
+            product=self.product, location=self.warehouse, quantity=200,
+        )
+        lot_old = create_stock_lot(
+            product=self.product,
+            lot_number="OLD",
+            quantity_received=100,
+            quantity_remaining=100,
+            received_date=today - timedelta(days=30),
+        )
+        lot_new = create_stock_lot(
+            product=self.product,
+            lot_number="NEW",
+            quantity_received=100,
+            quantity_remaining=100,
+            received_date=today,
+        )
+        movement = self.service.process_movement_with_lots(
+            product=self.product,
+            movement_type=MovementType.ISSUE,
+            quantity=80,
+            from_location=self.warehouse,
+            allocation_strategy="LIFO",
+        )
+        lot_new.refresh_from_db()
+        lot_old.refresh_from_db()
+        self.assertEqual(lot_new.quantity_remaining, 20)
+        self.assertEqual(lot_old.quantity_remaining, 100)
+
+        alloc = StockMovementLot.objects.get(stock_movement=movement)
+        self.assertEqual(alloc.stock_lot, lot_new)
+
+
+# =====================================================================
+# Lot-Aware: ISSUE — MANUAL
+# =====================================================================
+
+
+class LotIssueManualTests(LotServiceSetupMixin, TestCase):
+    """Test ISSUE with MANUAL allocation strategy."""
+
+    def test_manual_allocation(self):
+        create_stock_record(
+            product=self.product, location=self.warehouse, quantity=200,
+        )
+        lot_a = create_stock_lot(
+            product=self.product, lot_number="A",
+            quantity_received=100, quantity_remaining=100,
+        )
+        lot_b = create_stock_lot(
+            product=self.product, lot_number="B",
+            quantity_received=100, quantity_remaining=100,
+        )
+        movement = self.service.process_movement_with_lots(
+            product=self.product,
+            movement_type=MovementType.ISSUE,
+            quantity=70,
+            from_location=self.warehouse,
+            allocation_strategy="MANUAL",
+            manual_lot_allocations=[
+                {"lot_id": lot_a.pk, "quantity": 30},
+                {"lot_id": lot_b.pk, "quantity": 40},
+            ],
+        )
+        lot_a.refresh_from_db()
+        lot_b.refresh_from_db()
+        self.assertEqual(lot_a.quantity_remaining, 70)
+        self.assertEqual(lot_b.quantity_remaining, 60)
+
+        allocs = StockMovementLot.objects.filter(stock_movement=movement)
+        self.assertEqual(allocs.count(), 2)
+
+    def test_manual_total_mismatch_raises_error(self):
+        create_stock_record(
+            product=self.product, location=self.warehouse, quantity=200,
+        )
+        lot = create_stock_lot(
+            product=self.product, lot_number="A",
+            quantity_received=100, quantity_remaining=100,
+        )
+        with self.assertRaises(ValueError) as ctx:
+            self.service.process_movement_with_lots(
+                product=self.product,
+                movement_type=MovementType.ISSUE,
+                quantity=50,
+                from_location=self.warehouse,
+                allocation_strategy="MANUAL",
+                manual_lot_allocations=[
+                    {"lot_id": lot.pk, "quantity": 30},
+                ],
+            )
+        self.assertIn("does not match", str(ctx.exception))
+
+    def test_manual_insufficient_lot_raises_error(self):
+        create_stock_record(
+            product=self.product, location=self.warehouse, quantity=200,
+        )
+        lot = create_stock_lot(
+            product=self.product, lot_number="A",
+            quantity_received=10, quantity_remaining=10,
+        )
+        with self.assertRaises(InsufficientStockError):
+            self.service.process_movement_with_lots(
+                product=self.product,
+                movement_type=MovementType.ISSUE,
+                quantity=50,
+                from_location=self.warehouse,
+                allocation_strategy="MANUAL",
+                manual_lot_allocations=[
+                    {"lot_id": lot.pk, "quantity": 50},
+                ],
+            )
+
+    def test_manual_requires_allocations(self):
+        create_stock_record(
+            product=self.product, location=self.warehouse, quantity=100,
+        )
+        create_stock_lot(
+            product=self.product, lot_number="A",
+            quantity_received=100, quantity_remaining=100,
+        )
+        with self.assertRaises(ValueError):
+            self.service.process_movement_with_lots(
+                product=self.product,
+                movement_type=MovementType.ISSUE,
+                quantity=10,
+                from_location=self.warehouse,
+                allocation_strategy="MANUAL",
+            )
+
+
+# =====================================================================
+# Lot-Aware: TRANSFER
+# =====================================================================
+
+
+class LotTransferTests(LotServiceSetupMixin, TestCase):
+    """Test TRANSFER preserves lot identity (no quantity_remaining change)."""
+
+    def test_transfer_preserves_lot_quantity_remaining(self):
+        create_stock_record(
+            product=self.product, location=self.warehouse, quantity=100,
+        )
+        lot = create_stock_lot(
+            product=self.product, lot_number="T-LOT",
+            quantity_received=100, quantity_remaining=100,
+        )
+        self.service.process_movement_with_lots(
+            product=self.product,
+            movement_type=MovementType.TRANSFER,
+            quantity=40,
+            from_location=self.warehouse,
+            to_location=self.store,
+        )
+        lot.refresh_from_db()
+        self.assertEqual(lot.quantity_remaining, 100)
+
+    def test_transfer_creates_movement_lot_entries(self):
+        create_stock_record(
+            product=self.product, location=self.warehouse, quantity=100,
+        )
+        lot = create_stock_lot(
+            product=self.product, lot_number="T-LOT",
+            quantity_received=100, quantity_remaining=100,
+        )
+        movement = self.service.process_movement_with_lots(
+            product=self.product,
+            movement_type=MovementType.TRANSFER,
+            quantity=40,
+            from_location=self.warehouse,
+            to_location=self.store,
+        )
+        sml = StockMovementLot.objects.get(stock_movement=movement)
+        self.assertEqual(sml.stock_lot, lot)
+        self.assertEqual(sml.quantity, 40)
+
+    def test_transfer_updates_stock_records(self):
+        create_stock_record(
+            product=self.product, location=self.warehouse, quantity=100,
+        )
+        create_stock_lot(
+            product=self.product, lot_number="T-LOT",
+            quantity_received=100, quantity_remaining=100,
+        )
+        self.service.process_movement_with_lots(
+            product=self.product,
+            movement_type=MovementType.TRANSFER,
+            quantity=30,
+            from_location=self.warehouse,
+            to_location=self.store,
+        )
+        src = StockRecord.objects.get(
+            product=self.product, location=self.warehouse,
+        )
+        dst = StockRecord.objects.get(
+            product=self.product, location=self.store,
+        )
+        self.assertEqual(src.quantity, 70)
+        self.assertEqual(dst.quantity, 30)
+
+
+# =====================================================================
+# Lot-Aware: ADJUSTMENT
+# =====================================================================
+
+
+class LotAdjustmentTests(LotServiceSetupMixin, TestCase):
+    """Test ADJUSTMENT with lot operations."""
+
+    def test_negative_adjustment_targets_specific_lot(self):
+        create_stock_record(
+            product=self.product, location=self.warehouse, quantity=100,
+        )
+        lot = create_stock_lot(
+            product=self.product, lot_number="ADJ-LOT",
+            quantity_received=100, quantity_remaining=100,
+        )
+        self.service.process_movement_with_lots(
+            product=self.product,
+            movement_type=MovementType.ADJUSTMENT,
+            quantity=25,
+            from_location=self.warehouse,
+            lot_number="ADJ-LOT",
+        )
+        lot.refresh_from_db()
+        self.assertEqual(lot.quantity_remaining, 75)
+
+    def test_negative_adjustment_fifo_when_no_lot_number(self):
+        today = date.today()
+        create_stock_record(
+            product=self.product, location=self.warehouse, quantity=200,
+        )
+        lot_old = create_stock_lot(
+            product=self.product, lot_number="OLD",
+            quantity_received=100, quantity_remaining=100,
+            received_date=today - timedelta(days=10),
+        )
+        lot_new = create_stock_lot(
+            product=self.product, lot_number="NEW",
+            quantity_received=100, quantity_remaining=100,
+            received_date=today,
+        )
+        self.service.process_movement_with_lots(
+            product=self.product,
+            movement_type=MovementType.ADJUSTMENT,
+            quantity=50,
+            from_location=self.warehouse,
+        )
+        lot_old.refresh_from_db()
+        lot_new.refresh_from_db()
+        self.assertEqual(lot_old.quantity_remaining, 50)
+        self.assertEqual(lot_new.quantity_remaining, 100)
+
+    def test_positive_adjustment_creates_lot(self):
+        self.service.process_movement_with_lots(
+            product=self.product,
+            movement_type=MovementType.ADJUSTMENT,
+            quantity=50,
+            to_location=self.warehouse,
+            lot_number="ADJ-NEW",
+        )
+        lot = StockLot.objects.get(lot_number="ADJ-NEW")
+        self.assertEqual(lot.quantity_received, 50)
+        self.assertEqual(lot.quantity_remaining, 50)
+
+    def test_adjustment_insufficient_specific_lot_raises_error(self):
+        create_stock_record(
+            product=self.product, location=self.warehouse, quantity=100,
+        )
+        create_stock_lot(
+            product=self.product, lot_number="SMALL",
+            quantity_received=10, quantity_remaining=10,
+        )
+        with self.assertRaises(InsufficientStockError):
+            self.service.process_movement_with_lots(
+                product=self.product,
+                movement_type=MovementType.ADJUSTMENT,
+                quantity=50,
+                from_location=self.warehouse,
+                lot_number="SMALL",
+            )
+
+
+# =====================================================================
+# Tracking Mode Validation
+# =====================================================================
+
+
+class TrackingModeTests(TestCase):
+    """Test tracking_mode enforcement."""
+
+    def setUp(self):
+        self.service = StockService()
+        self.warehouse = create_location(name="TM Warehouse")
+
+    def test_tracking_none_ignores_lot_info(self):
+        product = create_product(
+            sku="TM-NONE", tracking_mode="none",
+        )
+        movement = self.service.process_movement_with_lots(
+            product=product,
+            movement_type=MovementType.RECEIVE,
+            quantity=100,
+            to_location=self.warehouse,
+            lot_number="IGNORED",
+        )
+        self.assertIsNotNone(movement.pk)
+        self.assertEqual(StockLot.objects.count(), 0)
+        self.assertEqual(StockMovementLot.objects.count(), 0)
+
+    def test_tracking_required_without_lot_raises_error(self):
+        product = create_product(
+            sku="TM-REQ", tracking_mode="required",
+        )
+        with self.assertRaises(LotTrackingRequiredError) as ctx:
+            self.service.process_movement_with_lots(
+                product=product,
+                movement_type=MovementType.RECEIVE,
+                quantity=100,
+                to_location=self.warehouse,
+            )
+        self.assertIn("requires lot tracking", str(ctx.exception))
+
+    def test_tracking_required_with_lot_succeeds(self):
+        product = create_product(
+            sku="TM-REQ-OK", tracking_mode="required",
+        )
+        movement = self.service.process_movement_with_lots(
+            product=product,
+            movement_type=MovementType.RECEIVE,
+            quantity=100,
+            to_location=self.warehouse,
+            lot_number="REQ-LOT",
+        )
+        self.assertIsNotNone(movement.pk)
+        self.assertTrue(
+            StockLot.objects.filter(lot_number="REQ-LOT").exists(),
+        )
+
+    def test_tracking_optional_creates_lot_when_provided(self):
+        product = create_product(
+            sku="TM-OPT", tracking_mode="optional",
+        )
+        movement = self.service.process_movement_with_lots(
+            product=product,
+            movement_type=MovementType.RECEIVE,
+            quantity=50,
+            to_location=self.warehouse,
+            lot_number="OPT-LOT",
+        )
+        self.assertIsNotNone(movement.pk)
+        self.assertTrue(
+            StockLot.objects.filter(lot_number="OPT-LOT").exists(),
+        )
+
+    def test_tracking_optional_skips_lot_when_not_provided(self):
+        product = create_product(
+            sku="TM-OPT-SKIP", tracking_mode="optional",
+        )
+        movement = self.service.process_movement_with_lots(
+            product=product,
+            movement_type=MovementType.RECEIVE,
+            quantity=50,
+            to_location=self.warehouse,
+        )
+        self.assertIsNotNone(movement.pk)
+        self.assertEqual(StockLot.objects.count(), 0)
+
+
+# =====================================================================
+# Backward Compatibility
+# =====================================================================
+
+
+class BackwardCompatibilityTests(StockServiceSetupMixin, TestCase):
+    """Ensure process_movement() is unchanged alongside the new method."""
+
+    def test_process_movement_still_works(self):
+        self.service.process_movement(
+            product=self.product,
+            movement_type=MovementType.RECEIVE,
+            quantity=100,
+            to_location=self.warehouse,
+        )
+        record = StockRecord.objects.get(
+            product=self.product, location=self.warehouse,
+        )
+        self.assertEqual(record.quantity, 100)
+        self.assertEqual(StockLot.objects.count(), 0)
+        self.assertEqual(StockMovementLot.objects.count(), 0)
+
+    def test_process_movement_creates_no_lot_entries(self):
+        self.service.process_movement(
+            product=self.product,
+            movement_type=MovementType.RECEIVE,
+            quantity=50,
+            to_location=self.warehouse,
+        )
+        self.assertEqual(StockMovementLot.objects.count(), 0)
+
+
+# =====================================================================
+# Lot-Aware: End-to-End Sequences
+# =====================================================================
+
+
+class LotSequenceTests(LotServiceSetupMixin, TestCase):
+    """Test multi-step lot-aware movement sequences."""
+
+    def test_receive_then_fifo_issue(self):
+        """Receive into lots, then FIFO issue draws from oldest."""
+        self.service.process_movement_with_lots(
+            product=self.product,
+            movement_type=MovementType.RECEIVE,
+            quantity=100,
+            to_location=self.warehouse,
+            lot_number="FIRST",
+        )
+        first_lot = StockLot.objects.get(lot_number="FIRST")
+        first_lot.received_date = date.today() - timedelta(days=10)
+        first_lot.save(update_fields=["received_date"])
+
+        self.service.process_movement_with_lots(
+            product=self.product,
+            movement_type=MovementType.RECEIVE,
+            quantity=100,
+            to_location=self.warehouse,
+            lot_number="SECOND",
+        )
+
+        self.service.process_movement_with_lots(
+            product=self.product,
+            movement_type=MovementType.ISSUE,
+            quantity=120,
+            from_location=self.warehouse,
+            allocation_strategy="FIFO",
+        )
+
+        first_lot.refresh_from_db()
+        second_lot = StockLot.objects.get(lot_number="SECOND")
+        self.assertEqual(first_lot.quantity_remaining, 0)
+        self.assertEqual(second_lot.quantity_remaining, 80)
+
+        record = StockRecord.objects.get(
+            product=self.product, location=self.warehouse,
+        )
+        self.assertEqual(record.quantity, 80)
+
+    def test_receive_transfer_then_issue_preserves_lots(self):
+        """Transfer doesn't consume lots; subsequent issue still can."""
+        self.service.process_movement_with_lots(
+            product=self.product,
+            movement_type=MovementType.RECEIVE,
+            quantity=100,
+            to_location=self.warehouse,
+            lot_number="LOT-A",
+        )
+        lot = StockLot.objects.get(lot_number="LOT-A")
+
+        self.service.process_movement_with_lots(
+            product=self.product,
+            movement_type=MovementType.TRANSFER,
+            quantity=40,
+            from_location=self.warehouse,
+            to_location=self.store,
+        )
+        lot.refresh_from_db()
+        self.assertEqual(lot.quantity_remaining, 100)
+
+        self.service.process_movement_with_lots(
+            product=self.product,
+            movement_type=MovementType.ISSUE,
+            quantity=30,
+            from_location=self.store,
+        )
+        lot.refresh_from_db()
+        self.assertEqual(lot.quantity_remaining, 70)

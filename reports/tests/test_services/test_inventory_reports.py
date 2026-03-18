@@ -5,9 +5,16 @@ from decimal import Decimal
 
 from django.test import TestCase
 
-from inventory.models import MovementType
+from inventory.models import MovementType, ReservationStatus
 from inventory.services.stock import StockService
-from inventory.tests.factories import create_location, create_product, create_stock_record
+from inventory.tests.factories import (
+    create_category,
+    create_location,
+    create_product,
+    create_reservation,
+    create_stock_lot,
+    create_stock_record,
+)
 
 from reports.services.inventory_reports import InventoryReportService
 
@@ -257,3 +264,511 @@ class MovementHistoryTests(InventoryReportServiceSetupMixin, TestCase):
         self.assertEqual(summary["receive"]["total_quantity"], 100)
         self.assertEqual(summary["issue"]["count"], 1)
         self.assertEqual(summary["issue"]["total_quantity"], 20)
+
+
+# =====================================================================
+# Reservation Summary
+# =====================================================================
+
+
+class ReservationSummaryTests(InventoryReportServiceSetupMixin, TestCase):
+    """Test reservation summary reporting."""
+
+    def setUp(self):
+        super().setUp()
+        create_stock_record(
+            product=self.product_a, location=self.warehouse, quantity=100,
+        )
+        create_stock_record(
+            product=self.product_b, location=self.store, quantity=50,
+        )
+
+    def test_empty_when_no_reservations(self):
+        summary = self.service.get_reservation_summary()
+        self.assertEqual(summary["total_active_reservations"], 0)
+        self.assertEqual(summary["total_reserved_quantity"], 0)
+        self.assertEqual(summary["by_status"], {})
+
+    def test_counts_by_status(self):
+        create_reservation(
+            product=self.product_a, location=self.warehouse,
+            quantity=10, status=ReservationStatus.PENDING,
+        )
+        create_reservation(
+            product=self.product_a, location=self.warehouse,
+            quantity=20, status=ReservationStatus.CONFIRMED,
+        )
+        create_reservation(
+            product=self.product_b, location=self.store,
+            quantity=5, status=ReservationStatus.CANCELLED,
+        )
+
+        summary = self.service.get_reservation_summary()
+        self.assertEqual(summary["by_status"]["pending"]["count"], 1)
+        self.assertEqual(summary["by_status"]["pending"]["total_quantity"], 10)
+        self.assertEqual(summary["by_status"]["confirmed"]["count"], 1)
+        self.assertEqual(summary["by_status"]["confirmed"]["total_quantity"], 20)
+        self.assertEqual(summary["by_status"]["cancelled"]["count"], 1)
+
+    def test_active_totals_exclude_non_active_statuses(self):
+        create_reservation(
+            product=self.product_a, location=self.warehouse,
+            quantity=10, status=ReservationStatus.PENDING,
+        )
+        create_reservation(
+            product=self.product_a, location=self.warehouse,
+            quantity=15, status=ReservationStatus.CONFIRMED,
+        )
+        create_reservation(
+            product=self.product_b, location=self.store,
+            quantity=5, status=ReservationStatus.FULFILLED,
+        )
+        create_reservation(
+            product=self.product_b, location=self.store,
+            quantity=8, status=ReservationStatus.EXPIRED,
+        )
+
+        summary = self.service.get_reservation_summary()
+        self.assertEqual(summary["total_active_reservations"], 2)
+        self.assertEqual(summary["total_reserved_quantity"], 25)
+
+
+# =====================================================================
+# Availability Report
+# =====================================================================
+
+
+class AvailabilityReportTests(InventoryReportServiceSetupMixin, TestCase):
+    """Test per-product availability reporting."""
+
+    def setUp(self):
+        super().setUp()
+        create_stock_record(
+            product=self.product_a, location=self.warehouse, quantity=100,
+        )
+        create_stock_record(
+            product=self.product_b, location=self.store, quantity=50,
+        )
+
+    def test_availability_with_no_reservations(self):
+        results = self.service.get_availability_report()
+        self.assertEqual(len(results), 2)
+        item_a = next(r for r in results if r["sku"] == "RPT-A")
+        self.assertEqual(item_a["total_quantity"], 100)
+        self.assertEqual(item_a["reserved_quantity"], 0)
+        self.assertEqual(item_a["available_quantity"], 100)
+
+    def test_availability_with_active_reservations(self):
+        create_reservation(
+            product=self.product_a, location=self.warehouse,
+            quantity=30, status=ReservationStatus.PENDING,
+        )
+        create_reservation(
+            product=self.product_a, location=self.warehouse,
+            quantity=10, status=ReservationStatus.CONFIRMED,
+        )
+
+        results = self.service.get_availability_report()
+        item_a = next(r for r in results if r["sku"] == "RPT-A")
+        self.assertEqual(item_a["reserved_quantity"], 40)
+        self.assertEqual(item_a["available_quantity"], 60)
+
+    def test_availability_ignores_non_active_reservations(self):
+        create_reservation(
+            product=self.product_a, location=self.warehouse,
+            quantity=30, status=ReservationStatus.FULFILLED,
+        )
+        create_reservation(
+            product=self.product_a, location=self.warehouse,
+            quantity=10, status=ReservationStatus.CANCELLED,
+        )
+
+        results = self.service.get_availability_report()
+        item_a = next(r for r in results if r["sku"] == "RPT-A")
+        self.assertEqual(item_a["reserved_quantity"], 0)
+        self.assertEqual(item_a["available_quantity"], 100)
+
+    def test_filter_by_category(self):
+        cat = create_category(name="Electronics", slug="electronics")
+        self.product_a.category = cat
+        self.product_a.save()
+
+        results = self.service.get_availability_report(category_id=cat.pk)
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]["sku"], "RPT-A")
+
+    def test_filter_by_product(self):
+        results = self.service.get_availability_report(
+            product_id=self.product_b.pk,
+        )
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]["sku"], "RPT-B")
+
+    def test_reserved_value_calculation(self):
+        create_reservation(
+            product=self.product_a, location=self.warehouse,
+            quantity=20, status=ReservationStatus.PENDING,
+        )
+        results = self.service.get_availability_report()
+        item_a = next(r for r in results if r["sku"] == "RPT-A")
+        self.assertEqual(
+            item_a["reserved_value"],
+            20 * Decimal("10.00"),
+        )
+
+    def test_excludes_inactive_products(self):
+        inactive = create_product(
+            sku="RPT-INACTIVE", is_active=False,
+            unit_cost=Decimal("5.00"),
+        )
+        create_stock_record(
+            product=inactive, location=self.warehouse, quantity=50,
+        )
+        results = self.service.get_availability_report()
+        skus = [r["sku"] for r in results]
+        self.assertNotIn("RPT-INACTIVE", skus)
+
+    def test_products_sorted_by_sku(self):
+        results = self.service.get_availability_report()
+        skus = [r["sku"] for r in results]
+        self.assertEqual(skus, sorted(skus))
+
+
+# =====================================================================
+# Reserved Stock Value KPI
+# =====================================================================
+
+
+class ReservedStockValueTests(InventoryReportServiceSetupMixin, TestCase):
+    """Test the reserved stock value dashboard KPI."""
+
+    def test_zero_when_no_reservations(self):
+        create_stock_record(
+            product=self.product_a, location=self.warehouse, quantity=100,
+        )
+        value = self.service.get_reserved_stock_value()
+        self.assertEqual(value, Decimal("0.00"))
+
+    def test_correct_value_with_reservations(self):
+        create_stock_record(
+            product=self.product_a, location=self.warehouse, quantity=100,
+        )
+        create_stock_record(
+            product=self.product_b, location=self.store, quantity=50,
+        )
+        create_reservation(
+            product=self.product_a, location=self.warehouse,
+            quantity=10, status=ReservationStatus.PENDING,
+        )
+        create_reservation(
+            product=self.product_b, location=self.store,
+            quantity=5, status=ReservationStatus.CONFIRMED,
+        )
+
+        value = self.service.get_reserved_stock_value()
+        expected = (10 * Decimal("10.00")) + (5 * Decimal("25.00"))
+        self.assertEqual(value, expected)
+
+    def test_ignores_non_active_reservations(self):
+        create_stock_record(
+            product=self.product_a, location=self.warehouse, quantity=100,
+        )
+        create_reservation(
+            product=self.product_a, location=self.warehouse,
+            quantity=50, status=ReservationStatus.FULFILLED,
+        )
+        value = self.service.get_reserved_stock_value()
+        self.assertEqual(value, Decimal("0.00"))
+
+
+# =====================================================================
+# Expiring Lots
+# =====================================================================
+
+
+class ExpiringLotsTests(InventoryReportServiceSetupMixin, TestCase):
+    """Test get_expiring_lots service method."""
+
+    def test_returns_lots_within_window(self):
+        create_stock_lot(
+            product=self.product_a,
+            lot_number="EXP-10",
+            expiry_date=date.today() + timedelta(days=10),
+        )
+        create_stock_lot(
+            product=self.product_a,
+            lot_number="EXP-25",
+            expiry_date=date.today() + timedelta(days=25),
+        )
+        lots = self.service.get_expiring_lots(days_ahead=30)
+        lot_numbers = [lot.lot_number for lot in lots]
+        self.assertIn("EXP-10", lot_numbers)
+        self.assertIn("EXP-25", lot_numbers)
+
+    def test_excludes_lots_beyond_window(self):
+        create_stock_lot(
+            product=self.product_a,
+            lot_number="EXP-FAR",
+            expiry_date=date.today() + timedelta(days=60),
+        )
+        lots = self.service.get_expiring_lots(days_ahead=30)
+        lot_numbers = [lot.lot_number for lot in lots]
+        self.assertNotIn("EXP-FAR", lot_numbers)
+
+    def test_excludes_already_expired(self):
+        create_stock_lot(
+            product=self.product_a,
+            lot_number="EXP-PAST",
+            expiry_date=date.today() - timedelta(days=1),
+        )
+        lots = self.service.get_expiring_lots(days_ahead=30)
+        lot_numbers = [lot.lot_number for lot in lots]
+        self.assertNotIn("EXP-PAST", lot_numbers)
+
+    def test_excludes_depleted_lots(self):
+        create_stock_lot(
+            product=self.product_a,
+            lot_number="EXP-DEPLETED",
+            expiry_date=date.today() + timedelta(days=10),
+            quantity_remaining=0,
+        )
+        lots = self.service.get_expiring_lots(days_ahead=30)
+        lot_numbers = [lot.lot_number for lot in lots]
+        self.assertNotIn("EXP-DEPLETED", lot_numbers)
+
+    def test_excludes_lots_without_expiry(self):
+        create_stock_lot(
+            product=self.product_a,
+            lot_number="NO-EXPIRY",
+            expiry_date=None,
+        )
+        lots = self.service.get_expiring_lots(days_ahead=30)
+        lot_numbers = [lot.lot_number for lot in lots]
+        self.assertNotIn("NO-EXPIRY", lot_numbers)
+
+    def test_filter_by_product(self):
+        create_stock_lot(
+            product=self.product_a,
+            lot_number="EXP-A",
+            expiry_date=date.today() + timedelta(days=10),
+        )
+        create_stock_lot(
+            product=self.product_b,
+            lot_number="EXP-B",
+            expiry_date=date.today() + timedelta(days=10),
+        )
+        lots = self.service.get_expiring_lots(
+            days_ahead=30, product=self.product_a,
+        )
+        lot_numbers = [lot.lot_number for lot in lots]
+        self.assertIn("EXP-A", lot_numbers)
+        self.assertNotIn("EXP-B", lot_numbers)
+
+    def test_filter_by_location(self):
+        create_stock_record(
+            product=self.product_a, location=self.warehouse, quantity=50,
+        )
+        create_stock_lot(
+            product=self.product_a,
+            lot_number="EXP-WH",
+            expiry_date=date.today() + timedelta(days=10),
+        )
+        lots = self.service.get_expiring_lots(
+            days_ahead=30, location=self.warehouse,
+        )
+        lot_numbers = [lot.lot_number for lot in lots]
+        self.assertIn("EXP-WH", lot_numbers)
+
+    def test_ordered_by_expiry_date(self):
+        create_stock_lot(
+            product=self.product_a,
+            lot_number="EXP-LATER",
+            expiry_date=date.today() + timedelta(days=20),
+        )
+        create_stock_lot(
+            product=self.product_a,
+            lot_number="EXP-SOONER",
+            expiry_date=date.today() + timedelta(days=5),
+        )
+        lots = list(self.service.get_expiring_lots(days_ahead=30))
+        self.assertEqual(lots[0].lot_number, "EXP-SOONER")
+        self.assertEqual(lots[1].lot_number, "EXP-LATER")
+
+
+# =====================================================================
+# Expired Lots
+# =====================================================================
+
+
+class ExpiredLotsTests(InventoryReportServiceSetupMixin, TestCase):
+    """Test get_expired_lots service method."""
+
+    def test_returns_expired_lots(self):
+        create_stock_lot(
+            product=self.product_a,
+            lot_number="PAST-1",
+            expiry_date=date.today() - timedelta(days=5),
+        )
+        lots = self.service.get_expired_lots()
+        lot_numbers = [lot.lot_number for lot in lots]
+        self.assertIn("PAST-1", lot_numbers)
+
+    def test_excludes_future_expiry(self):
+        create_stock_lot(
+            product=self.product_a,
+            lot_number="FUTURE-1",
+            expiry_date=date.today() + timedelta(days=10),
+        )
+        lots = self.service.get_expired_lots()
+        lot_numbers = [lot.lot_number for lot in lots]
+        self.assertNotIn("FUTURE-1", lot_numbers)
+
+    def test_excludes_depleted_by_default(self):
+        create_stock_lot(
+            product=self.product_a,
+            lot_number="PAST-DEPLETED",
+            expiry_date=date.today() - timedelta(days=5),
+            quantity_remaining=0,
+        )
+        lots = self.service.get_expired_lots()
+        lot_numbers = [lot.lot_number for lot in lots]
+        self.assertNotIn("PAST-DEPLETED", lot_numbers)
+
+    def test_includes_depleted_when_requested(self):
+        create_stock_lot(
+            product=self.product_a,
+            lot_number="PAST-DEPLETED",
+            expiry_date=date.today() - timedelta(days=5),
+            quantity_remaining=0,
+        )
+        lots = self.service.get_expired_lots(include_depleted=True)
+        lot_numbers = [lot.lot_number for lot in lots]
+        self.assertIn("PAST-DEPLETED", lot_numbers)
+
+    def test_filter_by_product(self):
+        create_stock_lot(
+            product=self.product_a,
+            lot_number="PAST-A",
+            expiry_date=date.today() - timedelta(days=3),
+        )
+        create_stock_lot(
+            product=self.product_b,
+            lot_number="PAST-B",
+            expiry_date=date.today() - timedelta(days=3),
+        )
+        lots = self.service.get_expired_lots(product=self.product_a)
+        lot_numbers = [lot.lot_number for lot in lots]
+        self.assertIn("PAST-A", lot_numbers)
+        self.assertNotIn("PAST-B", lot_numbers)
+
+    def test_includes_today_as_expired(self):
+        """Lots expiring today (expiry_date <= today) are considered expired."""
+        create_stock_lot(
+            product=self.product_a,
+            lot_number="TODAY",
+            expiry_date=date.today(),
+        )
+        lots = self.service.get_expired_lots()
+        lot_numbers = [lot.lot_number for lot in lots]
+        self.assertIn("TODAY", lot_numbers)
+
+
+# =====================================================================
+# Lot History
+# =====================================================================
+
+
+class LotHistoryTests(InventoryReportServiceSetupMixin, TestCase):
+    """Test get_lot_history service method."""
+
+    def test_returns_movements_for_lot(self):
+        from inventory.models import StockMovementLot
+
+        lot = create_stock_lot(
+            product=self.product_a, lot_number="HIST-001",
+        )
+        self.stock_service.process_movement(
+            product=self.product_a,
+            movement_type=MovementType.RECEIVE,
+            quantity=100,
+            to_location=self.warehouse,
+        )
+        movement = self.product_a.stock_movements.first()
+        StockMovementLot.objects.create(
+            stock_movement=movement, stock_lot=lot, quantity=100,
+        )
+
+        history = self.service.get_lot_history(
+            product=self.product_a, lot_number="HIST-001",
+        )
+        self.assertEqual(history.count(), 1)
+        self.assertEqual(history.first().pk, movement.pk)
+
+    def test_returns_empty_for_unknown_lot(self):
+        history = self.service.get_lot_history(
+            product=self.product_a, lot_number="NONEXISTENT",
+        )
+        self.assertEqual(history.count(), 0)
+
+    def test_multiple_movements_for_lot(self):
+        from inventory.models import StockMovementLot
+
+        lot = create_stock_lot(
+            product=self.product_a, lot_number="HIST-002",
+        )
+
+        self.stock_service.process_movement(
+            product=self.product_a,
+            movement_type=MovementType.RECEIVE,
+            quantity=100,
+            to_location=self.warehouse,
+        )
+        recv = self.product_a.stock_movements.order_by("created_at").last()
+        StockMovementLot.objects.create(
+            stock_movement=recv, stock_lot=lot, quantity=100,
+        )
+
+        self.stock_service.process_movement(
+            product=self.product_a,
+            movement_type=MovementType.ISSUE,
+            quantity=30,
+            from_location=self.warehouse,
+        )
+        issue = self.product_a.stock_movements.order_by("-created_at").first()
+        StockMovementLot.objects.create(
+            stock_movement=issue, stock_lot=lot, quantity=30,
+        )
+
+        history = self.service.get_lot_history(
+            product=self.product_a, lot_number="HIST-002",
+        )
+        self.assertEqual(history.count(), 2)
+
+    def test_excludes_unrelated_movements(self):
+        from inventory.models import StockMovementLot
+
+        lot = create_stock_lot(
+            product=self.product_a, lot_number="HIST-003",
+        )
+        self.stock_service.process_movement(
+            product=self.product_a,
+            movement_type=MovementType.RECEIVE,
+            quantity=100,
+            to_location=self.warehouse,
+        )
+        movement = self.product_a.stock_movements.first()
+        StockMovementLot.objects.create(
+            stock_movement=movement, stock_lot=lot, quantity=100,
+        )
+
+        self.stock_service.process_movement(
+            product=self.product_a,
+            movement_type=MovementType.RECEIVE,
+            quantity=50,
+            to_location=self.warehouse,
+        )
+
+        history = self.service.get_lot_history(
+            product=self.product_a, lot_number="HIST-003",
+        )
+        self.assertEqual(history.count(), 1)

@@ -2,49 +2,115 @@
 
 from datetime import timedelta
 
-from django.db.models import Count, Sum
-from django.db.models.functions import TruncDate
+from django.db import models
+from django.db.models import Count, F, OuterRef, Subquery, Sum
+from django.db.models.functions import Coalesce, TruncDate
 from django.utils import timezone
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from inventory.models import Product, StockLocation, StockMovement, StockRecord
+from inventory.models import (
+    Product,
+    StockLocation,
+    StockLot,
+    StockMovement,
+    StockRecord,
+    StockReservation,
+)
+from inventory.services.cache import get_cached_dashboard, set_cached_dashboard
 from procurement.models import PurchaseOrder
+from reports.services.inventory_reports import InventoryReportService
 from sales.models import SalesOrder
 
 
 class DashboardSummaryView(APIView):
-    """High-level KPIs for the dashboard."""
+    """High-level KPIs for the dashboard.
+
+    Includes reservation-aware totals (reserved / available) alongside
+    the original physical stock metrics.
+    """
 
     permission_classes = (IsAuthenticated,)
 
     def get(self, request):
-        return Response({
+        cached = get_cached_dashboard("summary")
+        if cached is not None:
+            return Response(cached)
+
+        report_service = InventoryReportService()
+        reserved_stock_value = report_service.get_reserved_stock_value()
+
+        total_items = StockRecord.objects.aggregate(
+            total=Coalesce(Sum("quantity"), 0),
+        )["total"]
+
+        total_reserved = StockReservation.objects.filter(
+            status__in=["pending", "confirmed"],
+        ).aggregate(total=Coalesce(Sum("quantity"), 0))["total"]
+
+        data = {
             "total_products": Product.objects.filter(is_active=True).count(),
             "total_locations": StockLocation.objects.filter(is_active=True).count(),
             "low_stock_count": Product.objects.filter(is_active=True).low_stock().count(),
             "total_stock_records": StockRecord.objects.count(),
+            "total_reserved": total_reserved,
+            "total_available": total_items - total_reserved,
             "purchase_orders": PurchaseOrder.objects.count(),
             "sales_orders": SalesOrder.objects.count(),
-        })
+            "reserved_stock_value": str(reserved_stock_value),
+        }
+        set_cached_dashboard("summary", data)
+        return Response(data)
 
 
 class StockByLocationView(APIView):
-    """Total stock quantity per active location — for bar charts."""
+    """Stock quantity per active location with reservation breakdown.
+
+    Returns total, reserved, and available quantities per location
+    for bar/stacked-bar charts.
+    """
 
     permission_classes = (IsAuthenticated,)
 
     def get(self, request):
+        cached = get_cached_dashboard("stock_by_location")
+        if cached is not None:
+            return Response(cached)
+
+        reserved_subquery = (
+            StockReservation.objects.filter(
+                location=OuterRef("location"),
+                status__in=["pending", "confirmed"],
+            )
+            .values("location")
+            .annotate(total=Sum("quantity"))
+            .values("total")
+        )
+
         qs = (
             StockRecord.objects.filter(location__is_active=True)
             .values("location__name")
-            .annotate(total_quantity=Sum("quantity"))
+            .annotate(
+                total_quantity=Coalesce(Sum("quantity"), 0),
+                reserved=Coalesce(Subquery(reserved_subquery), 0),
+            )
             .order_by("location__name")
         )
+
         labels = [entry["location__name"] for entry in qs]
-        data = [entry["total_quantity"] or 0 for entry in qs]
-        return Response({"labels": labels, "data": data})
+        totals = [entry["total_quantity"] for entry in qs]
+        reserved = [entry["reserved"] for entry in qs]
+        available = [t - r for t, r in zip(totals, reserved)]
+
+        data = {
+            "labels": labels,
+            "data": totals,
+            "reserved": reserved,
+            "available": available,
+        }
+        set_cached_dashboard("stock_by_location", data)
+        return Response(data)
 
 
 class MovementTrendsView(APIView):
@@ -99,3 +165,107 @@ class OrderStatusView(APIView):
                 "data": [e["count"] for e in so_qs],
             },
         })
+
+
+class PendingReservationsView(APIView):
+    """Pending and confirmed reservation summary — count, units, and value."""
+
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request):
+        cached = get_cached_dashboard("reservations")
+        if cached is not None:
+            return Response(cached)
+
+        active_qs = StockReservation.objects.filter(
+            status__in=["pending", "confirmed"],
+        )
+
+        aggregates = active_qs.aggregate(
+            total_units=Coalesce(Sum("quantity"), 0),
+            total_value=Coalesce(
+                Sum(F("quantity") * F("product__unit_cost")),
+                0,
+                output_field=models.DecimalField(),
+            ),
+        )
+
+        by_status = (
+            active_qs.values("status")
+            .annotate(
+                count=Count("id"),
+                units=Coalesce(Sum("quantity"), 0),
+            )
+            .order_by("status")
+        )
+
+        breakdown = {
+            entry["status"]: {"count": entry["count"], "units": entry["units"]}
+            for entry in by_status
+        }
+
+        data = {
+            "reservation_count": active_qs.count(),
+            "total_units": aggregates["total_units"],
+            "total_value": float(aggregates["total_value"]),
+            "pending": breakdown.get("pending", {"count": 0, "units": 0}),
+            "confirmed": breakdown.get("confirmed", {"count": 0, "units": 0}),
+        }
+        set_cached_dashboard("reservations", data)
+        return Response(data)
+
+
+class ExpiringLotsView(APIView):
+    """Lots expiring within the next 30 days.
+
+    Returns an empty list with ``has_lot_data: false`` when no lots
+    exist at all, enabling graceful UI degradation.
+    """
+
+    permission_classes = (IsAuthenticated,)
+
+    EXPIRY_WINDOW_DAYS = 30
+
+    def get(self, request):
+        cached = get_cached_dashboard("expiring_lots")
+        if cached is not None:
+            return Response(cached)
+
+        has_lot_data = StockLot.objects.exists()
+
+        if not has_lot_data:
+            data = {"has_lot_data": False, "expiring_lots": []}
+            set_cached_dashboard("expiring_lots", data)
+            return Response(data)
+
+        today = timezone.now().date()
+        cutoff = today + timedelta(days=self.EXPIRY_WINDOW_DAYS)
+
+        expiring_lots = (
+            StockLot.objects
+            .filter(
+                is_active=True,
+                expiry_date__isnull=False,
+                expiry_date__lte=cutoff,
+                quantity_remaining__gt=0,
+            )
+            .select_related("product")
+            .order_by("expiry_date")[:20]
+        )
+
+        lots_data = [
+            {
+                "id": lot.pk,
+                "lot_number": lot.lot_number,
+                "product_sku": lot.product.sku,
+                "product_name": lot.product.name,
+                "expiry_date": lot.expiry_date.isoformat(),
+                "days_to_expiry": lot.days_to_expiry(),
+                "quantity_remaining": lot.quantity_remaining,
+            }
+            for lot in expiring_lots
+        ]
+
+        data = {"has_lot_data": True, "expiring_lots": lots_data}
+        set_cached_dashboard("expiring_lots", data)
+        return Response(data)

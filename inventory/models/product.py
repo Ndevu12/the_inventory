@@ -1,5 +1,6 @@
 from django.db import models
-from django.db.models import F, UniqueConstraint
+from django.db.models import F, OuterRef, Subquery, UniqueConstraint
+from django.db.models.functions import Coalesce
 from modelcluster.contrib.taggit import ClusterTaggableManager
 from modelcluster.fields import ParentalKey
 from modelcluster.models import ClusterableModel
@@ -20,17 +21,47 @@ class UnitOfMeasure(models.TextChoices):
     PACKS = "pack", "Packs"
 
 
+class TrackingMode(models.TextChoices):
+    NONE = "none", "No Tracking"
+    OPTIONAL = "optional", "Optional Lot Tracking"
+    REQUIRED = "required", "Required Lot Tracking"
+
+
 class ProductQuerySet(models.QuerySet):
     """Custom queryset with inventory-specific filters."""
 
     def low_stock(self):
-        """Return products where any StockRecord quantity <= reorder_point.
+        """Return products where any location's available quantity <= reorder_point.
 
-        Products with ``reorder_point = 0`` are excluded (no alert configured).
+        Available quantity = physical quantity minus active reservations
+        (pending + confirmed).  Products with ``reorder_point = 0`` are
+        excluded (no alert configured).
         """
+        from inventory.models.reservation import StockReservation
+
+        reserved_subquery = Subquery(
+            StockReservation.objects.filter(
+                product=OuterRef("product"),
+                location=OuterRef("location"),
+                status__in=["pending", "confirmed"],
+            ).order_by().values("product", "location").annotate(
+                total=models.Sum("quantity"),
+            ).values("total")[:1]
+        )
+
+        from inventory.models.stock import StockRecord
+
+        low_records = StockRecord.objects.annotate(
+            _reserved=Coalesce(reserved_subquery, 0),
+            _available=F("quantity") - Coalesce(reserved_subquery, 0),
+        ).filter(
+            _available__lte=F("product__reorder_point"),
+            product__reorder_point__gt=0,
+        )
+
         return self.filter(
             reorder_point__gt=0,
-            stock_records__quantity__lte=F("reorder_point"),
+            pk__in=low_records.values("product_id"),
         ).distinct()
 
     def out_of_stock(self):
@@ -86,6 +117,12 @@ class Product(TimeStampedModel, ClusterableModel):
     reorder_point = models.PositiveIntegerField(
         default=0,
         help_text="When stock at any location falls to or below this amount, a low-stock alert is triggered. Set to 0 to disable alerts.",
+    )
+    tracking_mode = models.CharField(
+        max_length=10,
+        choices=TrackingMode.choices,
+        default=TrackingMode.NONE,
+        help_text="Whether lot/batch tracking is required for this product.",
     )
     is_active = models.BooleanField(
         default=True,

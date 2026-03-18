@@ -4,13 +4,20 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.test import TestCase
 
+from inventory.exceptions import MovementImmutableError
 from inventory.models import (
     MovementType,
+    ReservationStatus,
     StockLocation,
     StockMovement,
 )
 
-from ..factories import create_location, create_product, create_stock_record
+from ..factories import (
+    create_location,
+    create_product,
+    create_reservation,
+    create_stock_record,
+)
 
 
 # =====================================================================
@@ -88,6 +95,73 @@ class StockLocationSaveOverrideTests(TestCase):
         self.assertEqual(location.depth, 1)
         # Verify no duplicates created
         self.assertEqual(StockLocation.objects.filter(pk=original_pk).count(), 1)
+
+
+# =====================================================================
+# StockLocation — Capacity
+# =====================================================================
+
+
+class StockLocationCapacityTests(TestCase):
+    """Test max_capacity, current_utilization, remaining_capacity, and can_accept."""
+
+    def test_default_max_capacity_is_none(self):
+        location = create_location(name="Unlimited")
+        self.assertIsNone(location.max_capacity)
+
+    def test_current_utilization_no_stock(self):
+        location = create_location(name="Empty")
+        self.assertEqual(location.current_utilization, 0)
+
+    def test_current_utilization_sums_stock_records(self):
+        location = create_location(name="Warehouse")
+        p1 = create_product(sku="CAP-001")
+        p2 = create_product(sku="CAP-002")
+        create_stock_record(product=p1, location=location, quantity=40)
+        create_stock_record(product=p2, location=location, quantity=60)
+        self.assertEqual(location.current_utilization, 100)
+
+    def test_remaining_capacity_unlimited(self):
+        location = create_location(name="Unlimited")
+        self.assertIsNone(location.remaining_capacity)
+
+    def test_remaining_capacity_with_limit(self):
+        location = create_location(name="Limited", max_capacity=200)
+        p = create_product(sku="CAP-003")
+        create_stock_record(product=p, location=location, quantity=75)
+        self.assertEqual(location.remaining_capacity, 125)
+
+    def test_remaining_capacity_empty_location(self):
+        location = create_location(name="Empty Limited", max_capacity=50)
+        self.assertEqual(location.remaining_capacity, 50)
+
+    def test_can_accept_unlimited(self):
+        location = create_location(name="Unlimited")
+        self.assertTrue(location.can_accept(999999))
+
+    def test_can_accept_within_capacity(self):
+        location = create_location(name="Limited", max_capacity=100)
+        p = create_product(sku="CAP-004")
+        create_stock_record(product=p, location=location, quantity=50)
+        self.assertTrue(location.can_accept(50))
+
+    def test_can_accept_exactly_at_capacity(self):
+        location = create_location(name="Limited", max_capacity=100)
+        p = create_product(sku="CAP-005")
+        create_stock_record(product=p, location=location, quantity=50)
+        self.assertTrue(location.can_accept(50))
+
+    def test_can_accept_exceeds_capacity(self):
+        location = create_location(name="Limited", max_capacity=100)
+        p = create_product(sku="CAP-006")
+        create_stock_record(product=p, location=location, quantity=80)
+        self.assertFalse(location.can_accept(30))
+
+    def test_can_accept_already_full(self):
+        location = create_location(name="Full", max_capacity=50)
+        p = create_product(sku="CAP-007")
+        create_stock_record(product=p, location=location, quantity=50)
+        self.assertFalse(location.can_accept(1))
 
 
 # =====================================================================
@@ -177,6 +251,138 @@ class StockRecordIsLowStockPropertyTests(TestCase):
             product=product, location=location, quantity=0,
         )
         self.assertTrue(record.is_low_stock)
+
+
+# =====================================================================
+# StockRecord — reserved_quantity & available_quantity
+# =====================================================================
+
+
+class StockRecordReservedQuantityTests(TestCase):
+    """Test the reserved_quantity computed property."""
+
+    def test_no_reservations_returns_zero(self):
+        product = create_product(sku="RSV-001")
+        location = create_location(name="Warehouse")
+        record = create_stock_record(product=product, location=location, quantity=100)
+        self.assertEqual(record.reserved_quantity, 0)
+
+    def test_pending_reservation_counted(self):
+        product = create_product(sku="RSV-002")
+        location = create_location(name="Warehouse")
+        record = create_stock_record(product=product, location=location, quantity=100)
+        create_reservation(
+            product=product, location=location, quantity=30,
+            status=ReservationStatus.PENDING,
+        )
+        self.assertEqual(record.reserved_quantity, 30)
+
+    def test_confirmed_reservation_counted(self):
+        product = create_product(sku="RSV-003")
+        location = create_location(name="Warehouse")
+        record = create_stock_record(product=product, location=location, quantity=100)
+        create_reservation(
+            product=product, location=location, quantity=20,
+            status=ReservationStatus.CONFIRMED,
+        )
+        self.assertEqual(record.reserved_quantity, 20)
+
+    def test_fulfilled_reservation_not_counted(self):
+        product = create_product(sku="RSV-004")
+        location = create_location(name="Warehouse")
+        record = create_stock_record(product=product, location=location, quantity=100)
+        create_reservation(
+            product=product, location=location, quantity=15,
+            status=ReservationStatus.FULFILLED,
+        )
+        self.assertEqual(record.reserved_quantity, 0)
+
+    def test_cancelled_reservation_not_counted(self):
+        product = create_product(sku="RSV-005")
+        location = create_location(name="Warehouse")
+        record = create_stock_record(product=product, location=location, quantity=100)
+        create_reservation(
+            product=product, location=location, quantity=15,
+            status=ReservationStatus.CANCELLED,
+        )
+        self.assertEqual(record.reserved_quantity, 0)
+
+    def test_expired_reservation_not_counted(self):
+        product = create_product(sku="RSV-006")
+        location = create_location(name="Warehouse")
+        record = create_stock_record(product=product, location=location, quantity=100)
+        create_reservation(
+            product=product, location=location, quantity=15,
+            status=ReservationStatus.EXPIRED,
+        )
+        self.assertEqual(record.reserved_quantity, 0)
+
+    def test_multiple_active_reservations_summed(self):
+        product = create_product(sku="RSV-007")
+        location = create_location(name="Warehouse")
+        record = create_stock_record(product=product, location=location, quantity=100)
+        create_reservation(
+            product=product, location=location, quantity=10,
+            status=ReservationStatus.PENDING,
+        )
+        create_reservation(
+            product=product, location=location, quantity=25,
+            status=ReservationStatus.CONFIRMED,
+        )
+        self.assertEqual(record.reserved_quantity, 35)
+
+    def test_reservations_at_different_location_not_counted(self):
+        product = create_product(sku="RSV-008")
+        loc_a = create_location(name="Warehouse A")
+        loc_b = create_location(name="Warehouse B")
+        record_a = create_stock_record(product=product, location=loc_a, quantity=100)
+        create_reservation(product=product, location=loc_b, quantity=40)
+        self.assertEqual(record_a.reserved_quantity, 0)
+
+
+class StockRecordAvailableQuantityTests(TestCase):
+    """Test the available_quantity computed property."""
+
+    def test_no_reservations_equals_quantity(self):
+        product = create_product(sku="AVQ-001")
+        location = create_location(name="Warehouse")
+        record = create_stock_record(product=product, location=location, quantity=100)
+        self.assertEqual(record.available_quantity, 100)
+
+    def test_with_reservations(self):
+        product = create_product(sku="AVQ-002")
+        location = create_location(name="Warehouse")
+        record = create_stock_record(product=product, location=location, quantity=100)
+        create_reservation(product=product, location=location, quantity=30)
+        self.assertEqual(record.available_quantity, 70)
+
+    def test_fully_reserved(self):
+        product = create_product(sku="AVQ-003")
+        location = create_location(name="Warehouse")
+        record = create_stock_record(product=product, location=location, quantity=50)
+        create_reservation(product=product, location=location, quantity=50)
+        self.assertEqual(record.available_quantity, 0)
+
+
+class StockRecordIsLowStockWithReservationsTests(TestCase):
+    """Test is_low_stock accounts for reservations."""
+
+    def test_above_reorder_point_but_low_after_reservations(self):
+        """Physical quantity is above reorder_point, but available is at/below it."""
+        product = create_product(sku="LSR-001", reorder_point=10)
+        location = create_location(name="Warehouse")
+        record = create_stock_record(product=product, location=location, quantity=50)
+        self.assertFalse(record.is_low_stock)
+
+        create_reservation(product=product, location=location, quantity=45)
+        self.assertTrue(record.is_low_stock)
+
+    def test_not_low_stock_with_small_reservation(self):
+        product = create_product(sku="LSR-002", reorder_point=10)
+        location = create_location(name="Warehouse")
+        record = create_stock_record(product=product, location=location, quantity=50)
+        create_reservation(product=product, location=location, quantity=5)
+        self.assertFalse(record.is_low_stock)
 
 
 # =====================================================================
@@ -393,7 +599,7 @@ class StockMovementValidationAdjustmentTests(TestCase):
 class StockMovementImmutabilityTests(TestCase):
     """Test that saved movements cannot be updated."""
 
-    def test_update_raises_validation_error(self):
+    def test_update_raises_movement_immutable_error(self):
         product = create_product(sku="IMM-001")
         location = create_location(name="Warehouse")
         movement = StockMovement(
@@ -405,9 +611,9 @@ class StockMovementImmutabilityTests(TestCase):
         movement.save()
 
         movement.quantity = 20
-        with self.assertRaises(ValidationError) as ctx:
+        with self.assertRaises(MovementImmutableError) as ctx:
             movement.save()
-        self.assertIn("immutable", str(ctx.exception.message))
+        self.assertIn("immutable", str(ctx.exception))
 
 
 class StockMovementFKProtectionTests(TestCase):
