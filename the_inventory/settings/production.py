@@ -5,6 +5,14 @@ from .base import *  # noqa: F403,F401
 
 DEBUG = False
 
+# SECRET_KEY must be set in production
+SECRET_KEY = os.environ.get("SECRET_KEY")
+if not SECRET_KEY:
+    raise ValueError(
+        "The SECRET_KEY environment variable is not set. "
+        "This is required for production deployments."
+    )
+
 # Database - Use PostgreSQL in production via DATABASE_URL environment variable
 DATABASE_URL = os.environ.get("DATABASE_URL")
 if DATABASE_URL:
