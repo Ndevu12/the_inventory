@@ -24,10 +24,7 @@ RUN apt-get update --yes --quiet && apt-get install --yes --quiet --no-install-r
     libwebp-dev \
  && rm -rf /var/lib/apt/lists/*
 
-# Install the application server.
-RUN pip install "gunicorn==20.0.4"
-
-# Install the project requirements.
+# Install the project requirements (includes gunicorn).
 COPY requirements.txt /
 RUN pip install -r /requirements.txt
 
@@ -42,19 +39,19 @@ RUN chown wagtail:wagtail /app
 # Copy the source code of the project into the container.
 COPY --chown=wagtail:wagtail . .
 
+# Copy entrypoint script
+COPY --chown=wagtail:wagtail entrypoint.sh .
+RUN chmod +x entrypoint.sh
+
 # Use user "wagtail" to run the build commands below and the server itself.
 USER wagtail
 
 # Collect static files.
 RUN python manage.py collectstatic --noinput --clear
 
-# Runtime command that executes when "docker run" is called, it does the
-# following:
-#   1. Migrate the database.
-#   2. Start the application server.
-# WARNING:
-#   Migrating database at the same time as starting the server IS NOT THE BEST
-#   PRACTICE. The database should be migrated manually or using the release
-#   phase facilities of your hosting platform. This is used only so the
-#   Wagtail instance can be started with a simple "docker run" command.
-CMD set -xe; python manage.py migrate --noinput; gunicorn the_inventory.wsgi:application
+# Runtime command that executes when "docker run" is called.
+# The entrypoint script explicitly exports environment variables and handles:
+#   1. Migrate the database with properly set DJANGO_SETTINGS_MODULE
+#   2. Start the application server
+# This ensures that secrets injected by Andasy are available to the application.
+ENTRYPOINT ["./entrypoint.sh"]

@@ -1,8 +1,18 @@
 import os
+import dj_database_url
 
 from .base import *  # noqa: F403,F401
 
 DEBUG = False
+
+# Database - Use PostgreSQL in production via DATABASE_URL environment variable
+DATABASE_URL = os.environ.get("DATABASE_URL")
+if DATABASE_URL:
+    DATABASES["default"] = dj_database_url.config(  # noqa: F405
+        default=DATABASE_URL,
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
 
 # ManifestStaticFilesStorage is recommended in production, to prevent
 # outdated JavaScript / CSS assets being served from cache
