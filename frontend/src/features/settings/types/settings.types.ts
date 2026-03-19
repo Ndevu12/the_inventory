@@ -208,3 +208,4 @@ export interface BillingTenantUpdatePayload {
   max_users_override?: number | null
   max_products_override?: number | null
   billing_notes?: string
+}

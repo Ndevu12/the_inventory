@@ -6,7 +6,6 @@ from rest_framework import serializers
 
 from tenants.models import (
     InvitationStatus,
-    Tenant,
     TenantInvitation,
     TenantMembership,
     TenantRole,

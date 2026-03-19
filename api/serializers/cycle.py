@@ -5,7 +5,6 @@ from rest_framework import serializers
 from inventory.models import Product, StockLocation
 from inventory.models.cycle import (
     CycleCountLine,
-    CycleStatus,
     InventoryCycle,
     InventoryVariance,
     VarianceResolution,

@@ -14,7 +14,6 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.db.models import QuerySet
 from django.utils import timezone
-from django.utils.text import slugify
 
 from tenants.models import (
     INVITATION_EXPIRY_DAYS,
@@ -427,7 +426,7 @@ class TenantExportService:
 
     def _export_purchase_orders(self) -> tuple[list[dict], list[dict]]:
         """Export purchase orders with lines."""
-        from procurement.models import PurchaseOrder, PurchaseOrderLine
+        from procurement.models import PurchaseOrder
 
         qs = PurchaseOrder.objects.filter(tenant=self.tenant).select_related("supplier").prefetch_related("lines")
         qs = self._date_filter(qs)
@@ -514,7 +513,7 @@ class TenantExportService:
 
     def _export_sales_orders(self) -> tuple[list[dict], list[dict]]:
         """Export sales orders with lines."""
-        from sales.models import SalesOrder, SalesOrderLine
+        from sales.models import SalesOrder
 
         qs = SalesOrder.objects.filter(tenant=self.tenant).select_related("customer").prefetch_related("lines")
         qs = self._date_filter(qs)

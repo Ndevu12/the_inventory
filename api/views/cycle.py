@@ -82,7 +82,7 @@ class InventoryCycleViewSet(viewsets.GenericViewSet,
         service = CycleCountService()
 
         try:
-            line = service.record_count(
+            service.record_count(
                 cycle,
                 product=data["product"],
                 location=data["location"],

@@ -1,4 +1,4 @@
-from .audit import ComplianceAuditLogViewSet, PlatformAuditLogViewSet, PlatformAuditLogViewSet
+from .audit import ComplianceAuditLogViewSet, PlatformAuditLogViewSet
 from .bulk import BulkAdjustmentView, BulkRevalueView, BulkTransferView
 from .cycle import InventoryCycleViewSet
 from .inventory import (

@@ -178,7 +178,7 @@ class TenantCreateForm(forms.ModelForm):
             invited_by=invited_by,
         )
 
-        if invitation and send_owner_invitation:
+        if invitation and should_send_email:
             send_invitation_email(invitation)
 
         return tenant

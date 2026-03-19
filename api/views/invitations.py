@@ -45,7 +45,6 @@ from tenants.models import (
     InvitationStatus,
     TenantInvitation,
     TenantMembership,
-    TenantRole,
 )
 from tenants.permissions import IsTenantAdmin
 
