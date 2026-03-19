@@ -1,6 +1,5 @@
 from django.conf import settings
 from django.urls import include, path
-from django.contrib import admin
 
 from wagtail.admin import urls as wagtailadmin_urls
 from wagtail import urls as wagtail_urls
@@ -8,8 +7,13 @@ from wagtail.documents import urls as wagtaildocs_urls
 
 from search import views as search_views
 
+from tenants.django_admin_site import superuser_admin_site
+from tenants.wagtail_views import ImpersonateEndView, ImpersonateStartView
+
 urlpatterns = [
-    path("django-admin/", admin.site.urls),
+    path("django-admin/", superuser_admin_site.urls),
+    path("admin/impersonate/start/<int:user_id>/", ImpersonateStartView.as_view(), name="wagtail_impersonate_start"),
+    path("admin/impersonate/end/", ImpersonateEndView.as_view(), name="wagtail_impersonate_end"),
     path("admin/", include(wagtailadmin_urls)),
     path("documents/", include(wagtaildocs_urls)),
     path("search/", search_views.search, name="search"),

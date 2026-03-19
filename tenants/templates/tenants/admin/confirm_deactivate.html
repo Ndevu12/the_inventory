@@ -1,0 +1,11 @@
+{% extends "wagtailadmin/generic/base.html" %}
+{% load i18n %}
+
+{% block main_content %}
+    <p>{% blocktrans with name=tenant.name %}Are you sure you want to deactivate tenant "{{ name }}"? Inactive tenants cannot log in or access data.{% endblocktrans %}</p>
+    <form action="{{ action_url }}" method="POST">
+        {% csrf_token %}
+        <button type="submit" class="button serious">{% trans 'Yes, deactivate' %}</button>
+        <a href="{{ cancel_url }}" class="button button-secondary">{% trans "No, don't deactivate" %}</a>
+    </form>
+{% endblock %}

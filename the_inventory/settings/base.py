@@ -68,6 +68,7 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "api.middleware.JWTAuthMiddleware",
+    "tenants.middleware.ImpersonationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "tenants.middleware.TenantMiddleware",
@@ -254,6 +255,18 @@ CORS_ALLOW_CREDENTIALS = True
 
 
 # drf-spectacular (OpenAPI)
+
+# Frontend base URL for invite links, password reset, etc.
+# Override in production (e.g. FRONTEND_URL=https://app.example.com)
+FRONTEND_URL = "http://localhost:3000"
+
+# Public tenant registration (hosted vs self-hosted)
+# When True: anyone can register a new organization via POST /auth/register/
+# When False (default): only superuser/staff can create tenants via admin or createtenant
+# Hosters set ENABLE_PUBLIC_TENANT_REGISTRATION=True; self-hosted leave default
+ENABLE_PUBLIC_TENANT_REGISTRATION = os.environ.get(
+    "ENABLE_PUBLIC_TENANT_REGISTRATION", ""
+).lower() in ("1", "true", "yes")
 
 # Tenant access audit trail
 # Set to False to disable logging of tenant switches (useful for high-traffic systems).

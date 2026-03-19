@@ -38,8 +38,8 @@ class InventoryTokenObtainPairSerializer(TokenObtainPairSerializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ("id", "username", "email", "first_name", "last_name", "is_staff")
-        read_only_fields = ("id", "username", "is_staff")
+        fields = ("id", "username", "email", "first_name", "last_name", "is_staff", "is_superuser")
+        read_only_fields = ("id", "username", "is_staff", "is_superuser")
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -47,8 +47,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ("id", "username", "email", "first_name", "last_name", "is_staff")
-        read_only_fields = ("id", "username", "is_staff")
+        fields = ("id", "username", "email", "first_name", "last_name", "is_staff", "is_superuser")
+        read_only_fields = ("id", "username", "is_staff", "is_superuser")
 
 
 class MeResponseSerializer(serializers.Serializer):
@@ -90,3 +90,45 @@ class ChangePasswordSerializer(serializers.Serializer):
         if not user.check_password(value):
             raise serializers.ValidationError("Current password is incorrect.")
         return value
+
+
+class RegisterTenantSerializer(serializers.Serializer):
+    """Validate public tenant registration (organization + owner)."""
+
+    organization_name = serializers.CharField(max_length=255)
+    organization_slug = serializers.SlugField(required=False, allow_blank=True)
+    owner_username = serializers.CharField(max_length=150)
+    owner_email = serializers.EmailField()
+    owner_password = serializers.CharField(min_length=8, write_only=True)
+    owner_first_name = serializers.CharField(required=False, default="", allow_blank=True)
+    owner_last_name = serializers.CharField(required=False, default="", allow_blank=True)
+
+    def validate_owner_username(self, value):
+        value = (value or "").strip()
+        if User.objects.filter(username=value).exists():
+            raise serializers.ValidationError("This username is already taken.")
+        return value
+
+    def validate_owner_email(self, value):
+        value = (value or "").strip().lower()
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("An account with this email already exists.")
+        return value
+
+    def validate(self, attrs):
+        from django.utils.text import slugify
+        from tenants.models import Tenant
+
+        slug = (attrs.get("organization_slug") or "").strip()
+        if not slug:
+            slug = slugify(attrs.get("organization_name", ""))
+        if not slug:
+            raise serializers.ValidationError(
+                {"organization_name": "Organization name must yield a valid slug."}
+            )
+        if Tenant.objects.filter(slug=slug).exists():
+            raise serializers.ValidationError(
+                {"organization_slug": "An organization with this slug already exists."}
+            )
+        attrs["slug"] = slug
+        return attrs

@@ -5,7 +5,7 @@ CRUD ViewSets while additional paths cover auth, reports, dashboard,
 tenants, import, and API documentation.
 """
 
-from django.urls import path
+from django.urls import path, include
 from drf_spectacular.views import (
     SpectacularAPIView,
     SpectacularRedocView,
@@ -16,9 +16,11 @@ from rest_framework.routers import DefaultRouter
 from api.views import (
     CategoryViewSet,
     ComplianceAuditLogViewSet,
+    PlatformAuditLogViewSet,
     CustomerViewSet,
     DispatchViewSet,
     GoodsReceivedNoteViewSet,
+    InventoryCycleViewSet,
     ProductViewSet,
     PurchaseOrderViewSet,
     SalesOrderViewSet,
@@ -29,7 +31,16 @@ from api.views import (
     StockReservationViewSet,
     SupplierViewSet,
 )
-from api.views.auth import ChangePasswordView, LoginView, MeView, RefreshView
+from api.views.auth import (
+    AuthConfigView,
+    ChangePasswordView,
+    ImpersonateEndView,
+    ImpersonateStartView,
+    LoginView,
+    MeView,
+    RefreshView,
+    RegisterTenantView,
+)
 from api.views.dashboard import (
     DashboardSummaryView,
     ExpiringLotsView,
@@ -56,13 +67,32 @@ from api.views.reports import (
 )
 from api.views.bulk import BulkAdjustmentView, BulkRevalueView, BulkTransferView
 from api.views.jobs import JobListView, JobStatusView
+from api.views.invitations import (
+    AcceptInvitationView,
+    InvitationCancelView,
+    InvitationInfoView,
+    InvitationListCreateView,
+    PlatformInvitationViewSet,
+)
 from api.views.tenants import (
     CurrentTenantView,
+    TenantExportView,
     TenantMemberDetailView,
     TenantMemberListView,
 )
+from api.views.users import PlatformTenantListView, PlatformUserViewSet
+from api.views.billing import (
+    PlatformBillingTenantListView,
+    PlatformBillingTenantDetailView,
+    PlatformBillingTenantSuspendView,
+    PlatformBillingTenantReactivateView,
+)
 
 router = DefaultRouter()
+platform_router = DefaultRouter()
+platform_router.register("users", PlatformUserViewSet, basename="platform-user")
+platform_router.register("audit-log", PlatformAuditLogViewSet, basename="platform-auditlog")
+platform_router.register("invitations", PlatformInvitationViewSet, basename="platform-invitation")
 
 # Inventory
 router.register("categories", CategoryViewSet, basename="category")
@@ -72,6 +102,7 @@ router.register("stock-records", StockRecordViewSet, basename="stockrecord")
 router.register("stock-movements", StockMovementViewSet, basename="stockmovement")
 router.register("stock-lots", StockLotViewSet, basename="stocklot")
 router.register("reservations", StockReservationViewSet, basename="reservation")
+router.register("cycle-counts", InventoryCycleViewSet, basename="cyclecount")
 router.register("audit-log", ComplianceAuditLogViewSet, basename="auditlog")
 # Procurement
 router.register("suppliers", SupplierViewSet, basename="supplier")
@@ -85,10 +116,15 @@ router.register("dispatches", DispatchViewSet, basename="dispatch")
 
 urlpatterns = [
     # Auth
-    path("auth/login/", LoginView.as_view(), name="api-login"),
+    path("auth/config/", AuthConfigView.as_view(), name="api-auth-config"),
+    path("auth/login", LoginView.as_view(), name="api-login"),
+    path("auth/login/", LoginView.as_view(), name="api-login-slash"),
+    path("auth/register/", RegisterTenantView.as_view(), name="api-register"),
     path("auth/refresh/", RefreshView.as_view(), name="api-token-refresh"),
     path("auth/me/", MeView.as_view(), name="api-me"),
     path("auth/change-password/", ChangePasswordView.as_view(), name="api-change-password"),
+    path("auth/impersonate/start/", ImpersonateStartView.as_view(), name="api-impersonate-start"),
+    path("auth/impersonate/end/", ImpersonateEndView.as_view(), name="api-impersonate-end"),
 
     # Reports
     path("reports/stock-valuation/", StockValuationView.as_view(), name="api-stock-valuation"),
@@ -117,6 +153,12 @@ urlpatterns = [
     path("tenants/current/", CurrentTenantView.as_view(), name="api-current-tenant"),
     path("tenants/members/", TenantMemberListView.as_view(), name="api-tenant-members"),
     path("tenants/members/<int:pk>/", TenantMemberDetailView.as_view(), name="api-tenant-member-detail"),
+    path("tenants/invitations/", InvitationListCreateView.as_view(), name="api-tenant-invitations"),
+    path("tenants/invitations/<int:pk>/", InvitationCancelView.as_view(), name="api-tenant-invitation-cancel"),
+
+    # Public invitation endpoints (no auth required)
+    path("auth/invitations/<str:token>/", InvitationInfoView.as_view(), name="api-invitation-info"),
+    path("auth/invitations/<str:token>/accept/", AcceptInvitationView.as_view(), name="api-invitation-accept"),
 
     # Bulk operations
     path("bulk-operations/transfer/", BulkTransferView.as_view(), name="api-bulk-transfer"),
@@ -129,6 +171,15 @@ urlpatterns = [
     # Async jobs
     path("jobs/", JobListView.as_view(), name="api-job-list"),
     path("jobs/<uuid:job_id>/status/", JobStatusView.as_view(), name="api-job-status"),
+
+    # Platform admin (superuser only)
+    path("platform/tenants/", PlatformTenantListView.as_view(), name="api-platform-tenants"),
+    path("platform/tenants/<int:pk>/export/", TenantExportView.as_view(), name="api-platform-tenant-export"),
+    path("platform/billing/tenants/", PlatformBillingTenantListView.as_view(), name="api-platform-billing-tenants"),
+    path("platform/billing/tenants/<int:pk>/", PlatformBillingTenantDetailView.as_view(), name="api-platform-billing-tenant-detail"),
+    path("platform/billing/tenants/<int:pk>/suspend/", PlatformBillingTenantSuspendView.as_view(), name="api-platform-billing-tenant-suspend"),
+    path("platform/billing/tenants/<int:pk>/reactivate/", PlatformBillingTenantReactivateView.as_view(), name="api-platform-billing-tenant-reactivate"),
+    path("platform/", include(platform_router.urls)),
 
     # API documentation
     path("schema/", SpectacularAPIView.as_view(), name="schema"),

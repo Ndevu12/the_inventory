@@ -1,24 +1,23 @@
-"""Tenant resolution middleware.
+"""Tenant resolution and impersonation middleware.
 
-On every request the middleware resolves the active tenant and stores it
-in both ``request.tenant`` and thread-local context so that model
-managers can scope queries automatically.
+TenantMiddleware resolves the active tenant and stores it in both
+``request.tenant`` and thread-local context.
 
-Resolution order:
-1. ``X-Tenant`` HTTP header (API consumers switching tenant context)
-2. ``tenant`` query parameter
-3. The user's default ``TenantMembership``
-4. The user's first active membership (fallback)
-
-Anonymous requests get ``tenant = None``, which means all tenant-aware
-managers return an empty queryset — safe by default.
+ImpersonationMiddleware (session-based) swaps request.user to the
+impersonated user when a superuser has started impersonation via
+Wagtail admin. API impersonation uses token swap (no middleware).
 """
 
 import logging
 
 from django.conf import settings as django_settings
 
-from tenants.context import clear_current_tenant, set_current_tenant
+from tenants.context import (
+    clear_current_tenant,
+    clear_impersonation_context,
+    set_current_tenant,
+    set_impersonation_context,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -120,3 +119,63 @@ class TenantMiddleware:
 
         # 4) First active membership
         return memberships.first().tenant
+
+
+class ImpersonationMiddleware:
+    """Session-based impersonation for Wagtail admin.
+
+    When a superuser has started impersonation (session contains
+    _impersonating_user_id), swap request.user to the impersonated user.
+    Only applies to session-authenticated requests (not JWT API requests).
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        self._apply_impersonation(request)
+        try:
+            return self.get_response(request)
+        finally:
+            clear_impersonation_context()
+
+    @staticmethod
+    def _apply_impersonation(request):
+        """Swap to impersonated user when session indicates impersonation."""
+        # Skip for JWT-authenticated requests (API uses token swap, not session)
+        if getattr(request, "auth", None) is not None:
+            return
+        if not hasattr(request, "user") or not request.user.is_authenticated:
+            return
+        if not request.user.is_superuser:
+            return
+
+        session = getattr(request, "session", None)
+        if session is None:
+            return
+
+        imp_user_id = session.get("_impersonating_user_id")
+        if not imp_user_id:
+            return
+
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
+        try:
+            imp_user = User.objects.get(pk=imp_user_id, is_active=True)
+        except User.DoesNotExist:
+            session.pop("_impersonating_user_id", None)
+            return
+
+        if imp_user.pk == request.user.pk:
+            session.pop("_impersonating_user_id", None)
+            return
+
+        request._real_user = request.user
+        request.user = imp_user
+        request._impersonating = True
+
+        set_impersonation_context(
+            real_user=request._real_user,
+            impersonated_user=imp_user,
+        )

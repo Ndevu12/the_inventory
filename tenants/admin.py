@@ -1,42 +1,22 @@
-from django.contrib import admin
+"""Django admin for tenants app.
 
-from tenants.models import Tenant, TenantMembership
+Tenant and TenantMembership are managed via the Wagtail admin
+(Tenants snippet with Members inline). They are not registered
+in Django admin to consolidate platform admin in one place.
 
+SuperuserOnlyAdminSite: Django admin exposed at /django-admin/ for superusers
+only. Registers User and Group for auth operations (migrations, permissions,
+raw DB). See SA-08 in docs/TASKS.MD.
+"""
 
-class TenantMembershipInline(admin.TabularInline):
-    model = TenantMembership
-    extra = 1
-    fields = ("user", "role", "is_active", "is_default")
+from django.contrib.auth import get_user_model
+from django.contrib.auth.admin import GroupAdmin, UserAdmin
+from django.contrib.auth.models import Group
 
+from tenants.django_admin_site import superuser_admin_site
 
-@admin.register(Tenant)
-class TenantAdmin(admin.ModelAdmin):
-    list_display = ("name", "slug", "subscription_plan", "subscription_status", "is_active")
-    list_filter = ("is_active", "subscription_plan", "subscription_status")
-    search_fields = ("name", "slug")
-    prepopulated_fields = {"slug": ("name",)}
-    inlines = [TenantMembershipInline]
-    fieldsets = (
-        (None, {"fields": ("name", "slug", "is_active")}),
-        (
-            "Branding",
-            {
-                "fields": ("branding_site_name", "branding_primary_color", "branding_logo"),
-                "classes": ("collapse",),
-            },
-        ),
-        (
-            "Subscription",
-            {
-                "fields": ("subscription_plan", "subscription_status", "max_users", "max_products"),
-            },
-        ),
-    )
-
-
-@admin.register(TenantMembership)
-class TenantMembershipAdmin(admin.ModelAdmin):
-    list_display = ("user", "tenant", "role", "is_active", "is_default")
-    list_filter = ("role", "is_active", "tenant")
-    search_fields = ("user__username", "user__email", "tenant__name")
-    raw_id_fields = ("user",)
+# Register system models on the superuser-only Django admin.
+# Tenant-scoped models remain unregistered (managed via Wagtail).
+User = get_user_model()
+superuser_admin_site.register(Group, GroupAdmin)
+superuser_admin_site.register(User, UserAdmin)

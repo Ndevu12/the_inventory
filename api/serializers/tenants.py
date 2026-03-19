@@ -36,6 +36,65 @@ class TenantSerializer(serializers.ModelSerializer):
         return obj.product_count()
 
 
+class PlatformBillingTenantSerializer(serializers.ModelSerializer):
+    """Serializer for platform billing view — list tenants with usage and limits."""
+
+    user_count = serializers.SerializerMethodField()
+    product_count = serializers.SerializerMethodField()
+    effective_max_users = serializers.SerializerMethodField()
+    effective_max_products = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Tenant
+        fields = (
+            "id",
+            "name",
+            "slug",
+            "is_active",
+            "subscription_plan",
+            "subscription_status",
+            "max_users",
+            "max_products",
+            "max_users_override",
+            "max_products_override",
+            "user_count",
+            "product_count",
+            "effective_max_users",
+            "effective_max_products",
+            "billing_notes",
+            "created_at",
+            "updated_at",
+        )
+
+    def get_user_count(self, obj):
+        return obj.user_count()
+
+    def get_product_count(self, obj):
+        return obj.product_count()
+
+    def get_effective_max_users(self, obj):
+        return obj.effective_max_users()
+
+    def get_effective_max_products(self, obj):
+        return obj.effective_max_products()
+
+
+class PlatformBillingTenantUpdateSerializer(serializers.ModelSerializer):
+    """Serializer for PATCH — change plan, status, billing notes, overrides."""
+
+    class Meta:
+        model = Tenant
+        fields = (
+            "subscription_plan",
+            "subscription_status",
+            "max_users",
+            "max_products",
+            "max_users_override",
+            "max_products_override",
+            "billing_notes",
+        )
+
+
 class TenantMemberSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source="user.username", read_only=True)
     email = serializers.CharField(source="user.email", read_only=True)

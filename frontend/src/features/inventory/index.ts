@@ -1,0 +1,52 @@
+export { ProductListPage } from "./pages/product-list-page"
+export { ProductCreatePage } from "./pages/product-create-page"
+export { ProductEditPage } from "./pages/product-edit-page"
+export { ProductDetailPage } from "./pages/product-detail-page"
+
+export { CategoryListPage } from "./pages/category-list-page"
+export { StockRecordsPage } from "./pages/stock-records-page"
+export { LotListPage } from "./pages/lot-list-page"
+
+export type {
+  Product,
+  Category,
+  StockRecord,
+  StockMovement,
+  StockLot,
+} from "./types/inventory.types"
+
+export { LocationListPage } from "./pages/location-list-page"
+export { LocationTree } from "./components/locations/location-tree"
+export { LocationFormDialog } from "./components/locations/location-form-dialog"
+export { CapacityBar } from "./components/locations/capacity-bar"
+export {
+  useLocations,
+  useLocation,
+  useLocationStock,
+  useCreateLocation,
+  useUpdateLocation,
+  useDeleteLocation,
+} from "./hooks/use-locations"
+export type {
+  StockLocation,
+  StockLocationFormData,
+  StockRecordAtLocation,
+} from "./types/location.types"
+
+export { MovementListPage } from "./pages/movement-list-page"
+export { MovementCreatePage } from "./pages/movement-create-page"
+export { MovementTable } from "./components/movements/movement-table"
+export { MovementForm } from "./components/movements/movement-form"
+export { getMovementColumns } from "./components/movement-columns"
+export { useMovements, useMovement, useCreateMovement } from "./hooks/use-movements"
+export { useMovementFormStore } from "./stores/movement-form-store"
+export {
+  movementFormSchema,
+  MOVEMENT_TYPES,
+  ALLOCATION_STRATEGIES,
+} from "./helpers/movement-schemas"
+export type {
+  StockMovementCreatePayload,
+  MovementType,
+  MovementListParams,
+} from "./api/movements-api"
