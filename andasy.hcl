@@ -6,7 +6,8 @@ app_name = "theinventory"
 
 app {
 
-  env = {}
+  env = {
+  }
 
   port = 8000
 
