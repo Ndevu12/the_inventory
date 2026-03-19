@@ -6,7 +6,7 @@ This document outlines the planned development phases for **The Inventory**. Eac
 
 ---
 
-## Phase 1 — Core Inventory (Building Now) 🚧
+## Phase 1 — Core Inventory (Building Now) ✅
 
 The foundation: manage products, track stock, and move items between locations. This is what we are actively building. See [Architecture](ARCHITECTURE.md) for the full schema design.
 
@@ -16,20 +16,20 @@ The foundation: manage products, track stock, and move items between locations. 
 
 | Feature | Status |
 |---|---|
-| `TimeStampedModel` abstract base (audit: `created_at`, `updated_at`, `created_by`) | 📋 |
-| `Category` model — hierarchical tree via `treebeard`, soft-delete | 📋 |
-| `Product` model — SKU, name, description, unit of measure, unit cost, reorder point, soft-delete | 📋 |
-| `ProductImage` — multiple orderable images per product | 📋 |
-| `ProductTag` — free-form tagging via `django-taggit` | 📋 |
-| `StockLocation` model — hierarchical tree (warehouse → shelf → bin), soft-delete | 📋 |
-| `StockRecord` model — current quantity per product per location, low-stock property | 📋 |
-| `StockMovement` model — receive, issue, transfer, adjustment with point-in-time unit cost | 📋 |
-| Stock movement processing — atomic quantity updates on save, validation rules | 📋 |
-| Low-stock alerts — filtered admin view, dashboard widget | 📋 |
-| Full-text search & filtering via Wagtail search backend and `django-filter` | 📋 |
-| Wagtail admin dashboard widgets (stock summary, low-stock, recent movements) | 📋 |
-| Unit tests for all inventory models | 📋 |
-| Integration tests for stock movement flow | 📋 |
+| `TimeStampedModel` abstract base (audit: `created_at`, `updated_at`, `created_by`) | ✅ |
+| `Category` model — hierarchical tree via `treebeard`, soft-delete | ✅ |
+| `Product` model — SKU, name, description, unit of measure, unit cost, reorder point, soft-delete | ✅ |
+| `ProductImage` — multiple orderable images per product | ✅ |
+| `ProductTag` — free-form tagging via `django-taggit` | ✅ |
+| `StockLocation` model — hierarchical tree (warehouse → shelf → bin), soft-delete | ✅ |
+| `StockRecord` model — current quantity per product per location, low-stock property | ✅ |
+| `StockMovement` model — receive, issue, transfer, adjustment with point-in-time unit cost | ✅ |
+| Stock movement processing — atomic quantity updates on save, validation rules | ✅ |
+| Low-stock alerts — filtered admin view, dashboard widget | ✅ |
+| Full-text search & filtering via Wagtail search backend and `django-filter` | ✅ |
+| Wagtail admin dashboard widgets (stock summary, low-stock, recent movements) | ✅ |
+| Unit tests for all inventory models | ✅ |
+| Integration tests for stock movement flow | ✅ |
 
 **Goal:** A fully functional, well-tested inventory system usable through the Wagtail admin.
 
@@ -39,7 +39,7 @@ The foundation: manage products, track stock, and move items between locations. 
 
 ---
 
-## Phase 2 — Procurement & Sales 🚧
+## Phase 2 — Procurement & Sales ✅
 
 Extend the system to track the full lifecycle of goods — from purchase orders to customer sales.
 
@@ -67,7 +67,7 @@ Extend the system to track the full lifecycle of goods — from purchase orders 
 
 ---
 
-## Phase 3 — Reporting & Analytics 🚧
+## Phase 3 — Reporting & Analytics ✅
 
 Provide insight into inventory health, movement trends, and financial summaries.
 
@@ -122,13 +122,13 @@ Open up the system for external consumers and third-party integrations.
 | Tenant management API: current tenant, member list/update/delete | ✅ |
 | Import API: file upload endpoint for CSV/Excel | ✅ |
 | OpenAPI schema + Swagger UI + Redoc (`drf-spectacular`) | ✅ |
-| Webhook support for stock events | 📋 |
-| Barcode / QR code scanning support | 📋 |
-| Optional Elasticsearch backend for advanced search | 📋 |
+| Webhook support for stock events | ✅ |
+| Barcode / QR code scanning support | ✅ |
+| Optional Elasticsearch backend for advanced search | ✅ |
 
 ---
 
-## Phase 5 — Multi-tenancy & SaaS (Stretch) 🚧
+## Phase 5 — Multi-tenancy & SaaS (Stretch) ✅
 
 Enable multiple organizations to use a single deployment.
 
@@ -153,10 +153,10 @@ Enable multiple organizations to use a single deployment.
 | Full test suite (72 tests): models, middleware, context, managers, permissions, cross-app integration | ✅ |
 | Per-tenant unique constraints (sku, code, order_number per tenant) | ✅ |
 | Tenant-scoped Wagtail Snippet querysets (`TenantScopedSnippetViewSet`) | ✅ |
-| Tenant provisioning API / self-service signup | 📋 |
+| Tenant provisioning API / self-service signup | ✅ |
 
 ---
 
 ## How to Contribute
 
-Pick any **📋 Planned** item, open an issue to discuss your approach, and submit a PR. See the [Contributing Guide](../CONTRIBUTING.md) for workflow details.
+Pick any **✅ Planned** item, open an issue to discuss your approach, and submit a PR. See the [Contributing Guide](../CONTRIBUTING.md) for workflow details.

@@ -38,6 +38,14 @@ class SalesOrderLineSerializer(serializers.ModelSerializer):
         read_only_fields = ["id"]
 
 
+class SalesOrderLineWriteSerializer(serializers.Serializer):
+    product = serializers.PrimaryKeyRelatedField(
+        queryset=SalesOrderLine._meta.get_field("product").related_model.objects.all(),
+    )
+    quantity = serializers.IntegerField(min_value=1)
+    unit_price = serializers.DecimalField(max_digits=12, decimal_places=2)
+
+
 class SalesOrderSerializer(serializers.ModelSerializer):
     customer_name = serializers.CharField(
         source="customer.name", read_only=True,
@@ -71,6 +79,16 @@ class SalesOrderSerializer(serializers.ModelSerializer):
             if total_available < line.quantity:
                 return False
         return True
+
+    def create(self, validated_data):
+        lines_data = self.initial_data.get("lines", [])
+        line_serializer = SalesOrderLineWriteSerializer(data=lines_data, many=True)
+        line_serializer.is_valid(raise_exception=True)
+
+        order = SalesOrder.objects.create(**validated_data)
+        for line in line_serializer.validated_data:
+            SalesOrderLine.objects.create(sales_order=order, **line)
+        return order
 
 
 class DispatchSerializer(serializers.ModelSerializer):

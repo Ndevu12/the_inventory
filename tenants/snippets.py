@@ -7,11 +7,19 @@ Provides:
   automatically filter by the current tenant (for future use).
 """
 
+from django.urls import path
+
 from wagtail.snippets.models import register_snippet
 from wagtail.snippets.views.snippets import SnippetViewSet
 
 from tenants.context import get_current_tenant
 from tenants.models import Tenant
+from tenants.wagtail_views import (
+    TenantCreateView,
+    TenantDeactivateView,
+    TenantEditView,
+    TenantReactivateView,
+)
 
 
 class TenantSnippetViewSet(SnippetViewSet):
@@ -28,9 +36,29 @@ class TenantSnippetViewSet(SnippetViewSet):
         "subscription_plan",
         "subscription_status",
         "is_active",
+        "usage_summary",
     ]
     list_filter = ["is_active", "subscription_plan", "subscription_status"]
     search_fields = ["name", "slug"]
+    add_view_class = TenantCreateView
+    edit_view_class = TenantEditView
+
+    def get_urlpatterns(self):
+        conv = self.pk_path_converter
+        patterns = super().get_urlpatterns()
+        patterns.extend([
+            path(
+                f"deactivate/<{conv}:pk>/",
+                TenantDeactivateView.as_view(),
+                name="deactivate",
+            ),
+            path(
+                f"reactivate/<{conv}:pk>/",
+                TenantReactivateView.as_view(),
+                name="reactivate",
+            ),
+        ])
+        return patterns
 
 
 register_snippet(TenantSnippetViewSet)

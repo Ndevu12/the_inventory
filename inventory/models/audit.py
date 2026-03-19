@@ -14,6 +14,12 @@ class AuditAction(models.TextChoices):
     CYCLE_COUNT_RECONCILED = "cycle_count_reconciled", "Cycle Count Reconciled"
     BULK_OPERATION = "bulk_operation", "Bulk Operation"
     TENANT_ACCESSED = "tenant_accessed", "Tenant Accessed"
+    TENANT_DEACTIVATED = "tenant_deactivated", "Tenant Deactivated"
+    TENANT_REACTIVATED = "tenant_reactivated", "Tenant Reactivated"
+    TENANT_LIMIT_OVERRIDDEN = "tenant_limit_overridden", "Tenant Limit Overridden"
+    IMPERSONATION_STARTED = "impersonation_started", "Impersonation Started"
+    IMPERSONATION_ENDED = "impersonation_ended", "Impersonation Ended"
+    TENANT_EXPORT = "tenant_export", "Tenant Data Exported"
 
 
 class ComplianceAuditLog(models.Model):

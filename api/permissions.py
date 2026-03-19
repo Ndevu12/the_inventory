@@ -28,6 +28,23 @@ class ReadOnlyOrStaff(BasePermission):
         return request.user.is_staff
 
 
+class IsPlatformSuperuser(BasePermission):
+    """Allow access only to Django superusers (platform-level admin).
+
+    Used for platform user management and other cross-tenant admin features.
+    No tenant context is required.
+    """
+
+    message = "Platform superuser access is required."
+
+    def has_permission(self, request, view):
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and request.user.is_superuser
+        )
+
+
 class IsAdminOrOwner(BasePermission):
     """Allow access to tenant admins, tenant owners, and Django superusers.
 

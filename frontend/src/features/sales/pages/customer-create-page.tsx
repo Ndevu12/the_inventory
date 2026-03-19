@@ -1,0 +1,73 @@
+"use client"
+
+import { useRouter } from "next/navigation"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { toast } from "sonner"
+import Link from "next/link"
+
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardFooter } from "@/components/ui/card"
+import { PageHeader } from "@/components/layout/page-header"
+import { useCreateCustomer } from "../hooks/use-customers"
+import {
+  createCustomerSchema,
+  type CreateCustomerFormValues,
+} from "../helpers/customer-schemas"
+import { CustomerForm } from "../components/customers/customer-form"
+
+export function CustomerCreatePage() {
+  const router = useRouter()
+  const createMutation = useCreateCustomer()
+
+  const form = useForm<CreateCustomerFormValues>({
+    resolver: zodResolver(createCustomerSchema),
+    defaultValues: {
+      code: "",
+      name: "",
+      contact_name: "",
+      email: "",
+      phone: "",
+      address: "",
+      is_active: true,
+      notes: "",
+    },
+  })
+
+  function onSubmit(values: CreateCustomerFormValues) {
+    createMutation.mutate(values, {
+      onSuccess: (customer) => {
+        toast.success(`Customer "${customer.name}" created`)
+        router.push("/sales/customers")
+      },
+      onError: () => {
+        toast.error("Failed to create customer")
+      },
+    })
+  }
+
+  return (
+    <div className="flex flex-1 flex-col gap-6 p-6">
+      <PageHeader
+        title="New Customer"
+        description="Add a new customer to your directory"
+      />
+
+      <form onSubmit={form.handleSubmit(onSubmit)}>
+        <Card>
+          <CardContent className="pt-6">
+            <CustomerForm form={form} />
+          </CardContent>
+          <CardFooter className="flex justify-end gap-2">
+            <Button variant="outline" render={<Link href="/sales/customers" />}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={createMutation.isPending}>
+              {createMutation.isPending ? "Creating..." : "Create Customer"}
+            </Button>
+          </CardFooter>
+        </Card>
+      </form>
+    </div>
+  )
+}
