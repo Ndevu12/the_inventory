@@ -7,18 +7,44 @@ from .env_utils import env_bool
 
 DEBUG = False
 
-# ALLOWED_HOSTS - configure allowed domains for production
-# Accept from environment variable or use defaults for common platforms
-# Django matches subdomains with a leading dot only — "*.example.com" is not valid.
+
+def _normalize_allowed_host(raw: str) -> str:
+    """ALLOWED_HOSTS must be host[:port] only — no scheme or path (common env mistake)."""
+    h = raw.strip()
+    if not h:
+        return ""
+    lower = h.lower()
+    for prefix in ("https://", "http://"):
+        if lower.startswith(prefix):
+            h = h[len(prefix) :]
+            lower = h.lower()
+            break
+    if "/" in h:
+        h = h.split("/", 1)[0]
+    return h.strip()
+
+
+# ALLOWED_HOSTS — explicit hostnames for every public URL (and leading-dot suffixes, e.g. .example.com).
+# Normalize strips accidental https:// and paths from env. No platform-specific entries here:
+# set ALLOWED_HOSTS in your orchestration (K8s, PaaS, systemd) for each environment.
 # See https://docs.djangoproject.com/en/stable/ref/settings/#allowed-hosts
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "").split(",") if os.environ.get("ALLOWED_HOSTS") else [
+_default_allowed_hosts = [
     "localhost",
     "127.0.0.1",
-    ".onrender.com",  # any *.onrender.com service hostname
-    ".andasy.dev",
 ]
-# Remove empty strings from the list
-ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS if host.strip()]
+_env_allowed = (os.environ.get("ALLOWED_HOSTS") or "").strip()
+_raw_hosts = (
+    [x.strip() for x in _env_allowed.split(",") if x.strip()]
+    if _env_allowed
+    else list(_default_allowed_hosts)
+)
+ALLOWED_HOSTS = []
+_seen_hosts: set[str] = set()
+for item in _raw_hosts:
+    host = _normalize_allowed_host(item)
+    if host and host not in _seen_hosts:
+        _seen_hosts.add(host)
+        ALLOWED_HOSTS.append(host)
 
 # SECRET_KEY must be set in production
 SECRET_KEY = os.environ.get("SECRET_KEY")
@@ -44,8 +70,7 @@ if DATABASE_URL:
 STORAGES["staticfiles"]["BACKEND"] = "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"  # noqa: F405
 
 # Wagtail uses the default cache for site root paths on every page request. If Redis
-# is not reachable (common on Render without a Redis add-on), those lookups raise and
-# the site returns 500. Only enable django-redis when REDIS_URL is set.
+# is not configured, use LocMem (single-process only). Only enable django-redis when REDIS_URL is set.
 _redis_url = (os.environ.get("REDIS_URL") or "").strip()
 if _redis_url:
     CACHES = {  # noqa: F405
@@ -65,9 +90,9 @@ else:
         }
     }
 
-# TLS termination at the proxy (Render, Heroku, etc.)
-_render = (os.environ.get("RENDER") or "").strip().lower() in ("1", "true", "yes")
-if _render or env_bool("USE_X_FORWARDED_PROTO"):
+# TLS is usually terminated at a load balancer / ingress / PaaS edge. Trust X-Forwarded-Proto
+# unless you terminate TLS on the app process (set USE_X_FORWARDED_PROTO=false).
+if env_bool("USE_X_FORWARDED_PROTO", True):
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # Secure cookies by default in production; set SESSION_COOKIE_SECURE=false to disable.
