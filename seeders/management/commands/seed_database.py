@@ -3,7 +3,7 @@
 from django.core.management.base import BaseCommand, CommandError
 from tenants.models import Tenant
 from tenants.context import set_current_tenant, clear_current_tenant
-from inventory.seeders import SeederManager
+from seeders.seeder_manager import SeederManager
 
 
 class Command(BaseCommand):

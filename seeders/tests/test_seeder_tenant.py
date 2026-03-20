@@ -15,8 +15,8 @@ from django.core.management.base import CommandError
 
 from tenants.models import Tenant
 from tenants.context import get_current_tenant, set_current_tenant
-from inventory.seeders.tenant_seeder import TenantSeeder
-from inventory.seeders.seeder_manager import SeederManager
+from seeders.tenant_seeder import TenantSeeder
+from seeders.seeder_manager import SeederManager
 from inventory.models import (
     Category,
     Product,
@@ -201,7 +201,7 @@ class CategorySeederTenantTestCase(TransactionTestCase):
 
     def test_category_seeder_creates_with_tenant(self):
         """Test: CategorySeeder creates categories assigned to the provided tenant."""
-        from inventory.seeders.category_seeder import CategorySeeder
+        from seeders.category_seeder import CategorySeeder
 
         seeder = CategorySeeder(verbose=False)
         seeder.execute(tenant=self.tenant)
@@ -216,7 +216,7 @@ class CategorySeederTenantTestCase(TransactionTestCase):
 
     def test_category_seeder_hierarchy_respects_tenant(self):
         """Test: CategorySeeder creates hierarchical structure within tenant scope."""
-        from inventory.seeders.category_seeder import CategorySeeder
+        from seeders.category_seeder import CategorySeeder
 
         seeder = CategorySeeder(verbose=False)
         seeder.execute(tenant=self.tenant)
@@ -243,7 +243,7 @@ class ProductSeederTenantTestCase(TransactionTestCase):
         self.tenant = Tenant.objects.create(name="Test Tenant", slug="test-tenant")
 
         # Create categories first (ProductSeeder depends on them)
-        from inventory.seeders.category_seeder import CategorySeeder
+        from seeders.category_seeder import CategorySeeder
         cat_seeder = CategorySeeder(verbose=False)
         cat_seeder.execute(tenant=self.tenant)
 
@@ -255,7 +255,7 @@ class ProductSeederTenantTestCase(TransactionTestCase):
 
     def test_product_seeder_creates_with_tenant(self):
         """Test: ProductSeeder creates products assigned to the provided tenant."""
-        from inventory.seeders.product_seeder import ProductSeeder
+        from seeders.product_seeder import ProductSeeder
 
         seeder = ProductSeeder(verbose=False)
         seeder.execute(tenant=self.tenant)
@@ -270,13 +270,13 @@ class ProductSeederTenantTestCase(TransactionTestCase):
 
     def test_product_seeder_multiple_tenants(self):
         """Test: Products with same SKU can exist in different tenants."""
-        from inventory.seeders.product_seeder import ProductSeeder
+        from seeders.product_seeder import ProductSeeder
 
         # Create a second tenant
         tenant2 = Tenant.objects.create(name="Tenant 2", slug="tenant-2")
 
         # Create categories for tenant2
-        from inventory.seeders.category_seeder import CategorySeeder
+        from seeders.category_seeder import CategorySeeder
         cat_seeder = CategorySeeder(verbose=False)
         cat_seeder.execute(tenant=tenant2)
 
@@ -316,7 +316,7 @@ class StockLocationSeederTenantTestCase(TransactionTestCase):
 
     def test_stock_location_seeder_creates_with_tenant(self):
         """Test: StockLocationSeeder creates locations assigned to the provided tenant."""
-        from inventory.seeders.stock_location_seeder import StockLocationSeeder
+        from seeders.stock_location_seeder import StockLocationSeeder
 
         seeder = StockLocationSeeder(verbose=False)
         seeder.execute(tenant=self.tenant)
@@ -331,7 +331,7 @@ class StockLocationSeederTenantTestCase(TransactionTestCase):
 
     def test_stock_location_hierarchy_respects_tenant(self):
         """Test: StockLocationSeeder creates hierarchical structure within tenant scope."""
-        from inventory.seeders.stock_location_seeder import StockLocationSeeder
+        from seeders.stock_location_seeder import StockLocationSeeder
 
         seeder = StockLocationSeeder(verbose=False)
         seeder.execute(tenant=self.tenant)
@@ -360,9 +360,9 @@ class StockRecordSeederTenantTestCase(TransactionTestCase):
         self.tenant = Tenant.objects.create(name="Test Tenant", slug="test-tenant")
 
         # Create prerequisite data
-        from inventory.seeders.category_seeder import CategorySeeder
-        from inventory.seeders.product_seeder import ProductSeeder
-        from inventory.seeders.stock_location_seeder import StockLocationSeeder
+        from seeders.category_seeder import CategorySeeder
+        from seeders.product_seeder import ProductSeeder
+        from seeders.stock_location_seeder import StockLocationSeeder
 
         cat_seeder = CategorySeeder(verbose=False)
         cat_seeder.execute(tenant=self.tenant)
@@ -383,7 +383,7 @@ class StockRecordSeederTenantTestCase(TransactionTestCase):
 
     def test_stock_record_seeder_creates_with_tenant(self):
         """Test: StockRecordSeeder creates records assigned to the provided tenant."""
-        from inventory.seeders.stock_record_seeder import StockRecordSeeder
+        from seeders.stock_record_seeder import StockRecordSeeder
 
         seeder = StockRecordSeeder(verbose=False)
         seeder.execute(tenant=self.tenant)
@@ -398,7 +398,7 @@ class StockRecordSeederTenantTestCase(TransactionTestCase):
 
     def test_stock_record_foreign_keys_respect_tenant(self):
         """Test: StockRecordSeeder creates records linking tenant-scoped products and locations."""
-        from inventory.seeders.stock_record_seeder import StockRecordSeeder
+        from seeders.stock_record_seeder import StockRecordSeeder
 
         seeder = StockRecordSeeder(verbose=False)
         seeder.execute(tenant=self.tenant)
@@ -425,10 +425,10 @@ class StockMovementSeederTenantTestCase(TransactionTestCase):
         self.tenant = Tenant.objects.create(name="Test Tenant", slug="test-tenant")
 
         # Create prerequisite data
-        from inventory.seeders.category_seeder import CategorySeeder
-        from inventory.seeders.product_seeder import ProductSeeder
-        from inventory.seeders.stock_location_seeder import StockLocationSeeder
-        from inventory.seeders.stock_record_seeder import StockRecordSeeder
+        from seeders.category_seeder import CategorySeeder
+        from seeders.product_seeder import ProductSeeder
+        from seeders.stock_location_seeder import StockLocationSeeder
+        from seeders.stock_record_seeder import StockRecordSeeder
 
         cat_seeder = CategorySeeder(verbose=False)
         cat_seeder.execute(tenant=self.tenant)
@@ -453,7 +453,7 @@ class StockMovementSeederTenantTestCase(TransactionTestCase):
 
     def test_stock_movement_seeder_creates_with_tenant(self):
         """Test: StockMovementSeeder creates movements assigned to the provided tenant."""
-        from inventory.seeders.stock_movement_seeder import StockMovementSeeder
+        from seeders.stock_movement_seeder import StockMovementSeeder
 
         seeder = StockMovementSeeder(verbose=False)
         seeder.execute(tenant=self.tenant)
@@ -727,7 +727,7 @@ class DataIntegrityTenantTestCase(TransactionTestCase):
         tenant2 = Tenant.objects.create(name="Tenant 2", slug="tenant-2")
 
         # Create a category for each tenant
-        from inventory.seeders.category_seeder import CategorySeeder
+        from seeders.category_seeder import CategorySeeder
         cat_seeder1 = CategorySeeder(verbose=False)
         cat_seeder1.execute(tenant=tenant1)
         cat_seeder2 = CategorySeeder(verbose=False)

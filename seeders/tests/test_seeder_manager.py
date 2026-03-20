@@ -2,8 +2,8 @@
 
 from django.test import TestCase, TransactionTestCase
 from tenants.models import Tenant
-from inventory.seeders import SeederManager
-from inventory.seeders.tenant_seeder import TenantSeeder
+from seeders import SeederManager
+from seeders.tenant_seeder import TenantSeeder
 
 
 class SeederManagerTestCase(TransactionTestCase):

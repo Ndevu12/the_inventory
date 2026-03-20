@@ -69,7 +69,7 @@ class UserSeeder(BaseSeeder):
         # Add users to tenant with appropriate roles
         if self.tenant:
             self._add_user_to_tenant(admin_user, TenantRole.ADMIN, is_default=True)
-            self._add_user_to_tenant(manager_user, TenantRole.EDITOR)
+            self._add_user_to_tenant(manager_user, TenantRole.MANAGER)
             self._add_user_to_tenant(regular_user, TenantRole.VIEWER)
 
     def _add_user_to_tenant(self, user, role, is_default=False):

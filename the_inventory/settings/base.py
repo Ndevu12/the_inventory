@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     "sales",
     "reports",
     "api",
+    "seeders",
     "rest_framework",
     "rest_framework.authtoken",
     "corsheaders",

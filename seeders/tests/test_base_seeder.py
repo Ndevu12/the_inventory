@@ -4,7 +4,7 @@ from django.test import TestCase, TransactionTestCase
 from tenants.models import Tenant
 from inventory.models.product import Product
 from inventory.models.category import Category
-from inventory.seeders.base import BaseSeeder
+from seeders.base import BaseSeeder
 
 
 class ConcreteSeeder(BaseSeeder):
