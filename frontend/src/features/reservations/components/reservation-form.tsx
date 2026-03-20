@@ -99,7 +99,7 @@ export function ReservationForm({
               <Select
                 value={watch("product")?.toString() ?? ""}
                 onValueChange={(val) =>
-                  setValue("product", val, { shouldValidate: true })
+                  setValue("product", val as string, { shouldValidate: true })
                 }
               >
                 <SelectTrigger className="w-full">
@@ -125,7 +125,7 @@ export function ReservationForm({
               <Select
                 value={watch("location")?.toString() ?? ""}
                 onValueChange={(val) =>
-                  setValue("location", val, { shouldValidate: true })
+                  setValue("location", val as string, { shouldValidate: true })
                 }
               >
                 <SelectTrigger className="w-full">
@@ -168,7 +168,7 @@ export function ReservationForm({
               <Select
                 value={watch("sales_order") || ""}
                 onValueChange={(val) =>
-                  setValue("sales_order", val === "__none__" ? "" : val, {
+                  setValue("sales_order", (val === "__none__" ? "" : val) as string, {
                     shouldValidate: true,
                   })
                 }
