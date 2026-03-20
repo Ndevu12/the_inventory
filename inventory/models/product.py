@@ -10,6 +10,7 @@ from wagtail.fields import RichTextField
 from wagtail.models import Orderable
 from wagtail.search import index
 from .base import TimeStampedModel
+from tenants.context import get_current_tenant
 
 
 class UnitOfMeasure(models.TextChoices):
@@ -32,7 +33,6 @@ class ProductQuerySet(models.QuerySet):
 
     def filter_by_current_tenant(self):
         """Filter to thread-local tenant; empty queryset if unset (same contract as ``TimeStampedModel`` managers)."""
-        from tenants.context import get_current_tenant
 
         current_tenant = get_current_tenant()
         if current_tenant is None:

@@ -15,6 +15,7 @@ import logging
 from typing import Any
 
 from inventory.models.audit import ComplianceAuditLog
+from tenants.middleware import get_effective_tenant
 
 logger = logging.getLogger(__name__)
 
@@ -113,7 +114,6 @@ class AuditService:
         ComplianceAuditLog
             The persisted audit log entry.
         """
-        from tenants.middleware import get_effective_tenant
 
         tenant = getattr(request, "tenant", None) or get_effective_tenant(request)
         user = getattr(request, "user", None)

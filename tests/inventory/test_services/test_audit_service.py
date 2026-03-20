@@ -16,6 +16,7 @@ from inventory.models import MovementType
 from inventory.models.audit import AuditAction, ComplianceAuditLog
 from inventory.services.audit import AuditService
 from inventory.services.stock import StockService
+from tenants.context import clear_current_tenant
 
 from ..factories import (
     create_location,
@@ -203,7 +204,8 @@ class AuditServiceLogFromRequestTests(TestCase):
         self.assertEqual(entry.details["operation"], "import")
 
     def test_missing_tenant_on_request(self):
-        """When request has no tenant attr, None is passed to log()."""
+        """With no request.tenant and no thread-local tenant, log() gets tenant=None."""
+        clear_current_tenant()
         request = SimpleNamespace(
             user=self.user,
             META={"REMOTE_ADDR": "10.0.0.1"},

@@ -28,8 +28,10 @@ from tenants.models import Tenant
 User = get_user_model()
 
 
-def create_user(*, username="testuser", password="testpass123", **kwargs):
-    """Create and return a Django user."""
+def create_user(*, username=None, password="testpass123", **kwargs):
+    """Create and return a Django user. Username defaults to a unique value per call."""
+    if username is None:
+        username = f"user_{uuid.uuid4().hex[:12]}"
     defaults = {
         "username": username,
         "password": password,
@@ -41,12 +43,14 @@ def create_user(*, username="testuser", password="testpass123", **kwargs):
     return user
 
 
-def create_admin_user(*, username="admin", password="adminpass123", **kwargs):
-    """Create and return a Django superuser."""
+def create_admin_user(*, username=None, password="adminpass123", **kwargs):
+    """Create and return a Django superuser. Username defaults to a unique value per call."""
+    if username is None:
+        username = f"admin_{uuid.uuid4().hex[:12]}"
     defaults = {
         "username": username,
         "password": password,
-        "email": "admin@example.com",
+        "email": f"{username}@example.com",
     }
     defaults.update(kwargs)
     password = defaults.pop("password")

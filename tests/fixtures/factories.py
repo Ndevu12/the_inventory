@@ -34,8 +34,10 @@ def create_tenant(name=None, slug=None, **kwargs):
     return tenant
 
 
-def create_user(username="testuser", password="testpass123", **kwargs):
-    """Create a test user."""
+def create_user(username=None, password="testpass123", **kwargs):
+    """Create a test user. Username defaults to a unique value per call."""
+    if username is None:
+        username = f"user_{uuid.uuid4().hex[:12]}"
     defaults = {
         "username": username,
         "email": f"{username}@test.com",
@@ -46,8 +48,10 @@ def create_user(username="testuser", password="testpass123", **kwargs):
     return user
 
 
-def create_admin_user(username="admin", password="admin123", **kwargs):
-    """Create a test superuser."""
+def create_admin_user(username=None, password="admin123", **kwargs):
+    """Create a test superuser. Username defaults to a unique value per call."""
+    if username is None:
+        username = f"admin_{uuid.uuid4().hex[:12]}"
     defaults = {
         "username": username,
         "email": f"{username}@test.com",
