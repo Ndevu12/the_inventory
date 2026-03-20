@@ -7,11 +7,13 @@ DEBUG = False
 
 # ALLOWED_HOSTS - configure allowed domains for production
 # Accept from environment variable or use defaults for common platforms
+# Django matches subdomains with a leading dot only — "*.example.com" is not valid.
+# See https://docs.djangoproject.com/en/stable/ref/settings/#allowed-hosts
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "").split(",") if os.environ.get("ALLOWED_HOSTS") else [
     "localhost",
     "127.0.0.1",
-    "*.onrender.com",  # Render.com domains
-    "*.andasy.dev",    # Andasy domains
+    ".onrender.com",  # any *.onrender.com service hostname
+    ".andasy.dev",
 ]
 # Remove empty strings from the list
 ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS if host.strip()]
