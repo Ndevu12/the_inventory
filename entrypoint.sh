@@ -43,5 +43,11 @@ case "$_auto_seed" in
     ;;
 esac
 
-# Start Gunicorn
-gunicorn the_inventory.wsgi:application --bind 0.0.0.0:$PORT --workers 4
+# Start Gunicorn (access + error logs to stdout/stderr for platform log drains)
+exec gunicorn the_inventory.wsgi:application \
+  --bind "0.0.0.0:$PORT" \
+  --workers 4 \
+  --access-logfile - \
+  --error-logfile - \
+  --log-level info \
+  --capture-output

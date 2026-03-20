@@ -708,7 +708,7 @@ A `Dockerfile` is provided for containerized deployments. The image:
 2. Collects static files
 3. Runs migrations
 4. Optionally runs `seed_database` when `AUTO_SEED_DATABASE` is set (see below)
-5. Starts the WSGI server
+5. Starts Gunicorn with `--access-logfile -` and `--error-logfile -` so each HTTP request and worker errors show up in the container/platform log stream (e.g. Render **Logs**)
 
 **Auto-seed environment variables** (`AUTO_SEED_DATABASE`, `SEED_*`) are **not** Django settings and **not** gunicorn arguments. They are **OS environment variables** read only by `entrypoint.sh` at container start (after `migrate`, before gunicorn). Configure them in your host platform: Render **Environment** tab, Docker `-e` / Compose `environment` or `env_file`, etc. Local `manage.py runserver` does not run the entrypoint — use `python manage.py seed_database` manually there.
 
