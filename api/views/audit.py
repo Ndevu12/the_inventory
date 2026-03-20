@@ -17,7 +17,7 @@ from api.serializers.audit import (
     PlatformAuditLogSerializer,
 )
 from inventory.models import AuditAction, ComplianceAuditLog
-from tenants.context import get_current_tenant
+from tenants.middleware import get_effective_tenant
 
 _TENANT_CSV_HEADERS = [
     "ID", "Timestamp", "Action", "Product SKU", "Product",
@@ -45,7 +45,8 @@ class AuditLogFilter(FilterSet):
 class ComplianceAuditLogViewSet(viewsets.ReadOnlyModelViewSet):
     """Read-only audit log with filtering and CSV export.
 
-    Accessible only to tenant admins and owners.
+    Accessible only to tenant admins and owners (JWT-safe via
+    :class:`~api.permissions.IsAdminOrOwner`).
 
     Filters
     -------
@@ -73,10 +74,12 @@ class ComplianceAuditLogViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         qs = super().get_queryset()
-        tenant = get_current_tenant()
-        if tenant is not None and not self.request.user.is_superuser:
-            qs = qs.filter(tenant=tenant)
-        return qs
+        if self.request.user.is_superuser:
+            return qs
+        tenant = get_effective_tenant(self.request)
+        if tenant is None:
+            return qs.none()
+        return qs.filter(tenant=tenant)
 
     def list(self, request, *args, **kwargs):
         if request.query_params.get("export") == "csv":

@@ -584,6 +584,87 @@ Multi-tenancy infrastructure enabling multiple organizations to share a single d
 
 **Subscription Hooks:** `Tenant.subscription_plan` (free/starter/professional/enterprise), `subscription_status` (active/trial/past_due/cancelled/suspended), `max_users`, `max_products`.  Helper methods `is_within_user_limit()` and `is_within_product_limit()` enforce plan limits.
 
+### Seeding with Multi-Tenancy
+
+The seeder system (in `inventory/seeders/`) automatically handles tenant context during data initialization:
+
+**Tenant-Scoped Seeding:**
+- Each seeder accepts a `tenant` parameter: `seeder.execute(tenant=tenant_instance)`
+- All created objects (Category, Product, StockLocation, etc.) are automatically linked to the tenant
+- Thread-local tenant context is set via `set_current_tenant(tenant)` during seeding
+- Supports multi-tenant data initialization: seed the same data independently for each tenant
+
+**Seeder Architecture:**
+
+The seeding pipeline consists of:
+
+| Seeder | Purpose | Tenant-Aware |
+|---|---|---|
+| `TenantSeeder` | Creates or retrieves the "Default" tenant | Yes |
+| `CategorySeeder` | Creates product categories (hierarchical) | Yes |
+| `ProductSeeder` | Creates products across categories | Yes |
+| `StockLocationSeeder` | Creates warehouse structure (hierarchical) | Yes |
+| `StockRecordSeeder` | Creates stock-location associations | Yes |
+| `StockMovementSeeder` | Creates movement history (receive, issue, transfer, adjustment) | Yes |
+| `LowStockSeeder` | Creates low-stock scenarios for testing alerts | Yes |
+
+All seeders inherit from `BaseSeeder` and receive the tenant instance via `execute(tenant=tenant)`. The `SeederManager` orchestrates execution in dependency order, ensuring all data is properly scoped.
+
+**CLI Usage:**
+```bash
+# Seed for Default tenant (auto-creates if missing)
+python manage.py seed_database --clear --create-default
+
+# Seed for a specific tenant
+python manage.py seed_database --clear --tenant=acme-corp
+
+# Seed specific models only
+python manage.py seed_database --models categories,products --tenant=acme-corp
+
+# Create multiple tenants, then seed each independently
+python manage.py createtenant --name="Tenant A" --slug="tenant-a"
+python manage.py seed_database --clear --tenant=tenant-a
+```
+
+**Data Isolation:**
+- Each tenant has independent copies of all inventory data (categories, products, locations, stock records, movements)
+- Queries are automatically scoped to current tenant via `TenantAwareManager`
+- No orphaned data: all seeded objects have `tenant` assigned
+- Tenant field is non-nullable after migration TS-06, enforcing data integrity
+
+**Programmatic Usage:**
+```python
+from inventory.seeders import SeederManager
+from tenants.models import Tenant
+from tenants.context import set_current_tenant, clear_current_tenant
+
+# Get or create a tenant
+tenant, _ = Tenant.objects.get_or_create(
+    slug="acme-corp",
+    defaults={"name": "ACME Corp", "is_active": True}
+)
+
+# Set tenant context (required for audit logging)
+set_current_tenant(tenant)
+
+try:
+    # Seed all data for this tenant
+    manager = SeederManager(verbose=True, clear_data=True)
+    manager.seed(tenant=tenant)
+finally:
+    # Always clear context after seeding
+    clear_current_tenant()
+```
+
+**Troubleshooting:**
+- **"Default tenant does not exist"** → Use `--create-default` flag or specify `--tenant=<slug>`
+- **"Tenant with slug 'xyz' not found"** → Create the tenant first with `python manage.py createtenant --name="..." --slug="xyz"`
+- **Orphaned data (NULL tenant values)** → Run migration TS-06 to backfill and enforce non-nullable tenant field
+
+For complete seeding documentation, see [inventory/seeders/README.md](../inventory/seeders/README.md).
+
+For Tenant model details, see [tenants/models.py](../tenants/models.py).
+
 ---
 
 ## URL Routing

@@ -26,6 +26,10 @@ import {
   toMovementTrendData,
   formatShortDate,
 } from "../helpers/chart-helpers";
+import {
+  DashboardWidgetError,
+  getDashboardErrorMessage,
+} from "./dashboard-widget-error";
 
 const chartConfig = {
   movements: {
@@ -37,11 +41,17 @@ const chartConfig = {
 interface MovementTrendsChartProps {
   data: MovementTrendsData | undefined;
   isLoading: boolean;
+  isError: boolean;
+  error: unknown;
+  onRetry?: () => void;
 }
 
 export function MovementTrendsChart({
   data,
   isLoading,
+  isError,
+  error,
+  onRetry,
 }: MovementTrendsChartProps) {
   return (
     <Card>
@@ -50,7 +60,15 @@ export function MovementTrendsChart({
         <CardDescription>Daily stock movements over the last 30 days</CardDescription>
       </CardHeader>
       <CardContent>
-        {isLoading || !data ? (
+        {isLoading ? (
+          <Skeleton className="h-[300px] w-full" />
+        ) : isError ? (
+          <DashboardWidgetError
+            message={getDashboardErrorMessage(error)}
+            onRetry={onRetry}
+            minHeight="300px"
+          />
+        ) : !data ? (
           <Skeleton className="h-[300px] w-full" />
         ) : (
           <ChartContainer config={chartConfig} className="h-[300px] w-full">

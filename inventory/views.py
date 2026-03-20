@@ -4,12 +4,15 @@ All views follow the project's OOP standard — class-based with
 WagtailAdminTemplateMixin for consistent admin chrome.
 """
 
+from django.core.exceptions import PermissionDenied
 from django.views.generic import ListView, TemplateView
 from wagtail.admin.views.generic.base import WagtailAdminTemplateMixin
 from wagtail.search.backends import get_search_backend
 
 from inventory.filters import ProductFilterSet
 from inventory.models import Category, Product, StockLocation
+from tenants.context import get_current_tenant
+from tenants.permissions import get_membership
 
 
 class LowStockAlertView(WagtailAdminTemplateMixin, ListView):
@@ -26,10 +29,29 @@ class LowStockAlertView(WagtailAdminTemplateMixin, ListView):
     page_title = "Low Stock Alerts"
     header_icon = "warning"
 
+    def _get_current_tenant(self):
+        """Get current tenant and raise PermissionDenied if not set or user lacks access."""
+        tenant = get_current_tenant()
+        if not tenant:
+            raise PermissionDenied("Tenant context is not set.")
+        if not self.request.user.is_authenticated:
+            raise PermissionDenied("Authentication required.")
+        if not get_membership(self.request.user, tenant):
+            raise PermissionDenied("You do not have access to this tenant.")
+        return tenant
+
     def get_queryset(self):
         """Return low-stock products, applying any active filters."""
-        qs = Product.objects.low_stock().select_related("category").order_by("sku")
-        self.filterset = ProductFilterSet(self.request.GET, queryset=qs)
+        tenant = self._get_current_tenant()
+        qs = (
+            Product.objects.filter(tenant=tenant)
+            .low_stock()
+            .select_related("category")
+            .order_by("sku")
+        )
+        self.filterset = ProductFilterSet(
+            self.request.GET, queryset=qs, tenant=tenant
+        )
         return self.filterset.qs
 
     def get_context_data(self, **kwargs):
@@ -51,21 +73,36 @@ class InventorySearchView(WagtailAdminTemplateMixin, TemplateView):
     page_title = "Inventory Search"
     header_icon = "search"
 
+    def _get_current_tenant(self):
+        """Get current tenant and raise PermissionDenied if not set or user lacks access."""
+        tenant = get_current_tenant()
+        if not tenant:
+            raise PermissionDenied("Tenant context is not set.")
+        if not self.request.user.is_authenticated:
+            raise PermissionDenied("Authentication required.")
+        if not get_membership(self.request.user, tenant):
+            raise PermissionDenied("You do not have access to this tenant.")
+        return tenant
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        tenant = self._get_current_tenant()
         query = self.request.GET.get("q", "").strip()
         context["search_query"] = query
 
         if query:
             backend = get_search_backend()
             context["product_results"] = backend.search(
-                query, Product.objects.filter(is_active=True),
+                query,
+                Product.objects.filter(tenant=tenant, is_active=True),
             )
             context["category_results"] = backend.search(
-                query, Category.objects.filter(is_active=True),
+                query,
+                Category.objects.filter(tenant=tenant, is_active=True),
             )
             context["location_results"] = backend.search(
-                query, StockLocation.objects.filter(is_active=True),
+                query,
+                StockLocation.objects.filter(tenant=tenant, is_active=True),
             )
         else:
             context["product_results"] = Product.objects.none()

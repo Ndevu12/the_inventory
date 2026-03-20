@@ -135,6 +135,7 @@ class StockService:
             reference=reference,
             notes=notes,
             created_by=created_by,
+            tenant=product.tenant,
         )
 
         # full_clean() enforces field validation + the model's clean().
@@ -236,6 +237,7 @@ class StockService:
             reference=reference,
             notes=notes,
             created_by=created_by,
+            tenant=product.tenant,
         )
         movement.full_clean()
 
@@ -297,6 +299,7 @@ class StockService:
             StockRecord.objects.select_for_update().get_or_create(
                 product=product,
                 location=location,
+                defaults={"tenant": product.tenant},
             )
         )
         return record

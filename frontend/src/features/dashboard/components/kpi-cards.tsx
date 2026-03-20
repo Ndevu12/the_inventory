@@ -14,10 +14,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { DashboardSummary } from "../types/dashboard.types";
 import { formatCompactNumber, formatCurrency } from "../helpers/chart-helpers";
+import {
+  DashboardWidgetError,
+  getDashboardErrorMessage,
+} from "./dashboard-widget-error";
 
 interface KpiCardsProps {
   data: DashboardSummary | undefined;
   isLoading: boolean;
+  isError: boolean;
+  error: unknown;
+  onRetry?: () => void;
 }
 
 interface KpiItem {
@@ -95,8 +102,14 @@ function KpiSkeleton() {
   );
 }
 
-export function KpiCards({ data, isLoading }: KpiCardsProps) {
-  if (isLoading || !data) {
+export function KpiCards({
+  data,
+  isLoading,
+  isError,
+  error,
+  onRetry,
+}: KpiCardsProps) {
+  if (isLoading) {
     return (
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {Array.from({ length: 8 }).map((_, i) => (
@@ -104,6 +117,24 @@ export function KpiCards({ data, isLoading }: KpiCardsProps) {
         ))}
       </div>
     );
+  }
+
+  if (isError) {
+    return (
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="sm:col-span-2 lg:col-span-4">
+          <DashboardWidgetError
+            message={getDashboardErrorMessage(error)}
+            onRetry={onRetry}
+            minHeight="160px"
+          />
+        </div>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return null;
   }
 
   const kpis = buildKpis(data);

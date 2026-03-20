@@ -14,6 +14,21 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    # If python-dotenv is not installed, manually load .env
+    env_file = Path(__file__).resolve().parent.parent.parent / ".env"
+    if env_file.exists():
+        with open(env_file) as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    key, value = line.split("=", 1)
+                    os.environ.setdefault(key.strip(), value.strip())
+
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 BASE_DIR = PROJECT_DIR.parent
 
@@ -33,6 +48,7 @@ INSTALLED_APPS = [
     "sales",
     "reports",
     "api",
+    "seeders",
     "rest_framework",
     "rest_framework.authtoken",
     "corsheaders",
@@ -68,11 +84,11 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "tenants.middleware.TenantMiddleware",
     "api.middleware.JWTAuthMiddleware",
     "tenants.middleware.ImpersonationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "tenants.middleware.TenantMiddleware",
     "wagtail.contrib.redirects.middleware.RedirectMiddleware",
 ]
 
@@ -241,6 +257,7 @@ SIMPLE_JWT = {
     "BLACKLIST_AFTER_ROTATION": False,
     "AUTH_HEADER_TYPES": ("Bearer",),
     "TOKEN_OBTAIN_SERIALIZER": "api.serializers.auth.InventoryTokenObtainPairSerializer",
+    "TOKEN_REFRESH_SERIALIZER": "api.serializers.auth.InventoryTokenRefreshSerializer",
 }
 
 

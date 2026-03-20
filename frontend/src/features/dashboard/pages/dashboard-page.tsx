@@ -32,16 +32,28 @@ export function DashboardPage() {
         </p>
       </div>
 
-      <KpiCards data={summary.data} isLoading={summary.isLoading} />
+      <KpiCards
+        data={summary.data}
+        isLoading={summary.isLoading}
+        isError={summary.isError}
+        error={summary.error}
+        onRetry={() => void summary.refetch()}
+      />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <StockByLocationChart
           data={stockByLocation.data}
           isLoading={stockByLocation.isLoading}
+          isError={stockByLocation.isError}
+          error={stockByLocation.error}
+          onRetry={() => void stockByLocation.refetch()}
         />
         <MovementTrendsChart
           data={movementTrends.data}
           isLoading={movementTrends.isLoading}
+          isError={movementTrends.isError}
+          error={movementTrends.error}
+          onRetry={() => void movementTrends.refetch()}
         />
       </div>
 
@@ -49,14 +61,23 @@ export function DashboardPage() {
         <OrderStatusChart
           data={orderStatus.data}
           isLoading={orderStatus.isLoading}
+          isError={orderStatus.isError}
+          error={orderStatus.error}
+          onRetry={() => void orderStatus.refetch()}
         />
         <PendingReservationsCard
           data={reservations.data}
           isLoading={reservations.isLoading}
+          isError={reservations.isError}
+          error={reservations.error}
+          onRetry={() => void reservations.refetch()}
         />
         <ExpiringLotsCard
           data={expiringLots.data}
           isLoading={expiringLots.isLoading}
+          isError={expiringLots.isError}
+          error={expiringLots.error}
+          onRetry={() => void expiringLots.refetch()}
         />
       </div>
     </div>

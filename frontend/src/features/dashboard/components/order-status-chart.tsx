@@ -21,6 +21,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { OrderStatusData } from "../types/dashboard.types";
 import { toPieData, type PieDatum } from "../helpers/chart-helpers";
 import { useDashboardStore } from "../stores/dashboard-store";
+import {
+  DashboardWidgetError,
+  getDashboardErrorMessage,
+} from "./dashboard-widget-error";
 
 const chartConfig = {
   Draft: { label: "Draft", color: "var(--color-chart-1)" },
@@ -33,6 +37,9 @@ const chartConfig = {
 interface OrderStatusChartProps {
   data: OrderStatusData | undefined;
   isLoading: boolean;
+  isError: boolean;
+  error: unknown;
+  onRetry?: () => void;
 }
 
 function StatusPie({ items }: { items: PieDatum[] }) {
@@ -87,7 +94,13 @@ function StatusPie({ items }: { items: PieDatum[] }) {
   );
 }
 
-export function OrderStatusChart({ data, isLoading }: OrderStatusChartProps) {
+export function OrderStatusChart({
+  data,
+  isLoading,
+  isError,
+  error,
+  onRetry,
+}: OrderStatusChartProps) {
   const { orderChartTab, setOrderChartTab } = useDashboardStore();
 
   return (
@@ -97,7 +110,15 @@ export function OrderStatusChart({ data, isLoading }: OrderStatusChartProps) {
         <CardDescription>Distribution by current status</CardDescription>
       </CardHeader>
       <CardContent>
-        {isLoading || !data ? (
+        {isLoading ? (
+          <Skeleton className="h-[300px] w-full" />
+        ) : isError ? (
+          <DashboardWidgetError
+            message={getDashboardErrorMessage(error)}
+            onRetry={onRetry}
+            minHeight="300px"
+          />
+        ) : !data ? (
           <Skeleton className="h-[300px] w-full" />
         ) : (
           <Tabs

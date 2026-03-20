@@ -1,410 +1,455 @@
 # Project Tasks
 
 > Tasks are independent unless noted in the **Depends On** column.
-> Frontend paths are relative to `frontend/src/`.
-
-
-## System Admin Features (SA-*)
-
-Platform admin capabilities for system-level oversight. Each SA task is independent
-and can be implemented in parallel unless noted in **Depends On**.
+> All tasks are part of the **Tenant-Scoping Security Initiative** to ensure all features properly enforce tenant isolation and prevent cross-tenant data leakage.
 
 ---
 
-### SA-01 — Platform user management
+## Tenant-Scoping Security Tasks (TSS-*)
 
-**Priority:** HIGH
+Fixing tenant-scoping issues across the codebase to ensure all features properly enforce tenant isolation and prevent cross-tenant data leakage.
+
+---
+
+### TSS-01 — Add explicit tenant filtering to InventoryReportService
+
+**Priority:** HIGH | **Depends On:** None | **Parallel:** Yes
 
 **Problem:**
-Platform admins have no central place to manage users across tenants. User creation
-happens via tenant invitations or `createtenant`; there is no UI to list all users,
-reset passwords, suspend accounts, or assign users to tenants from a platform view.
+The `InventoryReportService` queries Product, StockMovement, StockReservation, and other models without explicit tenant filtering. While these models inherit from `TenantAwareModel` and should auto-filter via the manager, the service doesn't explicitly set tenant context. This could lead to cross-tenant data leakage if tenant context is not properly set in the request middleware.
 
 **Scope:**
 
 | Capability | Description |
 | ---------- | ----------- |
-| List users | Paginated table of all `User` records across tenants, with search and filters |
-| Create user | Form to create a user (email, username) and optionally assign to tenant(s) |
-| Edit user | Change email, username, is_active; reset password |
-| Suspend/delete | Set `is_active=False` or soft-delete; preserve for audit |
-| Assign to tenant | Add/remove TenantMembership records from user detail view |
+| Explicit tenant filtering | Add explicit `.filter(tenant=tenant)` to all querysets |
+| Accept tenant parameter | Update all service methods to accept optional `tenant` parameter |
+| Fallback to context | Use `get_current_tenant()` if tenant parameter not provided |
+| Validation | Raise error if no tenant can be determined |
 
 **Acceptance Criteria:**
 
-- [ ] Wagtail ModelViewSet or Django admin view (platform-only) for User model
-- [ ] List view with filters (is_active, tenant, search by email/username)
-- [ ] Create user form with optional tenant assignment
-- [ ] Edit user form with password reset action
-- [ ] Permissions restricted to platform superusers/staff
-- [ ] No tenant context required — operates on all users
-
-**Files to Create/Modify:**
-- `tenants/wagtail_views.py` or `tenants/viewsets.py` — User management viewset
-- `api/serializers/users.py` — Platform user serializers (if exposing via API)
-- `api/urls.py` — Platform admin API routes
-- Frontend: `frontend/src/app/(dashboard)/settings/users/page.tsx` *(new)*
-- Frontend: `frontend/src/features/settings/api/users-api.ts` *(new)*
-
-**Implementation Notes:**
-- Can use Wagtail's `ModelViewSet` for `auth.User` or restore Django admin User registration for superusers only (see SA-08).
-
----
-
-### SA-02 — Tenant oversight and support
-
-**Priority:** HIGH
-
-**Problem:**
-System admins cannot override tenant limits, force-deactivate a tenant, or view
-usage stats. Support and compliance scenarios require these capabilities.
-
-**Scope:**
-
-| Capability | Description |
-| ---------- | ----------- |
-| Override limits | Temporarily increase `max_users` or `max_products` for a tenant |
-| Force-deactivate | Set `tenant.is_active = False` to block access (compliance, non-payment) |
-| Usage stats | Display `user_count()`, `product_count()` and compare to limits |
-| Reactivate | Restore `is_active=True` for suspended tenants |
-
-**Acceptance Criteria:**
-
-- [ ] Tenant snippet/edit form includes override controls (or separate admin action)
-- [ ] `Force deactivate` and `Reactivate` actions available in tenant list/detail
-- [ ] Usage stats (users, products vs limits) visible in tenant list or detail
-- [ ] Audit log entry when limits are overridden or tenant is deactivated
-- [ ] Only platform superusers can perform these actions
+- [x] `reports/services/inventory_reports.py` updated
+- [x] All methods that query models accept optional `tenant` parameter
+- [x] Methods use `get_current_tenant()` as fallback if tenant not provided
+- [x] All querysets include explicit `.filter(tenant=tenant)` after model query
+- [x] Methods affected: `get_stock_valuation()`, `get_low_stock_products()`, `get_overstock_products()`, `get_movement_history()`, `get_movement_summary()`, `get_reservation_summary()`, `get_availability_report()`, `get_variance_report()`, `get_variance_summary()`, `get_cycle_history()`, `get_expiring_lots()`, `get_expired_lots()`, `get_lot_history()`, `get_product_traceability()`
+- [x] Raises `ValueError` if tenant cannot be determined
+- [x] Tested: All report methods return only current tenant's data
+- [x] Tested: Cross-tenant queries are blocked
 
 **Files to Modify:**
-- `tenants/models.py` — Ensure `user_count`, `product_count`, `is_within_*_limit` exist
-- `tenants/snippets.py` — Extend TenantSnippetViewSet with custom actions
-- `tenants/wagtail_views.py` — Custom action views for deactivate/reactivate
-- Frontend: Tenant settings pages to show usage and override UI (if API-driven)
+- `reports/services/inventory_reports.py` — Add tenant parameter and filtering
 
 **Implementation Notes:**
-- Backend can be done purely in Wagtail; frontend integration optional if platform admin stays in Wagtail UI.
+- Import `get_current_tenant` from `tenants.context`
+- Add tenant parameter to method signatures: `def method_name(self, *, tenant=None, ...)`
+- Use pattern: `tenant = tenant or get_current_tenant()` followed by `if not tenant: raise ValueError(...)`
 
 ---
 
-### SA-03 — Impersonate / view-as tenant
+### TSS-02 — Add explicit tenant filtering to OrderReportService
 
-**Priority:** MEDIUM
+**Priority:** HIGH | **Depends On:** None | **Parallel:** Yes
 
 **Problem:**
-Support and debugging require viewing the app as a specific tenant or user. There
-is no impersonation or view-as-tenant capability.
+The `OrderReportService` queries PurchaseOrder and SalesOrder without explicit tenant filtering. While these models inherit from `TenantAwareModel`, the service relies on implicit tenant context filtering which may not be reliable in all scenarios.
 
 **Scope:**
 
 | Capability | Description |
 | ---------- | ----------- |
-| Impersonate user | Log in as another user (or set a session flag) to reproduce issues |
-| View as tenant | Switch tenant context without changing logged-in user |
-| Exit impersonation | Clear impersonation and return to own session |
+| Explicit tenant filtering | Add explicit `.filter(tenant=tenant)` to all querysets |
+| Accept tenant parameter | Update all service methods to accept optional `tenant` parameter |
+| Fallback to context | Use `get_current_tenant()` if tenant parameter not provided |
+| Validation | Raise error if no tenant can be determined |
 
 **Acceptance Criteria:**
 
-- [ ] Platform superuser can select a user and "Impersonate" from user list/detail
-- [ ] Session stores `impersonating_user_id` or equivalent; views use that identity
-- [ ] Clear "Exit impersonation" control visible when impersonating
-- [ ] Impersonation actions are logged in audit log
-- [ ] Tenant switcher (if present) respects impersonation context
-
-**Files to Create/Modify:**
-- `tenants/middleware.py` — Impersonation middleware
-- `tenants/context.py` — Extend `get_current_tenant` / user resolution
-- `api/views/auth.py` — Impersonation start/end endpoints
-- `tenants/wagtail_views.py` — Impersonation action buttons
-- Frontend: Impersonation UI in user menu or settings
-
-**Implementation Notes:**
-- Requires careful security: only superusers, audit everything, time-limited sessions optional.
-
----
-
-### SA-04 — Platform-wide audit log with export 
-
-**Priority:** HIGH
-
-**Problem:**
-There may be tenant-scoped audit logging, but no platform-wide view of who did
-what across all tenants. Compliance and support need a unified audit trail with
-export (CSV/Excel).
-
-**Scope:**
-
-| Capability | Description |
-| ---------- | ----------- |
-| Platform audit view | List all audit entries across tenants (or aggregate from tenant logs) |
-| Filters | By user, tenant, action type, date range, object type |
-| Export | CSV and/or Excel download of filtered results |
-| Retention | Document retention policy (e.g., 90 days, 1 year) |
-
-**Acceptance Criteria:**
-
-- [ ] Platform admin can access audit log view (Wagtail or frontend)
-- [ ] Filters: user, tenant, action, date range
-- [ ] Export to CSV and optionally Excel
-- [ ] Pagination for large result sets
-- [ ] Audit entries include: timestamp, user, tenant, action, object type, object id, details
-- [ ] Only platform superusers can access platform audit view
-
-**Files to Create/Modify:**
-- `audit/` or `tenants/` — Platform audit model or query layer
-- `api/views/audit.py` — Platform audit list + export endpoints
-- `api/urls.py` — Audit routes
-- Frontend: `frontend/src/app/(dashboard)/audit-log/page.tsx` — May already exist; extend for platform scope
-- Frontend: Export button wired to platform audit API
-
-**Implementation Notes:**
-- If audit is currently tenant-scoped, add platform-level aggregation or a shared `AuditLog` model that records tenant_id.
-
----
-
-### SA-05 — Tenant invitation dashboard
-
-**Priority:** MEDIUM
-
-**Problem:**
-Platform admins cannot see pending, accepted, or expired invitations across
-tenants. Useful for support and compliance.
-
-**Scope:**
-
-| Capability | Description |
-| ---------- | ----------- |
-| List invitations | All TenantInvitation records with status, tenant, email, role, dates |
-| Filters | By status (pending, accepted, expired, cancelled), tenant, date range |
-| Cancel invitation | Set status to cancelled |
-| Resend | Regenerate token and extend expiry (optional) |
-
-**Acceptance Criteria:**
-
-- [ ] Platform admin view listing all TenantInvitation records
-- [ ] Filters: status, tenant, created_at range
-- [ ] Columns: email, tenant, role, status, created_at, expires_at, invited_by
-- [ ] Action to cancel a pending invitation
-- [ ] Optional: resend invitation (new token, extended expiry)
-- [ ] Only platform superusers can access
-
-**Files to Create/Modify:**
-- `tenants/wagtail_views.py` or snippet — TenantInvitation list view
-- `api/views/invitations.py` — Platform invitation list + cancel/resend
-- `api/urls.py` — Invitation routes
-- Frontend: `frontend/src/app/(dashboard)/settings/invitations/page.tsx` *(new)*
-- Frontend: `frontend/src/features/settings/api/invitations-api.ts` *(new)*
-
-**Implementation Notes:**
-- Can be a Wagtail ModelViewSet for TenantInvitation or a custom list view.
-
----
-
-### SA-06 — Billing and subscription UI
-
-**Priority:** MEDIUM
-
-**Problem:**
-Tenant subscription plan and status can be edited in the Tenant snippet, but there
-is no dedicated UI for billing workflows (change plan, view usage vs limits,
-suspend for non-payment).
-
-**Scope:**
-
-| Capability | Description |
-| ---------- | ----------- |
-| Change plan | Update `subscription_plan` and `subscription_status` from a billing view |
-| Usage vs limits | Table or cards showing each tenant's users/products vs max_users/max_products |
-| Suspend/reactivate | Quick actions for non-payment (ties into SA-02 tenant deactivation) |
-| Billing notes | Optional field or separate model for billing-related notes |
-
-**Acceptance Criteria:**
-
-- [ ] Billing/subscription view in platform admin
-- [ ] List tenants with plan, status, usage (users, products), limits
-- [ ] Quick actions: Change plan, Suspend, Reactivate
-- [ ] Optional: billing notes per tenant
-- [ ] Integrates with existing Tenant model fields
-- [ ] Only platform superusers can access
-
-**Files to Create/Modify:**
-- `tenants/wagtail_views.py` — Billing dashboard view
-- `api/views/tenants.py` — Billing-related endpoints (plan change, usage)
-- Frontend: `frontend/src/app/(dashboard)/settings/billing/page.tsx` *(new)*
-- Frontend: `frontend/src/features/settings/api/billing-api.ts` *(new)*
-
-**Implementation Notes:**
-- Overlaps with SA-02 (usage stats, suspend); can share backend logic.
-
----
-
-### SA-07 — Tenant data export
-
-**Priority:** LOW
-
-**Problem:**
-No way to export a tenant's data for backup, migration, or handover. Platform
-admins need this for support and compliance.
-
-**Scope:**
-
-| Capability | Description |
-| ---------- | ----------- |
-| Export tenant | Generate ZIP/JSON of core tenant data (products, locations, stock, orders, etc.) |
-| Scope options | Full export vs. date-range or entity-type filters |
-| Format | JSON (machine-readable) and/or CSV for key entities |
-| Async | For large tenants, run export as background job and download when ready |
-
-**Acceptance Criteria:**
-
-- [ ] "Export tenant data" action on tenant detail/list
-- [ ] Export includes: products, categories, locations, stock records, movements, POs, GRNs, sales orders, dispatches (as applicable)
-- [ ] Optional: filter by date range or entity type
-- [ ] Output: ZIP containing JSON/CSV files
-- [ ] For tenants above size threshold, use Celery task and notify when ready
-- [ ] Only platform superusers can trigger export
-- [ ] Export action logged in audit
-
-**Files to Create/Modify:**
-- `tenants/management/commands/export_tenant.py` — CLI export (can be invoked by view)
-- `tenants/services.py` — Export logic (serialize tenant data)
-- `api/views/tenants.py` — Export trigger + download endpoint
-- Frontend: Export button on tenant detail page
-
-**Implementation Notes:**
-- Start with synchronous export for small tenants; add async later if needed.
-
----
-
-### SA-08 — Django admin fallback for superusers
-
-**Priority:** MEDIUM
-
-**Problem:**
-All platform admin was consolidated in Wagtail; Django admin was redirected away.
-Some operations (auth.User, Groups, Permissions, migrations, raw DB) still need
-Django admin. Superusers have no way to access it.
-
-**Scope:**
-
-| Capability | Description |
-| ---------- | ----------- |
-| Restore django-admin | Make `/django-admin/` available again (or `/admin/django/`) |
-| Access control | Only users with `is_superuser=True` can access |
-| Minimal surface | Register only: User, Group, or other system models as needed |
-| Documentation | Document when to use Django admin vs. Wagtail |
-
-**Acceptance Criteria:**
-
-- [x] URL `/django-admin/` (or equivalent) is reachable
-- [x] Middleware or view decorator restricts access to `is_superuser`
-- [x] Non-superusers receive 403 or redirect to Wagtail admin
-- [x] Only necessary models registered (User, Group, etc.); tenant-scoped models remain unregistered
-- [x] Docs/TASKS.MD or README explains when to use each admin
-
-**When to use Django admin vs Wagtail**
-
-| Use Django admin (`/django-admin/`) | Use Wagtail admin (`/admin/`) |
-| ----------------------------------- | ----------------------------- |
-| Manage auth.User, Groups, Permissions | Manage tenants, products, inventory, procurement, sales |
-| System-level operations (migrations, raw DB) | Content editing, pages, documents, images |
-| Superusers only | Staff and tenant admins |
-
-Django admin is restricted to `is_superuser=True` and exposes only User and Group.
-Tenant-scoped models (Tenant, TenantMembership, products, etc.) stay in Wagtail.
+- [ ] `reports/services/order_reports.py` updated
+- [ ] All methods that query models accept optional `tenant` parameter
+- [ ] Methods use `get_current_tenant()` as fallback if tenant not provided
+- [ ] All querysets include explicit `.filter(tenant=tenant)` after model query
+- [ ] Methods affected: `get_purchase_summary()`, `get_purchase_totals()`, `get_sales_summary()`, `get_sales_totals()`
+- [ ] Raises `ValueError` if tenant cannot be determined
+- [ ] Tested: All report methods return only current tenant's data
+- [ ] Tested: Cross-tenant queries are blocked
 
 **Files to Modify:**
-- `the_inventory/urls.py` — Add django-admin route back (conditional or always, with auth)
-- `tenants/admin.py` — Optionally register User (if not using Wagtail for users)
-- `the_inventory/settings/base.py` — No change; use existing admin
-- New middleware: `tenants/middleware.py` — `DjangoAdminSuperuserOnlyMiddleware` (optional)
+- `reports/services/order_reports.py` — Add tenant parameter and filtering
 
 **Implementation Notes:**
-- Implemented: custom `SuperuserOnlyAdminSite` in `tenants/django_admin_site.py` with `has_permission` and `login` overrides. User and Group registered in `tenants/admin.py`.
+- Import `get_current_tenant` from `tenants.context`
+- Add tenant parameter to method signatures: `def method_name(self, *, tenant=None, ...)`
+- Use pattern: `tenant = tenant or get_current_tenant()` followed by `if not tenant: raise ValueError(...)`
 
 ---
 
-### SA-09 — Tenant creation UI in Wagtail
+### TSS-03 — Add explicit tenant verification to Report API views
 
-**Priority:** MEDIUM
+**Priority:** HIGH | **Depends On:** None | **Parallel:** Yes
 
 **Problem:**
-Tenants are created only via `createtenant` management command. Platform admins
-need a UI to create tenants without CLI access.
+Report API views instantiate `InventoryReportService` and `OrderReportService` without explicitly verifying or setting tenant context. While the middleware should set this, there's no explicit validation that the current tenant matches the authenticated user's tenant.
 
 **Scope:**
 
 | Capability | Description |
 | ---------- | ----------- |
-| Create tenant form | Wagtail add view for Tenant with required fields (name, slug) |
-| Set owner | Select or create user as tenant owner with role=OWNER |
-| Set initial limits | max_users, max_products from form |
-| Branding | Optional branding fields in create form |
-| Post-create | Redirect to edit view; optionally send invitation email to owner |
+| Tenant verification | Add explicit check that user belongs to current tenant |
+| Pass tenant to services | Pass tenant parameter to all service method calls |
+| Permission checks | Verify user has access to tenant before returning data |
 
 **Acceptance Criteria:**
 
-- [ ] "Add tenant" action in Wagtail Snippets → Tenants
-- [ ] Create form includes: name, slug, owner (user picker), max_users, max_products
-- [ ] Owner user is created or selected; TenantMembership created with role=OWNER
-- [ ] If owner is new user: set password or send invitation
-- [ ] Post-save redirect to tenant edit with Members inline
-- [ ] Reuses logic from `createtenant` where possible (service layer)
+- [ ] `api/views/reports.py` updated
+- [ ] All report view classes add tenant verification in `get()` method
+- [ ] Add helper method `_get_current_tenant()` that verifies user belongs to tenant
+- [ ] All service method calls pass `tenant=self.tenant` parameter
+- [ ] Views affected: `StockValuationView`, `MovementHistoryView`, `LowStockReportView`, `OverstockReportView`, `ReservationSummaryView`, `AvailabilityReportView`, `PurchaseSummaryView`, `SalesSummaryView`, `ProductExpiryView`, `LotHistoryView`, `VarianceReportView`, `CycleHistoryView`, `ProductTraceabilityView`
+- [ ] Returns 403 Forbidden if user doesn't belong to tenant
+- [ ] Tested: Authenticated user can only access their tenant's reports
+- [ ] Tested: Cross-tenant access is blocked with 403
 
-**Files to Create/Modify:**
-- `tenants/services.py` — `create_tenant_with_owner()` — shared with command and view
-- `tenants/snippets.py` — Extend TenantSnippetViewSet create flow
-- `tenants/wagtail_forms.py` — Custom create form with owner field
-- `tenants/management/commands/createtenant.py` — Refactor to use service
-- `tenants/models.py` — Ensure Tenant create validation matches
+**Files to Modify:**
+- `api/views/reports.py` — Add tenant verification and pass to services
 
 **Implementation Notes:**
-- Extract `createtenant` logic into a service so both CLI and UI use it.
+- Add method: `def _get_current_tenant(self):` that calls `get_current_tenant()` and verifies user membership
+- Use `from tenants.context import get_current_tenant`
+- Add permission check: verify user is in `tenant.members.all()`
+
+---
+
+### TSS-04 — Add explicit tenant filtering to Wagtail report views
+
+**Priority:** HIGH | **Depends On:** None | **Parallel:** Yes
+
+**Problem:**
+Wagtail admin report views (StockValuationView, MovementHistoryView, etc.) don't explicitly filter by tenant. These views are accessible to admin users and could potentially expose data from other tenants if tenant context is not properly set.
+
+**Scope:**
+
+| Capability | Description |
+| ---------- | ----------- |
+| Explicit tenant filtering | Add explicit `.filter(tenant=tenant)` to all querysets |
+| Tenant verification | Verify tenant context is set in get_context_data |
+| Permission checks | Add tenant-based permission checks |
+
+**Acceptance Criteria:**
+
+- [x] `reports/views.py` updated
+- [x] All report view classes verify tenant context in `get_context_data()`
+- [x] All querysets include explicit `.filter(tenant=tenant)` filtering
+- [x] Views affected: `StockValuationView`, `MovementHistoryView`, `LowStockReportView`, `OverstockReportView`, `ExpiryReportView`, `PurchaseSummaryView`, `SalesSummaryView`
+- [x] Add helper method `_get_current_tenant()` for tenant verification
+- [x] Returns error or empty results if tenant context is not set
+- [x] Tested: Admin users can only see their tenant's reports
+- [x] Tested: Cross-tenant access is blocked
+
+**Files to Modify:**
+- `reports/views.py` — Add tenant verification and filtering
+- `reports/services/inventory_reports.py` — Add tenant parameter to methods used by views
+
+**Implementation Notes:**
+- Add method: `def _get_current_tenant(self):` that calls `get_current_tenant()` and raises error if None
+- Use `from tenants.context import get_current_tenant`
+- Add to all `get_context_data()` methods: `tenant = self._get_current_tenant()`
+
+---
+
+### TSS-05 — Add explicit tenant filtering to Inventory admin views
+
+**Priority:** HIGH | **Depends On:** None | **Parallel:** Yes
+
+**Problem:**
+`LowStockAlertView` and `InventorySearchView` query Product, Category, and StockLocation without explicit tenant filtering. While these models inherit from `TenantAwareModel`, the views should explicitly verify tenant context.
+
+**Scope:**
+
+| Capability | Description |
+| ---------- | ----------- |
+| Explicit tenant filtering | Add explicit `.filter(tenant=tenant)` to all querysets |
+| Tenant verification | Verify tenant context is set in get_queryset |
+| Permission checks | Add tenant-based permission checks |
+
+**Acceptance Criteria:**
+
+- [x] `inventory/views.py` updated
+- [x] `LowStockAlertView.get_queryset()` includes explicit tenant filtering
+- [x] `InventorySearchView.get_context_data()` includes explicit tenant filtering
+- [x] Add helper method `_get_current_tenant()` for tenant verification
+- [x] All querysets include explicit `.filter(tenant=tenant)` filtering
+- [x] Returns error or empty results if tenant context is not set
+- [x] Tested: Admin users can only see their tenant's inventory
+- [x] Tested: Cross-tenant access is blocked
+
+**Files to Modify:**
+- `inventory/views.py` — Add tenant verification and filtering
+- `inventory/filters.py` — Add tenant-scoped category/location dropdowns
+
+**Implementation Notes:**
+- Add method: `def _get_current_tenant(self):` that calls `get_current_tenant()` and raises PermissionDenied if None
+- Use `from tenants.context import get_current_tenant` and `from tenants.permissions import get_membership`
+- Update `get_queryset()` and `get_context_data()` methods
+- ProductFilterSet accepts `tenant` kwarg to restrict category/location filter choices
+
+---
+
+### TSS-06 — Add explicit tenant verification to Inventory API viewsets
+
+**Priority:** HIGH | **Depends On:** None | **Parallel:** Yes
+
+**Problem:**
+`CategoryViewSet`, `ProductViewSet`, `StockLocationViewSet`, and other inventory viewsets rely on implicit tenant filtering via `TenantAwareManager`. While this should work, there's no explicit validation that the user belongs to the tenant being queried.
+
+**Scope:**
+
+| Capability | Description |
+| ---------- | ----------- |
+| Explicit tenant filtering | Override `get_queryset()` to explicitly filter by current tenant |
+| Permission checks | Add permission checks to verify user belongs to tenant |
+| Custom actions | Add tenant verification to custom actions (stock, movements, etc.) |
+
+**Acceptance Criteria:**
+
+- [x] `api/views/inventory.py` updated
+- [x] All viewsets override `get_queryset()` to explicitly filter by current tenant
+- [x] Add helper method `_get_current_tenant()` for tenant verification (`TenantScopedInventoryMixin`)
+- [x] All querysets include explicit `.filter(tenant=tenant)` filtering
+- [x] Viewsets affected: `CategoryViewSet`, `ProductViewSet`, `StockLocationViewSet`, `StockRecordViewSet`, `StockMovementViewSet`, `StockLotViewSet`
+- [x] Custom actions (stock, movements, availability, lots) verify tenant ownership
+- [x] Returns 403 Forbidden if user doesn't belong to tenant (or no resolvable tenant)
+- [x] Tested: Authenticated user can only access their tenant's data
+- [x] Tested: Cross-tenant data access blocked; users without tenant membership get 403
+
+**Files to Modify:**
+- `api/views/inventory.py` — Add tenant verification and filtering
+- `api/views/reservation.py` — `product_availability_action` explicit tenant filters
+- `tenants/middleware.py` — `resolve_tenant_for_request()` for DRF Token auth (middleware runs before DRF auth)
+
+**Implementation Notes:**
+- Add method: `def _get_current_tenant(self):` that calls `get_current_tenant()` and raises error if None
+- Override `get_queryset()` in each viewset to add explicit filtering
+- Use `from tenants.context import get_current_tenant`
+- Add tenant checks to custom actions
+
+---
+
+### TSS-07 — Add tenant field to PurchaseOrderLine model
+
+**Priority:** MEDIUM | **Depends On:** None | **Parallel:** Yes
+
+**Problem:**
+`PurchaseOrderLine` inherits from `TimeStampedModel` but doesn't have explicit tenant field. While it's related to `PurchaseOrder` which has tenant, there's no direct tenant field on `PurchaseOrderLine`, making it harder to query by tenant directly.
+
+**Scope:**
+
+| Capability | Description |
+| ---------- | ----------- |
+| Add tenant field | Add explicit `tenant` FK to PurchaseOrderLine |
+| Add constraint | Add unique constraint on (tenant, purchase_order, product) |
+| Migration | Create migration to backfill tenant from purchase_order |
+| Validation | Ensure tenant is set when creating PurchaseOrderLine instances |
+
+**Acceptance Criteria:**
+
+- [x] `procurement/models/order.py` updated
+- [x] `PurchaseOrderLine` model adds `tenant` FK field *(via `TimeStampedModel`; documented on the model)*
+- [x] Tenant field: `tenant = models.ForeignKey("tenants.Tenant", on_delete=models.CASCADE, ...)`
+- [x] Add unique constraint: `UniqueConstraint(fields=["tenant", "purchase_order", "product"], ...)`
+- [x] Migration created to backfill tenant from purchase_order
+- [x] Migration file: `procurement/migrations/0004_add_tenant_to_purchaseorderline.py`
+- [x] Tested: All PurchaseOrderLine instances have tenant populated
+- [x] Tested: Unique constraint prevents duplicate lines per tenant
+- [x] Tested: Queries can filter by tenant directly on PurchaseOrderLine
+
+**Files to Create:**
+- `procurement/migrations/XXXX_add_tenant_to_purchaseorderline.py` *(new)*
+
+**Files to Modify:**
+- `procurement/models/order.py` — Add tenant field and constraint
+
+**Implementation Notes:**
+- Use data migration (RunPython) to backfill tenant from related purchase_order
+- Add `null=False, blank=False` to tenant field after backfill
+
+---
+
+### TSS-08 — Add tenant field to SalesOrderLine model
+
+**Priority:** MEDIUM | **Depends On:** None | **Parallel:** Yes
+
+**Problem:**
+`SalesOrderLine` inherits from `TimeStampedModel` but doesn't have explicit tenant field. While it's related to `SalesOrder` which has tenant, there's no direct tenant field on `SalesOrderLine`.
+
+**Scope:**
+
+| Capability | Description |
+| ---------- | ----------- |
+| Add tenant field | Add explicit `tenant` FK to SalesOrderLine |
+| Add constraint | Add unique constraint on (tenant, sales_order, product) |
+| Migration | Create migration to backfill tenant from sales_order |
+| Validation | Ensure tenant is set when creating SalesOrderLine instances |
+
+**Acceptance Criteria:**
+
+- [x] `sales/models/order.py` updated
+- [x] `SalesOrderLine` model adds `tenant` FK field *(via `TimeStampedModel`, same as `PurchaseOrderLine`)*
+- [x] Tenant field: `tenant = models.ForeignKey("tenants.Tenant", on_delete=models.CASCADE, ...)`
+- [x] Add unique constraint: `UniqueConstraint(fields=["tenant", "sales_order", "product"], ...)`
+- [x] Migration created to backfill tenant from sales_order
+- [x] Migration file: `sales/migrations/XXXX_add_tenant_to_salesorderline.py`
+- [x] Tested: All SalesOrderLine instances have tenant populated
+- [x] Tested: Unique constraint prevents duplicate lines per tenant
+- [x] Tested: Queries can filter by tenant directly on SalesOrderLine
+
+**Files to Create:**
+- `sales/migrations/0004_add_tenant_to_salesorderline.py` *(new)*
+
+**Files to Modify:**
+- `sales/models/order.py` — Add tenant field and constraint
+
+**Implementation Notes:**
+- Use data migration (RunPython) to backfill tenant from related sales_order
+- Add `null=False, blank=False` to tenant field after backfill
+
+---
+
+### TSS-09 — Add logging and fallback to TenantAwareManager
+
+**Priority:** MEDIUM | **Depends On:** None | **Parallel:** Yes
+
+**Problem:**
+The `TenantAwareManager` in `tenants/managers.py` returns unfiltered querysets when no tenant is set in context. This could lead to data leakage if tenant context is accidentally cleared or not set. There's no explicit validation or warning.
+
+**Scope:**
+
+| Capability | Description |
+| ---------- | ----------- |
+| Add logging | Log warning when tenant context is None |
+| Add fallback | Add explicit tenant parameter to manager methods as fallback |
+| Add validation | Optionally raise exception in production when tenant context is missing |
+
+**Acceptance Criteria:**
+
+- [x] `tenants/managers.py` updated
+- [x] Add logging import: `import logging`
+- [x] Add logger: `logger = logging.getLogger(__name__)`
+- [x] Log warning when `get_current_tenant()` returns None: `logger.warning("Querying without tenant context")`
+- [x] Add `for_tenant(tenant)` method to explicitly filter by tenant
+- [x] Add `unscoped()` method to explicitly bypass tenant filtering (for admin/migrations)
+- [x] Add docstring explaining when to use each method
+- [x] Tested: Warning logged when tenant context is None
+- [x] Tested: `for_tenant(tenant)` filters correctly
+- [x] Tested: `unscoped()` returns all records
+
+**Files to Modify:**
+- `tenants/managers.py` — Add logging, fallback methods, validation
+
+**Implementation Notes:**
+- Use `logger.warning()` for non-critical cases
+- Consider `logger.error()` for production environments
+- Document when to use `unscoped()` (migrations, management commands only)
+
+---
+
+### TSS-10 — Add tenant verification to ProductViewSet and StockLocationViewSet custom actions
+
+**Priority:** MEDIUM | **Depends On:** None | **Parallel:** Yes
+
+**Problem:**
+The `stock()` action in `ProductViewSet` and `StockLocationViewSet` retrieves records without verifying that the product/location belongs to the current tenant. An authenticated user could potentially access data from other tenants.
+
+**Scope:**
+
+| Capability | Description |
+| ---------- | ----------- |
+| Tenant verification | Add explicit tenant check in custom actions |
+| Verify ownership | Verify product/location tenant matches current tenant |
+| Add similar checks | Apply to movements(), availability(), and lots() actions |
+
+**Acceptance Criteria:**
+
+- [x] `api/views/inventory.py` updated
+- [x] `ProductViewSet.stock()` action verifies `product.tenant == current_tenant`
+- [x] `ProductViewSet.movements()` action verifies `product.tenant == current_tenant`
+- [x] `ProductViewSet.availability()` action verifies `product.tenant == current_tenant`
+- [x] `ProductViewSet.lots()` action verifies `product.tenant == current_tenant`
+- [x] `StockLocationViewSet.stock()` action verifies `location.tenant == current_tenant`
+- [x] Returns 403 Forbidden if tenant doesn't match
+- [x] Tested: User can only access their tenant's product stock data
+- [x] Tested: Cross-tenant access is blocked with 403
+
+**Files to Modify:**
+- `api/views/inventory.py` — Add tenant verification to custom actions
+
+**Implementation Notes:**
+- Add helper method: `def _verify_tenant_ownership(self, obj):` that checks `obj.tenant == get_current_tenant()`
+- Raise `PermissionDenied` if tenant doesn't match
+- Use `from rest_framework.exceptions import PermissionDenied`
 
 ---
 
 ## Dependency Graph
 
 ```
+TSS-01 (InventoryReportService)
+TSS-02 (OrderReportService)
+TSS-03 (Report API views) ──→ depends on TSS-01, TSS-02
+TSS-04 (Wagtail report views)
+TSS-05 (Inventory admin views)
+TSS-06 (Inventory API viewsets)
+TSS-07 (PurchaseOrderLine tenant field)
+TSS-08 (SalesOrderLine tenant field)
+TSS-09 (TenantAwareManager logging)
+TSS-10 (Custom action verification)
 
-SA-01 ──────────────────────────────────────────┐
-SA-02 ──────────────────────────────────────────┤
-SA-03 ──────────────────────────────────────────┤  (all independent, can run in parallel)
-SA-04 ──────────────────────────────────────────┤
-SA-05 ──────────────────────────────────────────┤
-SA-06 ──────────────────────────────────────────┤
-SA-07 ──────────────────────────────────────────┤
-SA-08 ──────────────────────────────────────────┤
-SA-09 ──────────────────────────────────────────┘
+All tasks are independent and can be implemented in parallel.
 ```
 
 ---
 
 ## Recommended Execution Order
 
-### Sprint 1 — Single-Responsibility Fixes (HIGH)
+All 10 tasks are **independent** and can be implemented in parallel. However, for logical grouping:
 
-Run **FX-01**, **FX-02**, **FX-03**, **FX-04** in parallel. These are the most
-impactful architectural fixes and have zero dependencies.
+### Group 1 — Service Layer (TSS-01, TSS-02)
+- TSS-01: Add explicit tenant filtering to InventoryReportService
+- TSS-02: Add explicit tenant filtering to OrderReportService
 
-### Sprint 2 — Structural Cleanup (MEDIUM)
+### Group 2 — API & View Layer (TSS-03, TSS-04, TSS-05, TSS-06, TSS-10)
+- TSS-03: Add explicit tenant verification to Report API views
+- TSS-04: Add explicit tenant filtering to Wagtail report views
+- TSS-05: Add explicit tenant filtering to Inventory admin views
+- TSS-06: Add explicit tenant verification to Inventory API viewsets
+- TSS-10: Add tenant verification to custom actions
 
-1. Run **FX-05** and **FX-06** in parallel (folder restructures).
-2. After FX-06 completes, run **FX-07** and **FX-09** in parallel.
-3. Run **FX-08** independently (can overlap with any of the above).
+### Group 3 — Model Layer (TSS-07, TSS-08, TSS-09)
+- TSS-07: Add tenant field to PurchaseOrderLine model
+- TSS-08: Add tenant field to SalesOrderLine model
+- TSS-09: Add logging and fallback to TenantAwareManager
 
-### Sprint 3 — Consistency & Polish (LOW)
+---
 
-Run **FX-10** through **FX-15** in any order. All are independent and small in scope.
+## Testing Strategy
 
-### Sprint — System Admin (SA-*)
+After implementing each task:
 
-All SA tasks are independent and can be run in parallel. Suggested order by priority:
+1. Run unit tests for the modified module
+2. Run integration tests to verify tenant isolation
+3. Run full test suite: `python manage.py test`
+4. Manual testing: verify cross-tenant access is blocked
 
-| Phase | Tasks | Notes |
-| ----- | ----- | ----- |
-| Phase 1 (HIGH) | SA-01, SA-02, SA-04 | User management, tenant oversight, audit log |
-| Phase 2 (MEDIUM) | SA-03, SA-05, SA-06, SA-08, SA-09 | Impersonation, invitations, billing, Django fallback, tenant creation UI |
-| Phase 3 (LOW) | SA-07 | Tenant data export |
+---
 
-SA-02 and SA-06 share logic (usage stats, suspend); implement together or sequentially if preferred.
+## Security Checklist
+
+- [ ] All querysets explicitly filter by tenant
+- [ ] All API views verify user belongs to tenant
+- [ ] All custom actions verify tenant ownership
+- [ ] All models with tenant FK have non-nullable tenant field
+- [ ] All migrations backfill tenant data correctly
+- [ ] No cross-tenant data leakage in reports
+- [ ] No cross-tenant data leakage in API responses
+- [ ] Logging captures tenant context for audit trail

@@ -1,9 +1,11 @@
 """API views for inventory models."""
 
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.response import Response
 
@@ -15,6 +17,9 @@ from inventory.services.cache import (
     stock_record_key,
 )
 from inventory.services.stock import StockService
+from tenants.context import get_current_tenant
+from tenants.middleware import resolve_tenant_for_request
+from tenants.permissions import get_membership
 
 from api.serializers.inventory import (
     CategorySerializer,
@@ -28,7 +33,33 @@ from api.serializers.inventory import (
 from api.views.reservation import product_availability_action
 
 
-class CategoryViewSet(viewsets.ModelViewSet):
+class TenantScopedInventoryMixin:
+    """Explicit tenant resolution and membership checks for inventory APIs.
+
+    Thread-local context may be unset when DRF authenticates after
+    :class:`~tenants.middleware.TenantMiddleware` (e.g. token auth); in that
+    case we resolve the tenant from the authenticated user via
+    ``resolve_tenant_for_request``.
+    """
+
+    def _get_current_tenant(self):
+        tenant = get_current_tenant()
+        if tenant is None:
+            tenant = resolve_tenant_for_request(self.request)
+        if tenant is None:
+            raise PermissionDenied("No tenant context available.")
+        if not get_membership(self.request.user, tenant):
+            raise PermissionDenied("User does not belong to this tenant.")
+        return tenant
+
+    def _verify_tenant_ownership(self, obj):
+        """Ensure ``obj`` belongs to the tenant resolved for this request."""
+        tenant = self._get_current_tenant()
+        if obj.tenant_id != tenant.pk:
+            raise PermissionDenied("Object does not belong to the current tenant.")
+
+
+class CategoryViewSet(TenantScopedInventoryMixin, viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     filter_backends = [SearchFilter, OrderingFilter]
@@ -36,8 +67,12 @@ class CategoryViewSet(viewsets.ModelViewSet):
     ordering_fields = ["name", "created_at"]
     ordering = ["name"]
 
+    def get_queryset(self):
+        tenant = self._get_current_tenant()
+        return super().get_queryset().filter(tenant=tenant)
 
-class ProductViewSet(viewsets.ModelViewSet):
+
+class ProductViewSet(TenantScopedInventoryMixin, viewsets.ModelViewSet):
     queryset = Product.objects.select_related("category").all()
     serializer_class = ProductSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -46,12 +81,19 @@ class ProductViewSet(viewsets.ModelViewSet):
     ordering_fields = ["sku", "name", "unit_cost", "created_at"]
     ordering = ["sku"]
 
+    def get_queryset(self):
+        tenant = self._get_current_tenant()
+        return super().get_queryset().filter(tenant=tenant)
+
     @action(detail=True, methods=["get"])
     def stock(self, request, pk=None):
         """Return stock records for this product across all locations."""
-        product = self.get_object()
+        tenant = self._get_current_tenant()
+        product = get_object_or_404(Product.objects.all(), pk=pk)
+        self._verify_tenant_ownership(product)
         records = StockRecord.objects.filter(
             product=product,
+            tenant=tenant,
         ).select_related("location")
         data = []
         for record in records:
@@ -68,9 +110,12 @@ class ProductViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["get"])
     def movements(self, request, pk=None):
         """Return recent stock movements for this product."""
-        product = self.get_object()
+        tenant = self._get_current_tenant()
+        product = get_object_or_404(Product.objects.all(), pk=pk)
+        self._verify_tenant_ownership(product)
         movements = StockMovement.objects.filter(
             product=product,
+            tenant=tenant,
         ).select_related("from_location", "to_location")[:50]
         serializer = StockMovementSerializer(movements, many=True)
         return Response(serializer.data)
@@ -78,13 +123,17 @@ class ProductViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["get"])
     def availability(self, request, pk=None):
         """Return per-location availability: quantity, reserved, available."""
-        return product_availability_action(self, request, pk=pk)
+        product = get_object_or_404(Product.objects.all(), pk=pk)
+        self._verify_tenant_ownership(product)
+        return product_availability_action(self, request, product=product)
 
     @action(detail=True, methods=["get"])
     def lots(self, request, pk=None):
         """Return lots for this product, with optional filtering."""
-        product = self.get_object()
-        qs = StockLot.objects.filter(product=product).select_related("product")
+        tenant = self._get_current_tenant()
+        product = get_object_or_404(Product.objects.all(), pk=pk)
+        self._verify_tenant_ownership(product)
+        qs = StockLot.objects.filter(product=product, tenant=tenant).select_related("product")
 
         is_active = request.query_params.get("is_active")
         if is_active is not None:
@@ -104,7 +153,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-class StockLocationViewSet(viewsets.ModelViewSet):
+class StockLocationViewSet(TenantScopedInventoryMixin, viewsets.ModelViewSet):
     queryset = StockLocation.objects.all()
     serializer_class = StockLocationSerializer
     filter_backends = [SearchFilter, OrderingFilter]
@@ -112,12 +161,19 @@ class StockLocationViewSet(viewsets.ModelViewSet):
     ordering_fields = ["name", "created_at"]
     ordering = ["name"]
 
+    def get_queryset(self):
+        tenant = self._get_current_tenant()
+        return super().get_queryset().filter(tenant=tenant)
+
     @action(detail=True, methods=["get"])
     def stock(self, request, pk=None):
         """Return stock records at this location."""
-        location = self.get_object()
+        tenant = self._get_current_tenant()
+        location = get_object_or_404(StockLocation.objects.all(), pk=pk)
+        self._verify_tenant_ownership(location)
         records = StockRecord.objects.filter(
             location=location,
+            tenant=tenant,
         ).select_related("product")
         data = []
         for record in records:
@@ -132,7 +188,7 @@ class StockLocationViewSet(viewsets.ModelViewSet):
         return Response(data)
 
 
-class StockRecordViewSet(viewsets.ReadOnlyModelViewSet):
+class StockRecordViewSet(TenantScopedInventoryMixin, viewsets.ReadOnlyModelViewSet):
     """Read-only — stock is managed through movements, not direct edits."""
 
     queryset = StockRecord.objects.select_related("product", "location").all()
@@ -142,15 +198,21 @@ class StockRecordViewSet(viewsets.ReadOnlyModelViewSet):
     ordering_fields = ["quantity", "product__sku"]
     ordering = ["product__sku"]
 
+    def get_queryset(self):
+        tenant = self._get_current_tenant()
+        return super().get_queryset().filter(tenant=tenant)
+
     @action(detail=False, methods=["get"])
     def low_stock(self, request):
         """Return stock records that are at or below the product's reorder point."""
+        tenant = self._get_current_tenant()
         records = [r for r in self.get_queryset() if r.is_low_stock]
         serializer = self.get_serializer(records, many=True)
         return Response(serializer.data)
 
 
-class StockMovementViewSet(viewsets.GenericViewSet,
+class StockMovementViewSet(TenantScopedInventoryMixin,
+                           viewsets.GenericViewSet,
                            viewsets.mixins.ListModelMixin,
                            viewsets.mixins.RetrieveModelMixin,
                            viewsets.mixins.CreateModelMixin):
@@ -168,16 +230,28 @@ class StockMovementViewSet(viewsets.GenericViewSet,
     ordering_fields = ["created_at", "quantity"]
     ordering = ["-created_at"]
 
+    def get_queryset(self):
+        tenant = self._get_current_tenant()
+        return super().get_queryset().filter(tenant=tenant)
+
     def get_serializer_class(self):
         if self.action == "create":
             return StockMovementCreateSerializer
         return StockMovementSerializer
 
     def create(self, request, *args, **kwargs):
+        tenant = self._get_current_tenant()
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         data = serializer.validated_data
+        product = data["product"]
+        if product.tenant_id != tenant.pk:
+            raise PermissionDenied("Product does not belong to the current tenant.")
+        for loc in (data.get("from_location"), data.get("to_location")):
+            if loc is not None and loc.tenant_id != tenant.pk:
+                raise PermissionDenied("Location does not belong to the current tenant.")
+
         service = StockService()
         created_by = request.user if request.user.is_authenticated else None
 
@@ -231,7 +305,7 @@ class StockMovementViewSet(viewsets.GenericViewSet,
         return Response(output.data, status=status.HTTP_201_CREATED)
 
 
-class StockLotViewSet(viewsets.ReadOnlyModelViewSet):
+class StockLotViewSet(TenantScopedInventoryMixin, viewsets.ReadOnlyModelViewSet):
     """Read-only — lots are created via stock movements, not directly."""
 
     queryset = (
@@ -250,3 +324,7 @@ class StockLotViewSet(viewsets.ReadOnlyModelViewSet):
     search_fields = ["lot_number", "serial_number", "product__sku"]
     ordering_fields = ["received_date", "expiry_date", "quantity_remaining", "created_at"]
     ordering = ["-received_date"]
+
+    def get_queryset(self):
+        tenant = self._get_current_tenant()
+        return super().get_queryset().filter(tenant=tenant)

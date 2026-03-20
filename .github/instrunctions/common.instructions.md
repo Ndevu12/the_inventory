@@ -12,3 +12,4 @@ Description: This file describes the environment variable configuration for the 
 
 - Don't hardcode backend URLs in your code. Use environment variables to configure the API server URL for development and production.
 
+- All imports should be at the top of the file, and you should avoid importing modules inside functions or blocks of code.

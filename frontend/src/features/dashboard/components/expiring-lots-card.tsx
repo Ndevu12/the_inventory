@@ -19,10 +19,17 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { ExpiringLotsData, ExpiringLot } from "../types/dashboard.types";
+import {
+  DashboardWidgetError,
+  getDashboardErrorMessage,
+} from "./dashboard-widget-error";
 
 interface ExpiringLotsCardProps {
   data: ExpiringLotsData | undefined;
   isLoading: boolean;
+  isError: boolean;
+  error: unknown;
+  onRetry?: () => void;
 }
 
 function expiryVariant(daysLeft: number | null): "default" | "secondary" | "destructive" | "outline" {
@@ -63,7 +70,13 @@ function LotRow({ lot }: { lot: ExpiringLot }) {
   );
 }
 
-export function ExpiringLotsCard({ data, isLoading }: ExpiringLotsCardProps) {
+export function ExpiringLotsCard({
+  data,
+  isLoading,
+  isError,
+  error,
+  onRetry,
+}: ExpiringLotsCardProps) {
   return (
     <Card>
       <CardHeader>
@@ -74,7 +87,19 @@ export function ExpiringLotsCard({ data, isLoading }: ExpiringLotsCardProps) {
         <CardDescription>Lots expiring within the next 30 days</CardDescription>
       </CardHeader>
       <CardContent>
-        {isLoading || !data ? (
+        {isLoading ? (
+          <div className="space-y-2">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-10 w-full" />
+            ))}
+          </div>
+        ) : isError ? (
+          <DashboardWidgetError
+            message={getDashboardErrorMessage(error)}
+            onRetry={onRetry}
+            minHeight="200px"
+          />
+        ) : !data ? (
           <div className="space-y-2">
             {Array.from({ length: 5 }).map((_, i) => (
               <Skeleton key={i} className="h-10 w-full" />

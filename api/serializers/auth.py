@@ -2,7 +2,8 @@
 
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
+from rest_framework_simplejwt.exceptions import InvalidToken
 
 from tenants.models import TenantMembership
 
@@ -33,6 +34,16 @@ class InventoryTokenObtainPairSerializer(TokenObtainPairSerializer):
             data["tenant"] = None
 
         return data
+
+
+class InventoryTokenRefreshSerializer(TokenRefreshSerializer):
+    """Handle token refresh with graceful user deletion handling."""
+
+    def validate(self, attrs):
+        try:
+            return super().validate(attrs)
+        except User.DoesNotExist:
+            raise InvalidToken("User associated with token no longer exists.")
 
 
 class UserSerializer(serializers.ModelSerializer):

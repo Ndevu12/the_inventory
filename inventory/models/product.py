@@ -30,6 +30,15 @@ class TrackingMode(models.TextChoices):
 class ProductQuerySet(models.QuerySet):
     """Custom queryset with inventory-specific filters."""
 
+    def filter_by_current_tenant(self):
+        """Filter to thread-local tenant; empty queryset if unset (same contract as ``TimeStampedModel`` managers)."""
+        from tenants.context import get_current_tenant
+
+        current_tenant = get_current_tenant()
+        if current_tenant is None:
+            return self.none()
+        return self.filter(tenant=current_tenant)
+
     def low_stock(self):
         """Return products where any location's available quantity <= reorder_point.
 
