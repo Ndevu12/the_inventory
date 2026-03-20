@@ -95,11 +95,14 @@ export function CycleForm({
               <Label>Location (optional)</Label>
               <Select
                 value={watch("location") || ""}
-                onValueChange={(val) =>
-                  setValue("location", val === "__all__" ? "" : val, {
-                    shouldValidate: true,
-                  })
-                }
+                onValueChange={(val) => {
+                  if (val) {
+                    const locationValue = val === "__all__" ? "" : val;
+                    setValue("location", locationValue, {
+                      shouldValidate: true,
+                    });
+                  }
+                }}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="All Locations (Full Warehouse)" />
