@@ -456,7 +456,7 @@ function CreateUserDialog({
           </div>
           <div className="grid gap-2">
             <Label>Default role (for assigned tenants)</Label>
-            <Select value={defaultRole} onValueChange={setDefaultRole}>
+            <Select value={defaultRole} onValueChange={(val) => val && setDefaultRole(val)}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
