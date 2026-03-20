@@ -29,6 +29,8 @@ except ImportError:
                     key, value = line.split("=", 1)
                     os.environ.setdefault(key.strip(), value.strip())
 
+from .env_utils import env_bool, env_int, env_list, env_str
+
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 BASE_DIR = PROJECT_DIR.parent
 
@@ -149,9 +151,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
-LANGUAGE_CODE = "en-us"
+LANGUAGE_CODE = env_str("LANGUAGE_CODE", "en-us") or "en-us"
 
-TIME_ZONE = "UTC"
+TIME_ZONE = env_str("TIME_ZONE", "UTC") or "UTC"
 
 USE_I18N = True
 
@@ -171,10 +173,10 @@ STATICFILES_DIRS = [
 ]
 
 STATIC_ROOT = BASE_DIR / "static"
-STATIC_URL = "/static/"
+STATIC_URL = env_str("STATIC_URL", "/static/") or "/static/"
 
 MEDIA_ROOT = BASE_DIR / "media"
-MEDIA_URL = "/media/"
+MEDIA_URL = env_str("MEDIA_URL", "/media/") or "/media/"
 
 # Default storage settings
 # See https://docs.djangoproject.com/en/6.0/ref/settings/#std-setting-STORAGES
@@ -197,17 +199,17 @@ CACHES = {
     }
 }
 
-STOCK_CACHE_TTL = 60 * 10  # 10 minutes
-DASHBOARD_CACHE_TTL = 60 * 5  # 5 minutes
+STOCK_CACHE_TTL = env_int("STOCK_CACHE_TTL_SECONDS", 60 * 10)
+DASHBOARD_CACHE_TTL = env_int("DASHBOARD_CACHE_TTL_SECONDS", 60 * 5)
 
 # Django sets a maximum of 1000 fields per form by default, but particularly complex page models
 # can exceed this limit within Wagtail's page editor.
-DATA_UPLOAD_MAX_NUMBER_FIELDS = 10_000
+DATA_UPLOAD_MAX_NUMBER_FIELDS = env_int("DATA_UPLOAD_MAX_NUMBER_FIELDS", 10_000)
 
 
-# Wagtail settings
+# Wagtail settings (tunable public strings only; search backends stay in code)
 
-WAGTAIL_SITE_NAME = "the_inventory"
+WAGTAIL_SITE_NAME = env_str("WAGTAIL_SITE_NAME", "the_inventory") or "the_inventory"
 
 # Search
 # https://docs.wagtail.org/en/stable/topics/search/backends.html
@@ -217,9 +219,13 @@ WAGTAILSEARCH_BACKENDS = {
     }
 }
 
-# Base URL to use when referring to full URLs within the Wagtail admin backend -
-# e.g. in notification emails. Don't include '/admin' or a trailing slash
-WAGTAILADMIN_BASE_URL = "http://example.com"
+# Base URL for Wagtail admin emails / absolute links (no '/admin', no trailing slash).
+# Prefer WAGTAILADMIN_BASE_URL; fall back to PUBLIC_BASE_URL or local dev default.
+WAGTAILADMIN_BASE_URL = (
+    env_str("WAGTAILADMIN_BASE_URL")
+    or env_str("PUBLIC_BASE_URL")
+    or "http://127.0.0.1:8000"
+)
 
 # Allowed file extensions for documents in the document library.
 # This can be omitted to allow all files, but note that this may present a security risk
@@ -240,7 +246,7 @@ REST_FRAMEWORK = {
         "api.permissions.IsStaffUser",
     ],
     "DEFAULT_PAGINATION_CLASS": "api.pagination.StandardPagination",
-    "PAGE_SIZE": 25,
+    "PAGE_SIZE": env_int("API_PAGE_SIZE", 25),
     "DEFAULT_FILTER_BACKENDS": [
         "django_filters.rest_framework.DjangoFilterBackend",
     ],
@@ -251,8 +257,8 @@ REST_FRAMEWORK = {
 # SimpleJWT
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=env_int("JWT_ACCESS_TOKEN_MINUTES", 30)),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=env_int("JWT_REFRESH_TOKEN_DAYS", 7)),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": False,
     "AUTH_HEADER_TYPES": ("Bearer",),
@@ -261,16 +267,27 @@ SIMPLE_JWT = {
 }
 
 
-# CORS
+# CORS — SPA / separate frontend origin (comma-separated origins, full scheme+host+port)
 
-CORS_ALLOWED_ORIGINS = [
+_DEFAULT_CORS_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:5173",
     "http://127.0.0.1:3000",
     "http://127.0.0.1:5173",
 ]
-CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOW_HEADERS = [
+
+if env_bool("CORS_ALLOW_ALL_ORIGINS"):
+    # Browsers forbid credentials with wildcard origins; do not combine with
+    # CORS_ALLOW_CREDENTIALS=True for real auth flows.
+    CORS_ALLOW_ALL_ORIGINS = True
+    CORS_ALLOWED_ORIGINS: list[str] = []
+else:
+    CORS_ALLOW_ALL_ORIGINS = False
+    CORS_ALLOWED_ORIGINS = env_list("CORS_ALLOWED_ORIGINS", default=_DEFAULT_CORS_ORIGINS)
+
+CORS_ALLOW_CREDENTIALS = env_bool("CORS_ALLOW_CREDENTIALS", True)
+
+_CORS_BASE_HEADERS = [
     "accept",
     "accept-encoding",
     "authorization",
@@ -280,33 +297,51 @@ CORS_ALLOW_HEADERS = [
     "user-agent",
     "x-csrftoken",
     "x-requested-with",
-    "x-tenant",  # Custom header for multi-tenant support
+    "x-tenant",
 ]
+CORS_ALLOW_HEADERS = list(dict.fromkeys(_CORS_BASE_HEADERS + env_list("CORS_EXTRA_HEADERS")))
+
+# CSRF — required for session auth / unsafe methods from a browser on another origin.
+# When CORS_ALLOWED_ORIGINS is used, CSRF_TRUSTED_ORIGINS defaults to the same list.
+# If you set CORS_ALLOW_ALL_ORIGINS, you must set CSRF_TRUSTED_ORIGINS explicitly.
+_csrf_origins = env_list("CSRF_TRUSTED_ORIGINS")
+if _csrf_origins:
+    CSRF_TRUSTED_ORIGINS = _csrf_origins
+elif CORS_ALLOW_ALL_ORIGINS:
+    CSRF_TRUSTED_ORIGINS = []
+else:
+    CSRF_TRUSTED_ORIGINS = list(CORS_ALLOWED_ORIGINS)
+
+# Cookie / CSRF flags for cross-site frontends (e.g. SPA on another domain over HTTPS).
+SESSION_COOKIE_SAMESITE = env_str("SESSION_COOKIE_SAMESITE", "Lax") or "Lax"
+SESSION_COOKIE_SECURE = env_bool("SESSION_COOKIE_SECURE", False)
+CSRF_COOKIE_SAMESITE = env_str("CSRF_COOKIE_SAMESITE", "Lax") or "Lax"
+CSRF_COOKIE_SECURE = env_bool("CSRF_COOKIE_SECURE", False)
 
 
 # drf-spectacular (OpenAPI)
 
 # Frontend base URL for invite links, password reset, etc.
-# Override in production (e.g. FRONTEND_URL=https://app.example.com)
-FRONTEND_URL = "http://localhost:3000"
+FRONTEND_URL = env_str("FRONTEND_URL", "http://localhost:3000") or "http://localhost:3000"
 
 # Public tenant registration (hosted vs self-hosted)
 # When True: anyone can register a new organization via POST /auth/register/
 # When False (default): only superuser/staff can create tenants via admin or createtenant
 # Hosters set ENABLE_PUBLIC_TENANT_REGISTRATION=True; self-hosted leave default
-ENABLE_PUBLIC_TENANT_REGISTRATION = os.environ.get(
-    "ENABLE_PUBLIC_TENANT_REGISTRATION", ""
-).lower() in ("1", "true", "yes")
+ENABLE_PUBLIC_TENANT_REGISTRATION = env_bool("ENABLE_PUBLIC_TENANT_REGISTRATION", False)
 
 # Tenant access audit trail
-# Set to False to disable logging of tenant switches (useful for high-traffic systems).
-AUDIT_TENANT_ACCESS = True
+AUDIT_TENANT_ACCESS = env_bool("AUDIT_TENANT_ACCESS", True)
 
 
 SPECTACULAR_SETTINGS = {
-    "TITLE": "The Inventory API",
-    "DESCRIPTION": "RESTful API for The Inventory — a multi-tenant inventory management platform.",
-    "VERSION": "1.0.0",
+    "TITLE": env_str("API_DOC_TITLE", "The Inventory API") or "The Inventory API",
+    "DESCRIPTION": env_str(
+        "API_DOC_DESCRIPTION",
+        "RESTful API for The Inventory — a multi-tenant inventory management platform.",
+    )
+    or "RESTful API for The Inventory — a multi-tenant inventory management platform.",
+    "VERSION": env_str("API_DOC_VERSION", "1.0.0") or "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
 }
@@ -314,7 +349,9 @@ SPECTACULAR_SETTINGS = {
 
 # Celery
 
-CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379/0")
+CELERY_BROKER_URL = (
+    env_str("CELERY_BROKER_URL") or env_str("REDIS_URL") or "redis://localhost:6379/0"
+)
 CELERY_RESULT_BACKEND = "django-db"
 CELERY_RESULT_EXTENDED = True
 CELERY_ACCEPT_CONTENT = ["json"]
@@ -322,9 +359,24 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_TASK_TRACK_STARTED = True
-CELERY_TASK_ALWAYS_EAGER = os.environ.get("CELERY_TASK_ALWAYS_EAGER", "").lower() in (
-    "1",
-    "true",
-    "yes",
-)
+CELERY_TASK_ALWAYS_EAGER = env_bool("CELERY_TASK_ALWAYS_EAGER", False)
 CELERY_TASK_EAGER_PROPAGATES = CELERY_TASK_ALWAYS_EAGER
+
+# Email — only set attributes that are configured (dev.py may force console backend).
+_email_backend = env_str("EMAIL_BACKEND")
+if _email_backend:
+    EMAIL_BACKEND = _email_backend
+if env_str("EMAIL_HOST"):
+    EMAIL_HOST = env_str("EMAIL_HOST")
+    EMAIL_PORT = env_int("EMAIL_PORT", 587)
+    EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", True)
+    EMAIL_USE_SSL = env_bool("EMAIL_USE_SSL", False)
+    _user = env_str("EMAIL_HOST_USER")
+    if _user:
+        EMAIL_HOST_USER = _user
+    _pw = env_str("EMAIL_HOST_PASSWORD")
+    if _pw:
+        EMAIL_HOST_PASSWORD = _pw
+_default_from = env_str("DEFAULT_FROM_EMAIL")
+if _default_from:
+    DEFAULT_FROM_EMAIL = _default_from

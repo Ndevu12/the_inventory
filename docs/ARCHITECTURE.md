@@ -727,6 +727,8 @@ A `Dockerfile` is provided for containerized deployments. The image:
 | `SEED_MODELS` | Container env only; optional `--models` list; see `seed_database --help` |
 | `REDIS_URL` | Optional; if set, production uses Redis for `CACHES`. If unset, LocMemCache is used (no Redis on the host). |
 
+Most other tunables (CORS, CSRF, JWT lifetimes, `FRONTEND_URL`, cache TTLs, email, etc.) are read from the environment in `the_inventory/settings/base.py` via `env_utils`. See `.env.example` for names and defaults. Production also sets `SECURE_PROXY_SSL_HEADER` when `RENDER` or `USE_X_FORWARDED_PROTO` is set, and defaults `SESSION_COOKIE_SECURE` / `CSRF_COOKIE_SECURE` to true unless overridden.
+
 ---
 
 ## Contributing

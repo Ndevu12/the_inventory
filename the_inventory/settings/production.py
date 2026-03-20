@@ -1,7 +1,9 @@
 import os
+
 import dj_database_url
 
 from .base import *  # noqa: F403,F401
+from .env_utils import env_bool
 
 DEBUG = False
 
@@ -62,6 +64,15 @@ else:
             "LOCATION": "the-inventory-production",
         }
     }
+
+# TLS termination at the proxy (Render, Heroku, etc.)
+_render = (os.environ.get("RENDER") or "").strip().lower() in ("1", "true", "yes")
+if _render or env_bool("USE_X_FORWARDED_PROTO"):
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# Secure cookies by default in production; set SESSION_COOKIE_SECURE=false to disable.
+SESSION_COOKIE_SECURE = env_bool("SESSION_COOKIE_SECURE", True)
+CSRF_COOKIE_SECURE = env_bool("CSRF_COOKIE_SECURE", True)
 
 try:
     from .local import *  # noqa: F403,F401
