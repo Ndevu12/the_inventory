@@ -68,11 +68,11 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "tenants.middleware.TenantMiddleware",
     "api.middleware.JWTAuthMiddleware",
     "tenants.middleware.ImpersonationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "tenants.middleware.TenantMiddleware",
     "wagtail.contrib.redirects.middleware.RedirectMiddleware",
 ]
 
@@ -241,6 +241,7 @@ SIMPLE_JWT = {
     "BLACKLIST_AFTER_ROTATION": False,
     "AUTH_HEADER_TYPES": ("Bearer",),
     "TOKEN_OBTAIN_SERIALIZER": "api.serializers.auth.InventoryTokenObtainPairSerializer",
+    "TOKEN_REFRESH_SERIALIZER": "api.serializers.auth.InventoryTokenRefreshSerializer",
 }
 
 

@@ -14,19 +14,19 @@ class StockMovementSeeder(BaseSeeder):
         self.log("Creating stock movements...")
 
         # Get some products and locations
-        phone_1 = Product.objects.get(sku="PHONE-001")
-        phone_2 = Product.objects.get(sku="PHONE-002")
-        laptop_1 = Product.objects.get(sku="LAPTOP-001")
-        acc_1 = Product.objects.get(sku="ACC-001")
-        chair = Product.objects.get(sku="CHAIR-001")
+        phone_1 = Product.objects.get(sku="PHONE-001", tenant=self.tenant)
+        phone_2 = Product.objects.get(sku="PHONE-002", tenant=self.tenant)
+        laptop_1 = Product.objects.get(sku="LAPTOP-001", tenant=self.tenant)
+        acc_1 = Product.objects.get(sku="ACC-001", tenant=self.tenant)
+        chair = Product.objects.get(sku="CHAIR-001", tenant=self.tenant)
 
-        bin_a1_1 = StockLocation.objects.get(name="Bin A1-1")
-        bin_a1_2 = StockLocation.objects.get(name="Bin A1-2")
-        bin_a2_1 = StockLocation.objects.get(name="Bin A2-1")
-        bin_a2_2 = StockLocation.objects.get(name="Bin A2-2")
-        shelf_a3 = StockLocation.objects.get(name="Shelf A3")
-        shelf_b2 = StockLocation.objects.get(name="Shelf B2")
-        overflow = StockLocation.objects.get(name="Overflow Section")
+        bin_a1_1 = StockLocation.objects.get(name="Bin A1-1", tenant=self.tenant)
+        bin_a1_2 = StockLocation.objects.get(name="Bin A1-2", tenant=self.tenant)
+        bin_a2_1 = StockLocation.objects.get(name="Bin A2-1", tenant=self.tenant)
+        bin_a2_2 = StockLocation.objects.get(name="Bin A2-2", tenant=self.tenant)
+        shelf_a3 = StockLocation.objects.get(name="Shelf A3", tenant=self.tenant)
+        shelf_b2 = StockLocation.objects.get(name="Shelf B2", tenant=self.tenant)
+        overflow = StockLocation.objects.get(name="Overflow Section", tenant=self.tenant)
 
         now = timezone.now()
 
@@ -131,13 +131,21 @@ class StockMovementSeeder(BaseSeeder):
         ]
 
         for idx, movement_data in enumerate(movements):
+            # Check if movement already exists by reference
+            if StockMovement.objects.filter(
+                reference=movement_data["reference"],
+                tenant=self.tenant,
+            ).exists():
+                continue
+
             # Vary timestamps
             timestamp = now - timedelta(days=10 - idx)
-            movement = StockMovement.objects.create(
+            movement = self.create_with_tenant(
+                StockMovement,
                 **movement_data,
                 created_at=timestamp,
             )
             movement_type_label = movement.get_movement_type_display().title()
             self.log(f"  {movement.reference}: {movement.product.sku} ({movement_type_label})")
 
-        self.log(f"Total movements created: {StockMovement.objects.count()}")
+        self.log(f"Total movements created: {StockMovement.objects.filter(tenant=self.tenant).count()}")

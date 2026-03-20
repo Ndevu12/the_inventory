@@ -61,11 +61,13 @@ python manage.py update_index
 
 ### 6. Seed the database
 
-Seed the database with sample data for testing and development:
+Seed the database with sample data for testing and development. By default, this creates a "Default" tenant and seeds all data to it:
 
 ```bash
-python manage.py seed_database
+python manage.py seed_database --clear --create-default
 ```
+
+For multi-tenant setups or to seed a specific tenant, see the [Seeding Guide](docs/SEEDING_GUIDE.md).
 
 ### 7. Create a superuser
 
@@ -111,11 +113,13 @@ See [Architecture](docs/ARCHITECTURE.md) for the full technical design, includin
 
 ## Project Docs & Meta
 
-- [Architecture](docs/ARCHITECTURE.md)
-- [Roadmap](docs/ROADMAP.md)
-- [Contributing Guide](CONTRIBUTING.md)
-- [Code of Conduct](CODE_OF_CONDUCT.md)
-- [Changelog](CHANGELOG.md)
+- [Architecture](docs/ARCHITECTURE.md) — Technical design and system overview
+- [Seeding Guide](docs/SEEDING_GUIDE.md) — Quick reference for tenant-scoped database seeding
+- [Seeder Documentation](inventory/seeders/README.md) — Comprehensive seeding system documentation
+- [Roadmap](docs/ROADMAP.md) — Development roadmap and phases
+- [Contributing Guide](CONTRIBUTING.md) — How to contribute
+- [Code of Conduct](CODE_OF_CONDUCT.md) — Community guidelines
+- [Changelog](CHANGELOG.md) — Release history
 
 ## Contributing
 

@@ -42,14 +42,17 @@ class StockRecordSeeder(BaseSeeder):
         ]
 
         for sku, location_name, quantity in stock_distribution:
-            product = Product.objects.get(sku=sku)
-            location = StockLocation.objects.get(name=location_name)
+            product = Product.objects.get(sku=sku, tenant=self.tenant)
+            location = StockLocation.objects.get(name=location_name, tenant=self.tenant)
 
-            StockRecord.objects.create(
+            # Use get_or_create for idempotency
+            record, created = StockRecord.objects.get_or_create(
                 product=product,
                 location=location,
-                quantity=quantity,
+                tenant=self.tenant,
+                defaults={"quantity": quantity},
             )
-            self.log(f"  {product.sku} @ {location.name}: {quantity} units")
+            if created:
+                self.log(f"  {product.sku} @ {location.name}: {quantity} units")
 
-        self.log(f"Total stock records created: {StockRecord.objects.count()}")
+        self.log(f"Total stock records created: {StockRecord.objects.filter(tenant=self.tenant).count()}")

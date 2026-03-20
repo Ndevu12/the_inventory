@@ -12,14 +12,14 @@ class ProductSeeder(BaseSeeder):
         """Create products across different categories."""
         self.log("Creating products...")
 
-        # Get categories
-        phones = Category.objects.get(slug="phones")
-        laptops = Category.objects.get(slug="laptops")
-        accessories = Category.objects.get(slug="accessories")
-        desks = Category.objects.get(slug="desks")
-        chairs = Category.objects.get(slug="chairs")
-        pens = Category.objects.get(slug="pens-pencils")
-        paper = Category.objects.get(slug="paper-notepads")
+        # Get categories for the current tenant
+        phones = Category.objects.get(slug="phones", tenant=self.tenant)
+        laptops = Category.objects.get(slug="laptops", tenant=self.tenant)
+        accessories = Category.objects.get(slug="accessories", tenant=self.tenant)
+        desks = Category.objects.get(slug="desks", tenant=self.tenant)
+        chairs = Category.objects.get(slug="chairs", tenant=self.tenant)
+        pens = Category.objects.get(slug="pens-pencils", tenant=self.tenant)
+        paper = Category.objects.get(slug="paper-notepads", tenant=self.tenant)
 
         products = [
             # Phones
@@ -182,7 +182,12 @@ class ProductSeeder(BaseSeeder):
         ]
 
         for product_data in products:
-            product = Product.objects.create(**product_data)
-            self.log(f"  Created: {product.sku} - {product.name}")
+            product, created = Product.objects.get_or_create(
+                sku=product_data["sku"],
+                tenant=self.tenant,
+                defaults=product_data,
+            )
+            if created:
+                self.log(f"  Created: {product.sku} - {product.name}")
 
-        self.log(f"Total products created: {Product.objects.count()}")
+        self.log(f"Total products created: {Product.objects.filter(tenant=self.tenant).count()}")

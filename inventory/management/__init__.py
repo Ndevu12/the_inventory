@@ -63,7 +63,11 @@ class Command(BaseCommand):
                         self.stdout.write("")
             else:
                 # Seed all models
-                manager.seed()
+                result = manager.seed()
+                if verbose:
+                    self.stdout.write(
+                        f"  Tenant: {result['tenant'].name} (slug={result['tenant'].slug})"
+                    )
 
             self.stdout.write(
                 self.style.SUCCESS("✅ Database seeding completed successfully!")

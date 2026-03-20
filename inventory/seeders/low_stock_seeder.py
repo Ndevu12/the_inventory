@@ -46,7 +46,8 @@ class LowStockSeeder(BaseSeeder):
                     location=location
                 ).delete()
 
-                StockRecord.objects.create(
+                self.create_with_tenant(
+                    StockRecord,
                     product=product,
                     location=location,
                     quantity=0,
@@ -72,7 +73,8 @@ class LowStockSeeder(BaseSeeder):
                     location=location
                 ).delete()
 
-                StockRecord.objects.create(
+                self.create_with_tenant(
+                    StockRecord,
                     product=product,
                     location=location,
                     quantity=quantity,
