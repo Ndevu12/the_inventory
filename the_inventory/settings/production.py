@@ -5,6 +5,17 @@ from .base import *  # noqa: F403,F401
 
 DEBUG = False
 
+# ALLOWED_HOSTS - configure allowed domains for production
+# Accept from environment variable or use defaults for common platforms
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "").split(",") if os.environ.get("ALLOWED_HOSTS") else [
+    "localhost",
+    "127.0.0.1",
+    "*.onrender.com",  # Render.com domains
+    "*.andasy.dev",    # Andasy domains
+]
+# Remove empty strings from the list
+ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS if host.strip()]
+
 # SECRET_KEY must be set in production
 SECRET_KEY = os.environ.get("SECRET_KEY")
 if not SECRET_KEY:

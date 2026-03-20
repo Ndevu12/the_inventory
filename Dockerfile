@@ -5,7 +5,7 @@ FROM python:3.12-slim-bookworm
 RUN useradd wagtail
 
 # Port used by this container to serve HTTP.
-EXPOSE 8000
+EXPOSE 8000 10000
 
 # Set environment variables.
 # 1. Force Python stdout and stderr streams to be unbuffered.
