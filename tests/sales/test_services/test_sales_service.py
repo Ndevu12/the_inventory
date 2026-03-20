@@ -28,12 +28,15 @@ class SalesServiceSetupMixin:
     """Shared setUp for SalesService tests."""
 
     def setUp(self):
+        from tests.fixtures.factories import create_tenant
+        
         self.service = SalesService()
         self.stock_service = StockService()
-        self.customer = create_customer()
-        self.product_a = create_product(sku="SALE-A", unit_cost=Decimal("10.00"))
-        self.product_b = create_product(sku="SALE-B", unit_cost=Decimal("25.00"))
-        self.warehouse = create_location(name="Main Warehouse")
+        self.tenant = create_tenant()
+        self.customer = create_customer(tenant=self.tenant)
+        self.product_a = create_product(sku="SALE-A", unit_cost=Decimal("10.00"), tenant=self.tenant)
+        self.product_b = create_product(sku="SALE-B", unit_cost=Decimal("25.00"), tenant=self.tenant)
+        self.warehouse = create_location(name="Main Warehouse", tenant=self.tenant)
 
 
 # =====================================================================
@@ -45,7 +48,7 @@ class SalesServiceConfirmTests(SalesServiceSetupMixin, TestCase):
     """Test sales order confirmation."""
 
     def test_confirm_draft_order(self):
-        so = create_sales_order(customer=self.customer)
+        so = create_sales_order(customer=self.customer, tenant=self.tenant)
         create_sales_order_line(
             sales_order=so, product=self.product_a,
         )
@@ -56,6 +59,7 @@ class SalesServiceConfirmTests(SalesServiceSetupMixin, TestCase):
         so = create_sales_order(
             order_number="SO-EMPTY",
             customer=self.customer,
+            tenant=self.tenant,
         )
         with self.assertRaises(ValidationError) as ctx:
             self.service.confirm_order(sales_order=so)
@@ -66,6 +70,7 @@ class SalesServiceConfirmTests(SalesServiceSetupMixin, TestCase):
             order_number="SO-CONF",
             customer=self.customer,
             status=SalesOrderStatus.CONFIRMED,
+            tenant=self.tenant,
         )
         with self.assertRaises(ValidationError) as ctx:
             self.service.confirm_order(sales_order=so)
@@ -76,6 +81,7 @@ class SalesServiceConfirmTests(SalesServiceSetupMixin, TestCase):
             order_number="SO-CANC",
             customer=self.customer,
             status=SalesOrderStatus.CANCELLED,
+            tenant=self.tenant,
         )
         with self.assertRaises(ValidationError):
             self.service.confirm_order(sales_order=so)
@@ -93,6 +99,7 @@ class SalesServiceCancelTests(SalesServiceSetupMixin, TestCase):
         so = create_sales_order(
             order_number="SO-CDRAFT",
             customer=self.customer,
+            tenant=self.tenant,
         )
         result = self.service.cancel_order(sales_order=so)
         self.assertEqual(result.status, SalesOrderStatus.CANCELLED)
@@ -102,6 +109,7 @@ class SalesServiceCancelTests(SalesServiceSetupMixin, TestCase):
             order_number="SO-CCONF",
             customer=self.customer,
             status=SalesOrderStatus.CONFIRMED,
+            tenant=self.tenant,
         )
         result = self.service.cancel_order(sales_order=so)
         self.assertEqual(result.status, SalesOrderStatus.CANCELLED)
@@ -111,6 +119,7 @@ class SalesServiceCancelTests(SalesServiceSetupMixin, TestCase):
             order_number="SO-CFULFILL",
             customer=self.customer,
             status=SalesOrderStatus.FULFILLED,
+            tenant=self.tenant,
         )
         with self.assertRaises(ValidationError) as ctx:
             self.service.cancel_order(sales_order=so)
@@ -146,6 +155,7 @@ class SalesServiceDispatchTests(SalesServiceSetupMixin, TestCase):
             order_number=order_number,
             customer=self.customer,
             status=SalesOrderStatus.CONFIRMED,
+            tenant=self.tenant,
         )
         create_sales_order_line(
             sales_order=so,
@@ -164,7 +174,7 @@ class SalesServiceDispatchTests(SalesServiceSetupMixin, TestCase):
     def test_dispatch_creates_stock_movements(self):
         so = self._make_confirmed_so_with_stock()
         dispatch = create_dispatch(
-            sales_order=so, from_location=self.warehouse,
+            sales_order=so, from_location=self.warehouse, tenant=self.tenant,
         )
         self.service.process_dispatch(dispatch=dispatch)
 
@@ -176,7 +186,7 @@ class SalesServiceDispatchTests(SalesServiceSetupMixin, TestCase):
     def test_dispatch_decrements_stock_records(self):
         so = self._make_confirmed_so_with_stock()
         dispatch = create_dispatch(
-            sales_order=so, from_location=self.warehouse,
+            sales_order=so, from_location=self.warehouse, tenant=self.tenant,
         )
         self.service.process_dispatch(dispatch=dispatch)
 
@@ -192,7 +202,7 @@ class SalesServiceDispatchTests(SalesServiceSetupMixin, TestCase):
     def test_dispatch_marks_as_processed(self):
         so = self._make_confirmed_so_with_stock()
         dispatch = create_dispatch(
-            sales_order=so, from_location=self.warehouse,
+            sales_order=so, from_location=self.warehouse, tenant=self.tenant,
         )
         self.service.process_dispatch(dispatch=dispatch)
         dispatch.refresh_from_db()
@@ -201,7 +211,7 @@ class SalesServiceDispatchTests(SalesServiceSetupMixin, TestCase):
     def test_dispatch_transitions_so_to_fulfilled(self):
         so = self._make_confirmed_so_with_stock()
         dispatch = create_dispatch(
-            sales_order=so, from_location=self.warehouse,
+            sales_order=so, from_location=self.warehouse, tenant=self.tenant,
         )
         self.service.process_dispatch(dispatch=dispatch)
         so.refresh_from_db()
@@ -213,6 +223,7 @@ class SalesServiceDispatchTests(SalesServiceSetupMixin, TestCase):
             dispatch_number="DSP-DUP",
             sales_order=so,
             from_location=self.warehouse,
+            tenant=self.tenant,
         )
         self.service.process_dispatch(dispatch=dispatch)
 
@@ -225,11 +236,13 @@ class SalesServiceDispatchTests(SalesServiceSetupMixin, TestCase):
             order_number="SO-DSP-DRAFT",
             customer=self.customer,
             status=SalesOrderStatus.DRAFT,
+            tenant=self.tenant,
         )
         dispatch = create_dispatch(
             dispatch_number="DSP-DRAFT",
             sales_order=so,
             from_location=self.warehouse,
+            tenant=self.tenant,
         )
         with self.assertRaises(ValidationError) as ctx:
             self.service.process_dispatch(dispatch=dispatch)
@@ -241,6 +254,7 @@ class SalesServiceDispatchTests(SalesServiceSetupMixin, TestCase):
             order_number="SO-DSP-INSUF",
             customer=self.customer,
             status=SalesOrderStatus.CONFIRMED,
+            tenant=self.tenant,
         )
         create_sales_order_line(
             sales_order=so,
@@ -252,6 +266,7 @@ class SalesServiceDispatchTests(SalesServiceSetupMixin, TestCase):
             dispatch_number="DSP-INSUF",
             sales_order=so,
             from_location=self.warehouse,
+            tenant=self.tenant,
         )
         with self.assertRaises(ValidationError):
             self.service.process_dispatch(dispatch=dispatch)
@@ -267,6 +282,7 @@ class SalesServiceDispatchTests(SalesServiceSetupMixin, TestCase):
             dispatch_number="DSP-REF-001",
             sales_order=so,
             from_location=self.warehouse,
+            tenant=self.tenant,
         )
         self.service.process_dispatch(dispatch=dispatch)
 

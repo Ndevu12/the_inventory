@@ -22,9 +22,12 @@ class ReservationServiceSetupMixin:
     """Shared setUp for ReservationService tests."""
 
     def setUp(self):
+        from tests.fixtures.factories import create_tenant
+        
         self.service = ReservationService()
-        self.product = create_product(sku="RSV-001", unit_cost=Decimal("10.00"))
-        self.warehouse = create_location(name="Warehouse")
+        self.tenant = create_tenant()
+        self.product = create_product(sku="RSV-001", unit_cost=Decimal("10.00"), tenant=self.tenant)
+        self.warehouse = create_location(name="Warehouse", tenant=self.tenant)
         self.user = create_user(username="reservist")
         create_stock_record(
             product=self.product, location=self.warehouse, quantity=100,
@@ -138,7 +141,7 @@ class CreateReservationTests(ReservationServiceSetupMixin, TestCase):
         self.assertEqual(r2.quantity, 80)
 
     def test_create_at_no_stock_record_returns_zero_available(self):
-        other_product = create_product(sku="RSV-NOSTOCK")
+        other_product = create_product(sku="RSV-NOSTOCK", tenant=self.tenant)
         with self.assertRaises(InsufficientStockError):
             self.service.create_reservation(
                 product=other_product,
@@ -455,7 +458,7 @@ class ExpireStaleReservationsTests(ReservationServiceSetupMixin, TestCase):
         for i in range(5):
             create_reservation(
                 product=self.product,
-                location=create_location(name=f"Loc-{i}"),
+                location=create_location(name=f"Loc-{i}", tenant=self.tenant),
                 status=ReservationStatus.PENDING,
                 expires_at=past,
             )
@@ -588,7 +591,7 @@ class GetAvailableQuantityTests(ReservationServiceSetupMixin, TestCase):
         self.assertEqual(available, 45)
 
     def test_no_stock_record_returns_zero(self):
-        other = create_product(sku="RSV-NOSR")
+        other = create_product(sku="RSV-NOSR", tenant=self.tenant)
         available = self.service.get_available_quantity(
             other, self.warehouse,
         )
@@ -627,10 +630,13 @@ class ConcurrentReservationTests(ReservationServiceSetupMixin, TransactionTestCa
     """
 
     def setUp(self):
+        from tests.fixtures.factories import create_tenant
+        
         super().setUp()
         self.service = ReservationService()
-        self.product = create_product(sku="RACE-001", unit_cost=Decimal("10.00"))
-        self.warehouse = create_location(name="Race Warehouse")
+        self.tenant = create_tenant()
+        self.product = create_product(sku="RACE-001", unit_cost=Decimal("10.00"), tenant=self.tenant)
+        self.warehouse = create_location(name="Race Warehouse", tenant=self.tenant)
         create_stock_record(
             product=self.product, location=self.warehouse, quantity=100,
         )

@@ -7,6 +7,7 @@ from rest_framework import status
 from rest_framework.test import APIClient
 
 from tenants.models import TenantMembership, TenantRole
+from tenants.context import set_current_tenant
 from tests.fixtures.factories import create_tenant
 
 User = get_user_model()
@@ -22,6 +23,7 @@ class CurrentTenantTests(TestCase):
             is_staff=True,
         )
         self.tenant = create_tenant(name="Test Org", slug="test-org")
+        set_current_tenant(self.tenant)
         TenantMembership.objects.create(
             tenant=self.tenant,
             user=self.user,
@@ -103,6 +105,7 @@ class TenantMemberTests(TestCase):
             is_staff=True,
         )
         self.tenant = create_tenant(name="Test Org", slug="test-org")
+        set_current_tenant(self.tenant)
         TenantMembership.objects.create(
             tenant=self.tenant,
             user=self.admin_user,

@@ -13,7 +13,7 @@ class SupplierCreationTests(TestCase):
     """Test Supplier creation and field defaults."""
 
     def test_create_supplier_with_defaults(self):
-        supplier = create_supplier()
+        supplier = create_supplier(code="SUP-001")
         self.assertEqual(supplier.code, "SUP-001")
         self.assertEqual(supplier.name, "Test Supplier")
         self.assertTrue(supplier.is_active)
@@ -27,7 +27,10 @@ class SupplierCreationTests(TestCase):
         self.assertEqual(supplier.payment_terms, PaymentTerms.NET_30)
 
     def test_lead_time_days_default(self):
-        supplier = Supplier.objects.create(code="SUP-LT", name="Lead Time Co")
+        tenant = create_tenant()
+        supplier = Supplier.objects.create(
+            code="SUP-LT", name="Lead Time Co", tenant=tenant
+        )
         self.assertEqual(supplier.lead_time_days, 0)
 
 

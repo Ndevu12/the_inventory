@@ -57,7 +57,7 @@ class AuditLogListTests(AuditLogSetupMixin, APITestCase):
         self.assertEqual(len(response.data["results"]), 2)
 
     def test_list_entry_contains_expected_fields(self):
-        product = create_product(sku="AUD-001")
+        product = create_product(sku="AUD-001", tenant=self.tenant)
         self._create_log(product=product)
         response = self.client.get(AUDIT_LOG_URL)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -100,8 +100,8 @@ class AuditLogFilterTests(AuditLogSetupMixin, APITestCase):
         )
 
     def test_filter_by_product(self):
-        p1 = create_product(sku="AUD-P1")
-        p2 = create_product(sku="AUD-P2")
+        p1 = create_product(sku="AUD-P1", tenant=self.tenant)
+        p2 = create_product(sku="AUD-P2", tenant=self.tenant)
         self._create_log(product=p1)
         self._create_log(product=p2)
         self._create_log(product=p1)
@@ -142,7 +142,7 @@ class AuditLogFilterTests(AuditLogSetupMixin, APITestCase):
         self.assertEqual(response.data["results"][0]["id"], old.pk)
 
     def test_combined_filters(self):
-        p = create_product(sku="AUD-COMBO")
+        p = create_product(sku="AUD-COMBO", tenant=self.tenant)
         self._create_log(action=AuditAction.STOCK_RECEIVED, product=p)
         self._create_log(action=AuditAction.STOCK_ISSUED, product=p)
         self._create_log(action=AuditAction.STOCK_RECEIVED, product=None)
@@ -156,7 +156,7 @@ class AuditLogFilterTests(AuditLogSetupMixin, APITestCase):
 class AuditLogCSVExportTests(AuditLogSetupMixin, APITestCase):
 
     def test_csv_export_via_query_param(self):
-        product = create_product(sku="CSV-001")
+        product = create_product(sku="CSV-001", tenant=self.tenant)
         self._create_log(product=product)
         self._create_log(action=AuditAction.STOCK_ISSUED)
         response = self.client.get(AUDIT_LOG_URL, {"export": "csv"})

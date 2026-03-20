@@ -124,15 +124,18 @@ class StockReservationViewSet(viewsets.GenericViewSet,
         return Response(output.data)
 
 
-def product_availability_action(self, request, pk=None):
+def product_availability_action(self, request, pk=None, product=None):
     """Return per-location availability for a product.
 
     Aggregates stock quantity, active reservations, and available qty.
+    When ``product`` is omitted, resolves it via ``get_object()`` (tenant-scoped).
     """
-    product = self.get_object()
+    tenant = self._get_current_tenant()
+    if product is None:
+        product = self.get_object()
     records = (
         StockRecord.objects
-        .filter(product=product)
+        .filter(product=product, tenant=tenant)
         .select_related("location")
     )
 
@@ -144,6 +147,7 @@ def product_availability_action(self, request, pk=None):
                 product=product,
                 location=record.location,
                 status__in=_ACTIVE_STATUSES,
+                tenant=tenant,
             )
             .aggregate(total=Sum("quantity"))
         )["total"] or 0

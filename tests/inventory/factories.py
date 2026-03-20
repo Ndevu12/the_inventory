@@ -1,13 +1,7 @@
-"""Shared test data factories for the inventory app.
-
-Provides convenience functions to create common test objects with
-sensible defaults, reducing boilerplate across test modules.
-
-All factory functions accept ``**kwargs`` so tests can override any
-field when needed.
-"""
+"""Shared test data factories for the inventory app."""
 
 from decimal import Decimal
+import uuid
 
 from django.contrib.auth import get_user_model
 
@@ -60,8 +54,14 @@ def create_admin_user(*, username="admin", password="adminpass123", **kwargs):
     return user
 
 
-def create_tenant(*, name="Test Corp", slug="test-corp", **kwargs):
-    """Create and return a Tenant."""
+def create_tenant(*, name=None, slug=None, **kwargs):
+    """Create and return a Tenant with unique slug."""
+    unique_id = str(uuid.uuid4())[:8]
+    if name is None:
+        name = f"Test Corp {unique_id}"
+    if slug is None:
+        slug = f"test-corp-{unique_id}"
+    
     defaults = {
         "name": name,
         "slug": slug,
@@ -71,19 +71,30 @@ def create_tenant(*, name="Test Corp", slug="test-corp", **kwargs):
     return Tenant.objects.create(**defaults)
 
 
-def create_category(*, name="Test Category", slug="test-category", **kwargs):
+def create_category(*, name="Test Category", slug=None, tenant=None, **kwargs):
     """Create and return a root Category node."""
+    if slug is None:
+        slug = f"cat-{str(uuid.uuid4())[:8]}"
+    
     defaults = {
         "name": name,
         "slug": slug,
         "is_active": True,
     }
+    if tenant:
+        defaults["tenant"] = tenant
     defaults.update(kwargs)
     return Category.add_root(**defaults)
 
 
-def create_product(*, sku="TEST-001", name="Test Product", category=None, **kwargs):
+def create_product(*, sku=None, name="Test Product", category=None, tenant=None, **kwargs):
     """Create and return a Product with sensible defaults."""
+    if sku is None:
+        sku = f"SKU-{str(uuid.uuid4())[:8]}"
+    
+    if category is None and tenant:
+        category = create_category(tenant=tenant)
+    
     defaults = {
         "sku": sku,
         "name": name,
@@ -93,16 +104,20 @@ def create_product(*, sku="TEST-001", name="Test Product", category=None, **kwar
         "reorder_point": 5,
         "is_active": True,
     }
+    if tenant:
+        defaults["tenant"] = tenant
     defaults.update(kwargs)
     return Product.objects.create(**defaults)
 
 
-def create_location(*, name="Main Warehouse", **kwargs):
+def create_location(*, name="Main Warehouse", tenant=None, **kwargs):
     """Create and return a root StockLocation node."""
     defaults = {
         "name": name,
         "is_active": True,
     }
+    if tenant:
+        defaults["tenant"] = tenant
     defaults.update(kwargs)
     return StockLocation.add_root(**defaults)
 
@@ -114,6 +129,8 @@ def create_stock_record(*, product, location, quantity=0, **kwargs):
         "location": location,
         "quantity": quantity,
     }
+    if hasattr(product, 'tenant') and product.tenant:
+        defaults["tenant"] = product.tenant
     defaults.update(kwargs)
     return StockRecord.objects.create(**defaults)
 
@@ -121,7 +138,7 @@ def create_stock_record(*, product, location, quantity=0, **kwargs):
 def create_stock_lot(
     *,
     product,
-    lot_number="LOT-001",
+    lot_number=None,
     quantity_received=100,
     quantity_remaining=100,
     received_date=None,
@@ -129,6 +146,9 @@ def create_stock_lot(
 ):
     """Create and return a StockLot with sensible defaults."""
     from datetime import date
+
+    if lot_number is None:
+        lot_number = f"LOT-{str(uuid.uuid4())[:8]}"
 
     defaults = {
         "product": product,
@@ -227,12 +247,7 @@ def create_stock_movement(
     to_location=None,
     **kwargs,
 ):
-    """Create and return a StockMovement (bypasses service layer).
-
-    Use this only when you need a raw movement record without
-    processing side-effects.  For integration tests, prefer
-    :meth:`StockService.process_movement`.
-    """
+    """Create and return a StockMovement (bypasses service layer)."""
     defaults = {
         "product": product,
         "movement_type": movement_type,

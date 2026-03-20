@@ -113,7 +113,9 @@ class AuditService:
         ComplianceAuditLog
             The persisted audit log entry.
         """
-        tenant = getattr(request, "tenant", None)
+        from tenants.middleware import get_effective_tenant
+
+        tenant = getattr(request, "tenant", None) or get_effective_tenant(request)
         user = getattr(request, "user", None)
         if user is not None and not getattr(user, "is_authenticated", False):
             user = None

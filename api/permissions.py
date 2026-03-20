@@ -1,6 +1,7 @@
 from rest_framework.permissions import BasePermission
 
 from tenants.context import get_current_tenant
+from tenants.middleware import get_effective_tenant
 from tenants.models import TenantMembership, TenantRole
 
 _ADMIN_ROLES = {TenantRole.OWNER, TenantRole.ADMIN}
@@ -64,6 +65,8 @@ class IsAdminOrOwner(BasePermission):
             return True
 
         tenant = get_current_tenant()
+        if tenant is None:
+            tenant = get_effective_tenant(request)
         qs = TenantMembership.objects.filter(
             user=user, is_active=True, role__in=_ADMIN_ROLES,
         )

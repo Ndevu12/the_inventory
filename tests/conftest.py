@@ -3,18 +3,26 @@
 import pytest
 from django.contrib.auth import get_user_model
 from tenants.models import Tenant, TenantMembership, TenantRole
+from tenants.context import set_current_tenant, clear_current_tenant
+from tests.fixtures.factories import create_tenant as factory_create_tenant
 
 User = get_user_model()
+
+
+@pytest.fixture(autouse=True)
+def clear_tenant_context():
+    """Clear tenant context before and after each test."""
+    clear_current_tenant()
+    yield
+    clear_current_tenant()
 
 
 @pytest.fixture
 def tenant():
     """Create a test tenant."""
-    return Tenant.objects.create(
-        name="Test Tenant",
-        slug="test-tenant",
-        is_active=True,
-    )
+    t = factory_create_tenant()
+    set_current_tenant(t)
+    return t
 
 
 @pytest.fixture
@@ -77,19 +85,7 @@ def regular_user(tenant):
 def multiple_tenants():
     """Create multiple test tenants."""
     return {
-        "tenant1": Tenant.objects.create(
-            name="Tenant 1",
-            slug="tenant-1",
-            is_active=True,
-        ),
-        "tenant2": Tenant.objects.create(
-            name="Tenant 2",
-            slug="tenant-2",
-            is_active=True,
-        ),
-        "tenant3": Tenant.objects.create(
-            name="Tenant 3",
-            slug="tenant-3",
-            is_active=True,
-        ),
+        "tenant1": factory_create_tenant(),
+        "tenant2": factory_create_tenant(),
+        "tenant3": factory_create_tenant(),
     }

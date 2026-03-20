@@ -114,7 +114,7 @@ class TenantMemberSerializer(serializers.ModelSerializer):
         if not request:
             return value
         from tenants.permissions import get_membership
-        actor = get_membership(request.user)
+        actor = get_membership(request.user, request=request)
         if not actor:
             raise serializers.ValidationError("You are not a member of this tenant.")
         if value == TenantRole.OWNER and not actor.is_owner:

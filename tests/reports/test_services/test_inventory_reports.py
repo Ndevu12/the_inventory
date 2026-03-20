@@ -7,6 +7,7 @@ from django.test import TestCase
 
 from inventory.models import MovementType, ReservationStatus
 from inventory.services.stock import StockService
+from tenants.context import clear_current_tenant, set_current_tenant
 from tests.fixtures.factories import (
     create_category,
     create_location,
@@ -14,6 +15,7 @@ from tests.fixtures.factories import (
     create_reservation,
     create_stock_lot,
     create_stock_record,
+    create_tenant,
 )
 
 from reports.services.inventory_reports import InventoryReportService
@@ -25,16 +27,18 @@ class InventoryReportServiceSetupMixin:
     def setUp(self):
         self.service = InventoryReportService()
         self.stock_service = StockService()
-        self.warehouse = create_location(name="Warehouse")
-        self.store = create_location(name="Store")
+        self.tenant = create_tenant()
+        set_current_tenant(self.tenant)
+        self.warehouse = create_location(name="Warehouse", tenant=self.tenant)
+        self.store = create_location(name="Store", tenant=self.tenant)
 
         self.product_a = create_product(
             sku="RPT-A", name="Widget A",
-            unit_cost=Decimal("10.00"), reorder_point=20,
+            unit_cost=Decimal("10.00"), reorder_point=20, tenant=self.tenant,
         )
         self.product_b = create_product(
             sku="RPT-B", name="Widget B",
-            unit_cost=Decimal("25.00"), reorder_point=10,
+            unit_cost=Decimal("25.00"), reorder_point=10, tenant=self.tenant,
         )
 
 
@@ -92,7 +96,7 @@ class StockValuationTests(InventoryReportServiceSetupMixin, TestCase):
     def test_valuation_excludes_inactive_products(self):
         inactive = create_product(
             sku="RPT-INACTIVE", is_active=False,
-            unit_cost=Decimal("5.00"),
+            unit_cost=Decimal("5.00"), tenant=self.tenant,
         )
         create_stock_record(
             product=inactive, location=self.warehouse, quantity=50,
@@ -156,7 +160,9 @@ class LowStockReportTests(InventoryReportServiceSetupMixin, TestCase):
         self.assertNotIn("RPT-A", skus)
 
     def test_excludes_zero_reorder_point(self):
-        no_alert = create_product(sku="RPT-NOALERT", reorder_point=0)
+        no_alert = create_product(
+            sku="RPT-NOALERT", reorder_point=0, tenant=self.tenant,
+        )
         create_stock_record(
             product=no_alert, location=self.warehouse, quantity=0,
         )
@@ -389,7 +395,9 @@ class AvailabilityReportTests(InventoryReportServiceSetupMixin, TestCase):
         self.assertEqual(item_a["available_quantity"], 100)
 
     def test_filter_by_category(self):
-        cat = create_category(name="Electronics", slug="electronics")
+        cat = create_category(
+            name="Electronics", slug="electronics", tenant=self.tenant,
+        )
         self.product_a.category = cat
         self.product_a.save()
 
@@ -419,7 +427,7 @@ class AvailabilityReportTests(InventoryReportServiceSetupMixin, TestCase):
     def test_excludes_inactive_products(self):
         inactive = create_product(
             sku="RPT-INACTIVE", is_active=False,
-            unit_cost=Decimal("5.00"),
+            unit_cost=Decimal("5.00"), tenant=self.tenant,
         )
         create_stock_record(
             product=inactive, location=self.warehouse, quantity=50,
@@ -772,3 +780,89 @@ class LotHistoryTests(InventoryReportServiceSetupMixin, TestCase):
             product=self.product_a, lot_number="HIST-003",
         )
         self.assertEqual(history.count(), 1)
+
+
+# =====================================================================
+# Tenant Security
+# =====================================================================
+
+
+class InventoryReportTenantSecurityTests(TestCase):
+    """Test that report methods enforce tenant isolation."""
+
+    def setUp(self):
+        self.service = InventoryReportService()
+        self.stock_service = StockService()
+        self.tenant1 = create_tenant(name="Tenant 1", slug="tenant-1")
+        self.tenant2 = create_tenant(name="Tenant 2", slug="tenant-2")
+
+        set_current_tenant(self.tenant1)
+        self.loc1 = create_location(name="WH1", tenant=self.tenant1)
+        self.prod1 = create_product(
+            sku="T1-P1", name="Tenant1 Product",
+            unit_cost=Decimal("10.00"), reorder_point=10, tenant=self.tenant1,
+        )
+        create_stock_record(self.prod1, self.loc1, quantity=50)
+
+        set_current_tenant(self.tenant2)
+        self.loc2 = create_location(name="WH2", tenant=self.tenant2)
+        self.prod2 = create_product(
+            sku="T2-P1", name="Tenant2 Product",
+            unit_cost=Decimal("20.00"), reorder_point=5, tenant=self.tenant2,
+        )
+        create_stock_record(self.prod2, self.loc2, quantity=100)
+
+    def test_no_tenant_raises_value_error(self):
+        """Raises ValueError when no tenant in context and none provided."""
+        clear_current_tenant()
+        with self.assertRaises(ValueError) as ctx:
+            self.service.get_stock_valuation(method="latest_cost")
+        self.assertIn("No tenant", str(ctx.exception))
+
+    def test_stock_valuation_returns_only_current_tenant_data(self):
+        """get_stock_valuation returns only products for the specified tenant."""
+        set_current_tenant(self.tenant1)
+        valuations = self.service.get_stock_valuation(
+            method="latest_cost", tenant=self.tenant1,
+        )
+        skus = [v.product.sku for v in valuations]
+        self.assertIn("T1-P1", skus)
+        self.assertNotIn("T2-P1", skus)
+
+        valuations = self.service.get_stock_valuation(
+            method="latest_cost", tenant=self.tenant2,
+        )
+        skus = [v.product.sku for v in valuations]
+        self.assertIn("T2-P1", skus)
+        self.assertNotIn("T1-P1", skus)
+
+    def test_movement_history_filters_by_tenant(self):
+        """get_movement_history returns only movements for the tenant."""
+        set_current_tenant(self.tenant1)
+        self.stock_service.process_movement(
+            product=self.prod1,
+            movement_type=MovementType.RECEIVE,
+            quantity=25,
+            to_location=self.loc1,
+        )
+        set_current_tenant(self.tenant2)
+        self.stock_service.process_movement(
+            product=self.prod2,
+            movement_type=MovementType.RECEIVE,
+            quantity=50,
+            to_location=self.loc2,
+        )
+
+        set_current_tenant(self.tenant1)
+        movements = self.service.get_movement_history(tenant=self.tenant1)
+        self.assertEqual(movements.count(), 1)
+        self.assertEqual(movements.first().product.sku, "T1-P1")
+
+    def test_product_traceability_returns_none_for_other_tenant_sku(self):
+        """get_product_traceability returns None for SKU belonging to another tenant."""
+        set_current_tenant(self.tenant1)
+        create_stock_lot(self.prod1, lot_number="LOT-1")
+        result = self.service.get_product_traceability(
+            sku="T2-P1", lot_number="LOT-1", tenant=self.tenant1,
+        )
+        self.assertIsNone(result)

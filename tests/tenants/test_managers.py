@@ -53,7 +53,21 @@ class TenantAwareManagerTest(TestCase):
         mgr.model = StockLocation
         mgr.auto_created = True
         clear_current_tenant()
-        self.assertEqual(mgr.get_queryset().count(), 3)
+        with self.assertLogs("tenants.managers", level="WARNING") as captured:
+            self.assertEqual(mgr.get_queryset().count(), 3)
+        self.assertTrue(
+            any("Querying without tenant context" in line for line in captured.output),
+            captured.output,
+        )
+
+    def test_manager_for_tenant_filters_regardless_of_context(self):
+        loc1, loc2, loc3 = self._create_locations()
+        mgr = TenantAwareManager()
+        mgr.model = StockLocation
+        mgr.auto_created = True
+        set_current_tenant(self.t2)
+        qs = mgr.for_tenant(self.t1)
+        self.assertEqual(set(qs.values_list("pk", flat=True)), {loc1.pk, loc3.pk})
 
     def test_queryset_for_tenant_helper(self):
         loc1, loc2, loc3 = self._create_locations()

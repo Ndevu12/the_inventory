@@ -1,11 +1,8 @@
-"""Shared test factories for all tests.
-
-Provides reusable factory functions for creating test data across all test modules,
-avoiding duplication and ensuring consistency.
-"""
+"""Shared test factories for all tests."""
 
 from decimal import Decimal
 from datetime import date
+import uuid
 
 from django.contrib.auth import get_user_model
 from inventory.models import (
@@ -15,19 +12,26 @@ from inventory.models import (
     CycleStatus, ReservationStatus,
 )
 from tenants.models import Tenant, TenantMembership, TenantRole
+from tenants.context import set_current_tenant
 from procurement.models import PurchaseOrder, Supplier
 from sales.models import SalesOrder, Customer
 
 User = get_user_model()
 
 
-# Tenant Factories
-
-def create_tenant(name="Test Tenant", slug="test-tenant", **kwargs):
-    """Create a test tenant."""
+def create_tenant(name=None, slug=None, **kwargs):
+    """Create a test tenant with unique slug."""
+    unique_id = str(uuid.uuid4())[:8]
+    if name is None:
+        name = f"Test Tenant {unique_id}"
+    if slug is None:
+        slug = f"test-tenant-{unique_id}"
+    
     defaults = {"name": name, "slug": slug, "is_active": True}
     defaults.update(kwargs)
-    return Tenant.objects.create(**defaults)
+    tenant = Tenant.objects.create(**defaults)
+    set_current_tenant(tenant)
+    return tenant
 
 
 def create_user(username="testuser", password="testpass123", **kwargs):
@@ -66,10 +70,15 @@ def create_tenant_membership(tenant, user, role=TenantRole.VIEWER, **kwargs):
     return TenantMembership.objects.create(**defaults)
 
 
-# Inventory Factories
+# Alias used across the test suite
+create_membership = create_tenant_membership
 
-def create_category(name="Test Category", slug="test-category", tenant=None, **kwargs):
+
+def create_category(name="Test Category", slug=None, tenant=None, **kwargs):
     """Create a root category."""
+    if slug is None:
+        slug = f"cat-{str(uuid.uuid4())[:8]}"
+    
     defaults = {"name": name, "slug": slug, "is_active": True}
     if tenant:
         defaults["tenant"] = tenant
@@ -77,8 +86,11 @@ def create_category(name="Test Category", slug="test-category", tenant=None, **k
     return Category.add_root(**defaults)
 
 
-def create_product(sku="TEST-001", name="Test Product", category=None, tenant=None, **kwargs):
+def create_product(sku=None, name="Test Product", category=None, tenant=None, **kwargs):
     """Create a product."""
+    if sku is None:
+        sku = f"SKU-{str(uuid.uuid4())[:8]}"
+    
     if category is None and tenant:
         category = create_category(tenant=tenant)
     
@@ -119,9 +131,12 @@ def create_stock_record(product, location, quantity=0, **kwargs):
     return StockRecord.objects.create(**defaults)
 
 
-def create_stock_lot(product, lot_number="LOT-001", quantity_received=100,
+def create_stock_lot(product, lot_number=None, quantity_received=100,
                      quantity_remaining=100, received_date=None, **kwargs):
     """Create a stock lot."""
+    if lot_number is None:
+        lot_number = f"LOT-{str(uuid.uuid4())[:8]}"
+    
     defaults = {
         "product": product,
         "lot_number": lot_number,
@@ -236,10 +251,11 @@ def create_inventory_variance(cycle, count_line, product, location, system_quant
     return InventoryVariance.objects.create(**defaults)
 
 
-# Procurement Factories
-
-def create_supplier(name="Test Supplier", code="SUP-001", tenant=None, **kwargs):
+def create_supplier(name="Test Supplier", code=None, tenant=None, **kwargs):
     """Create a supplier."""
+    if code is None:
+        code = f"SUP-{str(uuid.uuid4())[:8]}"
+    
     defaults = {"name": name, "code": code, "is_active": True}
     if tenant:
         defaults["tenant"] = tenant
@@ -247,8 +263,11 @@ def create_supplier(name="Test Supplier", code="SUP-001", tenant=None, **kwargs)
     return Supplier.objects.create(**defaults)
 
 
-def create_purchase_order(supplier=None, po_number="PO-001", tenant=None, **kwargs):
+def create_purchase_order(supplier=None, po_number=None, tenant=None, **kwargs):
     """Create a purchase order."""
+    if po_number is None:
+        po_number = f"PO-{str(uuid.uuid4())[:8]}"
+    
     if supplier is None and tenant:
         supplier = create_supplier(tenant=tenant)
     
@@ -259,10 +278,11 @@ def create_purchase_order(supplier=None, po_number="PO-001", tenant=None, **kwar
     return PurchaseOrder.objects.create(**defaults)
 
 
-# Sales Factories
-
-def create_customer(name="Test Customer", code="CUST-001", tenant=None, **kwargs):
+def create_customer(name="Test Customer", code=None, tenant=None, **kwargs):
     """Create a customer."""
+    if code is None:
+        code = f"CUST-{str(uuid.uuid4())[:8]}"
+    
     defaults = {"name": name, "code": code, "is_active": True}
     if tenant:
         defaults["tenant"] = tenant
@@ -270,8 +290,11 @@ def create_customer(name="Test Customer", code="CUST-001", tenant=None, **kwargs
     return Customer.objects.create(**defaults)
 
 
-def create_sales_order(customer=None, so_number="SO-001", tenant=None, **kwargs):
+def create_sales_order(customer=None, so_number=None, tenant=None, **kwargs):
     """Create a sales order."""
+    if so_number is None:
+        so_number = f"SO-{str(uuid.uuid4())[:8]}"
+    
     if customer is None and tenant:
         customer = create_customer(tenant=tenant)
     

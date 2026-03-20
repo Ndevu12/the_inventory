@@ -1,490 +1,455 @@
 # Project Tasks
 
 > Tasks are independent unless noted in the **Depends On** column.
-> All tasks are part of the **Tenant-Scoped Seeding Initiative** to ensure inventory data is always linked to a tenant and prevent orphaned data.
+> All tasks are part of the **Tenant-Scoping Security Initiative** to ensure all features properly enforce tenant isolation and prevent cross-tenant data leakage.
 
 ---
 
-## Tenant-Scoped Seeding Tasks (TS-*)
+## Tenant-Scoping Security Tasks (TSS-*)
 
-Refactoring the seeder system to automatically create a default tenant and assign all seeded inventory data to it, eliminating orphaned data and enforcing multi-tenancy at the database level.
+Fixing tenant-scoping issues across the codebase to ensure all features properly enforce tenant isolation and prevent cross-tenant data leakage.
 
 ---
 
-### TS-01 — Create tenant seeder
+### TSS-01 — Add explicit tenant filtering to InventoryReportService
 
-**Priority:** HIGH | **Depends On:** None
+**Priority:** HIGH | **Depends On:** None | **Parallel:** Yes
 
 **Problem:**
-No mechanism exists to seed a default tenant during initialization. All inventory seeders run
-without tenant association, creating orphaned data with `tenant=NULL`.
+The `InventoryReportService` queries Product, StockMovement, StockReservation, and other models without explicit tenant filtering. While these models inherit from `TenantAwareModel` and should auto-filter via the manager, the service doesn't explicitly set tenant context. This could lead to cross-tenant data leakage if tenant context is not properly set in the request middleware.
 
 **Scope:**
 
 | Capability | Description |
 | ---------- | ----------- |
-| Create seeder class | New `TenantSeeder` inheriting from `BaseSeeder` |
-| Default tenant | Create "Default" tenant with slug "default" if missing |
-| Idempotency | Return existing tenant if already present (safe to re-run) |
-| Instance return | Return tenant instance for downstream seeders to use |
+| Explicit tenant filtering | Add explicit `.filter(tenant=tenant)` to all querysets |
+| Accept tenant parameter | Update all service methods to accept optional `tenant` parameter |
+| Fallback to context | Use `get_current_tenant()` if tenant parameter not provided |
+| Validation | Raise error if no tenant can be determined |
 
 **Acceptance Criteria:**
 
-- [ ] `inventory/seeders/tenant_seeder.py` created with `TenantSeeder` class
-- [ ] Inherits from `BaseSeeder` with `execute()` method
-- [ ] Creates Tenant: name="Default", slug="default", is_active=True
-- [ ] Handles existence check: returns existing tenant if slug="default" already exists
-- [ ] Returns Tenant instance for use by other seeders
-- [ ] Wrapped in `transaction.atomic()` for safety
-- [ ] Tested: `test_tenant_seeder_creates_default_tenant()`, `test_tenant_seeder_returns_existing_on_rerun()`
+- [x] `reports/services/inventory_reports.py` updated
+- [x] All methods that query models accept optional `tenant` parameter
+- [x] Methods use `get_current_tenant()` as fallback if tenant not provided
+- [x] All querysets include explicit `.filter(tenant=tenant)` after model query
+- [x] Methods affected: `get_stock_valuation()`, `get_low_stock_products()`, `get_overstock_products()`, `get_movement_history()`, `get_movement_summary()`, `get_reservation_summary()`, `get_availability_report()`, `get_variance_report()`, `get_variance_summary()`, `get_cycle_history()`, `get_expiring_lots()`, `get_expired_lots()`, `get_lot_history()`, `get_product_traceability()`
+- [x] Raises `ValueError` if tenant cannot be determined
+- [x] Tested: All report methods return only current tenant's data
+- [x] Tested: Cross-tenant queries are blocked
+
+**Files to Modify:**
+- `reports/services/inventory_reports.py` — Add tenant parameter and filtering
+
+**Implementation Notes:**
+- Import `get_current_tenant` from `tenants.context`
+- Add tenant parameter to method signatures: `def method_name(self, *, tenant=None, ...)`
+- Use pattern: `tenant = tenant or get_current_tenant()` followed by `if not tenant: raise ValueError(...)`
+
+---
+
+### TSS-02 — Add explicit tenant filtering to OrderReportService
+
+**Priority:** HIGH | **Depends On:** None | **Parallel:** Yes
+
+**Problem:**
+The `OrderReportService` queries PurchaseOrder and SalesOrder without explicit tenant filtering. While these models inherit from `TenantAwareModel`, the service relies on implicit tenant context filtering which may not be reliable in all scenarios.
+
+**Scope:**
+
+| Capability | Description |
+| ---------- | ----------- |
+| Explicit tenant filtering | Add explicit `.filter(tenant=tenant)` to all querysets |
+| Accept tenant parameter | Update all service methods to accept optional `tenant` parameter |
+| Fallback to context | Use `get_current_tenant()` if tenant parameter not provided |
+| Validation | Raise error if no tenant can be determined |
+
+**Acceptance Criteria:**
+
+- [ ] `reports/services/order_reports.py` updated
+- [ ] All methods that query models accept optional `tenant` parameter
+- [ ] Methods use `get_current_tenant()` as fallback if tenant not provided
+- [ ] All querysets include explicit `.filter(tenant=tenant)` after model query
+- [ ] Methods affected: `get_purchase_summary()`, `get_purchase_totals()`, `get_sales_summary()`, `get_sales_totals()`
+- [ ] Raises `ValueError` if tenant cannot be determined
+- [ ] Tested: All report methods return only current tenant's data
+- [ ] Tested: Cross-tenant queries are blocked
+
+**Files to Modify:**
+- `reports/services/order_reports.py` — Add tenant parameter and filtering
+
+**Implementation Notes:**
+- Import `get_current_tenant` from `tenants.context`
+- Add tenant parameter to method signatures: `def method_name(self, *, tenant=None, ...)`
+- Use pattern: `tenant = tenant or get_current_tenant()` followed by `if not tenant: raise ValueError(...)`
+
+---
+
+### TSS-03 — Add explicit tenant verification to Report API views
+
+**Priority:** HIGH | **Depends On:** None | **Parallel:** Yes
+
+**Problem:**
+Report API views instantiate `InventoryReportService` and `OrderReportService` without explicitly verifying or setting tenant context. While the middleware should set this, there's no explicit validation that the current tenant matches the authenticated user's tenant.
+
+**Scope:**
+
+| Capability | Description |
+| ---------- | ----------- |
+| Tenant verification | Add explicit check that user belongs to current tenant |
+| Pass tenant to services | Pass tenant parameter to all service method calls |
+| Permission checks | Verify user has access to tenant before returning data |
+
+**Acceptance Criteria:**
+
+- [ ] `api/views/reports.py` updated
+- [ ] All report view classes add tenant verification in `get()` method
+- [ ] Add helper method `_get_current_tenant()` that verifies user belongs to tenant
+- [ ] All service method calls pass `tenant=self.tenant` parameter
+- [ ] Views affected: `StockValuationView`, `MovementHistoryView`, `LowStockReportView`, `OverstockReportView`, `ReservationSummaryView`, `AvailabilityReportView`, `PurchaseSummaryView`, `SalesSummaryView`, `ProductExpiryView`, `LotHistoryView`, `VarianceReportView`, `CycleHistoryView`, `ProductTraceabilityView`
+- [ ] Returns 403 Forbidden if user doesn't belong to tenant
+- [ ] Tested: Authenticated user can only access their tenant's reports
+- [ ] Tested: Cross-tenant access is blocked with 403
+
+**Files to Modify:**
+- `api/views/reports.py` — Add tenant verification and pass to services
+
+**Implementation Notes:**
+- Add method: `def _get_current_tenant(self):` that calls `get_current_tenant()` and verifies user membership
+- Use `from tenants.context import get_current_tenant`
+- Add permission check: verify user is in `tenant.members.all()`
+
+---
+
+### TSS-04 — Add explicit tenant filtering to Wagtail report views
+
+**Priority:** HIGH | **Depends On:** None | **Parallel:** Yes
+
+**Problem:**
+Wagtail admin report views (StockValuationView, MovementHistoryView, etc.) don't explicitly filter by tenant. These views are accessible to admin users and could potentially expose data from other tenants if tenant context is not properly set.
+
+**Scope:**
+
+| Capability | Description |
+| ---------- | ----------- |
+| Explicit tenant filtering | Add explicit `.filter(tenant=tenant)` to all querysets |
+| Tenant verification | Verify tenant context is set in get_context_data |
+| Permission checks | Add tenant-based permission checks |
+
+**Acceptance Criteria:**
+
+- [x] `reports/views.py` updated
+- [x] All report view classes verify tenant context in `get_context_data()`
+- [x] All querysets include explicit `.filter(tenant=tenant)` filtering
+- [x] Views affected: `StockValuationView`, `MovementHistoryView`, `LowStockReportView`, `OverstockReportView`, `ExpiryReportView`, `PurchaseSummaryView`, `SalesSummaryView`
+- [x] Add helper method `_get_current_tenant()` for tenant verification
+- [x] Returns error or empty results if tenant context is not set
+- [x] Tested: Admin users can only see their tenant's reports
+- [x] Tested: Cross-tenant access is blocked
+
+**Files to Modify:**
+- `reports/views.py` — Add tenant verification and filtering
+- `reports/services/inventory_reports.py` — Add tenant parameter to methods used by views
+
+**Implementation Notes:**
+- Add method: `def _get_current_tenant(self):` that calls `get_current_tenant()` and raises error if None
+- Use `from tenants.context import get_current_tenant`
+- Add to all `get_context_data()` methods: `tenant = self._get_current_tenant()`
+
+---
+
+### TSS-05 — Add explicit tenant filtering to Inventory admin views
+
+**Priority:** HIGH | **Depends On:** None | **Parallel:** Yes
+
+**Problem:**
+`LowStockAlertView` and `InventorySearchView` query Product, Category, and StockLocation without explicit tenant filtering. While these models inherit from `TenantAwareModel`, the views should explicitly verify tenant context.
+
+**Scope:**
+
+| Capability | Description |
+| ---------- | ----------- |
+| Explicit tenant filtering | Add explicit `.filter(tenant=tenant)` to all querysets |
+| Tenant verification | Verify tenant context is set in get_queryset |
+| Permission checks | Add tenant-based permission checks |
+
+**Acceptance Criteria:**
+
+- [x] `inventory/views.py` updated
+- [x] `LowStockAlertView.get_queryset()` includes explicit tenant filtering
+- [x] `InventorySearchView.get_context_data()` includes explicit tenant filtering
+- [x] Add helper method `_get_current_tenant()` for tenant verification
+- [x] All querysets include explicit `.filter(tenant=tenant)` filtering
+- [x] Returns error or empty results if tenant context is not set
+- [x] Tested: Admin users can only see their tenant's inventory
+- [x] Tested: Cross-tenant access is blocked
+
+**Files to Modify:**
+- `inventory/views.py` — Add tenant verification and filtering
+- `inventory/filters.py` — Add tenant-scoped category/location dropdowns
+
+**Implementation Notes:**
+- Add method: `def _get_current_tenant(self):` that calls `get_current_tenant()` and raises PermissionDenied if None
+- Use `from tenants.context import get_current_tenant` and `from tenants.permissions import get_membership`
+- Update `get_queryset()` and `get_context_data()` methods
+- ProductFilterSet accepts `tenant` kwarg to restrict category/location filter choices
+
+---
+
+### TSS-06 — Add explicit tenant verification to Inventory API viewsets
+
+**Priority:** HIGH | **Depends On:** None | **Parallel:** Yes
+
+**Problem:**
+`CategoryViewSet`, `ProductViewSet`, `StockLocationViewSet`, and other inventory viewsets rely on implicit tenant filtering via `TenantAwareManager`. While this should work, there's no explicit validation that the user belongs to the tenant being queried.
+
+**Scope:**
+
+| Capability | Description |
+| ---------- | ----------- |
+| Explicit tenant filtering | Override `get_queryset()` to explicitly filter by current tenant |
+| Permission checks | Add permission checks to verify user belongs to tenant |
+| Custom actions | Add tenant verification to custom actions (stock, movements, etc.) |
+
+**Acceptance Criteria:**
+
+- [x] `api/views/inventory.py` updated
+- [x] All viewsets override `get_queryset()` to explicitly filter by current tenant
+- [x] Add helper method `_get_current_tenant()` for tenant verification (`TenantScopedInventoryMixin`)
+- [x] All querysets include explicit `.filter(tenant=tenant)` filtering
+- [x] Viewsets affected: `CategoryViewSet`, `ProductViewSet`, `StockLocationViewSet`, `StockRecordViewSet`, `StockMovementViewSet`, `StockLotViewSet`
+- [x] Custom actions (stock, movements, availability, lots) verify tenant ownership
+- [x] Returns 403 Forbidden if user doesn't belong to tenant (or no resolvable tenant)
+- [x] Tested: Authenticated user can only access their tenant's data
+- [x] Tested: Cross-tenant data access blocked; users without tenant membership get 403
+
+**Files to Modify:**
+- `api/views/inventory.py` — Add tenant verification and filtering
+- `api/views/reservation.py` — `product_availability_action` explicit tenant filters
+- `tenants/middleware.py` — `resolve_tenant_for_request()` for DRF Token auth (middleware runs before DRF auth)
+
+**Implementation Notes:**
+- Add method: `def _get_current_tenant(self):` that calls `get_current_tenant()` and raises error if None
+- Override `get_queryset()` in each viewset to add explicit filtering
+- Use `from tenants.context import get_current_tenant`
+- Add tenant checks to custom actions
+
+---
+
+### TSS-07 — Add tenant field to PurchaseOrderLine model
+
+**Priority:** MEDIUM | **Depends On:** None | **Parallel:** Yes
+
+**Problem:**
+`PurchaseOrderLine` inherits from `TimeStampedModel` but doesn't have explicit tenant field. While it's related to `PurchaseOrder` which has tenant, there's no direct tenant field on `PurchaseOrderLine`, making it harder to query by tenant directly.
+
+**Scope:**
+
+| Capability | Description |
+| ---------- | ----------- |
+| Add tenant field | Add explicit `tenant` FK to PurchaseOrderLine |
+| Add constraint | Add unique constraint on (tenant, purchase_order, product) |
+| Migration | Create migration to backfill tenant from purchase_order |
+| Validation | Ensure tenant is set when creating PurchaseOrderLine instances |
+
+**Acceptance Criteria:**
+
+- [x] `procurement/models/order.py` updated
+- [x] `PurchaseOrderLine` model adds `tenant` FK field *(via `TimeStampedModel`; documented on the model)*
+- [x] Tenant field: `tenant = models.ForeignKey("tenants.Tenant", on_delete=models.CASCADE, ...)`
+- [x] Add unique constraint: `UniqueConstraint(fields=["tenant", "purchase_order", "product"], ...)`
+- [x] Migration created to backfill tenant from purchase_order
+- [x] Migration file: `procurement/migrations/0004_add_tenant_to_purchaseorderline.py`
+- [x] Tested: All PurchaseOrderLine instances have tenant populated
+- [x] Tested: Unique constraint prevents duplicate lines per tenant
+- [x] Tested: Queries can filter by tenant directly on PurchaseOrderLine
 
 **Files to Create:**
-- `inventory/seeders/tenant_seeder.py` *(new)*
+- `procurement/migrations/XXXX_add_tenant_to_purchaseorderline.py` *(new)*
 
 **Files to Modify:**
-- `inventory/seeders/base.py` — Document tenant seeder pattern in docstring
+- `procurement/models/order.py` — Add tenant field and constraint
 
 **Implementation Notes:**
-- Use `Tenant.objects.get_or_create()` with slug="default" to ensure idempotency.
+- Use data migration (RunPython) to backfill tenant from related purchase_order
+- Add `null=False, blank=False` to tenant field after backfill
 
 ---
 
-### TS-02 — Update base seeder for tenant context
+### TSS-08 — Add tenant field to SalesOrderLine model
 
-**Priority:** HIGH | **Depends On:** None
+**Priority:** MEDIUM | **Depends On:** None | **Parallel:** Yes
 
 **Problem:**
-`BaseSeeder` has no mechanism to pass or store tenant context. Child seeders cannot access
-the tenant they should seed data into.
+`SalesOrderLine` inherits from `TimeStampedModel` but doesn't have explicit tenant field. While it's related to `SalesOrder` which has tenant, there's no direct tenant field on `SalesOrderLine`.
 
 **Scope:**
 
 | Capability | Description |
 | ---------- | ----------- |
-| Accept tenant parameter | `execute(tenant=None)` method signature |
-| Store tenant | Instance variable `self.tenant` for all child seeders |
-| Helper method | `create_with_tenant(model, **kwargs)` to safely assign tenant |
-| Validation | Raise error if tenant is None when required |
+| Add tenant field | Add explicit `tenant` FK to SalesOrderLine |
+| Add constraint | Add unique constraint on (tenant, sales_order, product) |
+| Migration | Create migration to backfill tenant from sales_order |
+| Validation | Ensure tenant is set when creating SalesOrderLine instances |
 
 **Acceptance Criteria:**
 
-- [ ] `BaseSeeder.execute()` signature updated to accept `tenant` parameter
-- [ ] `self.tenant` stored as instance variable in execute
-- [ ] Helper method `create_with_tenant(model, **kwargs)` added
-- [ ] Helper adds `tenant=self.tenant` to kwargs before calling `model.objects.create()`
-- [ ] Separate helper `add_root_with_tenant(model, **kwargs)` for treebeard models (Category, StockLocation)
-- [ ] Raises informative error if `self.tenant` is None in helpers
-- [ ] All child seeders updated to call parent's helpers instead of direct `.create()` calls
-- [ ] Tested: `test_base_seeder_stores_tenant()`, `test_create_with_tenant_helper()`
-
-**Files to Modify:**
-- `inventory/seeders/base.py` — Add tenant param, helpers, validation
-
-**Implementation Notes:**
-- Child seeders will be updated in TS-04; this task is foundational infrastructure.
-
----
-
-### TS-03 — Update CLI command for tenant context and set_current_tenant
-
-**Priority:** HIGH | **Depends On:** None
-
-**Problem:**
-The management command `seed_database` has no tenant awareness. It doesn't create or accept a tenant,
-and doesn't set thread-local tenant context via `set_current_tenant()` from `tenants/context.py`.
-
-**Scope:**
-
-| Capability | Description |
-| ---------- | ----------- |
-| Add --tenant flag | Optional flag to seed for specific tenant slug (e.g., `--tenant=acme`) |
-| Default behavior | Auto-create "Default" tenant if none specified and none exists |
-| Set tenant context | Call `set_current_tenant(tenant)` before seeding |
-| Error handling | Fail gracefully if tenant slug provided but doesn't exist |
-| Output | Print tenant name and seeded data counts |
-
-**Acceptance Criteria:**
-
-- [ ] `inventory/management/commands/seed_database.py` updated
-- [ ] Add `--tenant` optional argument to command options
-- [ ] Add `--create-default` flag to force auto-create default tenant
-- [ ] If no `--tenant` provided: check for "Default" tenant; if missing and `--create-default`, create it
-- [ ] If `--tenant` provided: fetch by slug; raise error if not found
-- [ ] Call `from tenants.context import set_current_tenant` and invoke before seeding
-- [ ] Call `set_current_tenant(None)` after seeding to clear context
-- [ ] Output: "Seeding into tenant: {tenant_name} (slug={slug})"
-- [ ] Tested: `test_seed_command_creates_default_tenant()`, `test_seed_command_sets_context()`, `test_seed_command_uses_specified_tenant()`
-
-**Files to Modify:**
-- `inventory/management/commands/seed_database.py` — Add tenant flags, context, error handling
-
-**Implementation Notes:**
-- Reuse logic from `tenants/management/commands/createtenant.py` for tenant creation if possible.
-- Ensure `set_current_tenant()` is cleared after seeding to avoid side effects.
-
----
-
-### TS-04 — Refactor all seeders to use tenant parameter
-
-**Priority:** HIGH | **Depends On:** TS-02
-
-**Problem:**
-All individual seeders (`CategorySeeder`, `ProductSeeder`, etc.) create data without tenant
-association. They must be refactored to accept and use the tenant from `BaseSeeder`.
-
-**Scope:**
-
-| Capability | Description |
-| ---------- | ----------- |
-| Update category seeder | Use `add_root_with_tenant()` for Category creation |
-| Update product seeder | Use `create_with_tenant()` for Product creation |
-| Update location seeder | Use `add_root_with_tenant()` for StockLocation hierarchy |
-| Update stock record seeder | Use `create_with_tenant()` for StockRecord creation |
-| Update movement seeder | Use `create_with_tenant()` for StockMovement creation |
-| Update low-stock seeder | Use `create_with_tenant()` for scenario objects |
-
-**Acceptance Criteria:**
-
-- [ ] `inventory/seeders/category_seeder.py` — Replace `.add_root()` with `self.add_root_with_tenant()`
-- [ ] `inventory/seeders/product_seeder.py` — Replace `.create()` with `self.create_with_tenant()`
-- [ ] `inventory/seeders/stock_location_seeder.py` — Replace `.add_root()` with `self.add_root_with_tenant()`
-- [ ] `inventory/seeders/stock_record_seeder.py` — Replace `.create()` with `self.create_with_tenant()`
-- [ ] `inventory/seeders/stock_movement_seeder.py` — Replace `.create()` with `self.create_with_tenant()`
-- [ ] `inventory/seeders/low_stock_seeder.py` — Replace `.create()` with `self.create_with_tenant()`
-- [ ] All seeders remove inline `tenant=None` or missing tenant assignments (if any)
-- [ ] Tested: Run `manage.py seed_database` and verify all seeded objects have `tenant` populated
-- [ ] Tested: Verify foreign key relationships work correctly (products link to categories, etc.)
-
-**Files to Modify:**
-- `inventory/seeders/category_seeder.py` — Replace `.add_root()` calls
-- `inventory/seeders/product_seeder.py` — Replace `.create()` calls
-- `inventory/seeders/stock_location_seeder.py` — Replace `.add_root()` calls
-- `inventory/seeders/stock_record_seeder.py` — Replace `.create()` calls
-- `inventory/seeders/stock_movement_seeder.py` — Replace `.create()` calls
-- `inventory/seeders/low_stock_seeder.py` — Replace `.create()` calls
-
-**Implementation Notes:**
-- All seeders should already inherit from `BaseSeeder`, so they have access to `self.tenant`.
-- This task is straightforward once TS-02 (base seeder) is complete.
-
----
-
-### TS-05 — Update seeder manager to orchestrate tenant-scoped seeding
-
-**Priority:** HIGH | **Depends On:** TS-01, TS-02, TS-04
-
-**Problem:**
-`SeederManager` doesn't handle tenant seeding. It must execute `TenantSeeder` first and pass
-the tenant instance to all downstream seeders. It must also support multi-tenant seeding.
-
-**Scope:**
-
-| Capability | Description |
-| ---------- | ----------- |
-| Tenant seeder first | Run `TenantSeeder` before all other seeders |
-| Capture tenant | Store returned tenant instance from `TenantSeeder.execute()` |
-| Pass to children | Call `other_seeder.execute(tenant=tenant)` for all seeders |
-| Support --tenant flag | Accept optional `tenant` parameter from calling code |
-| Maintain order | Keep existing dependency order (Categories → Products, etc.) |
-
-**Acceptance Criteria:**
-
-- [ ] `inventory/seeders/seeder_manager.py` updated
-- [ ] Add `TenantSeeder` import at top
-- [ ] `run()` method accepts optional `tenant` parameter
-- [ ] If `tenant` provided: use it; otherwise invoke `TenantSeeder().execute()` to get/create default
-- [ ] Call `tenant_seeder.execute()` first in seeding order
-- [ ] Pass `tenant` instance to all subsequent `seeder.execute(tenant=tenant)` calls
-- [ ] Maintain existing dependency order after TenantSeeder
-- [ ] Return dict with tenant and seeded counts: `{"tenant": tenant, "objects_created": {...}}`
-- [ ] Tested: `test_seeder_manager_runs_tenant_seeder_first()`, `test_seeder_manager_passes_tenant()`
-
-**Files to Modify:**
-- `inventory/seeders/seeder_manager.py` — Orchestrate tenant seeding
-
-**Implementation Notes:**
-- If multi-tenant seeding is desired later (seed once per tenant), this structure supports it.
-
----
-
-### TS-06 — Create Django migration to backfill and enforce non-nullable tenant
-
-**Priority:** HIGH | **Depends On:** TS-01, TS-04
-
-**Problem:**
-Existing inventory data may have `tenant=NULL` (orphaned). The `tenant` field is currently nullable.
-A migration is needed to backfill orphaned data and make the field non-nullable to prevent future orphaning.
-
-**Scope:**
-
-| Capability | Description |
-| ---------- | ----------- |
-| Backfill strategy | Assign orphaned data to "Default" tenant (or delete if deletion is policy) |
-| Models affected | Category, Product, StockLocation, StockRecord, StockMovement, StockLot, StockReservation, InventoryCycle |
-| Make non-nullable | Set `null=False` on `tenant` FK in `TimeStampedModel` base |
-| Cascade fix (if needed) | Update `on_delete=CASCADE` in models to ensure consistency |
-
-**Acceptance Criteria:**
-
-- [ ] Migration file created in `inventory/migrations/` (e.g., `0XXX_backfill_and_enforce_tenant.py`)
-- [ ] Migration backfills all NULL tenant entries by assigning to default tenant (or deletes if policy mandates)
-- [ ] Migration sets `null=False` on tenant FK in `inventory/models/base.py`
-- [ ] Migration is reversible (with rollback logic for non-nullable change)
-- [ ] `python manage.py migrate` runs successfully on fresh and existing databases
-- [ ] Post-migration, querying `Product.objects.filter(tenant__isnull=True)` returns 0 results
-- [ ] Tested: Run migration on test database and verify no data loss
+- [x] `sales/models/order.py` updated
+- [x] `SalesOrderLine` model adds `tenant` FK field *(via `TimeStampedModel`, same as `PurchaseOrderLine`)*
+- [x] Tenant field: `tenant = models.ForeignKey("tenants.Tenant", on_delete=models.CASCADE, ...)`
+- [x] Add unique constraint: `UniqueConstraint(fields=["tenant", "sales_order", "product"], ...)`
+- [x] Migration created to backfill tenant from sales_order
+- [x] Migration file: `sales/migrations/XXXX_add_tenant_to_salesorderline.py`
+- [x] Tested: All SalesOrderLine instances have tenant populated
+- [x] Tested: Unique constraint prevents duplicate lines per tenant
+- [x] Tested: Queries can filter by tenant directly on SalesOrderLine
 
 **Files to Create:**
-- `inventory/migrations/XXXX_backfill_and_enforce_tenant.py` *(new)*
+- `sales/migrations/0004_add_tenant_to_salesorderline.py` *(new)*
 
 **Files to Modify:**
-- `inventory/models/base.py` — Update `tenant` field: `null=False`
+- `sales/models/order.py` — Add tenant field and constraint
 
 **Implementation Notes:**
-- Use data migration (RunPython) if custom logic needed for backfilling.
-- Consider adding a default=get_default_tenant function if backfill rejects NULL assignments.
+- Use data migration (RunPython) to backfill tenant from related sales_order
+- Add `null=False, blank=False` to tenant field after backfill
 
 ---
 
-### TS-07 — Make tenant field non-nullable in TimeStampedModel
+### TSS-09 — Add logging and fallback to TenantAwareManager
 
-**Priority:** HIGH | **Depends On:** TS-06
+**Priority:** MEDIUM | **Depends On:** None | **Parallel:** Yes
 
 **Problem:**
-The `tenant` field in `TimeStampedModel` allows NULL, enabling orphaned data. After migration backfill,
-the model definition must enforce non-nullable.
+The `TenantAwareManager` in `tenants/managers.py` returns unfiltered querysets when no tenant is set in context. This could lead to data leakage if tenant context is accidentally cleared or not set. There's no explicit validation or warning.
 
 **Scope:**
 
 | Capability | Description |
 | ---------- | ----------- |
-| Update field definition | Set `null=False, blank=False` on tenant FK |
-| Add default (optional) | Optionally add a default Callable to get default tenant |
-| Update docstring | Clarify that tenant is now required for all inventory data |
+| Add logging | Log warning when tenant context is None |
+| Add fallback | Add explicit tenant parameter to manager methods as fallback |
+| Add validation | Optionally raise exception in production when tenant context is missing |
 
 **Acceptance Criteria:**
 
-- [ ] `inventory/models/base.py` — `tenant` field updated to `null=False, blank=False`
-- [ ] Field definition matches: `tenant = models.ForeignKey(..., null=False, blank=False, on_delete=models.CASCADE, ...)`
-- [ ] Docstring updated to reflect tenant requirement
-- [ ] Model tests verify non-nullable enforcement
-- [ ] Tested: Attempt to create inventory object without tenant → should raise IntegrityError or ValidationError
+- [x] `tenants/managers.py` updated
+- [x] Add logging import: `import logging`
+- [x] Add logger: `logger = logging.getLogger(__name__)`
+- [x] Log warning when `get_current_tenant()` returns None: `logger.warning("Querying without tenant context")`
+- [x] Add `for_tenant(tenant)` method to explicitly filter by tenant
+- [x] Add `unscoped()` method to explicitly bypass tenant filtering (for admin/migrations)
+- [x] Add docstring explaining when to use each method
+- [x] Tested: Warning logged when tenant context is None
+- [x] Tested: `for_tenant(tenant)` filters correctly
+- [x] Tested: `unscoped()` returns all records
 
 **Files to Modify:**
-- `inventory/models/base.py` — Update tenant field definition
+- `tenants/managers.py` — Add logging, fallback methods, validation
 
 **Implementation Notes:**
-- Migration (TS-06) must complete before this code change.
-- Consider adding `default=get_default_tenant` if needed for backward compatibility during testing.
+- Use `logger.warning()` for non-critical cases
+- Consider `logger.error()` for production environments
+- Document when to use `unscoped()` (migrations, management commands only)
 
 ---
 
-### TS-08 — Add tenant validation and helper methods to TimeStampedModel
+### TSS-10 — Add tenant verification to ProductViewSet and StockLocationViewSet custom actions
 
-**Priority:** MEDIUM | **Depends On:** TS-07
+**Priority:** MEDIUM | **Depends On:** None | **Parallel:** Yes
 
 **Problem:**
-No validation or helpers exist to ensure tenant consistency or to simplify tenant-scoped queries.
-Developers must manually filter by tenant in each query.
+The `stock()` action in `ProductViewSet` and `StockLocationViewSet` retrieves records without verifying that the product/location belongs to the current tenant. An authenticated user could potentially access data from other tenants.
 
 **Scope:**
 
 | Capability | Description |
 | ---------- | ----------- |
-| Save validation | Override `save()` to validate tenant consistency |
-| Manager methods | Add `.filter_by_current_tenant()` to convenience query |
-| Tenant audit | Optionally auto-set tenant from thread-local context in edge cases |
-| Docstring | Document best practices for tenant-scoped models |
+| Tenant verification | Add explicit tenant check in custom actions |
+| Verify ownership | Verify product/location tenant matches current tenant |
+| Add similar checks | Apply to movements(), availability(), and lots() actions |
 
 **Acceptance Criteria:**
 
-- [ ] `inventory/models/base.py` — Add `save()` override to validate tenant before save
-- [ ] Add custom Manager with `filter_by_current_tenant()` method
-- [ ] Override `.save()` to ensure audit fields (`created_by`) respect tenant (if applicable)
-- [ ] Add docstring to `TimeStampedModel` explaining tenant requirements
-- [ ] Tested: Override `save()` to check that tenant is not None
-- [ ] Tested: `Product.objects.filter_by_current_tenant()` returns only current tenant's products
+- [x] `api/views/inventory.py` updated
+- [x] `ProductViewSet.stock()` action verifies `product.tenant == current_tenant`
+- [x] `ProductViewSet.movements()` action verifies `product.tenant == current_tenant`
+- [x] `ProductViewSet.availability()` action verifies `product.tenant == current_tenant`
+- [x] `ProductViewSet.lots()` action verifies `product.tenant == current_tenant`
+- [x] `StockLocationViewSet.stock()` action verifies `location.tenant == current_tenant`
+- [x] Returns 403 Forbidden if tenant doesn't match
+- [x] Tested: User can only access their tenant's product stock data
+- [x] Tested: Cross-tenant access is blocked with 403
 
 **Files to Modify:**
-- `inventory/models/base.py` — Add validation, manager methods, docstring
+- `api/views/inventory.py` — Add tenant verification to custom actions
 
 **Implementation Notes:**
-- `filter_by_current_tenant()` should use `get_current_tenant()` from `tenants/context.py`.
-- Ensure `save()` doesn't interfere with bulk operations (disable for bulk_create if needed).
-
----
-
-### TS-09 — Update seeder documentation with tenant-scoping details
-
-**Priority:** MEDIUM | **Depends On:** TS-03, TS-05
-
-**Problem:**
-Documentation (README or existing seeder docs) doesn't explain tenant requirements or how to seed
-for specific tenants. Developers won't know how to use the system.
-
-**Scope:**
-
-| Capability | Description |
-| ---------- | ----------- |
-| Update README | Add section on tenant seeding in `inventory/seeders/README.md` or central docs |
-| CLI examples | Document `manage.py seed_database --tenant=<slug>` usage |
-| Default behavior | Explain "Default" tenant auto-creation |
-| Troubleshooting | Section for common issues (existing tenant, NULL data, etc.) |
-
-**Acceptance Criteria:**
-
-- [ ] `inventory/seeders/README.md` (or relevant docs) updated with tenant seeding section
-- [ ] Document default behavior: "Runs seeders for 'Default' tenant if not specified"
-- [ ] Example: `python manage.py seed_database` (uses Default)
-- [ ] Example: `python manage.py seed_database --tenant=acme` (uses ACME tenant)
-- [ ] Example: `python manage.py seed_database --clear --tenant=default` (clear and recreate)
-- [ ] Troubleshooting: What to do if "Default" tenant already exists
-- [ ] Clarify that all seeded data is now tenant-scoped (no orphaned data)
-- [ ] Link to `tenants/models.py` for Tenant model overview
-
-**Files to Create/Modify:**
-- `inventory/seeders/README.md` — Add tenant section *(or central docs)*
-- `docs/ARCHITECTURE.md` — Optional: add multi-tenancy seeding section
-
-**Implementation Notes:**
-- Can reference existing architecture docs if they cover multi-tenancy.
-
----
-
-### TS-10 — Write comprehensive tests for tenant-scoped seeding
-
-**Priority:** HIGH | **Depends On:** TS-01 through TS-08
-
-**Problem:**
-No tests verify that seeders respect tenant context or that orphaned data is prevented.
-Tests ensure system reliability and prevent regressions.
-
-**Scope:**
-
-| Capability | Description |
-| ---------- | ----------- |
-| Unit tests | Test each seeder individually with tenant parameter |
-| Integration tests | Run full seeding pipeline and verify tenant assignment |
-| CLI tests | Test management command with --tenant flag and defaults |
-| Database tests | Verify no NULL tenants exist after seeding |
-| Constraint tests | Verify unique constraints work with non-nullable tenant |
-
-**Acceptance Criteria:**
-
-- [ ] `inventory/tests/test_seeder_tenant.py` created *(or expanded existing)*
-- [ ] `test_tenant_seeder_creates_default()` — TenantSeeder creates Default tenant
-- [ ] `test_tenant_seeder_idempotent()` — Re-running returns existing tenant
-- [ ] `test_category_seeder_uses_tenant()` — Categories assigned to tenant
-- [ ] `test_product_seeder_uses_tenant()` — Products assigned to tenant
-- [ ] `test_stock_location_seeder_uses_tenant()` — Locations assigned to tenant
-- [ ] `test_stock_record_seeder_uses_tenant()` — Records assigned to tenant
-- [ ] `test_stock_movement_seeder_uses_tenant()` — Movements assigned to tenant
-- [ ] `test_seeder_manager_full_pipeline()` — Run all seeders via manager
-- [ ] `test_seed_command_creates_default_tenant()` — CLI auto-creates Default
-- [ ] `test_seed_command_specified_tenant()` — CLI uses --tenant flag
-- [ ] `test_seed_command_no_orphaned_data()` — Query Product.objects.filter(tenant__isnull=True) == 0
-- [ ] `test_product_unique_constraint_per_tenant()` — SKU unique per tenant enforced
-- [ ] All tests pass: `python manage.py test inventory.tests.test_seeder_tenant`
-
-**Files to Create:**
-- `inventory/tests/test_seeder_tenant.py` *(new)*
-
-**Files to Modify:**
-- `inventory/tests/test_seeder_*.py` — Integrate tenant tests into existing seeder tests (optional)
-
-**Implementation Notes:**
-- Use Django's `TransactionTestCase` for tests involving `transaction.atomic()`.
-- Mock `set_current_tenant()` and `get_current_tenant()` if testing in isolation.
-
----
-
-### TS-11 — Verify no regressions in existing systems
-
-**Priority:** MEDIUM | **Depends On:** TS-04, TS-06, TS-07
-
-**Problem:**
-Changes to seeders and models might break existing workflows (API serialization, views, exports).
-Regression testing ensures the system still works end-to-end.
-
-**Scope:**
-
-| Capability | Description |
-| ---------- | ----------- |
-| API endpoints | Verify product, category, stock APIs still return correct data |
-| Serializers | Check serializers handle tenant FK correctly |
-| Views | Ensure inventory views still render and filter by tenant |
-| Exports | CSV/PDF exports include tenant context |
-| Audit logging | Ensure audit logs track tenant changes |
-
-**Acceptance Criteria:**
-
-- [ ] Run API test suite: `python manage.py test api.tests`
-- [ ] All product/category/stock record endpoints return 200, data is tenant-scoped
-- [ ] Serializers render tenant field or include it in output
-- [ ] Inventory views (UI) still filter and display data correctly
-- [ ] Any exports (reports, CSV) include/reference tenant
-- [ ] Audit logs record seeding actions with tenant context
-- [ ] No new error logs in `python manage.py` or API responses
-
-**Files to Verify (no changes expected):**
-- `api/serializers/inventory.py` — Verify tenant in schema
-- `api/views/inventory.py` — Verify tenant filtering
-- `inventory/views.py` — UI views still work
-- `audit/models.py` — Audit logging includes tenant
-
-**Implementation Notes:**
-- Run full test suite: `python manage.py test` to catch any regressions.
-- Manual testing recommended for UI workflows.
+- Add helper method: `def _verify_tenant_ownership(self, obj):` that checks `obj.tenant == get_current_tenant()`
+- Raise `PermissionDenied` if tenant doesn't match
+- Use `from rest_framework.exceptions import PermissionDenied`
 
 ---
 
 ## Dependency Graph
 
 ```
-TS-01 (TenantSeeder) ──────────────┐
-                                    ├──→ TS-05 (SeederManager) ──→ TS-10 (Tests)
-TS-02 (BaseSeeder) ──────→ TS-04 ─┤                           ┌──→ TS-11 (Regression)
-                           (Refactor)─┤
-TS-03 (CLI Command) ──────────────┤
-                                    ├──→ TS-05 (SeederManager)
+TSS-01 (InventoryReportService)
+TSS-02 (OrderReportService)
+TSS-03 (Report API views) ──→ depends on TSS-01, TSS-02
+TSS-04 (Wagtail report views)
+TSS-05 (Inventory admin views)
+TSS-06 (Inventory API viewsets)
+TSS-07 (PurchaseOrderLine tenant field)
+TSS-08 (SalesOrderLine tenant field)
+TSS-09 (TenantAwareManager logging)
+TSS-10 (Custom action verification)
 
-TS-06 (Migration) ──────────────────→ TS-07 (Non-Nullable) ──→ TS-08 (Validation) ──→ TS-10 (Tests)
-
-TS-09 (Documentation) ──→ can run anytime after TS-03, TS-05
-TS-11 (Regression) ──────→ run last, after all code is done
+All tasks are independent and can be implemented in parallel.
 ```
 
 ---
 
 ## Recommended Execution Order
 
-### Phase 1 — Foundation (Tasks 1-3)
+All 10 tasks are **independent** and can be implemented in parallel. However, for logical grouping:
 
-Run **TS-01**, **TS-02**, **TS-03** in parallel. These are foundational changes with no interdependencies.
+### Group 1 — Service Layer (TSS-01, TSS-02)
+- TSS-01: Add explicit tenant filtering to InventoryReportService
+- TSS-02: Add explicit tenant filtering to OrderReportService
 
-- TS-01: Create TenantSeeder class
-- TS-02: Update BaseSeeder for tenant context
-- TS-03: Update CLI command with --tenant flag
+### Group 2 — API & View Layer (TSS-03, TSS-04, TSS-05, TSS-06, TSS-10)
+- TSS-03: Add explicit tenant verification to Report API views
+- TSS-04: Add explicit tenant filtering to Wagtail report views
+- TSS-05: Add explicit tenant filtering to Inventory admin views
+- TSS-06: Add explicit tenant verification to Inventory API viewsets
+- TSS-10: Add tenant verification to custom actions
 
-### Phase 2 — Refactoring (Tasks 4-5)
+### Group 3 — Model Layer (TSS-07, TSS-08, TSS-09)
+- TSS-07: Add tenant field to PurchaseOrderLine model
+- TSS-08: Add tenant field to SalesOrderLine model
+- TSS-09: Add logging and fallback to TenantAwareManager
 
-After Phase 1, run **TS-04**, **TS-05** in parallel. TS-04 is prerequisite for TS-05 to integrate.
+---
 
-- TS-04: Refactor all 6 individual seeders
-- TS-05: Update SeederManager to orchestrate
+## Testing Strategy
 
-### Phase 3 — Database & Model (Tasks 6-8)
+After implementing each task:
 
-After Phase 2, run **TS-06**, **TS-07**, **TS-08** sequentially to avoid conflicts.
+1. Run unit tests for the modified module
+2. Run integration tests to verify tenant isolation
+3. Run full test suite: `python manage.py test`
+4. Manual testing: verify cross-tenant access is blocked
 
-- TS-06: Migration to backfill and enforce non-nullable
-- TS-07: Update model definition
-- TS-08: Add validation and helpers
+---
 
-### Phase 4 — Testing & Documentation (Tasks 9-11)
+## Security Checklist
 
-Run after Phase 3 completes, in any order.
-
-- TS-09: Update documentation
-- TS-10: Comprehensive tests
-- TS-11: Regression testing (run last)
+- [ ] All querysets explicitly filter by tenant
+- [ ] All API views verify user belongs to tenant
+- [ ] All custom actions verify tenant ownership
+- [ ] All models with tenant FK have non-nullable tenant field
+- [ ] All migrations backfill tenant data correctly
+- [ ] No cross-tenant data leakage in reports
+- [ ] No cross-tenant data leakage in API responses
+- [ ] Logging captures tenant context for audit trail

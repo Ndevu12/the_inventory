@@ -85,7 +85,12 @@ class PurchaseOrder(TimeStampedModel):
 
 
 class PurchaseOrderLine(TimeStampedModel):
-    """A single line item on a purchase order."""
+    """A single line item on a purchase order.
+
+    Tenant is inherited from ``TimeStampedModel`` (``tenant`` FK to ``tenants.Tenant``,
+    ``on_delete=CASCADE``). It must match the parent ``PurchaseOrder``'s tenant; if
+    omitted at creation, it is set from the purchase order on ``save()`` when the PO has a tenant.
+    """
 
     purchase_order = models.ForeignKey(
         "procurement.PurchaseOrder",
@@ -107,7 +112,35 @@ class PurchaseOrderLine(TimeStampedModel):
     )
 
     class Meta:
-        unique_together = ("purchase_order", "product")
+        constraints = [
+            UniqueConstraint(
+                fields=["tenant", "purchase_order", "product"],
+                name="unique_purchaseorderline_tenant_po_product",
+            ),
+        ]
+
+    def clean(self):
+        super().clean()
+        if self.purchase_order_id and self.tenant_id and self.purchase_order.tenant_id:
+            if self.tenant_id != self.purchase_order.tenant_id:
+                raise ValidationError({
+                    "tenant": "Line tenant must match the purchase order's tenant.",
+                })
+
+    def save(self, *args, **kwargs):
+        if self.purchase_order_id:
+            po_tid = self.purchase_order.tenant_id
+            if self.tenant_id is None and po_tid:
+                self.tenant_id = po_tid
+            elif (
+                self.tenant_id
+                and po_tid
+                and self.tenant_id != po_tid
+            ):
+                raise ValidationError({
+                    "tenant": "Line tenant must match the purchase order's tenant.",
+                })
+        super().save(*args, **kwargs)
 
     @property
     def line_total(self):

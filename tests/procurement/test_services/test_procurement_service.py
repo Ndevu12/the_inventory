@@ -29,9 +29,14 @@ class ProcurementServiceSetupMixin:
     def setUp(self):
         self.service = ProcurementService()
         self.supplier = create_supplier()
-        self.product_a = create_product(sku="PROC-A", unit_cost=Decimal("10.00"))
-        self.product_b = create_product(sku="PROC-B", unit_cost=Decimal("25.00"))
-        self.warehouse = create_location(name="Main Warehouse")
+        tenant = self.supplier.tenant
+        self.product_a = create_product(
+            sku="PROC-A", unit_cost=Decimal("10.00"), tenant=tenant
+        )
+        self.product_b = create_product(
+            sku="PROC-B", unit_cost=Decimal("25.00"), tenant=tenant
+        )
+        self.warehouse = create_location(name="Main Warehouse", tenant=tenant)
 
 
 # =====================================================================

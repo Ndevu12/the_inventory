@@ -186,3 +186,26 @@ class DRFPermissionClassTest(TestCase):
         set_current_tenant(self.tenant)
         perm = TenantReadOnlyOrManager()
         self.assertTrue(perm.has_permission(self._request("POST"), None))
+
+    def test_is_tenant_member_resolves_tenant_without_thread_local(self):
+        """JWT: middleware cleared thread-local; membership still resolves from request."""
+        clear_current_tenant()
+        create_membership(
+            tenant=self.tenant,
+            user=self.user,
+            role=TenantRole.VIEWER,
+            is_default=True,
+        )
+        perm = IsTenantMember()
+        self.assertTrue(perm.has_permission(self._request(), None))
+
+    def test_is_tenant_admin_resolves_tenant_without_thread_local(self):
+        clear_current_tenant()
+        create_membership(
+            tenant=self.tenant,
+            user=self.user,
+            role=TenantRole.ADMIN,
+            is_default=True,
+        )
+        perm = IsTenantAdmin()
+        self.assertTrue(perm.has_permission(self._request(), None))

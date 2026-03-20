@@ -12,15 +12,25 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import type { PendingReservationsData } from "../types/dashboard.types";
 import { formatCompactNumber, formatCurrency } from "../helpers/chart-helpers";
+import {
+  DashboardWidgetError,
+  getDashboardErrorMessage,
+} from "./dashboard-widget-error";
 
 interface PendingReservationsCardProps {
   data: PendingReservationsData | undefined;
   isLoading: boolean;
+  isError: boolean;
+  error: unknown;
+  onRetry?: () => void;
 }
 
 export function PendingReservationsCard({
   data,
   isLoading,
+  isError,
+  error,
+  onRetry,
 }: PendingReservationsCardProps) {
   return (
     <Card>
@@ -32,7 +42,19 @@ export function PendingReservationsCard({
         <CardDescription>Active reservation summary</CardDescription>
       </CardHeader>
       <CardContent>
-        {isLoading || !data ? (
+        {isLoading ? (
+          <div className="space-y-3">
+            <Skeleton className="h-5 w-full" />
+            <Skeleton className="h-5 w-3/4" />
+            <Skeleton className="h-5 w-2/3" />
+          </div>
+        ) : isError ? (
+          <DashboardWidgetError
+            message={getDashboardErrorMessage(error)}
+            onRetry={onRetry}
+            minHeight="140px"
+          />
+        ) : !data ? (
           <div className="space-y-3">
             <Skeleton className="h-5 w-full" />
             <Skeleton className="h-5 w-3/4" />

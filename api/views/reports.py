@@ -7,6 +7,7 @@ endpoint to download a file instead.
 
 from datetime import date
 
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -15,12 +16,23 @@ from reports.exports import export_csv
 from reports.pdf import export_pdf
 from reports.services.inventory_reports import InventoryReportService
 from reports.services.order_reports import OrderReportService
+from tenants.middleware import get_effective_tenant
+from tenants.permissions import get_membership
 
 
 class _ExportableAPIView(APIView):
     """Base for report views that support CSV/PDF file downloads."""
 
     permission_classes = (IsAuthenticated,)
+
+    def _get_current_tenant(self):
+        """Resolve tenant (JWT-safe) and verify membership."""
+        tenant = get_effective_tenant(self.request)
+        if not tenant:
+            raise PermissionDenied("No tenant context set.")
+        if not get_membership(self.request.user, tenant=tenant):
+            raise PermissionDenied("User does not belong to this tenant.")
+        return tenant
 
     def _wants_export(self, request):
         return request.query_params.get("export")
@@ -51,10 +63,11 @@ class StockValuationView(_ExportableAPIView):
     """
 
     def get(self, request):
+        tenant = self._get_current_tenant()
         method = request.query_params.get("method", "weighted_average")
         service = InventoryReportService()
-        valuations = service.get_stock_valuation(method=method)
-        summary = service.get_valuation_summary(method=method)
+        valuations = service.get_stock_valuation(method=method, tenant=tenant)
+        summary = service.get_valuation_summary(method=method, tenant=tenant)
 
         items = [
             {
@@ -93,11 +106,13 @@ class MovementHistoryView(_ExportableAPIView):
     """
 
     def get(self, request):
+        tenant = self._get_current_tenant()
         service = InventoryReportService()
         movements = service.get_movement_history(
             date_from=self._parse_date(request.query_params.get("date_from")),
             date_to=self._parse_date(request.query_params.get("date_to")),
             movement_type=request.query_params.get("type"),
+            tenant=tenant,
         )
 
         items = [
@@ -132,8 +147,9 @@ class LowStockReportView(_ExportableAPIView):
     """Products at or below reorder point."""
 
     def get(self, request):
+        tenant = self._get_current_tenant()
         service = InventoryReportService()
-        products = service.get_low_stock_products()
+        products = service.get_low_stock_products(tenant=tenant)
 
         items = []
         for p in products:
@@ -165,9 +181,10 @@ class OverstockReportView(_ExportableAPIView):
     """
 
     def get(self, request):
+        tenant = self._get_current_tenant()
         threshold = int(request.query_params.get("threshold", 3))
         service = InventoryReportService()
-        products = service.get_overstock_products(threshold_multiplier=threshold)
+        products = service.get_overstock_products(threshold_multiplier=threshold, tenant=tenant)
 
         items = []
         for p in products:
@@ -199,8 +216,9 @@ class ReservationSummaryView(_ExportableAPIView):
     """
 
     def get(self, request):
+        tenant = self._get_current_tenant()
         service = InventoryReportService()
-        summary = service.get_reservation_summary()
+        summary = service.get_reservation_summary(tenant=tenant)
 
         fmt = self._wants_export(request)
         if fmt:
@@ -226,6 +244,7 @@ class AvailabilityReportView(_ExportableAPIView):
     """
 
     def get(self, request):
+        tenant = self._get_current_tenant()
         category_id = request.query_params.get("category")
         product_id = request.query_params.get("product")
 
@@ -233,6 +252,7 @@ class AvailabilityReportView(_ExportableAPIView):
         items = service.get_availability_report(
             category_id=int(category_id) if category_id else None,
             product_id=int(product_id) if product_id else None,
+            tenant=tenant,
         )
 
         total_reserved_value = sum(
@@ -278,13 +298,14 @@ class PurchaseSummaryView(_ExportableAPIView):
     """
 
     def get(self, request):
+        tenant = self._get_current_tenant()
         period = request.query_params.get("period", "monthly")
         date_from = self._parse_date(request.query_params.get("date_from"))
         date_to = self._parse_date(request.query_params.get("date_to"))
 
         service = OrderReportService()
-        data = service.get_purchase_summary(period=period, date_from=date_from, date_to=date_to)
-        totals = service.get_purchase_totals(date_from=date_from, date_to=date_to)
+        data = service.get_purchase_summary(period=period, date_from=date_from, date_to=date_to, tenant=tenant)
+        totals = service.get_purchase_totals(date_from=date_from, date_to=date_to, tenant=tenant)
 
         items = [
             {"period": str(row["period"]), "order_count": row["order_count"], "total": str(row["total_cost"])}
@@ -309,13 +330,14 @@ class SalesSummaryView(_ExportableAPIView):
     """
 
     def get(self, request):
+        tenant = self._get_current_tenant()
         period = request.query_params.get("period", "monthly")
         date_from = self._parse_date(request.query_params.get("date_from"))
         date_to = self._parse_date(request.query_params.get("date_to"))
 
         service = OrderReportService()
-        data = service.get_sales_summary(period=period, date_from=date_from, date_to=date_to)
-        totals = service.get_sales_totals(date_from=date_from, date_to=date_to)
+        data = service.get_sales_summary(period=period, date_from=date_from, date_to=date_to, tenant=tenant)
+        totals = service.get_sales_totals(date_from=date_from, date_to=date_to, tenant=tenant)
 
         items = [
             {"period": str(row["period"]), "order_count": row["order_count"], "total": str(row["total_revenue"])}
@@ -363,14 +385,15 @@ class ProductExpiryView(_ExportableAPIView):
             return None
 
     def get(self, request):
+        tenant = self._get_current_tenant()
         service = InventoryReportService()
         days_ahead, product, location = self._get_filters(request)
 
         expiring = service.get_expiring_lots(
-            days_ahead=days_ahead, product=product, location=location,
+            days_ahead=days_ahead, product=product, location=location, tenant=tenant,
         )
         expired = service.get_expired_lots(
-            product=product, location=location,
+            product=product, location=location, tenant=tenant,
         )
 
         def _lot_dict(lot, status):
@@ -432,6 +455,7 @@ class LotHistoryView(_ExportableAPIView):
     """
 
     def get(self, request):
+        tenant = self._get_current_tenant()
         product_id = request.query_params.get("product")
         lot_number = request.query_params.get("lot_number")
 
@@ -446,7 +470,7 @@ class LotHistoryView(_ExportableAPIView):
             return Response({"detail": "Product not found."}, status=404)
 
         service = InventoryReportService()
-        movements = service.get_lot_history(product=product, lot_number=lot_number)
+        movements = service.get_lot_history(product=product, lot_number=lot_number, tenant=tenant)
 
         items = [
             {
@@ -521,6 +545,7 @@ class VarianceReportView(_ExportableAPIView):
     """
 
     def get(self, request):
+        tenant = self._get_current_tenant()
         cycle_id = request.query_params.get("cycle_id")
         product_id = request.query_params.get("product_id")
         variance_type = request.query_params.get("variance_type")
@@ -533,8 +558,9 @@ class VarianceReportView(_ExportableAPIView):
             cycle_id=cycle_id,
             product_id=product_id,
             variance_type=variance_type,
+            tenant=tenant,
         )
-        summary = service.get_variance_summary(cycle_id=cycle_id)
+        summary = service.get_variance_summary(cycle_id=cycle_id, tenant=tenant)
 
         items = [
             {
@@ -601,8 +627,9 @@ class CycleHistoryView(_ExportableAPIView):
     """Summary of past inventory cycles and their reconciliation status."""
 
     def get(self, request):
+        tenant = self._get_current_tenant()
         service = InventoryReportService()
-        cycles = service.get_cycle_history()
+        cycles = service.get_cycle_history(tenant=tenant)
 
         fmt = self._wants_export(request)
         if fmt:
@@ -639,6 +666,7 @@ class ProductTraceabilityView(_ExportableAPIView):
     """
 
     def get(self, request):
+        tenant = self._get_current_tenant()
         sku = request.query_params.get("product")
         lot_number = request.query_params.get("lot")
 
@@ -649,7 +677,7 @@ class ProductTraceabilityView(_ExportableAPIView):
             )
 
         service = InventoryReportService()
-        result = service.get_product_traceability(sku=sku, lot_number=lot_number)
+        result = service.get_product_traceability(sku=sku, lot_number=lot_number, tenant=tenant)
 
         if result is None:
             return Response(

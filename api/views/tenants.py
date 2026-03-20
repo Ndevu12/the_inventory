@@ -13,6 +13,7 @@ from api.permissions import IsPlatformSuperuser
 from api.serializers.tenants import TenantMemberSerializer, TenantSerializer
 from inventory.models import AuditAction
 from inventory.services.audit import AuditService
+from tenants.middleware import get_effective_tenant
 from tenants.models import Tenant, TenantMembership
 from tenants.permissions import IsTenantAdmin, IsTenantMember
 from tenants.services import TenantExportService
@@ -30,7 +31,7 @@ class CurrentTenantView(APIView):
         return [IsAuthenticated(), IsTenantAdmin()]
 
     def get(self, request):
-        tenant = getattr(request, "tenant", None)
+        tenant = get_effective_tenant(request)
         if not tenant:
             return Response(
                 {"detail": "No active tenant."}, status=status.HTTP_404_NOT_FOUND,
@@ -39,7 +40,7 @@ class CurrentTenantView(APIView):
         return Response(serializer.data)
 
     def patch(self, request):
-        tenant = getattr(request, "tenant", None)
+        tenant = get_effective_tenant(request)
         if not tenant:
             return Response(
                 {"detail": "No active tenant."}, status=status.HTTP_404_NOT_FOUND,
@@ -57,7 +58,7 @@ class TenantMemberListView(ListAPIView):
     permission_classes = (IsAuthenticated, IsTenantMember)
 
     def get_queryset(self):
-        tenant = getattr(self.request, "tenant", None)
+        tenant = get_effective_tenant(self.request)
         if not tenant:
             return TenantMembership.objects.none()
         return (
@@ -77,7 +78,7 @@ class TenantMemberDetailView(RetrieveUpdateDestroyAPIView):
     permission_classes = (IsAuthenticated, IsTenantAdmin)
 
     def get_queryset(self):
-        tenant = getattr(self.request, "tenant", None)
+        tenant = get_effective_tenant(self.request)
         if not tenant:
             return TenantMembership.objects.none()
         return TenantMembership.objects.filter(tenant=tenant).select_related("user")

@@ -7,12 +7,17 @@ with support for period-based grouping (daily, weekly, monthly).
 from __future__ import annotations
 
 from datetime import date
+from typing import TYPE_CHECKING
 
 from django.db.models import Count, DecimalField, F, Sum
 from django.db.models.functions import Coalesce, TruncDay, TruncMonth, TruncWeek
 
 from procurement.models import PurchaseOrder, PurchaseOrderLine, PurchaseOrderStatus
 from sales.models import SalesOrder, SalesOrderLine, SalesOrderStatus
+from tenants.context import get_current_tenant
+
+if TYPE_CHECKING:
+    from tenants.models import Tenant
 
 
 TRUNC_FUNCTIONS = {
@@ -39,6 +44,7 @@ class OrderReportService:
     def get_purchase_summary(
         self,
         *,
+        tenant: Tenant | None = None,
         period: str = "monthly",
         date_from: date | None = None,
         date_to: date | None = None,
@@ -50,14 +56,20 @@ class OrderReportService:
 
         Parameters
         ----------
+        tenant : Tenant | None
+            Tenant to filter by. Defaults to current tenant from context.
         period : str
             ``"daily"``, ``"weekly"``, or ``"monthly"``.
         date_from, date_to : date | None
             Optional date range filter on ``order_date``.
         """
+        tenant = tenant or get_current_tenant()
+        if not tenant:
+            raise ValueError("No tenant provided or found in context")
+
         trunc_fn = self._get_trunc_function(period)
 
-        qs = PurchaseOrder.objects.exclude(
+        qs = PurchaseOrder.objects.filter(tenant=tenant).exclude(
             status=PurchaseOrderStatus.CANCELLED,
         )
         qs = self._apply_date_filter(qs, "order_date", date_from, date_to)
@@ -83,6 +95,7 @@ class OrderReportService:
     def get_purchase_totals(
         self,
         *,
+        tenant: Tenant | None = None,
         date_from: date | None = None,
         date_to: date | None = None,
     ) -> dict:
@@ -91,7 +104,11 @@ class OrderReportService:
         Returns ``order_count``, ``line_count``, ``total_cost``,
         and ``status_breakdown``.
         """
-        qs = PurchaseOrder.objects.exclude(
+        tenant = tenant or get_current_tenant()
+        if not tenant:
+            raise ValueError("No tenant provided or found in context")
+
+        qs = PurchaseOrder.objects.filter(tenant=tenant).exclude(
             status=PurchaseOrderStatus.CANCELLED,
         )
         qs = self._apply_date_filter(qs, "order_date", date_from, date_to)
@@ -132,6 +149,7 @@ class OrderReportService:
     def get_sales_summary(
         self,
         *,
+        tenant: Tenant | None = None,
         period: str = "monthly",
         date_from: date | None = None,
         date_to: date | None = None,
@@ -141,9 +159,13 @@ class OrderReportService:
         Returns a list of dicts with ``period``, ``order_count``, and
         ``total_revenue`` for each time bucket.
         """
+        tenant = tenant or get_current_tenant()
+        if not tenant:
+            raise ValueError("No tenant provided or found in context")
+
         trunc_fn = self._get_trunc_function(period)
 
-        qs = SalesOrder.objects.exclude(
+        qs = SalesOrder.objects.filter(tenant=tenant).exclude(
             status=SalesOrderStatus.CANCELLED,
         )
         qs = self._apply_date_filter(qs, "order_date", date_from, date_to)
@@ -169,6 +191,7 @@ class OrderReportService:
     def get_sales_totals(
         self,
         *,
+        tenant: Tenant | None = None,
         date_from: date | None = None,
         date_to: date | None = None,
     ) -> dict:
@@ -177,7 +200,11 @@ class OrderReportService:
         Returns ``order_count``, ``line_count``, ``total_revenue``,
         and ``status_breakdown``.
         """
-        qs = SalesOrder.objects.exclude(
+        tenant = tenant or get_current_tenant()
+        if not tenant:
+            raise ValueError("No tenant provided or found in context")
+
+        qs = SalesOrder.objects.filter(tenant=tenant).exclude(
             status=SalesOrderStatus.CANCELLED,
         )
         qs = self._apply_date_filter(qs, "order_date", date_from, date_to)

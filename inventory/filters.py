@@ -41,6 +41,9 @@ class ProductFilterSet(django_filters.FilterSet):
     - **stock_status** — custom filter using ProductQuerySet methods
     - **is_active** — boolean
     - **location** — filters products that have stock at a given location
+
+    When ``tenant`` is provided, category and location dropdowns are
+    restricted to that tenant's data.
     """
 
     category = django_filters.ModelChoiceFilter(
@@ -63,3 +66,9 @@ class ProductFilterSet(django_filters.FilterSet):
     class Meta:
         model = Product
         fields = ["category", "stock_status", "is_active", "location"]
+
+    def __init__(self, *args, tenant=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if tenant is not None:
+            self.filters["category"].queryset = Category.objects.filter(tenant=tenant)
+            self.filters["location"].queryset = StockLocation.objects.filter(tenant=tenant)

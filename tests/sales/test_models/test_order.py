@@ -2,13 +2,14 @@
 
 from decimal import Decimal
 
+from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.test import TestCase
 
 from tests.fixtures.factories import create_location, create_product
 from tests.fixtures.factories import create_tenant
 
-from sales.models import SalesOrderStatus
+from sales.models import SalesOrderLine, SalesOrderStatus
 
 from ..factories import (
     create_customer,
@@ -31,7 +32,7 @@ class SalesOrderCreationTests(TestCase):
         self.customer = create_customer(tenant=self.tenant)
 
     def test_create_draft_order(self):
-        so = create_sales_order(customer=self.customer)
+        so = create_sales_order(customer=self.customer, tenant=self.tenant)
         self.assertEqual(so.status, SalesOrderStatus.DRAFT)
         self.assertEqual(so.customer, self.customer)
 
@@ -39,6 +40,7 @@ class SalesOrderCreationTests(TestCase):
         so = create_sales_order(
             order_number="SO-STR-001",
             customer=self.customer,
+            tenant=self.tenant,
         )
         self.assertEqual(str(so), f"SO-STR-001 — {self.customer.name}")
 
@@ -65,9 +67,10 @@ class SalesOrderLineTests(TestCase):
     """Test SalesOrderLine creation and computed properties."""
 
     def setUp(self):
-        self.customer = create_customer()
-        self.so = create_sales_order(customer=self.customer)
-        self.product = create_product(sku="SLINE-001")
+        self.tenant = create_tenant()
+        self.customer = create_customer(tenant=self.tenant)
+        self.so = create_sales_order(customer=self.customer, tenant=self.tenant)
+        self.product = create_product(sku="SLINE-001", tenant=self.tenant)
 
     def test_create_line(self):
         line = create_sales_order_line(
@@ -109,8 +112,8 @@ class SalesOrderLineTests(TestCase):
             )
 
     def test_total_price_across_lines(self):
-        p1 = create_product(sku="STOTAL-001")
-        p2 = create_product(sku="STOTAL-002")
+        p1 = create_product(sku="STOTAL-001", tenant=self.tenant)
+        p2 = create_product(sku="STOTAL-002", tenant=self.tenant)
         create_sales_order_line(
             sales_order=self.so,
             product=p1,
@@ -125,6 +128,41 @@ class SalesOrderLineTests(TestCase):
         )
         self.assertEqual(self.so.total_price, Decimal("150.00"))
 
+    def test_tenant_copied_from_sales_order_when_omitted(self):
+        line = SalesOrderLine(
+            sales_order=self.so,
+            product=self.product,
+            quantity=2,
+            unit_price=Decimal("9.99"),
+        )
+        line.save()
+        line.refresh_from_db()
+        self.assertEqual(line.tenant_id, self.so.tenant_id)
+
+    def test_line_tenant_mismatch_raises_validation_error(self):
+        other_tenant = create_tenant(name="Other", slug="other-so-line")
+        with self.assertRaises(ValidationError):
+            SalesOrderLine(
+                sales_order=self.so,
+                product=self.product,
+                quantity=1,
+                unit_price=Decimal("1.00"),
+                tenant=other_tenant,
+            ).save()
+
+    def test_filter_lines_by_tenant(self):
+        create_sales_order_line(sales_order=self.so, product=self.product)
+        other_tenant = create_tenant(name="Other Co", slug="other-filter")
+        other_so = create_sales_order(
+            customer=create_customer(code="C-OTHER", tenant=other_tenant),
+            tenant=other_tenant,
+        )
+        other_product = create_product(sku="OTHER-SOL", tenant=other_tenant)
+        create_sales_order_line(sales_order=other_so, product=other_product)
+        qs = SalesOrderLine.objects.filter(tenant=self.tenant)
+        self.assertEqual(qs.count(), 1)
+        self.assertEqual(qs.get().sales_order_id, self.so.id)
+
 
 # =====================================================================
 # Dispatch
@@ -135,33 +173,39 @@ class DispatchTests(TestCase):
     """Test Dispatch creation and field defaults."""
 
     def test_create_dispatch(self):
-        customer = create_customer(code="CUST-DSP")
+        tenant = create_tenant(slug="dsp-create")
+        customer = create_customer(code="CUST-DSP", tenant=tenant)
         so = create_sales_order(
             order_number="SO-DSP-001",
             customer=customer,
             status=SalesOrderStatus.CONFIRMED,
+            tenant=tenant,
         )
-        location = create_location(name="Shipping Area")
+        location = create_location(name="Shipping Area", tenant=tenant)
         dispatch = create_dispatch(
             dispatch_number="DSP-001",
             sales_order=so,
             from_location=location,
+            tenant=tenant,
         )
         self.assertFalse(dispatch.is_processed)
         self.assertEqual(dispatch.sales_order, so)
 
     def test_str_representation(self):
-        customer = create_customer(code="CUST-DSPSTR")
+        tenant = create_tenant(slug="dsp-str")
+        customer = create_customer(code="CUST-DSPSTR", tenant=tenant)
         so = create_sales_order(
             order_number="SO-DSPSTR",
             customer=customer,
             status=SalesOrderStatus.CONFIRMED,
+            tenant=tenant,
         )
-        location = create_location(name="Dock D")
+        location = create_location(name="Dock D", tenant=tenant)
         dispatch = create_dispatch(
             dispatch_number="DSP-STR",
             sales_order=so,
             from_location=location,
+            tenant=tenant,
         )
         self.assertEqual(str(dispatch), "DSP-STR — SO-DSPSTR")
 

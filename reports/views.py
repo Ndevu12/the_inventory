@@ -4,10 +4,12 @@ All views are read-only and follow the project's OOP standard.
 Each view supports CSV export via ``?export=csv``.
 """
 
+from django.core.exceptions import PermissionDenied
 from django.views.generic import ListView, TemplateView
 from wagtail.admin.views.generic.base import WagtailAdminTemplateMixin
 
-from inventory.models import StockMovement
+from inventory.models import Product, StockLocation, StockMovement
+from tenants.context import get_current_tenant
 
 from reports.exports import CSVExportMixin
 from reports.filters import ExpiryReportFilter, MovementHistoryFilter
@@ -16,11 +18,29 @@ from reports.services.order_reports import OrderReportService
 
 
 # =====================================================================
+# Tenant verification mixin
+# =====================================================================
+
+
+class TenantReportMixin:
+    """Mixin for report views that require tenant context."""
+
+    def _get_current_tenant(self):
+        """Get current tenant and raise PermissionDenied if not set."""
+        tenant = get_current_tenant()
+        if not tenant:
+            raise PermissionDenied("Tenant context is not set.")
+        return tenant
+
+
+# =====================================================================
 # Stock Valuation
 # =====================================================================
 
 
-class StockValuationView(CSVExportMixin, WagtailAdminTemplateMixin, TemplateView):
+class StockValuationView(
+    TenantReportMixin, CSVExportMixin, WagtailAdminTemplateMixin, TemplateView
+):
     """Stock valuation report with weighted-average and latest-cost methods."""
 
     template_name = "reports/stock_valuation.html"
@@ -29,14 +49,15 @@ class StockValuationView(CSVExportMixin, WagtailAdminTemplateMixin, TemplateView
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        tenant = self._get_current_tenant()
         service = InventoryReportService()
 
         method = self.request.GET.get("method", "weighted_average")
         if method not in service.VALUATION_METHODS:
             method = "weighted_average"
 
-        valuations = service.get_stock_valuation(method=method)
-        summary = service.get_valuation_summary(method=method)
+        valuations = service.get_stock_valuation(method=method, tenant=tenant)
+        summary = service.get_valuation_summary(method=method, tenant=tenant)
 
         context["valuations"] = valuations
         context["summary"] = summary
@@ -45,11 +66,12 @@ class StockValuationView(CSVExportMixin, WagtailAdminTemplateMixin, TemplateView
         return context
 
     def _get_export_data(self):
+        tenant = self._get_current_tenant()
         service = InventoryReportService()
         method = self.request.GET.get("method", "weighted_average")
         if method not in service.VALUATION_METHODS:
             method = "weighted_average"
-        valuations = service.get_stock_valuation(method=method)
+        valuations = service.get_stock_valuation(method=method, tenant=tenant)
         headers = ["SKU", "Product", "Category", "Quantity", "Unit Cost", "Total Value", "Method"]
         rows = [
             [
@@ -85,7 +107,9 @@ class StockValuationView(CSVExportMixin, WagtailAdminTemplateMixin, TemplateView
 # =====================================================================
 
 
-class MovementHistoryView(CSVExportMixin, WagtailAdminTemplateMixin, ListView):
+class MovementHistoryView(
+    TenantReportMixin, CSVExportMixin, WagtailAdminTemplateMixin, ListView
+):
     """Filterable, paginated movement history with audit trail."""
 
     template_name = "reports/movement_history.html"
@@ -95,8 +119,10 @@ class MovementHistoryView(CSVExportMixin, WagtailAdminTemplateMixin, ListView):
     header_icon = "history"
 
     def get_queryset(self):
+        tenant = self._get_current_tenant()
         qs = (
             StockMovement.objects
+            .filter(tenant=tenant)
             .select_related(
                 "product", "from_location", "to_location", "created_by",
             )
@@ -156,7 +182,9 @@ class MovementHistoryView(CSVExportMixin, WagtailAdminTemplateMixin, ListView):
 # =====================================================================
 
 
-class LowStockReportView(CSVExportMixin, WagtailAdminTemplateMixin, TemplateView):
+class LowStockReportView(
+    TenantReportMixin, CSVExportMixin, WagtailAdminTemplateMixin, TemplateView
+):
     """Low-stock report showing products at or below their reorder point."""
 
     template_name = "reports/low_stock_report.html"
@@ -165,14 +193,16 @@ class LowStockReportView(CSVExportMixin, WagtailAdminTemplateMixin, TemplateView
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        tenant = self._get_current_tenant()
         service = InventoryReportService()
-        context["products"] = service.get_low_stock_products()
+        context["products"] = service.get_low_stock_products(tenant=tenant)
         context["total_count"] = context["products"].count()
         return context
 
     def _get_export_data(self):
+        tenant = self._get_current_tenant()
         service = InventoryReportService()
-        products = service.get_low_stock_products()
+        products = service.get_low_stock_products(tenant=tenant)
         headers = ["SKU", "Product", "Category", "Reorder Point", "Locations & Stock"]
         rows = [
             [
@@ -204,7 +234,9 @@ class LowStockReportView(CSVExportMixin, WagtailAdminTemplateMixin, TemplateView
         )
 
 
-class OverstockReportView(CSVExportMixin, WagtailAdminTemplateMixin, TemplateView):
+class OverstockReportView(
+    TenantReportMixin, CSVExportMixin, WagtailAdminTemplateMixin, TemplateView
+):
     """Overstock report showing products with excessive inventory."""
 
     template_name = "reports/overstock_report.html"
@@ -213,6 +245,7 @@ class OverstockReportView(CSVExportMixin, WagtailAdminTemplateMixin, TemplateVie
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        tenant = self._get_current_tenant()
         service = InventoryReportService()
 
         multiplier = self.request.GET.get("threshold", 3)
@@ -222,7 +255,7 @@ class OverstockReportView(CSVExportMixin, WagtailAdminTemplateMixin, TemplateVie
             multiplier = 3
 
         products = service.get_overstock_products(
-            threshold_multiplier=multiplier,
+            threshold_multiplier=multiplier, tenant=tenant,
         )
         context["products"] = products
         context["total_count"] = products.count()
@@ -230,6 +263,7 @@ class OverstockReportView(CSVExportMixin, WagtailAdminTemplateMixin, TemplateVie
         return context
 
     def _get_export_data(self):
+        tenant = self._get_current_tenant()
         service = InventoryReportService()
         multiplier = self.request.GET.get("threshold", 3)
         try:
@@ -237,7 +271,7 @@ class OverstockReportView(CSVExportMixin, WagtailAdminTemplateMixin, TemplateVie
         except (ValueError, TypeError):
             multiplier = 3
         products = service.get_overstock_products(
-            threshold_multiplier=multiplier,
+            threshold_multiplier=multiplier, tenant=tenant,
         )
         headers = ["SKU", "Product", "Category", "Reorder Point", "Total Stock", "Threshold"]
         rows = [
@@ -273,7 +307,9 @@ class OverstockReportView(CSVExportMixin, WagtailAdminTemplateMixin, TemplateVie
 # =====================================================================
 
 
-class ExpiryReportView(CSVExportMixin, WagtailAdminTemplateMixin, TemplateView):
+class ExpiryReportView(
+    TenantReportMixin, CSVExportMixin, WagtailAdminTemplateMixin, TemplateView
+):
     """Lots approaching or past their expiry date."""
 
     template_name = "reports/expiry_report.html"
@@ -281,6 +317,7 @@ class ExpiryReportView(CSVExportMixin, WagtailAdminTemplateMixin, TemplateView):
     header_icon = "time"
 
     def _get_params(self):
+        tenant = self._get_current_tenant()
         days_ahead = self.request.GET.get("days_ahead", "30")
         try:
             days_ahead = max(1, int(days_ahead))
@@ -290,35 +327,37 @@ class ExpiryReportView(CSVExportMixin, WagtailAdminTemplateMixin, TemplateView):
         product_id = self.request.GET.get("product") or None
         location_id = self.request.GET.get("location") or None
 
-        from inventory.models import Product, StockLocation
         product = None
         location = None
         if product_id:
             try:
-                product = Product.objects.get(pk=product_id)
+                product = Product.objects.filter(tenant=tenant).get(pk=product_id)
             except (Product.DoesNotExist, ValueError):
                 pass
         if location_id:
             try:
-                location = StockLocation.objects.get(pk=location_id)
+                location = StockLocation.objects.filter(
+                    tenant=tenant,
+                ).get(pk=location_id)
             except (StockLocation.DoesNotExist, ValueError):
                 pass
 
-        return days_ahead, product, location
+        return days_ahead, product, location, tenant
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        tenant = self._get_current_tenant()
         service = InventoryReportService()
-        days_ahead, product, location = self._get_params()
+        days_ahead, product, location, _ = self._get_params()
 
         expiring = service.get_expiring_lots(
-            days_ahead=days_ahead, product=product, location=location,
+            days_ahead=days_ahead, product=product, location=location, tenant=tenant,
         )
         expired = service.get_expired_lots(
-            product=product, location=location,
+            product=product, location=location, tenant=tenant,
         )
 
-        self.filterset = ExpiryReportFilter(self.request.GET)
+        self.filterset = ExpiryReportFilter(self.request.GET, queryset=expiring)
 
         context["expiring_lots"] = expiring
         context["expired_lots"] = expired
@@ -330,12 +369,12 @@ class ExpiryReportView(CSVExportMixin, WagtailAdminTemplateMixin, TemplateView):
 
     def _get_export_data(self):
         service = InventoryReportService()
-        days_ahead, product, location = self._get_params()
+        days_ahead, product, location, tenant = self._get_params()
         expiring = service.get_expiring_lots(
-            days_ahead=days_ahead, product=product, location=location,
+            days_ahead=days_ahead, product=product, location=location, tenant=tenant,
         )
         expired = service.get_expired_lots(
-            product=product, location=location,
+            product=product, location=location, tenant=tenant,
         )
         headers = [
             "Status", "SKU", "Product", "Lot Number", "Expiry Date",
@@ -378,7 +417,9 @@ class ExpiryReportView(CSVExportMixin, WagtailAdminTemplateMixin, TemplateView):
 # =====================================================================
 
 
-class PurchaseSummaryView(CSVExportMixin, WagtailAdminTemplateMixin, TemplateView):
+class PurchaseSummaryView(
+    TenantReportMixin, CSVExportMixin, WagtailAdminTemplateMixin, TemplateView
+):
     """Purchase order summary grouped by time period."""
 
     template_name = "reports/purchase_summary.html"
@@ -406,14 +447,15 @@ class PurchaseSummaryView(CSVExportMixin, WagtailAdminTemplateMixin, TemplateVie
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        tenant = self._get_current_tenant()
         service = OrderReportService()
         period, date_from, date_to = self._get_params()
 
         context["summary"] = service.get_purchase_summary(
-            period=period, date_from=date_from, date_to=date_to,
+            tenant=tenant, period=period, date_from=date_from, date_to=date_to,
         )
         context["totals"] = service.get_purchase_totals(
-            date_from=date_from, date_to=date_to,
+            tenant=tenant, date_from=date_from, date_to=date_to,
         )
         context["current_period"] = period
         context["date_from"] = date_from
@@ -421,10 +463,11 @@ class PurchaseSummaryView(CSVExportMixin, WagtailAdminTemplateMixin, TemplateVie
         return context
 
     def _get_export_data(self):
+        tenant = self._get_current_tenant()
         service = OrderReportService()
         period, date_from, date_to = self._get_params()
         data = service.get_purchase_summary(
-            period=period, date_from=date_from, date_to=date_to,
+            tenant=tenant, period=period, date_from=date_from, date_to=date_to,
         )
         headers = ["Period", "Order Count", "Total Cost"]
         rows = [
@@ -453,7 +496,9 @@ class PurchaseSummaryView(CSVExportMixin, WagtailAdminTemplateMixin, TemplateVie
         )
 
 
-class SalesSummaryView(CSVExportMixin, WagtailAdminTemplateMixin, TemplateView):
+class SalesSummaryView(
+    TenantReportMixin, CSVExportMixin, WagtailAdminTemplateMixin, TemplateView
+):
     """Sales order summary grouped by time period."""
 
     template_name = "reports/sales_summary.html"
@@ -481,14 +526,15 @@ class SalesSummaryView(CSVExportMixin, WagtailAdminTemplateMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        tenant = self._get_current_tenant()
         service = OrderReportService()
         period, date_from, date_to = self._get_params()
 
         context["summary"] = service.get_sales_summary(
-            period=period, date_from=date_from, date_to=date_to,
+            tenant=tenant, period=period, date_from=date_from, date_to=date_to,
         )
         context["totals"] = service.get_sales_totals(
-            date_from=date_from, date_to=date_to,
+            tenant=tenant, date_from=date_from, date_to=date_to,
         )
         context["current_period"] = period
         context["date_from"] = date_from
@@ -496,10 +542,11 @@ class SalesSummaryView(CSVExportMixin, WagtailAdminTemplateMixin, TemplateView):
         return context
 
     def _get_export_data(self):
+        tenant = self._get_current_tenant()
         service = OrderReportService()
         period, date_from, date_to = self._get_params()
         data = service.get_sales_summary(
-            period=period, date_from=date_from, date_to=date_to,
+            tenant=tenant, period=period, date_from=date_from, date_to=date_to,
         )
         headers = ["Period", "Order Count", "Total Revenue"]
         rows = [

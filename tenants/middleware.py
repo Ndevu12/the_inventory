@@ -15,6 +15,7 @@ from django.conf import settings as django_settings
 from tenants.context import (
     clear_current_tenant,
     clear_impersonation_context,
+    get_current_tenant,
     set_current_tenant,
     set_impersonation_context,
 )
@@ -119,6 +120,24 @@ class TenantMiddleware:
 
         # 4) First active membership
         return memberships.first().tenant
+
+
+def resolve_tenant_for_request(request):
+    """Resolve tenant from the authenticated user using the same rules as
+    :class:`TenantMiddleware`.
+
+    Use when thread-local tenant context was not set — e.g. DRF
+    authenticates the user after ``TenantMiddleware`` runs (Token auth).
+    """
+    return TenantMiddleware._resolve_tenant(request)
+
+
+def get_effective_tenant(request):
+    """Thread-local tenant if set, else resolve from *request* (JWT / late auth)."""
+    tenant = get_current_tenant()
+    if tenant is not None:
+        return tenant
+    return resolve_tenant_for_request(request)
 
 
 class ImpersonationMiddleware:

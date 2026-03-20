@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import UniqueConstraint
 from wagtail.search import index
@@ -68,7 +69,12 @@ class SalesOrder(TimeStampedModel):
 
 
 class SalesOrderLine(TimeStampedModel):
-    """A single line item on a sales order."""
+    """A single line item on a sales order.
+
+    Tenant is inherited from ``TimeStampedModel`` (``tenant`` FK to ``tenants.Tenant``,
+    ``on_delete=CASCADE``). It must match the parent ``SalesOrder``'s tenant; if
+    omitted at creation, it is copied from the sales order on ``save()``.
+    """
 
     sales_order = models.ForeignKey(
         "sales.SalesOrder",
@@ -90,7 +96,35 @@ class SalesOrderLine(TimeStampedModel):
     )
 
     class Meta:
-        unique_together = ("sales_order", "product")
+        constraints = [
+            UniqueConstraint(
+                fields=["tenant", "sales_order", "product"],
+                name="unique_salesorderline_tenant_so_product",
+            ),
+        ]
+
+    def clean(self):
+        super().clean()
+        if self.sales_order_id and self.tenant_id and self.sales_order.tenant_id:
+            if self.tenant_id != self.sales_order.tenant_id:
+                raise ValidationError({
+                    "tenant": "Line tenant must match the sales order's tenant.",
+                })
+
+    def save(self, *args, **kwargs):
+        if self.sales_order_id:
+            so_tid = self.sales_order.tenant_id
+            if self.tenant_id is None and so_tid:
+                self.tenant_id = so_tid
+            elif (
+                self.tenant_id
+                and so_tid
+                and self.tenant_id != so_tid
+            ):
+                raise ValidationError({
+                    "tenant": "Line tenant must match the sales order's tenant.",
+                })
+        super().save(*args, **kwargs)
 
     @property
     def line_total(self):

@@ -40,6 +40,7 @@ from api.serializers.invitations import (
     InvitationSerializer,
     PlatformInvitationSerializer,
 )
+from tenants.middleware import get_effective_tenant
 from tenants.models import (
     INVITATION_EXPIRY_DAYS,
     InvitationStatus,
@@ -63,7 +64,7 @@ class InvitationListCreateView(ListAPIView):
     pagination_class = None
 
     def get_queryset(self):
-        tenant = getattr(self.request, "tenant", None)
+        tenant = get_effective_tenant(self.request)
         if not tenant:
             return TenantInvitation.objects.none()
         return (
@@ -73,7 +74,7 @@ class InvitationListCreateView(ListAPIView):
         )
 
     def post(self, request):
-        tenant = getattr(request, "tenant", None)
+        tenant = get_effective_tenant(request)
         if not tenant:
             return Response(
                 {"detail": "No active tenant."},
@@ -108,7 +109,7 @@ class InvitationCancelView(APIView):
     permission_classes = (IsAuthenticated, IsTenantAdmin)
 
     def delete(self, request, pk):
-        tenant = getattr(request, "tenant", None)
+        tenant = get_effective_tenant(request)
         if not tenant:
             return Response(
                 {"detail": "No active tenant."},

@@ -149,6 +149,7 @@ class ReservationService:
                 status=ReservationStatus.PENDING,
                 notes=notes,
                 stock_lot=stock_lot,
+                tenant=product.tenant,
             )
 
         self._log_audit(

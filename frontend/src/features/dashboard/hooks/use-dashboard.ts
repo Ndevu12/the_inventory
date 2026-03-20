@@ -18,10 +18,16 @@ export const dashboardKeys = {
   expiringLots: () => [...dashboardKeys.all, "expiring-lots"] as const,
 };
 
+/** Shared options: fail fast on errors and avoid long retry storms on the dashboard. */
+const dashboardQueryOptions = {
+  retry: 1,
+} as const;
+
 export function useSummary() {
   return useQuery({
     queryKey: dashboardKeys.summary(),
     queryFn: fetchSummary,
+    ...dashboardQueryOptions,
   });
 }
 
@@ -29,6 +35,7 @@ export function useStockByLocation() {
   return useQuery({
     queryKey: dashboardKeys.stockByLocation(),
     queryFn: fetchStockByLocation,
+    ...dashboardQueryOptions,
   });
 }
 
@@ -36,6 +43,7 @@ export function useMovementTrends() {
   return useQuery({
     queryKey: dashboardKeys.movementTrends(),
     queryFn: fetchMovementTrends,
+    ...dashboardQueryOptions,
   });
 }
 
@@ -43,6 +51,7 @@ export function useOrderStatus() {
   return useQuery({
     queryKey: dashboardKeys.orderStatus(),
     queryFn: fetchOrderStatus,
+    ...dashboardQueryOptions,
   });
 }
 
@@ -50,6 +59,7 @@ export function usePendingReservations() {
   return useQuery({
     queryKey: dashboardKeys.reservations(),
     queryFn: fetchPendingReservations,
+    ...dashboardQueryOptions,
   });
 }
 
@@ -57,5 +67,6 @@ export function useExpiringLots() {
   return useQuery({
     queryKey: dashboardKeys.expiringLots(),
     queryFn: fetchExpiringLots,
+    ...dashboardQueryOptions,
   });
 }

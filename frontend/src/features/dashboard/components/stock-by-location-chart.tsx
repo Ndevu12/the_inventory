@@ -25,6 +25,10 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import type { StockByLocationData } from "../types/dashboard.types";
 import { toStockByLocationBarData } from "../helpers/chart-helpers";
+import {
+  DashboardWidgetError,
+  getDashboardErrorMessage,
+} from "./dashboard-widget-error";
 
 const chartConfig = {
   reserved: {
@@ -40,11 +44,17 @@ const chartConfig = {
 interface StockByLocationChartProps {
   data: StockByLocationData | undefined;
   isLoading: boolean;
+  isError: boolean;
+  error: unknown;
+  onRetry?: () => void;
 }
 
 export function StockByLocationChart({
   data,
   isLoading,
+  isError,
+  error,
+  onRetry,
 }: StockByLocationChartProps) {
   return (
     <Card>
@@ -55,7 +65,15 @@ export function StockByLocationChart({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {isLoading || !data ? (
+        {isLoading ? (
+          <Skeleton className="h-[300px] w-full" />
+        ) : isError ? (
+          <DashboardWidgetError
+            message={getDashboardErrorMessage(error)}
+            onRetry={onRetry}
+            minHeight="300px"
+          />
+        ) : !data ? (
           <Skeleton className="h-[300px] w-full" />
         ) : data.labels.length === 0 ? (
           <div className="flex h-[300px] items-center justify-center text-muted-foreground">
