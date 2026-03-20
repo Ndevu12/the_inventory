@@ -50,8 +50,7 @@ USER wagtail
 RUN python manage.py collectstatic --noinput --clear
 
 # Runtime command that executes when "docker run" is called.
-# The entrypoint script explicitly exports environment variables and handles:
-#   1. Migrate the database with properly set DJANGO_SETTINGS_MODULE
-#   2. Start the application server
-# This ensures that secrets injected by Andasy are available to the application.
+# entrypoint.sh: migrate → optional seed (env AUTO_SEED_DATABASE / SEED_*) → gunicorn.
+# Seed vars are OS env vars (Render Environment, docker -e, compose env_file), not CLI flags.
+# See .env.example section "AUTO-SEED".
 ENTRYPOINT ["./entrypoint.sh"]

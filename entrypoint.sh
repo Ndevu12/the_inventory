@@ -11,10 +11,37 @@ echo "=== Environment Variables ==="
 echo "DJANGO_SETTINGS_MODULE=$DJANGO_SETTINGS_MODULE"
 echo "DATABASE_URL=$DATABASE_URL"
 echo "PORT=$PORT"
+echo "AUTO_SEED_DATABASE=${AUTO_SEED_DATABASE:-}"
 echo "================================"
 
 # Run database migrations
 python manage.py migrate --noinput
+
+# Optional: seed sample data when AUTO_SEED_DATABASE is truthy (1, true, yes, on)
+_auto_seed=$(printf '%s' "${AUTO_SEED_DATABASE:-}" | tr '[:upper:]' '[:lower:]')
+case "$_auto_seed" in
+  1|true|yes|on)
+    echo "=== AUTO_SEED_DATABASE enabled: running seed_database ==="
+    if [ -n "${SEED_TENANT:-}" ]; then
+      SEED_ARGS="--tenant=${SEED_TENANT}"
+    else
+      SEED_ARGS="--create-default"
+    fi
+    if [ -n "${SEED_MODELS:-}" ]; then
+      SEED_ARGS="$SEED_ARGS --models=${SEED_MODELS}"
+    fi
+    _seed_clear=$(printf '%s' "${SEED_CLEAR:-}" | tr '[:upper:]' '[:lower:]')
+    case "$_seed_clear" in
+      1|true|yes|on) SEED_ARGS="$SEED_ARGS --clear" ;;
+    esac
+    _seed_quiet=$(printf '%s' "${SEED_QUIET:-}" | tr '[:upper:]' '[:lower:]')
+    case "$_seed_quiet" in
+      1|true|yes|on) SEED_ARGS="$SEED_ARGS --quiet" ;;
+    esac
+    python manage.py seed_database $SEED_ARGS
+    echo "=== seed_database finished ==="
+    ;;
+esac
 
 # Start Gunicorn
 gunicorn the_inventory.wsgi:application --bind 0.0.0.0:$PORT --workers 4

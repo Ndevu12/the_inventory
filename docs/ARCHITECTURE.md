@@ -707,7 +707,10 @@ A `Dockerfile` is provided for containerized deployments. The image:
 1. Installs Python dependencies from `requirements.txt`
 2. Collects static files
 3. Runs migrations
-4. Starts the WSGI server
+4. Optionally runs `seed_database` when `AUTO_SEED_DATABASE` is set (see below)
+5. Starts the WSGI server
+
+**Auto-seed environment variables** (`AUTO_SEED_DATABASE`, `SEED_*`) are **not** Django settings and **not** gunicorn arguments. They are **OS environment variables** read only by `entrypoint.sh` at container start (after `migrate`, before gunicorn). Configure them in your host platform: Render **Environment** tab, Docker `-e` / Compose `environment` or `env_file`, etc. Local `manage.py runserver` does not run the entrypoint — use `python manage.py seed_database` manually there.
 
 ### Environment Variables (Production)
 
@@ -717,6 +720,12 @@ A `Dockerfile` is provided for containerized deployments. The image:
 | `SECRET_KEY` | Django secret key |
 | `DATABASE_URL` | PostgreSQL connection string |
 | `ALLOWED_HOSTS` | Comma-separated allowed hostnames |
+| `AUTO_SEED_DATABASE` | Container env only: if truthy, `entrypoint.sh` runs `seed_database` after migrate (not a Django setting) |
+| `SEED_CLEAR` | Container env only; truthy → `--clear` on that seed run |
+| `SEED_QUIET` | Container env only; truthy → `--quiet` |
+| `SEED_TENANT` | Container env only; optional slug for `--tenant` |
+| `SEED_MODELS` | Container env only; optional `--models` list; see `seed_database --help` |
+| `REDIS_URL` | Optional; if set, production uses Redis for `CACHES`. If unset, LocMemCache is used (no Redis on the host). |
 
 ---
 

@@ -41,15 +41,27 @@ if DATABASE_URL:
 # See https://docs.djangoproject.com/en/6.0/ref/contrib/staticfiles/#manifeststaticfilesstorage
 STORAGES["staticfiles"]["BACKEND"] = "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"  # noqa: F405
 
-CACHES = {  # noqa: F405
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/1"),
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-        },
+# Wagtail uses the default cache for site root paths on every page request. If Redis
+# is not reachable (common on Render without a Redis add-on), those lookups raise and
+# the site returns 500. Only enable django-redis when REDIS_URL is set.
+_redis_url = (os.environ.get("REDIS_URL") or "").strip()
+if _redis_url:
+    CACHES = {  # noqa: F405
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": _redis_url,
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            },
+        }
     }
-}
+else:
+    CACHES = {  # noqa: F405
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "the-inventory-production",
+        }
+    }
 
 try:
     from .local import *  # noqa: F403,F401

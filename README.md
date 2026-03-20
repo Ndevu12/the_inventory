@@ -92,6 +92,14 @@ docker build -t the_inventory .
 docker run -p 8000:8000 the_inventory
 ```
 
+Optional **database seeding** on container start uses **environment variables** (not extra CLI arguments to gunicorn). Example:
+
+```bash
+docker run -p 8000:8000 -e AUTO_SEED_DATABASE=true -e DATABASE_URL=… the_inventory
+```
+
+On **Render**, add the same keys under the service **Environment** tab. Details: `.env.example` (section **AUTO-SEED**), [Architecture — Docker](docs/ARCHITECTURE.md#docker), [seeders/README.md](seeders/README.md).
+
 ## Project Structure
 
 ```
@@ -115,7 +123,7 @@ See [Architecture](docs/ARCHITECTURE.md) for the full technical design, includin
 
 - [Architecture](docs/ARCHITECTURE.md) — Technical design and system overview
 - [Seeding Guide](docs/SEEDING_GUIDE.md) — Quick reference for tenant-scoped database seeding
-- [Seeder Documentation](inventory/seeders/README.md) — Comprehensive seeding system documentation
+- [Seeder Documentation](seeders/README.md) — Comprehensive seeding system documentation
 - [Roadmap](docs/ROADMAP.md) — Development roadmap and phases
 - [Contributing Guide](CONTRIBUTING.md) — How to contribute
 - [Code of Conduct](CODE_OF_CONDUCT.md) — Community guidelines

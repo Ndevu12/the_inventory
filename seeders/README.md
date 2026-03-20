@@ -20,6 +20,29 @@ This will:
 7. Create 10 stock movements (audit history)
 8. Create low-stock scenarios for testing alerts
 
+### Docker / Render (auto-seed on deploy)
+
+**Configuration:** set **environment variables** on the container (not flags on the gunicorn command, not values inside `the_inventory.settings.*`). Examples:
+
+| Platform | Where |
+|----------|--------|
+| **Render** | Web Service → **Environment** → add variables |
+| **Docker** | `docker run -e AUTO_SEED_DATABASE=true …` or Compose `environment:` / `env_file:` |
+
+**When they run:** `entrypoint.sh` reads them once at **container start**, after `migrate` and before gunicorn. They are **ignored** if you only run `python manage.py runserver` locally (use `manage.py seed_database` yourself in that case).
+
+**Truthiness:** `1`, `true`, `yes`, or `on` (case-insensitive).
+
+| Variable | Effect |
+|----------|--------|
+| `AUTO_SEED_DATABASE` | When truthy, runs `seed_database` after migrations |
+| `SEED_TENANT` | Optional slug → `--tenant=…` (if unset, entrypoint uses `--create-default`) |
+| `SEED_MODELS` | Optional → `--models=…` (comma-separated) |
+| `SEED_CLEAR` | When truthy → `--clear` (wipes seeded inventory tables first; destructive) |
+| `SEED_QUIET` | When truthy → `--quiet` |
+
+See `.env.example` (section **AUTO-SEED**) for the full notes.
+
 ## App Structure
 
 ```
