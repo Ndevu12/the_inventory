@@ -41,17 +41,9 @@ export function POTable({
       data={data}
       pageCount={pageCount}
       pagination={pagination}
-      onPaginationChange={(updater) => {
-        const next =
-          typeof updater === "function" ? updater(pagination) : updater
-        onPaginationChange(next)
-      }}
+      onPaginationChange={onPaginationChange}
       sorting={sorting}
-      onSortingChange={(updater) => {
-        const next =
-          typeof updater === "function" ? updater(sorting) : updater
-        onSortingChange(next)
-      }}
+      onSortingChange={onSortingChange}
       searchValue={searchValue}
       onSearchChange={onSearchChange}
       searchPlaceholder="Search purchase orders..."

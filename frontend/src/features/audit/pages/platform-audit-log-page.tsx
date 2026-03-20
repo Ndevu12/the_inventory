@@ -170,8 +170,8 @@ export function PlatformAuditLogPage() {
               options={AUDIT_ACTION_OPTIONS}
             />
             <Select
-              value={tenantFilter}
-              onValueChange={setTenantFilter}
+              value={tenantFilter || "all"}
+              onValueChange={(value) => setTenantFilter(value as string)}
             >
               <SelectTrigger className="h-8 w-[180px]">
                 <SelectValue placeholder="All tenants" />

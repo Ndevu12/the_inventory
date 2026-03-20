@@ -96,3 +96,12 @@ export interface ProductFormValues {
   tracking_mode: string
   is_active: boolean
 }
+export interface StockRecordListParams {
+  page?: number;
+  page_size?: number;
+  search?: string;
+  ordering?: string;
+  product?: string;
+  location?: string;
+  is_low_stock?: string;
+}

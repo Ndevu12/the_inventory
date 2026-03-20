@@ -37,6 +37,9 @@ interface DataTableProps<TData, TValue> {
   pagination?: PaginationState
   onPaginationChange?: (pagination: PaginationState) => void
 
+  sorting?: SortingState
+  onSortingChange?: (sorting: SortingState) => void
+
   searchKey?: string
   searchPlaceholder?: string
   searchValue?: string
@@ -45,6 +48,7 @@ interface DataTableProps<TData, TValue> {
 
   isLoading?: boolean
   emptyMessage?: string
+  noResultsMessage?: string
 }
 
 export function DataTable<TData, TValue>({
@@ -53,27 +57,32 @@ export function DataTable<TData, TValue>({
   pageCount,
   pagination: controlledPagination,
   onPaginationChange,
+  sorting: controlledSorting,
+  onSortingChange,
   searchKey,
   searchPlaceholder,
   searchValue,
   onSearchChange,
   filterContent,
   isLoading = false,
-  emptyMessage = "No results.",
+  emptyMessage,
+  noResultsMessage,
 }: DataTableProps<TData, TValue>) {
-  const [sorting, setSorting] = React.useState<SortingState>([])
+  const finalEmptyMessage = emptyMessage || noResultsMessage || "No results."
+  const [sorting, setSorting] = React.useState<SortingState>(controlledSorting || [])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = React.useState({})
 
   const isServerPaginated = pageCount !== undefined && onPaginationChange !== undefined
+  const isServerSorted = onSortingChange !== undefined
 
   const table = useReactTable({
     data,
     columns,
     pageCount: isServerPaginated ? pageCount : undefined,
     state: {
-      sorting,
+      sorting: controlledSorting !== undefined ? controlledSorting : sorting,
       columnFilters,
       columnVisibility,
       rowSelection,
@@ -81,7 +90,14 @@ export function DataTable<TData, TValue>({
         ? { pagination: controlledPagination }
         : {}),
     },
-    onSortingChange: setSorting,
+    onSortingChange: (updater) => {
+      const next = typeof updater === "function" ? updater(sorting) : updater
+      if (isServerSorted && onSortingChange) {
+        onSortingChange(next)
+      } else {
+        setSorting(next)
+      }
+    },
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
@@ -167,7 +183,7 @@ export function DataTable<TData, TValue>({
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                  {emptyMessage}
+                  {finalEmptyMessage}
                 </TableCell>
               </TableRow>
             )}
