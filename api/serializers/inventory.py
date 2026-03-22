@@ -12,6 +12,7 @@ from inventory.models import (
     StockMovementLot,
     StockRecord,
 )
+from tenants.middleware import get_effective_tenant
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -24,8 +25,9 @@ class CategorySerializer(serializers.ModelSerializer):
         read_only_fields = ["created_at", "updated_at"]
 
     def validate_slug(self, value):
-        tenant = self.context.get("tenant") or getattr(
-            self.context.get("request"), "tenant", None
+        request = self.context.get("request")
+        tenant = self.context.get("tenant") or (
+            get_effective_tenant(request) if request else None
         )
         qs = Category.objects.filter(slug=value)
         if tenant:
@@ -58,8 +60,9 @@ class ProductSerializer(serializers.ModelSerializer):
         read_only_fields = ["created_at", "updated_at"]
 
     def validate_sku(self, value):
-        tenant = self.context.get("tenant") or getattr(
-            self.context.get("request"), "tenant", None
+        request = self.context.get("request")
+        tenant = self.context.get("tenant") or (
+            get_effective_tenant(request) if request else None
         )
         qs = Product.objects.filter(sku=value)
         if tenant:
