@@ -15,9 +15,10 @@ from api.serializers.sales import (
     DispatchSerializer,
     SalesOrderSerializer,
 )
+from api.views.inventory import TenantScopedInventoryMixin
 
 
-class CustomerViewSet(viewsets.ModelViewSet):
+class CustomerViewSet(TenantScopedInventoryMixin, viewsets.ModelViewSet):
     queryset = Customer.objects.all()
     serializer_class = CustomerSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -26,8 +27,12 @@ class CustomerViewSet(viewsets.ModelViewSet):
     ordering_fields = ["name", "code", "created_at"]
     ordering = ["name"]
 
+    def get_queryset(self):
+        tenant = self._get_current_tenant()
+        return super().get_queryset().filter(tenant=tenant)
 
-class SalesOrderViewSet(viewsets.ModelViewSet):
+
+class SalesOrderViewSet(TenantScopedInventoryMixin, viewsets.ModelViewSet):
     queryset = SalesOrder.objects.select_related("customer").prefetch_related(
         "lines", "lines__product",
     ).all()
@@ -37,6 +42,10 @@ class SalesOrderViewSet(viewsets.ModelViewSet):
     search_fields = ["order_number", "customer__name"]
     ordering_fields = ["order_date", "order_number", "created_at"]
     ordering = ["-order_date"]
+
+    def get_queryset(self):
+        tenant = self._get_current_tenant()
+        return super().get_queryset().filter(tenant=tenant)
 
     @action(detail=True, methods=["post"])
     def confirm(self, request, pk=None):
@@ -70,7 +79,7 @@ class SalesOrderViewSet(viewsets.ModelViewSet):
         return Response(self.get_serializer(so).data)
 
 
-class DispatchViewSet(viewsets.ModelViewSet):
+class DispatchViewSet(TenantScopedInventoryMixin, viewsets.ModelViewSet):
     queryset = Dispatch.objects.select_related(
         "sales_order", "from_location",
     ).all()
@@ -79,6 +88,10 @@ class DispatchViewSet(viewsets.ModelViewSet):
     filterset_fields = ["is_processed", "sales_order"]
     ordering_fields = ["dispatch_date", "created_at"]
     ordering = ["-dispatch_date"]
+
+    def get_queryset(self):
+        tenant = self._get_current_tenant()
+        return super().get_queryset().filter(tenant=tenant)
 
     @action(detail=True, methods=["post"])
     def process(self, request, pk=None):

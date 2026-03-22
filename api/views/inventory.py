@@ -1,12 +1,14 @@
 """API views for inventory models."""
 
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.db import IntegrityError
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.filters import OrderingFilter, SearchFilter
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from inventory.exceptions import InventoryError, InsufficientStockError, MovementImmutableError
@@ -19,7 +21,7 @@ from inventory.services.cache import (
 from inventory.services.stock import StockService
 from tenants.context import get_current_tenant
 from tenants.middleware import resolve_tenant_for_request
-from tenants.permissions import get_membership
+from tenants.permissions import TenantReadOnlyOrManager, get_membership
 
 from api.serializers.inventory import (
     CategorySerializer,
@@ -34,13 +36,19 @@ from api.views.reservation import product_availability_action
 
 
 class TenantScopedInventoryMixin:
-    """Explicit tenant resolution and membership checks for inventory APIs.
+    """Tenant resolution, membership checks, and RBAC for inventory APIs.
+
+    Replaces the global ``IsStaffUser`` default with tenant-aware
+    permissions so that non-staff tenant members (managers, admins, etc.)
+    can use CRUD endpoints while viewers get read-only access.
 
     Thread-local context may be unset when DRF authenticates after
     :class:`~tenants.middleware.TenantMiddleware` (e.g. token auth); in that
     case we resolve the tenant from the authenticated user via
     ``resolve_tenant_for_request``.
     """
+
+    permission_classes = [IsAuthenticated, TenantReadOnlyOrManager]
 
     def _get_current_tenant(self):
         tenant = get_current_tenant()
@@ -57,6 +65,29 @@ class TenantScopedInventoryMixin:
         tenant = self._get_current_tenant()
         if obj.tenant_id != tenant.pk:
             raise PermissionDenied("Object does not belong to the current tenant.")
+
+    def perform_create(self, serializer):
+        tenant = self._get_current_tenant()
+        created_by = self.request.user if self.request.user.is_authenticated else None
+        try:
+            serializer.save(tenant=tenant, created_by=created_by)
+        except IntegrityError as exc:
+            raise ValidationError(
+                {"detail": "A record with these unique fields already exists for this tenant."}
+            ) from exc
+
+    def perform_update(self, serializer):
+        self._verify_tenant_ownership(serializer.instance)
+        try:
+            serializer.save()
+        except IntegrityError as exc:
+            raise ValidationError(
+                {"detail": "A record with these unique fields already exists for this tenant."}
+            ) from exc
+
+    def perform_destroy(self, instance):
+        self._verify_tenant_ownership(instance)
+        instance.delete()
 
 
 class CategoryViewSet(TenantScopedInventoryMixin, viewsets.ModelViewSet):

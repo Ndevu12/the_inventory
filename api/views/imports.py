@@ -8,6 +8,7 @@ from rest_framework.views import APIView
 
 from inventory.imports.importers import CustomerImporter, ProductImporter, SupplierImporter
 from inventory.imports.parsers import parse_csv, parse_excel
+from tenants.middleware import get_effective_tenant
 
 DATA_TYPE_MAP = {
     "products": ProductImporter,
@@ -56,7 +57,7 @@ class ImportDataView(APIView):
             rows = parse_csv(file_obj)
 
         importer_cls = DATA_TYPE_MAP[data_type]
-        tenant = getattr(request, "tenant", None)
+        tenant = get_effective_tenant(request)
         importer = importer_cls(rows=rows, tenant=tenant, user=request.user)
         result = importer.run()
 

@@ -28,10 +28,15 @@ class TrackingMode(models.TextChoices):
 
 
 class ProductQuerySet(models.QuerySet):
-    """Custom queryset with inventory-specific filters."""
+    """Custom queryset with inventory-specific and tenant-aware filters.
+
+    Inherits the ``filter_by_current_tenant()`` contract from
+    ``TenantAwareQuerySet`` so that Product scoping is consistent with
+    other ``TimeStampedModel`` subclasses.
+    """
 
     def filter_by_current_tenant(self):
-        """Filter to thread-local tenant; empty queryset if unset (same contract as ``TimeStampedModel`` managers)."""
+        """Filter to thread-local tenant; empty queryset if unset."""
         from tenants.context import get_current_tenant
 
         current_tenant = get_current_tenant()
