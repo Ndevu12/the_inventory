@@ -15,25 +15,32 @@ from inventory.models import (
     VarianceResolution,
     VarianceType,
 )
+from tenants.context import set_current_tenant
+from tenants.models import TenantRole
 from tests.fixtures.factories import (
     create_cycle_count_line,
     create_inventory_cycle,
     create_location,
     create_product,
+    create_tenant,
+    create_tenant_membership,
 )
 
 User = get_user_model()
 
 
 class VarianceAPISetupMixin:
-    """Shared setUp: staff user with auth token and cycles with variances."""
+    """Shared setUp: staff user with auth token, tenant, and cycles with variances."""
 
     def setUp(self):
+        self.tenant = create_tenant(name="Variance Test Tenant")
         self.user = User.objects.create_user(
             username="rptuser", password="testpass123", is_staff=True,
         )
+        create_tenant_membership(self.tenant, self.user, role=TenantRole.MANAGER)
         self.token = Token.objects.create(user=self.user)
         self.client.credentials(HTTP_AUTHORIZATION=f"Token {self.token.key}")
+        set_current_tenant(self.tenant)
 
         self.warehouse = create_location(name="Warehouse")
         self.product_a = create_product(

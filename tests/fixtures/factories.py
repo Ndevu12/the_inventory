@@ -12,11 +12,18 @@ from inventory.models import (
     CycleStatus, ReservationStatus,
 )
 from tenants.models import Tenant, TenantMembership, TenantRole
-from tenants.context import set_current_tenant
-from procurement.models import PurchaseOrder, Supplier
-from sales.models import SalesOrder, Customer
+from tenants.context import get_current_tenant, set_current_tenant
+from procurement.models import GoodsReceivedNote, PurchaseOrder, PurchaseOrderLine, Supplier
+from sales.models import Customer, Dispatch, SalesOrder, SalesOrderLine
 
 User = get_user_model()
+
+
+def _resolve_tenant(tenant):
+    """Return given tenant, or fall back to thread-local tenant context."""
+    if tenant is not None:
+        return tenant
+    return get_current_tenant()
 
 
 def create_tenant(name=None, slug=None, **kwargs):
@@ -79,9 +86,10 @@ def create_category(name="Test Category", slug=None, tenant=None, **kwargs):
     if slug is None:
         slug = f"cat-{str(uuid.uuid4())[:8]}"
     
+    resolved = _resolve_tenant(tenant)
     defaults = {"name": name, "slug": slug, "is_active": True}
-    if tenant:
-        defaults["tenant"] = tenant
+    if resolved:
+        defaults["tenant"] = resolved
     defaults.update(kwargs)
     return Category.add_root(**defaults)
 
@@ -91,8 +99,9 @@ def create_product(sku=None, name="Test Product", category=None, tenant=None, **
     if sku is None:
         sku = f"SKU-{str(uuid.uuid4())[:8]}"
     
-    if category is None and tenant:
-        category = create_category(tenant=tenant)
+    resolved = _resolve_tenant(tenant)
+    if category is None and resolved:
+        category = create_category(tenant=resolved)
     
     defaults = {
         "sku": sku,
@@ -103,17 +112,18 @@ def create_product(sku=None, name="Test Product", category=None, tenant=None, **
         "reorder_point": 5,
         "is_active": True,
     }
-    if tenant:
-        defaults["tenant"] = tenant
+    if resolved:
+        defaults["tenant"] = resolved
     defaults.update(kwargs)
     return Product.objects.create(**defaults)
 
 
 def create_location(name="Main Warehouse", tenant=None, **kwargs):
     """Create a root stock location."""
+    resolved = _resolve_tenant(tenant)
     defaults = {"name": name, "is_active": True}
-    if tenant:
-        defaults["tenant"] = tenant
+    if resolved:
+        defaults["tenant"] = resolved
     defaults.update(kwargs)
     return StockLocation.add_root(**defaults)
 
@@ -184,6 +194,7 @@ def create_reservation(product, location, quantity=10, status=ReservationStatus.
 
 def create_reservation_rule(name="Default Rule", tenant=None, **kwargs):
     """Create a reservation rule."""
+    resolved = _resolve_tenant(tenant)
     defaults = {
         "name": name,
         "auto_reserve_on_order": False,
@@ -191,8 +202,8 @@ def create_reservation_rule(name="Default Rule", tenant=None, **kwargs):
         "allocation_strategy": AllocationStrategy.FIFO,
         "is_active": True,
     }
-    if tenant:
-        defaults["tenant"] = tenant
+    if resolved:
+        defaults["tenant"] = resolved
     defaults.update(kwargs)
     return ReservationRule.objects.create(**defaults)
 
@@ -200,14 +211,15 @@ def create_reservation_rule(name="Default Rule", tenant=None, **kwargs):
 def create_inventory_cycle(name="Q1 Cycle Count", scheduled_date=None,
                           status=CycleStatus.SCHEDULED, location=None, tenant=None, **kwargs):
     """Create an inventory cycle."""
+    resolved = _resolve_tenant(tenant)
     defaults = {
         "name": name,
         "scheduled_date": scheduled_date or date.today(),
         "status": status,
         "location": location,
     }
-    if tenant:
-        defaults["tenant"] = tenant
+    if resolved:
+        defaults["tenant"] = resolved
     defaults.update(kwargs)
     return InventoryCycle.objects.create(**defaults)
 
@@ -256,26 +268,72 @@ def create_supplier(name="Test Supplier", code=None, tenant=None, **kwargs):
     if code is None:
         code = f"SUP-{str(uuid.uuid4())[:8]}"
     
+    resolved = _resolve_tenant(tenant)
     defaults = {"name": name, "code": code, "is_active": True}
-    if tenant:
-        defaults["tenant"] = tenant
+    if resolved:
+        defaults["tenant"] = resolved
     defaults.update(kwargs)
     return Supplier.objects.create(**defaults)
 
 
-def create_purchase_order(supplier=None, po_number=None, tenant=None, **kwargs):
+def create_purchase_order(supplier=None, order_number=None, tenant=None, **kwargs):
     """Create a purchase order."""
-    if po_number is None:
-        po_number = f"PO-{str(uuid.uuid4())[:8]}"
+    if order_number is None:
+        order_number = f"PO-{str(uuid.uuid4())[:8]}"
     
-    if supplier is None and tenant:
-        supplier = create_supplier(tenant=tenant)
+    resolved = _resolve_tenant(tenant)
+    if supplier is None and resolved:
+        supplier = create_supplier(tenant=resolved)
+    elif supplier is None:
+        supplier = create_supplier()
     
-    defaults = {"po_number": po_number, "supplier": supplier, "status": "draft"}
-    if tenant:
-        defaults["tenant"] = tenant
+    defaults = {
+        "order_number": order_number,
+        "supplier": supplier,
+        "status": "draft",
+        "order_date": date.today(),
+    }
+    if resolved:
+        defaults["tenant"] = resolved
     defaults.update(kwargs)
     return PurchaseOrder.objects.create(**defaults)
+
+
+def create_purchase_order_line(purchase_order, product, quantity=10,
+                               unit_cost=Decimal("10.00"), **kwargs):
+    """Create a purchase order line."""
+    defaults = {
+        "purchase_order": purchase_order,
+        "product": product,
+        "quantity": quantity,
+        "unit_cost": unit_cost,
+    }
+    if hasattr(purchase_order, 'tenant'):
+        defaults["tenant"] = purchase_order.tenant
+    defaults.update(kwargs)
+    return PurchaseOrderLine.objects.create(**defaults)
+
+
+def create_goods_received_note(purchase_order, location, grn_number=None,
+                               received_date=None, tenant=None, **kwargs):
+    """Create a goods received note."""
+    if grn_number is None:
+        grn_number = f"GRN-{str(uuid.uuid4())[:8]}"
+    
+    resolved = _resolve_tenant(tenant)
+    if resolved is None and hasattr(purchase_order, 'tenant'):
+        resolved = purchase_order.tenant
+    
+    defaults = {
+        "grn_number": grn_number,
+        "purchase_order": purchase_order,
+        "location": location,
+        "received_date": received_date or date.today(),
+    }
+    if resolved:
+        defaults["tenant"] = resolved
+    defaults.update(kwargs)
+    return GoodsReceivedNote.objects.create(**defaults)
 
 
 def create_customer(name="Test Customer", code=None, tenant=None, **kwargs):
@@ -283,23 +341,69 @@ def create_customer(name="Test Customer", code=None, tenant=None, **kwargs):
     if code is None:
         code = f"CUST-{str(uuid.uuid4())[:8]}"
     
+    resolved = _resolve_tenant(tenant)
     defaults = {"name": name, "code": code, "is_active": True}
-    if tenant:
-        defaults["tenant"] = tenant
+    if resolved:
+        defaults["tenant"] = resolved
     defaults.update(kwargs)
     return Customer.objects.create(**defaults)
 
 
-def create_sales_order(customer=None, so_number=None, tenant=None, **kwargs):
+def create_sales_order(customer=None, order_number=None, tenant=None, **kwargs):
     """Create a sales order."""
-    if so_number is None:
-        so_number = f"SO-{str(uuid.uuid4())[:8]}"
+    if order_number is None:
+        order_number = f"SO-{str(uuid.uuid4())[:8]}"
     
-    if customer is None and tenant:
-        customer = create_customer(tenant=tenant)
+    resolved = _resolve_tenant(tenant)
+    if customer is None and resolved:
+        customer = create_customer(tenant=resolved)
+    elif customer is None:
+        customer = create_customer()
     
-    defaults = {"so_number": so_number, "customer": customer, "status": "draft"}
-    if tenant:
-        defaults["tenant"] = tenant
+    defaults = {
+        "order_number": order_number,
+        "customer": customer,
+        "status": "draft",
+        "order_date": date.today(),
+    }
+    if resolved:
+        defaults["tenant"] = resolved
     defaults.update(kwargs)
     return SalesOrder.objects.create(**defaults)
+
+
+def create_sales_order_line(sales_order, product, quantity=10,
+                            unit_price=Decimal("15.00"), **kwargs):
+    """Create a sales order line."""
+    defaults = {
+        "sales_order": sales_order,
+        "product": product,
+        "quantity": quantity,
+        "unit_price": unit_price,
+    }
+    if hasattr(sales_order, 'tenant'):
+        defaults["tenant"] = sales_order.tenant
+    defaults.update(kwargs)
+    return SalesOrderLine.objects.create(**defaults)
+
+
+def create_dispatch(sales_order, from_location, dispatch_number=None,
+                    dispatch_date=None, tenant=None, **kwargs):
+    """Create a dispatch."""
+    if dispatch_number is None:
+        dispatch_number = f"DSP-{str(uuid.uuid4())[:8]}"
+    
+    resolved = _resolve_tenant(tenant)
+    if resolved is None and hasattr(sales_order, 'tenant'):
+        resolved = sales_order.tenant
+    
+    defaults = {
+        "dispatch_number": dispatch_number,
+        "sales_order": sales_order,
+        "from_location": from_location,
+        "dispatch_date": dispatch_date or date.today(),
+    }
+    if resolved:
+        defaults["tenant"] = resolved
+    defaults.update(kwargs)
+    return Dispatch.objects.create(**defaults)
