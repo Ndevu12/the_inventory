@@ -12,6 +12,7 @@ from inventory.models import (
     StockMovementLot,
     StockRecord,
 )
+from tenants.middleware import get_effective_tenant
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -22,6 +23,22 @@ class CategorySerializer(serializers.ModelSerializer):
             "created_at", "updated_at",
         ]
         read_only_fields = ["created_at", "updated_at"]
+
+    def validate_slug(self, value):
+        request = self.context.get("request")
+        tenant = self.context.get("tenant") or (
+            get_effective_tenant(request) if request else None
+        )
+        qs = Category.objects.filter(slug=value)
+        if tenant:
+            qs = qs.filter(tenant=tenant)
+        if self.instance:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise serializers.ValidationError(
+                "A category with this slug already exists for this tenant."
+            )
+        return value
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -41,6 +58,22 @@ class ProductSerializer(serializers.ModelSerializer):
             "created_at", "updated_at",
         ]
         read_only_fields = ["created_at", "updated_at"]
+
+    def validate_sku(self, value):
+        request = self.context.get("request")
+        tenant = self.context.get("tenant") or (
+            get_effective_tenant(request) if request else None
+        )
+        qs = Product.objects.filter(sku=value)
+        if tenant:
+            qs = qs.filter(tenant=tenant)
+        if self.instance:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise serializers.ValidationError(
+                "A product with this SKU already exists for this tenant."
+            )
+        return value
 
 
 class StockLocationSerializer(serializers.ModelSerializer):

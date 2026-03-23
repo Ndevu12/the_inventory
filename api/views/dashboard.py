@@ -40,17 +40,21 @@ class DashboardTenantScopedView(APIView):
 
     permission_classes = (IsAuthenticated,)
 
-    def dispatch(self, request, *args, **kwargs):
+    def initial(self, request, *args, **kwargs):
+        super().initial(request, *args, **kwargs)
         tenant = resolve_tenant_for_request(request)
         if tenant is None:
             raise PermissionDenied("No tenant context available.")
         if not get_membership(request.user, tenant):
             raise PermissionDenied("User does not belong to this tenant.")
         set_current_tenant(tenant)
-        try:
-            return super().dispatch(request, *args, **kwargs)
-        finally:
+        request._dashboard_tenant_set = True
+
+    def finalize_response(self, request, response, *args, **kwargs):
+        response = super().finalize_response(request, response, *args, **kwargs)
+        if getattr(request, '_dashboard_tenant_set', False):
             clear_current_tenant()
+        return response
 
 
 class DashboardSummaryView(DashboardTenantScopedView):

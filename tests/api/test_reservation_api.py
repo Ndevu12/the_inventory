@@ -7,25 +7,32 @@ from rest_framework.test import APITestCase
 
 from inventory.models import ReservationStatus
 from inventory.services.reservation import ReservationService
+from tenants.context import set_current_tenant
+from tenants.models import TenantRole
 from tests.fixtures.factories import (
     create_location,
     create_product,
     create_reservation,
     create_stock_record,
+    create_tenant,
+    create_tenant_membership,
 )
 
 User = get_user_model()
 
 
 class APISetupMixin:
-    """Shared setUp: staff user with token + stock fixtures."""
+    """Shared setUp: staff user with token + stock fixtures + tenant."""
 
     def setUp(self):
+        self.tenant = create_tenant(name="Reservation Test Tenant")
         self.staff_user = User.objects.create_user(
             username="manager", password="testpass123", is_staff=True,
         )
+        create_tenant_membership(self.tenant, self.staff_user, role=TenantRole.MANAGER)
         self.staff_token = Token.objects.create(user=self.staff_user)
         self.client.credentials(HTTP_AUTHORIZATION=f"Token {self.staff_token.key}")
+        set_current_tenant(self.tenant)
 
         self.product = create_product(sku="RSV-PROD")
         self.location = create_location(name="Warehouse A")

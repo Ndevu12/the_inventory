@@ -15,9 +15,10 @@ from api.serializers.procurement import (
     PurchaseOrderSerializer,
     SupplierSerializer,
 )
+from api.views.inventory import TenantScopedInventoryMixin
 
 
-class SupplierViewSet(viewsets.ModelViewSet):
+class SupplierViewSet(TenantScopedInventoryMixin, viewsets.ModelViewSet):
     queryset = Supplier.objects.all()
     serializer_class = SupplierSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -26,8 +27,12 @@ class SupplierViewSet(viewsets.ModelViewSet):
     ordering_fields = ["name", "code", "created_at"]
     ordering = ["name"]
 
+    def get_queryset(self):
+        tenant = self._get_current_tenant()
+        return super().get_queryset().filter(tenant=tenant)
 
-class PurchaseOrderViewSet(viewsets.ModelViewSet):
+
+class PurchaseOrderViewSet(TenantScopedInventoryMixin, viewsets.ModelViewSet):
     queryset = PurchaseOrder.objects.select_related("supplier").prefetch_related(
         "lines", "lines__product",
     ).all()
@@ -37,6 +42,10 @@ class PurchaseOrderViewSet(viewsets.ModelViewSet):
     search_fields = ["order_number", "supplier__name"]
     ordering_fields = ["order_date", "order_number", "created_at"]
     ordering = ["-order_date"]
+
+    def get_queryset(self):
+        tenant = self._get_current_tenant()
+        return super().get_queryset().filter(tenant=tenant)
 
     @action(detail=True, methods=["post"])
     def confirm(self, request, pk=None):
@@ -70,7 +79,7 @@ class PurchaseOrderViewSet(viewsets.ModelViewSet):
         return Response(self.get_serializer(po).data)
 
 
-class GoodsReceivedNoteViewSet(viewsets.ModelViewSet):
+class GoodsReceivedNoteViewSet(TenantScopedInventoryMixin, viewsets.ModelViewSet):
     queryset = GoodsReceivedNote.objects.select_related(
         "purchase_order", "location",
     ).all()
@@ -79,6 +88,10 @@ class GoodsReceivedNoteViewSet(viewsets.ModelViewSet):
     filterset_fields = ["is_processed", "purchase_order"]
     ordering_fields = ["received_date", "created_at"]
     ordering = ["-received_date"]
+
+    def get_queryset(self):
+        tenant = self._get_current_tenant()
+        return super().get_queryset().filter(tenant=tenant)
 
     @action(detail=True, methods=["post"])
     def receive(self, request, pk=None):

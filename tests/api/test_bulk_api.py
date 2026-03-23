@@ -16,12 +16,13 @@ from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase
 
 from inventory.models import StockRecord
+from tenants.context import set_current_tenant
+from tenants.models import Tenant, TenantMembership, TenantRole
 from tests.fixtures.factories import (
     create_location,
     create_product,
     create_stock_record,
 )
-from tenants.models import Tenant, TenantMembership, TenantRole
 
 User = get_user_model()
 
@@ -33,6 +34,7 @@ class BulkAPISetupMixin:
         self.tenant = Tenant.objects.create(
             name="Bulk Test Corp", slug="bulk-test-corp", is_active=True,
         )
+        set_current_tenant(self.tenant)
 
         self.manager = User.objects.create_user(
             username="manager", password="testpass123", is_staff=True,

@@ -17,25 +17,32 @@ from rest_framework.test import APITestCase
 from inventory.models import MovementType, StockLot, StockRecord
 from inventory.models.product import TrackingMode
 from inventory.services.stock import StockService
+from tenants.context import set_current_tenant
+from tenants.models import TenantRole
 from tests.fixtures.factories import (
     create_location,
     create_product,
     create_stock_lot,
     create_stock_record,
+    create_tenant,
+    create_tenant_membership,
 )
 
 User = get_user_model()
 
 
 class LotAPISetupMixin:
-    """Shared setUp: staff user with token auth."""
+    """Shared setUp: staff user with token auth and tenant context."""
 
     def setUp(self):
+        self.tenant = create_tenant(name="Lot Test Tenant")
         self.user = User.objects.create_user(
             username="lotapiuser", password="testpass123", is_staff=True,
         )
+        create_tenant_membership(self.tenant, self.user, role=TenantRole.MANAGER)
         self.token = Token.objects.create(user=self.user)
         self.client.credentials(HTTP_AUTHORIZATION=f"Token {self.token.key}")
+        set_current_tenant(self.tenant)
 
 
 # =====================================================================

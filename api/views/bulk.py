@@ -1,10 +1,10 @@
 """API views for bulk stock operations."""
 
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from api.permissions import IsStaffUser
 from api.serializers.bulk import (
     BulkAdjustmentSerializer,
     BulkOperationResultSerializer,
@@ -19,7 +19,7 @@ from tenants.permissions import IsTenantAdmin, IsTenantManager
 class BulkTransferView(APIView):
     """``POST /api/v1/bulk-operations/transfer/`` — managers+"""
 
-    permission_classes = [IsStaffUser, IsTenantManager]
+    permission_classes = [IsAuthenticated, IsTenantManager]
 
     def post(self, request):
         serializer = BulkTransferSerializer(data=request.data)
@@ -62,7 +62,7 @@ class BulkTransferView(APIView):
 class BulkAdjustmentView(APIView):
     """``POST /api/v1/bulk-operations/adjust/`` — managers+"""
 
-    permission_classes = [IsStaffUser, IsTenantManager]
+    permission_classes = [IsAuthenticated, IsTenantManager]
 
     def post(self, request):
         serializer = BulkAdjustmentSerializer(data=request.data)
@@ -103,7 +103,7 @@ class BulkAdjustmentView(APIView):
 class BulkRevalueView(APIView):
     """``POST /api/v1/bulk-operations/revalue/`` — admins+"""
 
-    permission_classes = [IsStaffUser, IsTenantAdmin]
+    permission_classes = [IsAuthenticated, IsTenantAdmin]
 
     def post(self, request):
         serializer = BulkRevalueSerializer(data=request.data)
