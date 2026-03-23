@@ -43,8 +43,12 @@ RUN chmod +x /app/entrypoint.sh && test -x /app/entrypoint.sh
 # Use user "wagtail" to run the build commands below and the server itself.
 USER wagtail
 
-# Collect static files.
-RUN python manage.py collectstatic --noinput --clear
+# Collect static files using the same STORAGES["staticfiles"] as production
+# (ManifestStaticFilesStorage). Default manage.py uses dev settings, which
+# skips the manifest; runtime then raises "Missing staticfiles manifest entry".
+RUN DJANGO_SETTINGS_MODULE=the_inventory.settings.production \
+    SECRET_KEY=collectstatic-build-only-not-used-at-runtime \
+    python manage.py collectstatic --noinput --clear
 
 # Runtime command that executes when "docker run" is called.
 # entrypoint.sh: migrate → optional seed (env AUTO_SEED_DATABASE / SEED_*) → gunicorn.
