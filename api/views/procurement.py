@@ -17,6 +17,10 @@ from api.serializers.procurement import (
 )
 from api.views.inventory import TenantScopedInventoryMixin
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class SupplierViewSet(TenantScopedInventoryMixin, viewsets.ModelViewSet):
     queryset = Supplier.objects.all()
@@ -58,8 +62,9 @@ class PurchaseOrderViewSet(TenantScopedInventoryMixin, viewsets.ModelViewSet):
                 confirmed_by=request.user,
             )
         except DjangoValidationError as e:
+            logger.exception("Validation error while confirming purchase order %s", po.pk)
             return Response(
-                {"detail": e.message if hasattr(e, "message") else str(e)},
+                {"detail": "Could not confirm this purchase order due to validation errors."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         return Response(self.get_serializer(po).data)
@@ -72,8 +77,9 @@ class PurchaseOrderViewSet(TenantScopedInventoryMixin, viewsets.ModelViewSet):
         try:
             service.cancel_order(purchase_order=po)
         except DjangoValidationError as e:
+            logger.exception("Validation error while cancelling purchase order %s", po.pk)
             return Response(
-                {"detail": e.message if hasattr(e, "message") else str(e)},
+                {"detail": "Could not cancel this purchase order due to validation errors."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         return Response(self.get_serializer(po).data)
@@ -104,8 +110,9 @@ class GoodsReceivedNoteViewSet(TenantScopedInventoryMixin, viewsets.ModelViewSet
                 received_by=request.user,
             )
         except DjangoValidationError as e:
+            logger.exception("Validation error while receiving goods for GRN %s", grn.pk)
             return Response(
-                {"detail": e.message if hasattr(e, "message") else str(e)},
+                {"detail": "Could not process this goods received note due to validation errors."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         grn.refresh_from_db()
