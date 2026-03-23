@@ -328,7 +328,7 @@ class StockMovementViewSet(TenantScopedInventoryMixin,
             )
         except DjangoValidationError as e:
             return Response(
-                {"detail": e.message if hasattr(e, "message") else str(e)},
+                {"detail": "Invalid stock movement data."},
                 status=status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
 
