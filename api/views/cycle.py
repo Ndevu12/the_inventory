@@ -17,6 +17,10 @@ from api.serializers.cycle import (
 from inventory.models.cycle import InventoryCycle
 from inventory.services.cycle import CycleCountService
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class InventoryCycleViewSet(viewsets.GenericViewSet,
                             viewsets.mixins.ListModelMixin,
@@ -129,7 +133,11 @@ class InventoryCycleViewSet(viewsets.GenericViewSet,
                 resolutions=data["resolutions"],
             )
         except ValueError as e:
-            return Response({"detail": str(e)}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+            logger.warning("Failed to reconcile inventory cycle %s: %s", cycle.id, e, exc_info=True)
+            return Response(
+                {"detail": "Unable to reconcile this cycle."},
+                status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            )
 
         cycle.refresh_from_db()
         output = InventoryCycleDetailSerializer(cycle)
