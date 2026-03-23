@@ -3,9 +3,48 @@ import os
 import dj_database_url
 
 from .base import *  # noqa: F403,F401
-from .env_utils import env_bool
+from .env_utils import env_bool, env_str
 
 DEBUG = False
+
+# Console logging for PaaS (Render, Fly, etc.): Gunicorn already streams access/error logs;
+# this sends Django/Wagtail log records to the same process stdout/stderr stream.
+_lvl = env_str("DJANGO_LOG_LEVEL", "INFO").upper()
+if _lvl not in ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"):
+    _lvl = "INFO"
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "production": {
+            "format": "{levelname} {asctime} {name} {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "production",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": _lvl,
+    },
+    "loggers": {
+        # 4xx/5xx and suspicious requests (visible at WARNING+)
+        "django.request": {
+            "handlers": ["console"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+        "django.security": {
+            "handlers": ["console"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+    },
+}
 
 
 def _normalize_allowed_host(raw: str) -> str:
