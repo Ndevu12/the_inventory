@@ -1,5 +1,7 @@
 """API views for sales models."""
 
+import logging
+
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
@@ -16,6 +18,9 @@ from api.serializers.sales import (
     SalesOrderSerializer,
 )
 from api.views.inventory import TenantScopedInventoryMixin
+
+
+logger = logging.getLogger(__name__)
 
 
 class CustomerViewSet(TenantScopedInventoryMixin, viewsets.ModelViewSet):
@@ -58,8 +63,9 @@ class SalesOrderViewSet(TenantScopedInventoryMixin, viewsets.ModelViewSet):
                 confirmed_by=request.user,
             )
         except DjangoValidationError as e:
+            logger.exception("Validation error while confirming sales order %s", so.pk)
             return Response(
-                {"detail": e.message if hasattr(e, "message") else str(e)},
+                {"detail": "Invalid data."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         return Response(self.get_serializer(so).data)
@@ -72,8 +78,9 @@ class SalesOrderViewSet(TenantScopedInventoryMixin, viewsets.ModelViewSet):
         try:
             service.cancel_order(sales_order=so)
         except DjangoValidationError as e:
+            logger.exception("Validation error while canceling sales order %s", so.pk)
             return Response(
-                {"detail": e.message if hasattr(e, "message") else str(e)},
+                {"detail": "Invalid data."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         return Response(self.get_serializer(so).data)
@@ -104,8 +111,9 @@ class DispatchViewSet(TenantScopedInventoryMixin, viewsets.ModelViewSet):
                 dispatched_by=request.user,
             )
         except DjangoValidationError as e:
+            logger.exception("Validation error while processing dispatch %s", dispatch.pk)
             return Response(
-                {"detail": e.message if hasattr(e, "message") else str(e)},
+                {"detail": "Invalid data."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         dispatch.refresh_from_db()
