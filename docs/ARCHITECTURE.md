@@ -714,20 +714,35 @@ A `Dockerfile` is provided for containerized deployments. The image:
 
 ### Environment Variables (Production)
 
-| Variable | Purpose |
-|---|---|
-| `DJANGO_SETTINGS_MODULE` | `the_inventory.settings.production` |
-| `SECRET_KEY` | Django secret key |
-| `DATABASE_URL` | PostgreSQL connection string |
-| `ALLOWED_HOSTS` | Comma-separated allowed hostnames |
-| `AUTO_SEED_DATABASE` | Container env only: if truthy, `entrypoint.sh` runs `seed_database` after migrate (not a Django setting) |
-| `SEED_CLEAR` | Container env only; truthy → `--clear` on that seed run |
-| `SEED_QUIET` | Container env only; truthy → `--quiet` |
-| `SEED_TENANT` | Container env only; optional slug for `--tenant` |
-| `SEED_MODELS` | Container env only; optional `--models` list; see `seed_database --help` |
-| `REDIS_URL` | Optional; if set, production uses Redis for `CACHES`. If unset, LocMemCache is used (no Redis on the host). |
+For a **complete reference of all environment variables, setup guides, and troubleshooting**, see the [Environment Configuration Guide](ENVIRONMENT.md).
 
-Most other tunables (CORS, CSRF, JWT lifetimes, `FRONTEND_URL`, cache TTLs, email, etc.) are read from the environment in `the_inventory/settings/base.py` via `env_utils`. See `.env.example` for names and defaults. Production sets `SECURE_PROXY_SSL_HEADER` when `USE_X_FORWARDED_PROTO` is true (default), and defaults `SESSION_COOKIE_SECURE` / `CSRF_COOKIE_SECURE` to true unless overridden.
+**Quick production checklist:**
+
+| Variable | Purpose | Required |
+|---|---|---|
+| `DJANGO_SETTINGS_MODULE` | `the_inventory.settings.production` | Yes |
+| `SECRET_KEY` | Django secret key (generate a new one) | Yes |
+| `DATABASE_URL` | PostgreSQL connection string | Yes |
+| `ALLOWED_HOSTS` | Comma-separated allowed hostnames | Yes |
+| `FRONTEND_URL` | Frontend application URL (for emails, redirects) | Recommended |
+| `REDIS_URL` | Redis for caching and Celery (optional; LocMemCache used if unset) | Optional |
+| `AUTO_SEED_DATABASE` | Container env only: if truthy, `entrypoint.sh` runs `seed_database` after migrate | Optional |
+| `CORS_ALLOWED_ORIGINS` | Allowed frontend origins for CORS requests | Recommended |
+| `EMAIL_HOST`, `EMAIL_PORT`, etc. | SMTP configuration for transactional emails | Optional |
+
+Additional tunables (CORS, CSRF, JWT lifetimes, cache TTLs, OpenAPI docs, pagination, email, etc.) are read from the environment in `the_inventory/settings/base.py` via `env_utils`. See [.env.example](../.env.example) for complete names and defaults.
+
+Production settings automatically:
+- Set `DEBUG = False` (enforce security)
+- Require `SECRET_KEY` (raises error if missing)
+- Use `ManifestStaticFilesStorage` (hash-based static file caching)
+- Default `SESSION_COOKIE_SECURE` / `CSRF_COOKIE_SECURE` to true
+- Set `SECURE_PROXY_SSL_HEADER` when `USE_X_FORWARDED_PROTO` is true (default)
+
+**For full documentation:**
+- [Environment Configuration Guide](ENVIRONMENT.md) — All variables, examples, setup for local/Docker/production
+- [Seeding Guide](SEEDING_GUIDE.md) — Database seeding with environment variables
+- [Seeder Documentation](../seeders/README.md) — Complete seeding system reference
 
 ---
 

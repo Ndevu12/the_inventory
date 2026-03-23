@@ -62,6 +62,24 @@ Thank you for your interest in contributing! This guide will help you get starte
 
    The project uses a split settings pattern. `manage.py` defaults to `the_inventory.settings.dev`, which enables `DEBUG=True` and uses SQLite. You do not need to configure anything extra for local development.
 
+### Environment Configuration
+
+The project supports flexible environment configuration for different setups:
+
+| Context | Configuration | Details |
+|---------|---------------|---------|
+| **Local Development** | Default (dev settings) | No `.env` needed; SQLite, DEBUG=True, localhost CORS |
+| **Local with `.env`** | Copy `.env.example` to `.env.local` | Override defaults for testing production-like setups |
+| **Docker/Containers** | Platform environment variables | Set via Render, Docker Compose, K8s, etc. |
+| **Frontend (Next.js)** | `.env.local` in `frontend/` | Must have `NEXT_PUBLIC_API_URL` pointing to backend |
+
+**Key differences:**
+- Backend loads environment variables from: OS env → `.env` file → code defaults
+- Frontend `NEXT_PUBLIC_*` variables must be set at build time (or via hosting platform)
+- `.env` and `.env.local` files are in `.gitignore` — never committed to git
+
+For complete setup instructions, environment variables reference, and troubleshooting, see [docs/ENVIRONMENT.md](docs/ENVIRONMENT.md).
+
 ## Project Layout
 
 ```

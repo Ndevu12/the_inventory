@@ -20,6 +20,8 @@ An open-source inventory management system built with [Wagtail CMS](https://wagt
 
 ## Quick Start
 
+**For detailed environment configuration (local, Docker, production), see the [Environment Configuration Guide](docs/ENVIRONMENT.md).**
+
 ### Prerequisites
 
 - Python 3.12 or later
@@ -98,7 +100,7 @@ Optional **database seeding** on container start uses **environment variables** 
 docker run -p 8000:8000 -e AUTO_SEED_DATABASE=true -e DATABASE_URL=… the_inventory
 ```
 
-On **Render**, add the same keys under the service **Environment** tab. Details: `.env.example` (section **AUTO-SEED**), [Architecture — Docker](docs/ARCHITECTURE.md#docker), [seeders/README.md](seeders/README.md).
+For complete environment variable documentation and deployment guides (Docker, Render, K8s), see the [Environment Configuration Guide](docs/ENVIRONMENT.md). Quick reference also in `.env.example` (section **AUTO-SEED**), [seeders/README.md](seeders/README.md).
 
 ## Project Structure
 
@@ -121,6 +123,7 @@ See [Architecture](docs/ARCHITECTURE.md) for the full technical design, includin
 
 ## Project Docs & Meta
 
+- [Environment Configuration Guide](docs/ENVIRONMENT.md) — Complete environment variables and setup for all deployment contexts
 - [Architecture](docs/ARCHITECTURE.md) — Technical design and system overview
 - [Seeding Guide](docs/SEEDING_GUIDE.md) — Quick reference for tenant-scoped database seeding
 - [Seeder Documentation](seeders/README.md) — Comprehensive seeding system documentation
