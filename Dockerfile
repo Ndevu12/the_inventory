@@ -36,12 +36,9 @@ WORKDIR /app
 # will be writing to the database file.
 RUN chown wagtail:wagtail /app
 
-# Copy the source code of the project into the container.
+# Copy the source code of the project into the container (includes entrypoint.sh).
 COPY --chown=wagtail:wagtail . .
-
-# Copy entrypoint script
-COPY --chown=wagtail:wagtail entrypoint.sh .
-RUN chmod +x entrypoint.sh
+RUN chmod +x /app/entrypoint.sh && test -x /app/entrypoint.sh
 
 # Use user "wagtail" to run the build commands below and the server itself.
 USER wagtail
@@ -53,4 +50,4 @@ RUN python manage.py collectstatic --noinput --clear
 # entrypoint.sh: migrate → optional seed (env AUTO_SEED_DATABASE / SEED_*) → gunicorn.
 # Seed vars are OS env vars (Render Environment, docker -e, compose env_file), not CLI flags.
 # See .env.example section "AUTO-SEED".
-ENTRYPOINT ["./entrypoint.sh"]
+ENTRYPOINT ["/app/entrypoint.sh"]
