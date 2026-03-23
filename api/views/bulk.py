@@ -15,6 +15,10 @@ from inventory.exceptions import InventoryError
 from inventory.services.bulk import BulkStockService
 from tenants.permissions import IsTenantAdmin, IsTenantManager
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class BulkTransferView(APIView):
     """``POST /api/v1/bulk-operations/transfer/`` — managers+"""
@@ -45,8 +49,9 @@ class BulkTransferView(APIView):
                 fail_fast=data.get("fail_fast", False),
             )
         except InventoryError as e:
+            logger.exception("Bulk transfer operation failed with an inventory error.")
             return Response(
-                {"detail": str(e)},
+                {"detail": "Bulk transfer operation could not be completed due to a conflict."},
                 status=status.HTTP_409_CONFLICT,
             )
 
@@ -86,8 +91,9 @@ class BulkAdjustmentView(APIView):
                 fail_fast=data.get("fail_fast", False),
             )
         except InventoryError as e:
+            logger.exception("Bulk adjustment operation failed with an inventory error.")
             return Response(
-                {"detail": str(e)},
+                {"detail": "Bulk adjustment operation could not be completed due to a conflict."},
                 status=status.HTTP_409_CONFLICT,
             )
 
@@ -126,8 +132,9 @@ class BulkRevalueView(APIView):
                 fail_fast=data.get("fail_fast", False),
             )
         except InventoryError as e:
+            logger.exception("Bulk revalue operation failed with an inventory error.")
             return Response(
-                {"detail": str(e)},
+                {"detail": "Bulk revalue operation could not be completed due to a conflict."},
                 status=status.HTTP_409_CONFLICT,
             )
 

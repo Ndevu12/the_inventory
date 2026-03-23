@@ -9,6 +9,7 @@ Usage::
 """
 
 from datetime import date
+from pathlib import Path
 
 from django.core.management.base import BaseCommand, CommandError
 
@@ -86,8 +87,27 @@ class Command(BaseCommand):
         )
         buffer = service.export_to_zip()
 
-        output_path = options.get("output") or f"{tenant.slug}_export.zip"
-        with open(output_path, "wb") as f:
+        base_dir = Path.cwd().resolve()
+
+        user_output = options.get("output")
+        if user_output:
+            candidate_path = Path(user_output).expanduser().resolve()
+            try:
+                candidate_path.relative_to(base_dir)
+            except ValueError:
+                raise CommandError(
+                    f"Output path '{user_output}' must be within the current directory."
+                )
+        else:
+            # Sanitize slug further before using it in filename
+            safe_slug = "".join(
+                c for c in tenant.slug if c.isalnum() or c in ("-", "_")
+            ) or "tenant"
+            candidate_path = base_dir / f"{safe_slug}_export.zip"
+
+        with candidate_path.open("wb") as f:
             f.write(buffer.getvalue())
 
-        self.stdout.write(self.style.SUCCESS(f"Exported {tenant.name} to {output_path}"))
+        self.stdout.write(
+            self.style.SUCCESS(f"Exported {tenant.name} to {candidate_path}")
+        )
