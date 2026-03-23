@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback } from "react"
+import { useCallback, useMemo } from "react"
 import Link from "next/link"
 import { PlusIcon } from "lucide-react"
 import type { PaginationState } from "@tanstack/react-table"
@@ -63,10 +63,33 @@ export function ProductListPage() {
 
   const pageCount = data ? Math.ceil(data.count / pageSize) : 0
 
+  const categoryFilterItems = useMemo(
+    () => [
+      { value: "__all__", label: "All Categories" },
+      ...(categoriesData?.results.map((cat) => ({
+        value: String(cat.id),
+        label: cat.name,
+      })) ?? []),
+    ],
+    [categoriesData],
+  )
+
+  const statusFilterItems = useMemo(
+    () => [
+      { value: "__all__", label: "All Status" },
+      ...ACTIVE_STATUS_OPTIONS.map((opt) => ({
+        value: opt.value,
+        label: opt.label,
+      })),
+    ],
+    [],
+  )
+
   const filterContent = (
     <div className="flex items-center gap-2">
       <Select
-        value={category || undefined}
+        items={categoryFilterItems}
+        value={category || "__all__"}
         onValueChange={(val) => setCategory(val === "__all__" ? "" : (val ?? ""))}
       >
         <SelectTrigger size="sm" className="h-8 w-[150px]">
@@ -83,7 +106,8 @@ export function ProductListPage() {
       </Select>
 
       <Select
-        value={isActive || undefined}
+        items={statusFilterItems}
+        value={isActive || "__all__"}
         onValueChange={(val) => setIsActive(val === "__all__" ? "" : (val ?? ""))}
       >
         <SelectTrigger size="sm" className="h-8 w-[120px]">
@@ -107,9 +131,11 @@ export function ProductListPage() {
         title="Products"
         description="Manage your product catalog"
         actions={
-          <Button render={<Link href="/products/new" />}>
-            <PlusIcon className="mr-2 size-4" />
-            Add Product
+          <Button asChild>
+            <Link href="/products/new">
+              <PlusIcon className="mr-2 size-4" />
+              Add Product
+            </Link>
           </Button>
         }
       />

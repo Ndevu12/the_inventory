@@ -34,6 +34,7 @@ export type {
 } from "./types/location.types"
 
 export { MovementListPage } from "./pages/movement-list-page"
+export { MovementDetailPage } from "./pages/movement-detail-page"
 export { MovementCreatePage } from "./pages/movement-create-page"
 export { MovementTable } from "./components/movements/movement-table"
 export { MovementForm } from "./components/movements/movement-form"

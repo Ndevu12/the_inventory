@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Loader2Icon } from "lucide-react"
@@ -83,6 +84,17 @@ export function ProductForm({
   const isActive = watch("is_active")
   const categoryValue = watch("category")
 
+  const categorySelectItems = useMemo(
+    () => [
+      { value: "__none__", label: "No category" },
+      ...categories.map((cat) => ({
+        value: String(cat.id),
+        label: cat.name,
+      })),
+    ],
+    [categories],
+  )
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <Card>
@@ -127,19 +139,25 @@ export function ProductForm({
           <div className="space-y-2">
             <Label htmlFor="category">Category</Label>
             <Select
-              value={categoryValue ?? undefined}
+              items={categorySelectItems}
+              value={
+                categoryValue != null ? String(categoryValue) : "__none__"
+              }
               onValueChange={(val) =>
-                setValue("category", val ? Number(val) : null, {
-                  shouldValidate: true,
-                })
+                setValue(
+                  "category",
+                  val === "__none__" ? null : Number(val),
+                  { shouldValidate: true },
+                )
               }
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="__none__">No category</SelectItem>
                 {categories.map((cat) => (
-                  <SelectItem key={cat.id} value={cat.id}>
+                  <SelectItem key={cat.id} value={String(cat.id)}>
                     {cat.name}
                   </SelectItem>
                 ))}
