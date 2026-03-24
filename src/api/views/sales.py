@@ -147,9 +147,9 @@ class DispatchViewSet(TenantScopedInventoryMixin, viewsets.ModelViewSet):
         service = SalesService()
         try:
             payload = service.fulfillment_preview(dispatch=dispatch)
-        except DjangoValidationError as e:
+        except DjangoValidationError:
             return Response(
-                {"detail": e.message if hasattr(e, "message") else str(e)},
+                {"detail": "Invalid request data."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         display_locale = display_locale_from_context({"request": request})
