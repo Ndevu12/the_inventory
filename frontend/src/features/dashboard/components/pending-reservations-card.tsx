@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { useLocale, useTranslations } from "next-intl";
 import type { PendingReservationsData } from "../types/dashboard.types";
 import { formatCompactNumber, formatCurrency } from "../helpers/chart-helpers";
 import {
@@ -32,14 +33,19 @@ export function PendingReservationsCard({
   error,
   onRetry,
 }: PendingReservationsCardProps) {
+  const t = useTranslations("Dashboard");
+  const tRes = useTranslations("Dashboard.pendingReservations");
+  const locale = useLocale();
+  const genericError = t("error.generic");
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <ShieldCheck className="size-5" />
-          Pending Reservations
+          {tRes("title")}
         </CardTitle>
-        <CardDescription>Active reservation summary</CardDescription>
+        <CardDescription>{tRes("description")}</CardDescription>
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -50,7 +56,7 @@ export function PendingReservationsCard({
           </div>
         ) : isError ? (
           <DashboardWidgetError
-            message={getDashboardErrorMessage(error)}
+            message={getDashboardErrorMessage(error, genericError)}
             onRetry={onRetry}
             minHeight="140px"
           />
@@ -62,17 +68,17 @@ export function PendingReservationsCard({
           </div>
         ) : data.reservation_count === 0 ? (
           <p className="text-sm text-muted-foreground">
-            No active reservations
+            {tRes("empty")}
           </p>
         ) : (
           <div className="space-y-4">
             <div className="flex items-baseline justify-between">
               <span className="text-3xl font-bold">
-                {formatCompactNumber(data.reservation_count)}
+                {formatCompactNumber(data.reservation_count, locale)}
               </span>
               <span className="text-sm text-muted-foreground">
-                {formatCompactNumber(data.total_units)} units ·{" "}
-                {formatCurrency(data.total_value)}
+                {formatCompactNumber(data.total_units, locale)} {tRes("units")} ·{" "}
+                {formatCurrency(data.total_value, locale)}
               </span>
             </div>
 
@@ -80,14 +86,14 @@ export function PendingReservationsCard({
               <div className="flex items-center justify-between rounded-md border p-3">
                 <div className="flex items-center gap-2">
                   <Clock className="size-4 text-amber-500" />
-                  <span className="text-sm font-medium">Pending</span>
+                  <span className="text-sm font-medium">{tRes("pending")}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge variant="secondary">
-                    {data.pending.count} orders
+                    {tRes("orderCount", { count: data.pending.count })}
                   </Badge>
                   <span className="text-sm text-muted-foreground">
-                    {formatCompactNumber(data.pending.units)} units
+                    {formatCompactNumber(data.pending.units, locale)} {tRes("units")}
                   </span>
                 </div>
               </div>
@@ -95,14 +101,14 @@ export function PendingReservationsCard({
               <div className="flex items-center justify-between rounded-md border p-3">
                 <div className="flex items-center gap-2">
                   <CheckCircle className="size-4 text-green-500" />
-                  <span className="text-sm font-medium">Confirmed</span>
+                  <span className="text-sm font-medium">{tRes("confirmed")}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge variant="secondary">
-                    {data.confirmed.count} orders
+                    {tRes("orderCount", { count: data.confirmed.count })}
                   </Badge>
                   <span className="text-sm text-muted-foreground">
-                    {formatCompactNumber(data.confirmed.units)} units
+                    {formatCompactNumber(data.confirmed.units, locale)} {tRes("units")}
                   </span>
                 </div>
               </div>

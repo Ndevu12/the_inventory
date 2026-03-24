@@ -1,6 +1,7 @@
 "use client"
 
 import type { ColumnDef, PaginationState, SortingState } from "@tanstack/react-table"
+import { useTranslations } from "next-intl"
 import { DataTable } from "@/components/data-table"
 import type { Customer } from "../../types/sales.types"
 
@@ -29,6 +30,8 @@ export function CustomerTable({
   onSearchChange,
   isLoading,
 }: CustomerTableProps) {
+  const t = useTranslations("Sales.customers.table")
+
   return (
     <DataTable
       columns={columns}
@@ -36,11 +39,11 @@ export function CustomerTable({
       pageCount={pageCount}
       pagination={pagination}
       onPaginationChange={onPaginationChange}
-      searchPlaceholder="Search customers..."
+      searchPlaceholder={t("searchPlaceholder")}
       searchValue={searchValue}
       onSearchChange={onSearchChange}
       isLoading={isLoading}
-      emptyMessage="No customers found."
+      emptyMessage={t("empty")}
     />
   )
 }

@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslations } from "next-intl"
 import { DataTable } from "@/components/data-table"
 import type { ColumnDef, PaginationState } from "@tanstack/react-table"
 import type { Supplier } from "../../types/procurement.types"
@@ -27,6 +28,8 @@ export function SupplierTable({
   isLoading,
   filterContent,
 }: SupplierTableProps) {
+  const t = useTranslations("Procurement.suppliers.list")
+
   return (
     <DataTable
       columns={columns}
@@ -36,10 +39,10 @@ export function SupplierTable({
       onPaginationChange={onPaginationChange}
       searchValue={searchValue}
       onSearchChange={onSearchChange}
-      searchPlaceholder="Search suppliers..."
+      searchPlaceholder={t("searchPlaceholder")}
       filterContent={filterContent}
       isLoading={isLoading}
-      emptyMessage="No suppliers found."
+      emptyMessage={t("empty")}
     />
   )
 }

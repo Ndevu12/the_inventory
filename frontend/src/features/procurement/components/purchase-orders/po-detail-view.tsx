@@ -1,5 +1,6 @@
 "use client"
 
+import { useLocale, useTranslations } from "next-intl"
 import { CheckCircleIcon, XCircleIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -31,15 +32,6 @@ interface PODetailViewProps {
   isCancelling?: boolean
 }
 
-const formatCurrency = (value: string | number) =>
-  new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(Number(value))
-
-const formatDate = (value: string | null) =>
-  value ? new Date(value).toLocaleDateString() : "—"
-
 export function PODetailView({
   order,
   onConfirm,
@@ -47,8 +39,21 @@ export function PODetailView({
   isConfirming = false,
   isCancelling = false,
 }: PODetailViewProps) {
+  const locale = useLocale()
+  const t = useTranslations("Procurement.purchaseOrders.detailView")
+  const tShared = useTranslations("Procurement.shared")
+
   const canConfirm = order.status === "draft"
   const canCancel = order.status === "draft" || order.status === "confirmed"
+
+  const formatCurrency = (value: string | number) =>
+    new Intl.NumberFormat(locale, {
+      style: "currency",
+      currency: "USD",
+    }).format(Number(value))
+
+  const formatDate = (value: string | null) =>
+    value ? new Date(value).toLocaleDateString(locale) : tShared("emDash")
 
   return (
     <div className="space-y-6">
@@ -70,7 +75,7 @@ export function PODetailView({
                   disabled={isConfirming}
                 >
                   <CheckCircleIcon className="mr-1 size-4" />
-                  {isConfirming ? "Confirming..." : "Confirm"}
+                  {isConfirming ? t("confirming") : t("confirm")}
                 </Button>
               )}
               {canCancel && onCancel && (
@@ -81,7 +86,7 @@ export function PODetailView({
                   disabled={isCancelling}
                 >
                   <XCircleIcon className="mr-1 size-4" />
-                  {isCancelling ? "Cancelling..." : "Cancel Order"}
+                  {isCancelling ? t("cancelling") : t("cancelOrder")}
                 </Button>
               )}
             </div>
@@ -91,13 +96,13 @@ export function PODetailView({
           <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div>
               <dt className="text-sm font-medium text-muted-foreground">
-                Order Date
+                {t("orderDate")}
               </dt>
               <dd className="mt-1 text-sm">{formatDate(order.order_date)}</dd>
             </div>
             <div>
               <dt className="text-sm font-medium text-muted-foreground">
-                Expected Delivery
+                {t("expectedDelivery")}
               </dt>
               <dd className="mt-1 text-sm">
                 {formatDate(order.expected_delivery_date)}
@@ -105,7 +110,7 @@ export function PODetailView({
             </div>
             <div>
               <dt className="text-sm font-medium text-muted-foreground">
-                Total Cost
+                {t("totalCost")}
               </dt>
               <dd className="mt-1 text-sm font-semibold">
                 {formatCurrency(order.total_cost)}
@@ -113,7 +118,7 @@ export function PODetailView({
             </div>
             <div>
               <dt className="text-sm font-medium text-muted-foreground">
-                Created
+                {t("created")}
               </dt>
               <dd className="mt-1 text-sm">
                 {formatDate(order.created_at)}
@@ -123,7 +128,7 @@ export function PODetailView({
           {order.notes && (
             <div className="mt-4">
               <dt className="text-sm font-medium text-muted-foreground">
-                Notes
+                {t("notes")}
               </dt>
               <dd className="mt-1 whitespace-pre-wrap text-sm">
                 {order.notes}
@@ -135,10 +140,9 @@ export function PODetailView({
 
       <Card>
         <CardHeader>
-          <CardTitle>Line Items</CardTitle>
+          <CardTitle>{t("lineItemsTitle")}</CardTitle>
           <CardDescription>
-            {order.lines.length} item{order.lines.length !== 1 ? "s" : ""} on
-            this order
+            {t("lineItemsCount", { count: order.lines.length })}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -146,11 +150,11 @@ export function PODetailView({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Product</TableHead>
-                  <TableHead>SKU</TableHead>
-                  <TableHead className="text-right">Quantity</TableHead>
-                  <TableHead className="text-right">Unit Cost</TableHead>
-                  <TableHead className="text-right">Line Total</TableHead>
+                  <TableHead>{t("colProduct")}</TableHead>
+                  <TableHead>{t("colSku")}</TableHead>
+                  <TableHead className="text-right">{t("colQuantity")}</TableHead>
+                  <TableHead className="text-right">{t("colUnitCost")}</TableHead>
+                  <TableHead className="text-right">{t("colLineTotal")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -177,7 +181,7 @@ export function PODetailView({
               <TableFooter>
                 <TableRow>
                   <TableCell colSpan={4} className="text-right font-semibold">
-                    Grand Total
+                    {t("grandTotal")}
                   </TableCell>
                   <TableCell className="text-right font-semibold">
                     {formatCurrency(order.total_cost)}

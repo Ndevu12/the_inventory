@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslations } from "next-intl"
 import { Link } from "@/i18n/navigation"
 import {
   DollarSign,
@@ -20,7 +21,10 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card"
-import type { ReportDefinition } from "../helpers/report-constants"
+import {
+  type ReportDefinition,
+  reportCardKeyFromId,
+} from "../helpers/report-constants"
 
 const ICON_MAP: Record<string, LucideIcon> = {
   DollarSign,
@@ -41,6 +45,8 @@ interface ReportCardProps {
 
 export function ReportCard({ report }: ReportCardProps) {
   const Icon = ICON_MAP[report.icon] ?? DollarSign
+  const t = useTranslations("Reports.cards")
+  const cardKey = reportCardKeyFromId(report.id)
 
   return (
     <Link href={report.path} className="group">
@@ -51,8 +57,8 @@ export function ReportCard({ report }: ReportCardProps) {
               <Icon className="size-5" />
             </div>
             <div className="space-y-1">
-              <CardTitle>{report.name}</CardTitle>
-              <CardDescription>{report.description}</CardDescription>
+              <CardTitle>{t(`${cardKey}.title`)}</CardTitle>
+              <CardDescription>{t(`${cardKey}.description`)}</CardDescription>
             </div>
           </div>
         </CardHeader>

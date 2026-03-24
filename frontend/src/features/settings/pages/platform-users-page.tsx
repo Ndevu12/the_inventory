@@ -3,6 +3,7 @@
 import * as React from "react"
 import type { ColumnDef, PaginationState } from "@tanstack/react-table"
 import { toast } from "sonner"
+import { useTranslations } from "next-intl"
 
 import { useAuth } from "@/features/auth/context/auth-context"
 import { useImpersonate } from "@/features/auth/hooks/use-auth"
@@ -45,7 +46,8 @@ import {
   useResetPlatformUserPassword,
 } from "../hooks/use-platform-users"
 import type { PlatformUser } from "../types/settings.types"
-import { ROLE_MAP } from "../helpers/settings-constants"
+import { TENANT_ROLE_VALUES } from "../helpers/settings-constants"
+import type { TenantRole } from "../types/settings.types"
 import { PlusIcon, KeyIcon, TrashIcon, UserCogIcon } from "lucide-react"
 
 function fullName(user: PlatformUser): string {
@@ -54,6 +56,10 @@ function fullName(user: PlatformUser): string {
 }
 
 export function PlatformUsersPage() {
+  const tu = useTranslations("SettingsPlatform.users")
+  const tRoles = useTranslations("SettingsTenant.roles")
+  const tCommon = useTranslations("Common.actions")
+
   const [pagination, setPagination] = React.useState<PaginationState>({
     pageIndex: 0,
     pageSize: 25,
@@ -81,12 +87,12 @@ export function PlatformUsersPage() {
     if (!userToSuspend) return
     removeMutation.mutate(userToSuspend.id, {
       onSuccess: () => {
-        toast.success(`${userToSuspend.username} has been suspended`)
+        toast.success(tu("toast.userSuspended", { username: userToSuspend.username }))
         setUserToSuspend(null)
       },
-      onError: () => toast.error("Failed to suspend user"),
+      onError: () => toast.error(tu("toast.suspendFailed")),
     })
-  }, [userToSuspend, removeMutation])
+  }, [userToSuspend, removeMutation, tu])
 
   const handleResetPassword = React.useCallback(() => {
     if (!passwordUserId || !newPassword || newPassword.length < 8) return
@@ -94,20 +100,20 @@ export function PlatformUsersPage() {
       { id: passwordUserId, new_password: newPassword },
       {
         onSuccess: () => {
-          toast.success("Password has been reset")
+          toast.success(tu("toast.passwordReset"))
           setPasswordUserId(null)
           setNewPassword("")
         },
-        onError: () => toast.error("Failed to reset password"),
-      }
+        onError: () => toast.error(tu("toast.passwordResetFailed")),
+      },
     )
-  }, [passwordUserId, newPassword, resetPasswordMutation])
+  }, [passwordUserId, newPassword, resetPasswordMutation, tu])
 
   const columns: ColumnDef<PlatformUser>[] = React.useMemo(
     () => [
       {
         accessorKey: "username",
-        header: "User",
+        header: tu("columns.user"),
         cell: ({ row }) => {
           const user = row.original
           return (
@@ -120,7 +126,7 @@ export function PlatformUsersPage() {
       },
       {
         accessorKey: "email",
-        header: "Email",
+        header: tu("columns.email"),
         cell: ({ row }) => (
           <span className="text-muted-foreground">
             {row.getValue("email") || "—"}
@@ -129,32 +135,34 @@ export function PlatformUsersPage() {
       },
       {
         accessorKey: "is_active",
-        header: "Status",
+        header: tu("columns.status"),
         cell: ({ row }) => {
           const active = row.getValue<boolean>("is_active")
           return (
             <Badge variant={active ? "default" : "secondary"}>
-              {active ? "Active" : "Suspended"}
+              {active
+                ? tu("userStatus.active")
+                : tu("userStatus.suspended")}
             </Badge>
           )
         },
       },
       {
         accessorKey: "tenants_display",
-        header: "Tenants",
+        header: tu("columns.tenants"),
         cell: ({ row }) => {
           const tenants = row.original.tenants_display
           if (!tenants?.length) return <span className="text-muted-foreground">—</span>
           return (
             <div className="flex flex-wrap gap-1">
-              {tenants.slice(0, 3).map((t) => (
-                <Badge key={t.id} variant="outline" className="text-xs">
-                  {t.name} ({ROLE_MAP[t.role as keyof typeof ROLE_MAP] ?? t.role})
+              {tenants.slice(0, 3).map((tenant) => (
+                <Badge key={tenant.id} variant="outline" className="text-xs">
+                  {tenant.name} ({tRoles(tenant.role as TenantRole)})
                 </Badge>
               ))}
               {tenants.length > 3 && (
                 <Badge variant="outline" className="text-xs">
-                  +{tenants.length - 3}
+                  {tu("moreTenants", { count: tenants.length - 3 })}
                 </Badge>
               )}
             </div>
@@ -164,7 +172,7 @@ export function PlatformUsersPage() {
       },
       {
         accessorKey: "date_joined",
-        header: "Joined",
+        header: tu("columns.joined"),
         cell: ({ row }) => {
           const date = new Date(row.getValue<string>("date_joined"))
           return date.toLocaleDateString()
@@ -186,12 +194,12 @@ export function PlatformUsersPage() {
                   onClick={() =>
                     impersonateMutation.mutate(user.id, {
                       onSuccess: () =>
-                        toast.success(`Impersonating ${user.username}`),
-                      onError: () => toast.error("Failed to impersonate"),
+                        toast.success(tu("toast.impersonating", { username: user.username })),
+                      onError: () => toast.error(tu("toast.impersonateFailed")),
                     })
                   }
                   disabled={impersonateMutation.isPending}
-                  title="Impersonate"
+                  title={tu("ariaImpersonate")}
                 >
                   <UserCogIcon className="size-4" />
                 </Button>
@@ -204,34 +212,16 @@ export function PlatformUsersPage() {
                   setPasswordUserId(user.id)
                   setNewPassword("")
                 }}
-                title="Reset password"
+                title={tu("ariaResetPassword")}
               >
                 <KeyIcon className="size-4" />
               </Button>
-              {canImpersonate && user.id !== currentUser?.id && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="size-8"
-                  onClick={() =>
-                    impersonateMutation.mutate(user.id, {
-                      onSuccess: () =>
-                        toast.success(`Impersonating ${user.username}`),
-                      onError: () => toast.error("Failed to impersonate"),
-                    })
-                  }
-                  disabled={impersonateMutation.isPending}
-                  title="Impersonate"
-                >
-                  <UserCogIcon className="size-4" />
-                </Button>
-              )}
               <Button
                 variant="ghost"
                 size="icon"
                 className="size-8 text-muted-foreground hover:text-destructive"
                 onClick={() => setUserToSuspend(user)}
-                title="Suspend user"
+                title={tu("ariaSuspendUser")}
               >
                 <TrashIcon className="size-4" />
               </Button>
@@ -242,7 +232,7 @@ export function PlatformUsersPage() {
         enableHiding: false,
       },
     ],
-    [canImpersonate, currentUser?.id, impersonateMutation],
+    [tu, tRoles, canImpersonate, currentUser?.id, impersonateMutation],
   )
 
   const users = data?.results ?? []
@@ -252,12 +242,12 @@ export function PlatformUsersPage() {
     <div className="flex flex-1 flex-col gap-6 p-6">
       <div className="flex items-center justify-between">
         <PageHeader
-          title="Platform Users"
-          description="Manage all users across tenants (superuser only)"
+          title={tu("page.title")}
+          description={tu("page.description")}
         />
         <Button onClick={() => setShowCreate(true)}>
           <PlusIcon className="mr-2 size-4" />
-          Create User
+          {tu("createUser")}
         </Button>
       </div>
 
@@ -269,12 +259,11 @@ export function PlatformUsersPage() {
         onPaginationChange={setPagination}
         searchValue={search}
         onSearchChange={setSearch}
-        searchPlaceholder="Search by email or username..."
+        searchPlaceholder={tu("searchPlaceholder")}
         isLoading={isLoading}
-        emptyMessage="No users found."
+        emptyMessage={tu("emptyMessage")}
       />
 
-      {/* Suspend confirmation */}
       <AlertDialog
         open={userToSuspend !== null}
         onOpenChange={(open) => {
@@ -283,27 +272,26 @@ export function PlatformUsersPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Suspend user</AlertDialogTitle>
+            <AlertDialogTitle>{tu("suspendDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to suspend{" "}
-              <strong>{userToSuspend?.username}</strong>? They will lose access
-              to all tenants. This can be reversed by editing the user.
+              {tu("suspendDialog.descriptionLead")}{" "}
+              <strong>{userToSuspend?.username}</strong>
+              {tu("suspendDialog.descriptionTrail")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{tCommon("cancel")}</AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
               onClick={handleSuspendConfirm}
               disabled={removeMutation.isPending}
             >
-              {removeMutation.isPending ? "Suspending…" : "Suspend"}
+              {removeMutation.isPending ? tu("suspending") : tu("suspend")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Reset password dialog */}
       <Dialog
         open={passwordUserId !== null}
         onOpenChange={(open) => {
@@ -315,20 +303,18 @@ export function PlatformUsersPage() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Reset password</DialogTitle>
-            <DialogDescription>
-              Enter a new password for this user. Minimum 8 characters.
-            </DialogDescription>
+            <DialogTitle>{tu("resetPassword.title")}</DialogTitle>
+            <DialogDescription>{tu("resetPassword.description")}</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="new-password">New password</Label>
+              <Label htmlFor="new-password">{tu("resetPassword.newPassword")}</Label>
               <Input
                 id="new-password"
                 type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Min 8 characters"
+                placeholder={tu("resetPassword.placeholder")}
                 minLength={8}
               />
             </div>
@@ -341,7 +327,7 @@ export function PlatformUsersPage() {
                 setNewPassword("")
               }}
             >
-              Cancel
+              {tCommon("cancel")}
             </Button>
             <Button
               onClick={handleResetPassword}
@@ -351,13 +337,14 @@ export function PlatformUsersPage() {
                 resetPasswordMutation.isPending
               }
             >
-              {resetPasswordMutation.isPending ? "Resetting…" : "Reset"}
+              {resetPasswordMutation.isPending
+                ? tu("resetPassword.resetting")
+                : tu("resetPassword.reset")}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Create user dialog - simplified for now, full form can be added */}
       <CreateUserDialog open={showCreate} onOpenChange={setShowCreate} />
     </div>
   )
@@ -370,6 +357,10 @@ function CreateUserDialog({
   open: boolean
   onOpenChange: (v: boolean) => void
 }) {
+  const tc = useTranslations("SettingsPlatform.users.createDialog")
+  const tRoles = useTranslations("SettingsTenant.roles")
+  const tCommon = useTranslations("Common.actions")
+
   const [username, setUsername] = React.useState("")
   const [email, setEmail] = React.useState("")
   const [password, setPassword] = React.useState("")
@@ -378,6 +369,7 @@ function CreateUserDialog({
 
   const createMutation = useCreatePlatformUser()
   const { data: tenants = [] } = usePlatformTenants()
+  const tu = useTranslations("SettingsPlatform.users")
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -391,7 +383,7 @@ function CreateUserDialog({
       },
       {
         onSuccess: () => {
-          toast.success(`User ${username} created`)
+          toast.success(tu("toast.userCreated", { username }))
           onOpenChange(false)
           setUsername("")
           setEmail("")
@@ -399,14 +391,14 @@ function CreateUserDialog({
           setTenantIds([])
         },
         onError: (err: { message?: string }) =>
-          toast.error(err?.message ?? "Failed to create user"),
-      }
+          toast.error(err?.message ?? tu("toast.createFailed")),
+      },
     )
   }
 
   const handleTenantToggle = (id: number) => {
     setTenantIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     )
   }
 
@@ -414,35 +406,33 @@ function CreateUserDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Create user</DialogTitle>
-          <DialogDescription>
-            Create a new user and optionally assign them to tenants.
-          </DialogDescription>
+          <DialogTitle>{tc("title")}</DialogTitle>
+          <DialogDescription>{tc("description")}</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid gap-4 py-4">
           <div className="grid gap-2">
-            <Label htmlFor="username">Username</Label>
+            <Label htmlFor="username">{tc("username")}</Label>
             <Input
               id="username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
-              placeholder="jdoe"
+              placeholder={tc("placeholderUsername")}
             />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{tc("email")}</Label>
             <Input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              placeholder="jane@example.com"
+              placeholder={tc("placeholderEmail")}
             />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">{tc("password")}</Label>
             <Input
               id="password"
               type="password"
@@ -450,36 +440,37 @@ function CreateUserDialog({
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={8}
-              placeholder="Min 8 characters"
+              placeholder={tc("placeholderPassword")}
             />
           </div>
           <div className="grid gap-2">
-            <Label>Default role (for assigned tenants)</Label>
+            <Label>{tc("defaultRole")}</Label>
             <Select value={defaultRole} onValueChange={(val) => val && setDefaultRole(val)}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="viewer">Viewer</SelectItem>
-                <SelectItem value="manager">Manager</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
-                <SelectItem value="owner">Owner</SelectItem>
+                {TENANT_ROLE_VALUES.map((r) => (
+                  <SelectItem key={r} value={r}>
+                    {tRoles(r)}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
           {tenants.length > 0 && (
             <div className="grid gap-2">
-              <Label>Assign to tenants</Label>
+              <Label>{tc("assignTenants")}</Label>
               <div className="flex flex-wrap gap-2">
-                {tenants.map((t) => (
+                {tenants.map((tenant) => (
                   <Button
-                    key={t.id}
+                    key={tenant.id}
                     type="button"
-                    variant={tenantIds.includes(t.id) ? "default" : "outline"}
+                    variant={tenantIds.includes(tenant.id) ? "default" : "outline"}
                     size="sm"
-                    onClick={() => handleTenantToggle(t.id)}
+                    onClick={() => handleTenantToggle(tenant.id)}
                   >
-                    {t.name}
+                    {tenant.name}
                   </Button>
                 ))}
               </div>
@@ -491,10 +482,10 @@ function CreateUserDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
             >
-              Cancel
+              {tCommon("cancel")}
             </Button>
             <Button type="submit" disabled={createMutation.isPending}>
-              {createMutation.isPending ? "Creating…" : "Create"}
+              {createMutation.isPending ? tc("creating") : tc("create")}
             </Button>
           </DialogFooter>
         </form>

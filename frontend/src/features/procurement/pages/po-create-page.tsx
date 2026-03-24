@@ -1,6 +1,7 @@
 "use client"
 
 import { useRouter } from "@/i18n/navigation"
+import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 
 import { PageHeader } from "@/components/layout/page-header"
@@ -15,6 +16,8 @@ import type { CreatePurchaseOrderFormValues } from "../helpers/po-schemas"
 
 export function POCreatePage() {
   const router = useRouter()
+  const t = useTranslations("Procurement.purchaseOrders.create")
+  const tShared = useTranslations("Procurement.shared")
   const createMutation = useCreatePurchaseOrder()
   const { data: suppliers, isLoading: suppliersLoading } = useActiveSuppliers()
   const { data: products, isLoading: productsLoading } = useAllProducts()
@@ -36,23 +39,20 @@ export function POCreatePage() {
 
     createMutation.mutate(payload, {
       onSuccess: () => {
-        toast.success("Purchase order created successfully")
+        toast.success(t("toastSuccess"))
         router.push("/procurement/purchase-orders")
       },
       onError: (error) => {
-        toast.error(
-          `Failed to create purchase order: ${(error as { message?: string }).message ?? "Unknown error"}`,
-        )
+        const message =
+          (error as { message?: string }).message ?? tShared("unknownError")
+        toast.error(t("toastError", { message }))
       },
     })
   }
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Create Purchase Order"
-        description="Place a new order with a supplier."
-      />
+      <PageHeader title={t("title")} description={t("description")} />
 
       {isLoading ? (
         <div className="space-y-4">

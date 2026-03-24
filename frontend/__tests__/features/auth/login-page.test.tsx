@@ -3,9 +3,11 @@
  */
 import type { ComponentProps } from "react";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { NextIntlClientProvider } from "next-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { LoginPage } from "@/features/auth/pages/login-page";
+import messages from "../../../public/locales/en.json";
 import {
   renderWithProviders,
   resetClientTestState,
@@ -44,7 +46,11 @@ describe("LoginPage rendering", () => {
   });
 
   it("renders the login shell inside Providers", async () => {
-    renderWithProviders(<LoginPage />);
+    renderWithProviders(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <LoginPage />
+      </NextIntlClientProvider>,
+    );
 
     await waitFor(() => {
       expect(screen.getByText(/welcome back/i)).toBeInTheDocument();

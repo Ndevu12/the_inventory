@@ -1,6 +1,7 @@
 "use client"
 
 import { use } from "react"
+import { useTranslations } from "next-intl"
 import { useRouter } from "@/i18n/navigation"
 
 import { PageHeader } from "@/components/layout/page-header"
@@ -16,6 +17,7 @@ interface ProductEditPageProps {
 }
 
 export function ProductEditPage({ params }: ProductEditPageProps) {
+  const t = useTranslations("Inventory")
   const { id } = use(params)
   const productId = Number(id)
   const router = useRouter()
@@ -42,9 +44,9 @@ export function ProductEditPage({ params }: ProductEditPageProps) {
   if (!product) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Product Not Found" />
+        <PageHeader title={t("products.notFoundTitle")} />
         <p className="text-muted-foreground">
-          The product you are looking for does not exist.
+          {t("products.notFoundBody")}
         </p>
       </div>
     )
@@ -53,8 +55,8 @@ export function ProductEditPage({ params }: ProductEditPageProps) {
   return (
     <div className="space-y-6">
       <PageHeader
-        title={`Edit ${product.name}`}
-        description="Update product details"
+        title={t("products.editTitle", { name: product.name })}
+        description={t("products.editDescription")}
       />
       <div className="mx-auto max-w-2xl">
         <ProductForm

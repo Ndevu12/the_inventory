@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { PlusIcon, Trash2Icon } from "lucide-react";
 import {
@@ -26,6 +27,8 @@ import type { BulkOperationResult, BulkRevaluePayload } from "../api/bulk-api";
 
 export function BulkRevalueForm() {
   const [result, setResult] = React.useState<BulkOperationResult | null>(null);
+  const tRevalue = useTranslations("BulkOperations.revalue");
+  const tShared = useTranslations("BulkOperations.shared");
 
   const { data: productsData, isLoading: productsLoading } = useBulkProducts();
   const revalueMutation = useBulkRevalue();
@@ -50,7 +53,7 @@ export function BulkRevalueForm() {
         Number(l.new_unit_cost) >= 0,
     );
     if (validItems.length === 0) {
-      toast.error("Add at least one product with a valid unit cost");
+      toast.error(tRevalue("toastNoItems"));
       return;
     }
 
@@ -65,16 +68,21 @@ export function BulkRevalueForm() {
       onSuccess: (data) => {
         setResult(data);
         if (data.failure_count === 0) {
-          toast.success(`All ${data.total_count} products revalued successfully`);
+          toast.success(
+            tRevalue("toastAllSuccess", { count: data.total_count }),
+          );
         } else {
           toast.warning(
-            `${data.success_count} of ${data.total_count} products revalued`,
+            tRevalue("toastPartial", {
+              success: data.success_count,
+              total: data.total_count,
+            }),
           );
         }
       },
       onError: (error) => {
         const message =
-          (error as { message?: string }).message ?? "Bulk revalue failed";
+          (error as { message?: string }).message ?? tRevalue("toastError");
         toast.error(message);
       },
     });
@@ -98,23 +106,20 @@ export function BulkRevalueForm() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Products to Revalue</CardTitle>
-              <CardDescription>
-                Set new unit costs for each product. This updates the product
-                record directly without creating stock movements.
-              </CardDescription>
+              <CardTitle>{tRevalue("cardTitle")}</CardTitle>
+              <CardDescription>{tRevalue("cardDescription")}</CardDescription>
             </div>
             <Button type="button" variant="outline" size="sm" onClick={addLine}>
               <PlusIcon className="mr-1 size-4" />
-              Add Product
+              {tShared("addProduct")}
             </Button>
           </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
             <div className="grid grid-cols-[1fr_160px_40px] gap-3 text-sm font-medium text-muted-foreground">
-              <span>Product</span>
-              <span>New Unit Cost</span>
+              <span>{tShared("product")}</span>
+              <span>{tShared("newUnitCost")}</span>
               <span />
             </div>
             {lines.map((line) => (
@@ -132,7 +137,9 @@ export function BulkRevalueForm() {
                   <SelectTrigger className="w-full">
                     <SelectValue
                       placeholder={
-                        productsLoading ? "Loading..." : "Select product"
+                        productsLoading
+                          ? tShared("loading")
+                          : tShared("selectProduct")
                       }
                     />
                   </SelectTrigger>
@@ -147,7 +154,7 @@ export function BulkRevalueForm() {
                 <Input
                   type="text"
                   inputMode="decimal"
-                  placeholder="0.00"
+                  placeholder={tRevalue("unitCostPlaceholder")}
                   value={line.new_unit_cost}
                   onChange={(e) =>
                     updateLine(line.id, { new_unit_cost: e.target.value })
@@ -170,7 +177,9 @@ export function BulkRevalueForm() {
 
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={revalueMutation.isPending}>
-          {revalueMutation.isPending ? "Processing..." : "Execute Revalue"}
+          {revalueMutation.isPending
+            ? tShared("processing")
+            : tRevalue("execute")}
         </Button>
       </div>
     </form>

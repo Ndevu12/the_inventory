@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback, useMemo } from "react";
 import {
   Area,
   AreaChart,
@@ -21,6 +22,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useLocale, useTranslations } from "next-intl";
 import type { MovementTrendsData } from "../types/dashboard.types";
 import {
   toMovementTrendData,
@@ -30,13 +32,6 @@ import {
   DashboardWidgetError,
   getDashboardErrorMessage,
 } from "./dashboard-widget-error";
-
-const chartConfig = {
-  movements: {
-    label: "Movements",
-    color: "var(--color-chart-1)",
-  },
-} satisfies ChartConfig;
 
 interface MovementTrendsChartProps {
   data: MovementTrendsData | undefined;
@@ -53,18 +48,39 @@ export function MovementTrendsChart({
   error,
   onRetry,
 }: MovementTrendsChartProps) {
+  const t = useTranslations("Dashboard");
+  const tMovement = useTranslations("Dashboard.movementTrends");
+  const locale = useLocale();
+  const genericError = t("error.generic");
+
+  const chartConfig = useMemo(
+    () =>
+      ({
+        movements: {
+          label: tMovement("seriesLabel"),
+          color: "var(--color-chart-1)",
+        },
+      }) satisfies ChartConfig,
+    [tMovement],
+  );
+
+  const shortDate = useCallback(
+    (dateStr: string) => formatShortDate(dateStr, locale),
+    [locale],
+  );
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Movement Trends</CardTitle>
-        <CardDescription>Daily stock movements over the last 30 days</CardDescription>
+        <CardTitle>{tMovement("title")}</CardTitle>
+        <CardDescription>{tMovement("description")}</CardDescription>
       </CardHeader>
       <CardContent>
         {isLoading ? (
           <Skeleton className="h-[300px] w-full" />
         ) : isError ? (
           <DashboardWidgetError
-            message={getDashboardErrorMessage(error)}
+            message={getDashboardErrorMessage(error, genericError)}
             onRetry={onRetry}
             minHeight="300px"
           />
@@ -93,7 +109,7 @@ export function MovementTrendsChart({
                 tickLine={false}
                 axisLine={false}
                 tickMargin={8}
-                tickFormatter={formatShortDate}
+                tickFormatter={shortDate}
                 interval="preserveStartEnd"
               />
               <YAxis
@@ -105,7 +121,7 @@ export function MovementTrendsChart({
               <ChartTooltip
                 content={
                   <ChartTooltipContent
-                    labelFormatter={formatShortDate}
+                    labelFormatter={shortDate}
                   />
                 }
               />

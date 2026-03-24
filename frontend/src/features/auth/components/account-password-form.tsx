@@ -1,7 +1,9 @@
 "use client";
 
+import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -15,20 +17,34 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  changePasswordSchema,
+  createChangePasswordSchema,
   type ChangePasswordFormValues,
 } from "../helpers/auth-schemas";
 import { useChangePassword } from "../hooks/use-auth";
 
 export function AccountPasswordForm() {
+  const t = useTranslations("Auth.account");
+  const tVal = useTranslations("Auth.validation");
   const changePassword = useChangePassword();
+
+  const schema = React.useMemo(
+    () =>
+      createChangePasswordSchema({
+        currentRequired: tVal("currentPasswordRequired"),
+        newMin: tVal("newPasswordMin"),
+        confirmRequired: tVal("confirmPasswordRequired"),
+        mismatch: tVal("passwordsMismatch"),
+      }),
+    [tVal],
+  );
+
   const {
     register,
     handleSubmit,
     reset,
     formState: { errors },
   } = useForm<ChangePasswordFormValues>({
-    resolver: zodResolver(changePasswordSchema),
+    resolver: zodResolver(schema),
     defaultValues: {
       old_password: "",
       new_password: "",
@@ -57,15 +73,13 @@ export function AccountPasswordForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">Password</CardTitle>
-        <CardDescription>
-          Use a strong password you do not reuse on other sites.
-        </CardDescription>
+        <CardTitle className="text-lg">{t("passwordTitle")}</CardTitle>
+        <CardDescription>{t("passwordDescription")}</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit(onSubmit)}>
         <CardContent className="grid gap-4">
           <div className="grid gap-2">
-            <Label htmlFor="account-old-password">Current password</Label>
+            <Label htmlFor="account-old-password">{t("currentPassword")}</Label>
             <Input
               id="account-old-password"
               type="password"
@@ -81,7 +95,7 @@ export function AccountPasswordForm() {
             )}
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="account-new-password">New password</Label>
+            <Label htmlFor="account-new-password">{t("newPassword")}</Label>
             <Input
               id="account-new-password"
               type="password"
@@ -97,7 +111,9 @@ export function AccountPasswordForm() {
             )}
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="account-confirm-password">Confirm new password</Label>
+            <Label htmlFor="account-confirm-password">
+              {t("confirmPassword")}
+            </Label>
             <Input
               id="account-confirm-password"
               type="password"
@@ -115,7 +131,7 @@ export function AccountPasswordForm() {
         </CardContent>
         <CardFooter className="flex justify-end">
           <Button type="submit" disabled={changePassword.isPending}>
-            {changePassword.isPending ? "Updating…" : "Update password"}
+            {changePassword.isPending ? t("updatingPassword") : t("updatePassword")}
           </Button>
         </CardFooter>
       </form>

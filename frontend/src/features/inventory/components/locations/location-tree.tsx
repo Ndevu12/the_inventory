@@ -1,27 +1,25 @@
-"use client";
+"use client"
 
-import { useState } from "react";
+import { useState } from "react"
+import { useTranslations } from "next-intl"
 import {
   ChevronRightIcon,
   PencilIcon,
   Trash2Icon,
   WarehouseIcon,
-} from "lucide-react";
-import { toast } from "sonner";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { CapacityBar } from "./capacity-bar";
-import { useLocationStock, useDeleteLocation } from "../../hooks/use-locations";
-import type { StockLocation, StockRecordAtLocation } from "../../types/location.types";
-
-/* ------------------------------------------------------------------ */
-/*  Stock-records sub-table (lazy-loaded when a node is expanded)     */
-/* ------------------------------------------------------------------ */
+} from "lucide-react"
+import { toast } from "sonner"
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
+import { CapacityBar } from "./capacity-bar"
+import { useLocationStock, useDeleteLocation } from "../../hooks/use-locations"
+import type { StockLocation, StockRecordAtLocation } from "../../types/location.types"
 
 function StockRecordsPanel({ locationId }: { locationId: number }) {
-  const { data: records, isLoading } = useLocationStock(locationId);
+  const t = useTranslations("Inventory")
+  const { data: records, isLoading } = useLocationStock(locationId)
 
   if (isLoading) {
     return (
@@ -30,15 +28,15 @@ function StockRecordsPanel({ locationId }: { locationId: number }) {
           <Skeleton key={i} className="h-7 w-full" />
         ))}
       </div>
-    );
+    )
   }
 
   if (!records?.length) {
     return (
       <p className="px-4 py-4 text-center text-sm text-muted-foreground">
-        No stock at this location.
+        {t("locations.noStock")}
       </p>
-    );
+    )
   }
 
   return (
@@ -46,10 +44,18 @@ function StockRecordsPanel({ locationId }: { locationId: number }) {
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b bg-muted/50 text-left">
-            <th className="px-4 py-2 font-medium">Product</th>
-            <th className="px-4 py-2 text-right font-medium">Qty</th>
-            <th className="px-4 py-2 text-right font-medium">Reserved</th>
-            <th className="px-4 py-2 text-right font-medium">Available</th>
+            <th className="px-4 py-2 font-medium">
+              {t("locations.subTableProduct")}
+            </th>
+            <th className="px-4 py-2 text-right font-medium">
+              {t("locations.subTableQty")}
+            </th>
+            <th className="px-4 py-2 text-right font-medium">
+              {t("locations.subTableReserved")}
+            </th>
+            <th className="px-4 py-2 text-right font-medium">
+              {t("locations.subTableAvailable")}
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -77,7 +83,7 @@ function StockRecordsPanel({ locationId }: { locationId: number }) {
                 </span>
                 {r.is_low_stock && (
                   <Badge variant="destructive" className="ml-2 text-[10px]">
-                    Low
+                    {t("shared.low")}
                   </Badge>
                 )}
               </td>
@@ -86,42 +92,43 @@ function StockRecordsPanel({ locationId }: { locationId: number }) {
         </tbody>
       </table>
     </div>
-  );
+  )
 }
 
-/* ------------------------------------------------------------------ */
-/*  Single location row                                               */
-/* ------------------------------------------------------------------ */
-
 interface LocationItemProps {
-  location: StockLocation;
-  onEdit: (location: StockLocation) => void;
+  location: StockLocation
+  onEdit: (location: StockLocation) => void
 }
 
 function LocationItem({ location, onEdit }: LocationItemProps) {
-  const [expanded, setExpanded] = useState(false);
-  const deleteMutation = useDeleteLocation();
+  const t = useTranslations("Inventory")
+  const [expanded, setExpanded] = useState(false)
+  const deleteMutation = useDeleteLocation()
 
   const handleDelete = () => {
-    if (!confirm(`Delete "${location.name}"? This cannot be undone.`))
-      return;
+    if (
+      !confirm(
+        t("shared.confirmDeleteLocation", { name: location.name }),
+      )
+    )
+      return
 
     deleteMutation.mutate(location.id, {
-      onSuccess: () => toast.success(`"${location.name}" deleted`),
+      onSuccess: () =>
+        toast.success(t("locations.toastDeleted", { name: location.name })),
       onError: (err) =>
-        toast.error(err.message || "Failed to delete location"),
-    });
-  };
+        toast.error(err.message || t("locations.toastDeleteFailed")),
+    })
+  }
 
   return (
     <div className="overflow-hidden rounded-lg border bg-card transition-shadow hover:shadow-sm">
       <div className="flex items-center gap-3 p-4">
-        {/* expand / collapse */}
         <Button
           variant="ghost"
           size="icon-sm"
           onClick={() => setExpanded((v) => !v)}
-          aria-label={expanded ? "Collapse" : "Expand"}
+          aria-label={expanded ? t("shared.collapse") : t("shared.expand")}
         >
           <ChevronRightIcon
             className={cn(
@@ -131,7 +138,6 @@ function LocationItem({ location, onEdit }: LocationItemProps) {
           />
         </Button>
 
-        {/* info */}
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <span className="truncate font-medium">{location.name}</span>
@@ -139,7 +145,7 @@ function LocationItem({ location, onEdit }: LocationItemProps) {
               variant={location.is_active ? "default" : "secondary"}
               className="shrink-0"
             >
-              {location.is_active ? "Active" : "Inactive"}
+              {location.is_active ? t("shared.active") : t("shared.inactive")}
             </Badge>
           </div>
           {location.description && (
@@ -149,7 +155,6 @@ function LocationItem({ location, onEdit }: LocationItemProps) {
           )}
         </div>
 
-        {/* capacity (hidden on mobile, shown inline on sm+) */}
         <div className="hidden w-48 shrink-0 sm:block">
           <CapacityBar
             currentUtilization={location.current_utilization}
@@ -157,13 +162,12 @@ function LocationItem({ location, onEdit }: LocationItemProps) {
           />
         </div>
 
-        {/* actions */}
         <div className="flex shrink-0 items-center gap-1">
           <Button
             variant="ghost"
             size="icon-sm"
             onClick={() => onEdit(location)}
-            aria-label="Edit location"
+            aria-label={t("shared.editLocation")}
           >
             <PencilIcon className="size-4" />
           </Button>
@@ -172,14 +176,13 @@ function LocationItem({ location, onEdit }: LocationItemProps) {
             size="icon-sm"
             onClick={handleDelete}
             disabled={deleteMutation.isPending}
-            aria-label="Delete location"
+            aria-label={t("shared.deleteLocation")}
           >
             <Trash2Icon className="size-4" />
           </Button>
         </div>
       </div>
 
-      {/* mobile capacity bar */}
       <div className="px-4 pb-3 sm:hidden">
         <CapacityBar
           currentUtilization={location.current_utilization}
@@ -187,20 +190,15 @@ function LocationItem({ location, onEdit }: LocationItemProps) {
         />
       </div>
 
-      {/* expandable stock records */}
       {expanded && <StockRecordsPanel locationId={location.id} />}
     </div>
-  );
+  )
 }
 
-/* ------------------------------------------------------------------ */
-/*  Tree / list wrapper                                               */
-/* ------------------------------------------------------------------ */
-
 interface LocationTreeProps {
-  locations: StockLocation[];
-  onEdit: (location: StockLocation) => void;
-  isLoading?: boolean;
+  locations: StockLocation[]
+  onEdit: (location: StockLocation) => void
+  isLoading?: boolean
 }
 
 export function LocationTree({
@@ -208,6 +206,8 @@ export function LocationTree({
   onEdit,
   isLoading,
 }: LocationTreeProps) {
+  const t = useTranslations("Inventory")
+
   if (isLoading) {
     return (
       <div className="space-y-3">
@@ -215,19 +215,19 @@ export function LocationTree({
           <Skeleton key={i} className="h-[72px] w-full rounded-lg" />
         ))}
       </div>
-    );
+    )
   }
 
   if (!locations.length) {
     return (
       <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
         <WarehouseIcon className="mb-4 size-12 text-muted-foreground/50" />
-        <h3 className="text-lg font-medium">No locations yet</h3>
+        <h3 className="text-lg font-medium">{t("locations.emptyTitle")}</h3>
         <p className="mt-1 text-sm text-muted-foreground">
-          Create your first stock location to start tracking inventory.
+          {t("locations.emptyDescription")}
         </p>
       </div>
-    );
+    )
   }
 
   return (
@@ -236,5 +236,5 @@ export function LocationTree({
         <LocationItem key={loc.id} location={loc} onEdit={onEdit} />
       ))}
     </div>
-  );
+  )
 }

@@ -62,23 +62,32 @@ export function toPieData(dataset: ChartDataset): PieDatum[] {
   }));
 }
 
-export function formatCompactNumber(value: number): string {
+export function formatCompactNumber(value: number, locale?: string): string {
   if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
   if (value >= 1_000) return `${(value / 1_000).toFixed(1)}K`;
-  return value.toLocaleString();
+  return value.toLocaleString(locale);
 }
 
-export function formatCurrency(value: string | number): string {
+export function formatCurrency(
+  value: string | number,
+  locale: string = "en-US",
+): string {
   const num = typeof value === "string" ? parseFloat(value) : value;
-  if (isNaN(num)) return "$0.00";
-  return new Intl.NumberFormat("en-US", {
+  if (isNaN(num)) {
+    return new Intl.NumberFormat(locale, {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 2,
+    }).format(0);
+  }
+  return new Intl.NumberFormat(locale, {
     style: "currency",
     currency: "USD",
     minimumFractionDigits: 2,
   }).format(num);
 }
 
-export function formatShortDate(dateStr: string): string {
+export function formatShortDate(dateStr: string, locale: string = "en"): string {
   const date = new Date(dateStr);
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return date.toLocaleDateString(locale, { month: "short", day: "numeric" });
 }

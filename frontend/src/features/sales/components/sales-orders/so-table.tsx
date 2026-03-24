@@ -1,6 +1,7 @@
 "use client"
 
 import type { ColumnDef, PaginationState } from "@tanstack/react-table"
+import { useTranslations } from "next-intl"
 import { DataTable } from "@/components/data-table/data-table"
 import type { SalesOrder } from "../../types/sales.types"
 
@@ -27,6 +28,8 @@ export function SOTable({
   isLoading,
   filterContent,
 }: SOTableProps) {
+  const t = useTranslations("Sales.salesOrders.table")
+
   return (
     <DataTable
       columns={columns}
@@ -34,11 +37,11 @@ export function SOTable({
       pageCount={pageCount}
       pagination={pagination}
       onPaginationChange={onPaginationChange}
-      searchPlaceholder="Search orders..."
+      searchPlaceholder={t("searchPlaceholder")}
       searchValue={searchValue}
       onSearchChange={onSearchChange}
       isLoading={isLoading}
-      emptyMessage="No sales orders found."
+      emptyMessage={t("empty")}
       filterContent={filterContent}
     />
   )

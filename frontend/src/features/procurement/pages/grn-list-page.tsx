@@ -4,25 +4,44 @@ import * as React from "react"
 import { Link } from "@/i18n/navigation"
 import type { PaginationState } from "@tanstack/react-table"
 import { PlusIcon } from "lucide-react"
+import { useLocale, useTranslations } from "next-intl"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/layout/page-header"
 import {
   DataTableFacetedFilter,
+  type FacetedFilterOption,
 } from "@/components/data-table/data-table-faceted-filter"
 import { GRNTable } from "../components/grn/grn-table"
 import { useGRNs, useReceiveGRN, useDeleteGRN } from "../hooks/use-grn"
 import { getGRNColumns } from "../components/grn-columns"
-import { GRN_PROCESSED_OPTIONS } from "../helpers/grn-constants"
+import { GRN_IS_PROCESSED_FILTER_VALUES } from "../helpers/grn-constants"
 import type { GoodsReceivedNote, GRNListParams } from "../types/grn.types"
 
 export function GRNListPage() {
+  const locale = useLocale()
+  const t = useTranslations("Procurement.grn.list")
+  const tCol = useTranslations("Procurement.grn.columns")
+  const tAct = useTranslations("Procurement.grn.actions")
+  const tProc = useTranslations("Procurement.grnProcessStatus")
+  const tShared = useTranslations("Procurement.shared")
+  const tTable = useTranslations("Inventory.tableActions")
+
   const [pagination, setPagination] = React.useState<PaginationState>({
     pageIndex: 0,
     pageSize: 20,
   })
   const [processedFilter, setProcessedFilter] = React.useState<string[]>([])
+
+  const processedFilterOptions: FacetedFilterOption[] = React.useMemo(
+    () =>
+      [...GRN_IS_PROCESSED_FILTER_VALUES].map((v) => ({
+        value: v,
+        label: v === "false" ? tProc("pending") : tProc("processed"),
+      })),
+    [tProc],
+  )
 
   const params = React.useMemo<GRNListParams>(() => {
     const p: GRNListParams = {
@@ -42,48 +61,63 @@ export function GRNListPage() {
   const receiveMutation = useReceiveGRN()
   const deleteMutation = useDeleteGRN()
 
-  const handleView = React.useCallback((_grn: GoodsReceivedNote) => {
+  const handleView = React.useCallback(() => {
     // detail view can be added later
   }, [])
 
   const handleReceive = React.useCallback(
     (grn: GoodsReceivedNote) => {
-      if (
-        !confirm(
-          `Process GRN "${grn.grn_number}"? This will create stock movements and cannot be undone.`,
-        )
-      )
-        return
+      if (!confirm(t("processConfirm", { grnNumber: grn.grn_number }))) return
       receiveMutation.mutate(grn.id, {
         onSuccess: () =>
-          toast.success(
-            `GRN "${grn.grn_number}" processed — stock movements created`,
-          ),
+          toast.success(t("toastProcessed", { grnNumber: grn.grn_number })),
         onError: (error) => {
           const message =
-            (error as { message?: string }).message ??
-            "Failed to process GRN"
+            (error as { message?: string }).message ?? t("toastProcessFailed")
           toast.error(message)
         },
       })
     },
-    [receiveMutation],
+    [receiveMutation, t],
   )
 
   const handleDelete = React.useCallback(
     (grn: GoodsReceivedNote) => {
-      if (!confirm(`Delete GRN "${grn.grn_number}"?`)) return
+      if (!confirm(t("deleteConfirm", { grnNumber: grn.grn_number }))) return
       deleteMutation.mutate(grn.id, {
-        onSuccess: () => toast.success(`GRN "${grn.grn_number}" deleted`),
-        onError: () => toast.error("Failed to delete GRN"),
+        onSuccess: () => toast.success(t("toastDeleted", { grnNumber: grn.grn_number })),
+        onError: () => toast.error(t("toastDeleteFailed")),
       })
     },
-    [deleteMutation],
+    [deleteMutation, t],
   )
 
   const columns = React.useMemo(
-    () => getGRNColumns({ onView: handleView, onReceive: handleReceive, onDelete: handleDelete }),
-    [handleView, handleReceive, handleDelete],
+    () =>
+      getGRNColumns(
+        { onView: handleView, onReceive: handleReceive, onDelete: handleDelete },
+        {
+          tColumns: (key) => tCol(key),
+          emDash: tShared("emDash"),
+          processedLabel: tProc("processed"),
+          pendingLabel: tProc("pending"),
+          viewLabel: tAct("view"),
+          receiveGoodsLabel: tAct("receiveGoods"),
+          deleteLabel: tTable("delete"),
+          locale,
+        },
+      ),
+    [
+      handleView,
+      handleReceive,
+      handleDelete,
+      tCol,
+      tShared,
+      tProc,
+      tAct,
+      tTable,
+      locale,
+    ],
   )
 
   const grns = data?.results ?? []
@@ -105,23 +139,23 @@ export function GRNListPage() {
   const filterContent = (
     <DataTableFacetedFilter
       column={fakeColumn}
-      title="Status"
-      options={GRN_PROCESSED_OPTIONS}
+      title={t("statusFilter")}
+      options={processedFilterOptions}
     />
   )
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-6">
       <PageHeader
-        title="Goods Received Notes"
-        description="Track and process goods received against purchase orders"
+        title={t("title")}
+        description={t("description")}
         actions={
           <Button
             nativeButton={false}
             render={<Link href="/procurement/goods-received/new" />}
           >
             <PlusIcon className="size-4" data-icon="inline-start" />
-            New GRN
+            {t("newButton")}
           </Button>
         }
       />

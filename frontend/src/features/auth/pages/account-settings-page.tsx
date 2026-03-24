@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader } from "@/components/layout/page-header";
 import { useAuth } from "../context/auth-context";
@@ -9,6 +11,7 @@ import { AccountPasswordForm } from "../components/account-password-form";
 import { AccountTenantContextCard } from "../components/account-tenant-context-card";
 
 export function AccountSettingsPage() {
+  const t = useTranslations("Auth.account");
   const { user } = useAuth();
   const { isLoading } = useMe();
 
@@ -31,9 +34,7 @@ export function AccountSettingsPage() {
   if (!user) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-4 p-6">
-        <p className="text-muted-foreground">
-          Unable to load your account. Try signing in again.
-        </p>
+        <p className="text-muted-foreground">{t("loadError")}</p>
       </div>
     );
   }
@@ -41,8 +42,8 @@ export function AccountSettingsPage() {
   return (
     <div className="flex flex-1 flex-col gap-6 p-6">
       <PageHeader
-        title="Account"
-        description="Your profile and password apply to your user across all organisations."
+        title={t("pageTitle")}
+        description={t("pageDescription")}
       />
 
       <div className="grid gap-6 lg:grid-cols-3">

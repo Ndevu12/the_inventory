@@ -1,12 +1,13 @@
 "use client"
 
 import * as React from "react"
+import { useTranslations } from "next-intl"
 import { PageHeader } from "@/components/layout/page-header"
 import { usePurchaseSummary } from "../hooks/use-reports"
 import { useExportReport } from "../hooks/use-export-report"
 import { useReportFiltersStore } from "../stores/report-filters-store"
 import { getPeriodSummaryColumns } from "../helpers/report-columns"
-import { PERIOD_OPTIONS } from "../helpers/report-constants"
+import { REPORT_PERIOD_VALUES } from "../helpers/report-constants"
 import { ReportTable } from "../components/report-table"
 import { ExportButtons } from "../components/export-buttons"
 import { DateRangeFilter, SelectFilter } from "../components/report-filters"
@@ -14,8 +15,28 @@ import { Card, CardContent } from "@/components/ui/card"
 import { formatCurrency, formatNumber } from "@/lib/utils/format"
 
 export function PurchaseSummaryPage() {
+  const tPage = useTranslations("Reports.pages.purchaseSummary")
+  const tFilters = useTranslations("Reports.filters")
+  const tShared = useTranslations("Reports.shared")
+  const tPer = useTranslations("Reports.options.period")
+  const tCol = useTranslations("Reports.columns")
+
   const { dateFrom, dateTo, period, setDateFrom, setDateTo, setPeriod } =
     useReportFiltersStore()
+
+  const periodOptions = React.useMemo(
+    () =>
+      REPORT_PERIOD_VALUES.map((value) => ({
+        value,
+        label: tPer(value),
+      })),
+    [tPer],
+  )
+
+  const columns = React.useMemo(
+    () => getPeriodSummaryColumns((k) => tCol(k), "totalCost"),
+    [tCol],
+  )
 
   const params = React.useMemo(
     () => ({
@@ -27,7 +48,6 @@ export function PurchaseSummaryPage() {
   )
 
   const { data, isLoading } = usePurchaseSummary(params)
-  const columns = React.useMemo(() => getPeriodSummaryColumns("Total Cost"), [])
 
   const exportParams = React.useMemo(
     () => ({
@@ -42,18 +62,18 @@ export function PurchaseSummaryPage() {
   return (
     <div className="flex flex-1 flex-col gap-6 p-6">
       <PageHeader
-        title="Purchase Summary"
-        description="Purchase order totals grouped by period"
+        title={tPage("title")}
+        description={tPage("description")}
         actions={<ExportButtons onExport={handleExport} exporting={exporting} />}
       />
 
       <div className="flex flex-wrap items-end gap-3">
         <SelectFilter
-          label="Period"
+          label={tFilters("period")}
           value={period}
           onChange={(v) => setPeriod(v as typeof period)}
-          options={PERIOD_OPTIONS}
-          placeholder="Select period"
+          options={periodOptions}
+          placeholder={tShared("selectPeriod")}
         />
         <DateRangeFilter
           dateFrom={dateFrom}
@@ -67,13 +87,13 @@ export function PurchaseSummaryPage() {
         <div className="grid gap-4 sm:grid-cols-2">
           <Card>
             <CardContent className="pt-4">
-              <p className="text-sm text-muted-foreground">Total Orders</p>
+              <p className="text-sm text-muted-foreground">{tPage("totalOrders")}</p>
               <p className="text-2xl font-semibold">{formatNumber(data.totals.total_orders)}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-4">
-              <p className="text-sm text-muted-foreground">Total Cost</p>
+              <p className="text-sm text-muted-foreground">{tPage("totalCost")}</p>
               <p className="text-2xl font-semibold">{formatCurrency(Number(data.totals.total_cost))}</p>
             </CardContent>
           </Card>
@@ -84,7 +104,7 @@ export function PurchaseSummaryPage() {
         columns={columns}
         data={data?.results ?? []}
         isLoading={isLoading}
-        emptyMessage="No purchase data for the selected period."
+        emptyMessage={tPage("empty")}
       />
     </div>
   )

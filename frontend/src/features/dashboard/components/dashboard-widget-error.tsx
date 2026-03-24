@@ -1,6 +1,7 @@
 "use client";
 
 import { AlertCircle } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import type { ApiError } from "@/types/api-common";
 
@@ -13,10 +14,13 @@ function isApiError(err: unknown): err is ApiError {
   );
 }
 
-export function getDashboardErrorMessage(error: unknown): string {
+export function getDashboardErrorMessage(
+  error: unknown,
+  fallbackMessage: string,
+): string {
   if (isApiError(error)) return error.message;
   if (error instanceof Error) return error.message;
-  return "Something went wrong. Please try again.";
+  return fallbackMessage;
 }
 
 export function DashboardWidgetError({
@@ -30,6 +34,7 @@ export function DashboardWidgetError({
   minHeight?: string;
   className?: string;
 }) {
+  const t = useTranslations("Dashboard.error");
   return (
     <div
       className={`flex flex-col items-center justify-center gap-3 rounded-md border border-destructive/30 bg-destructive/5 px-4 py-6 text-center ${className ?? ""}`}
@@ -39,7 +44,7 @@ export function DashboardWidgetError({
       <p className="max-w-md text-sm text-muted-foreground">{message}</p>
       {onRetry ? (
         <Button type="button" variant="outline" size="sm" onClick={() => onRetry()}>
-          Retry
+          {t("retry")}
         </Button>
       ) : null}
     </div>

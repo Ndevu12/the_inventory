@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useTranslations } from "next-intl"
 import { PageHeader } from "@/components/layout/page-header"
 import { useTraceability } from "../hooks/use-reports"
 import { useExportReport } from "../hooks/use-export-report"
@@ -12,6 +13,10 @@ import { TextFilter } from "../components/report-filters"
 import { Card, CardContent } from "@/components/ui/card"
 
 export function TraceabilityPage() {
+  const tPage = useTranslations("Reports.pages.traceability")
+  const tFilters = useTranslations("Reports.filters")
+  const tCol = useTranslations("Reports.columns")
+
   const { productSku, lotNumber, setProductSku, setLotNumber } =
     useReportFiltersStore()
 
@@ -22,7 +27,10 @@ export function TraceabilityPage() {
     lot: lotNumber,
   })
 
-  const columns = React.useMemo(() => getTraceabilityColumns(), [])
+  const columns = React.useMemo(
+    () => getTraceabilityColumns((k) => tCol(k)),
+    [tCol],
+  )
 
   const exportParams = React.useMemo(
     () => ({
@@ -36,8 +44,8 @@ export function TraceabilityPage() {
   return (
     <div className="flex flex-1 flex-col gap-6 p-6">
       <PageHeader
-        title="Product Traceability"
-        description="Full movement chain for a specific product and lot"
+        title={tPage("title")}
+        description={tPage("description")}
         actions={
           canQuery ? (
             <ExportButtons onExport={handleExport} exporting={exporting} />
@@ -47,23 +55,23 @@ export function TraceabilityPage() {
 
       <div className="flex flex-wrap items-end gap-3">
         <TextFilter
-          label="Product SKU"
+          label={tFilters("productSku")}
           value={productSku}
           onChange={setProductSku}
-          placeholder="Enter SKU"
+          placeholder={tPage("placeholderSku")}
         />
         <TextFilter
-          label="Lot Number"
+          label={tFilters("lotNumber")}
           value={lotNumber}
           onChange={setLotNumber}
-          placeholder="Enter lot number"
+          placeholder={tPage("placeholderLot")}
         />
       </div>
 
       {!canQuery && (
         <Card>
           <CardContent className="py-8 text-center text-muted-foreground">
-            Enter a product SKU and lot number to view the traceability chain.
+            {tPage("promptEnterSkuAndLot")}
           </CardContent>
         </Card>
       )}
@@ -72,20 +80,24 @@ export function TraceabilityPage() {
         <div className="grid gap-4 sm:grid-cols-2">
           <Card>
             <CardContent className="pt-4">
-              <p className="text-sm text-muted-foreground">Product</p>
+              <p className="text-sm text-muted-foreground">{tPage("productLabel")}</p>
               <p className="text-lg font-semibold">{data.product.name}</p>
               <p className="text-sm text-muted-foreground">{data.product.sku}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-4">
-              <p className="text-sm text-muted-foreground">Lot</p>
+              <p className="text-sm text-muted-foreground">{tPage("lotLabel")}</p>
               <p className="text-lg font-semibold">{data.lot.lot_number}</p>
               {data.lot.expiry_date && (
-                <p className="text-sm text-muted-foreground">Expires: {data.lot.expiry_date}</p>
+                <p className="text-sm text-muted-foreground">
+                  {tPage("expiresWithDate", { date: data.lot.expiry_date })}
+                </p>
               )}
               {data.lot.supplier && (
-                <p className="text-sm text-muted-foreground">Supplier: {data.lot.supplier}</p>
+                <p className="text-sm text-muted-foreground">
+                  {tPage("supplierWithName", { name: data.lot.supplier })}
+                </p>
               )}
             </CardContent>
           </Card>
@@ -97,7 +109,7 @@ export function TraceabilityPage() {
           columns={columns}
           data={data?.chain ?? []}
           isLoading={isLoading}
-          emptyMessage="No traceability data found for this product and lot."
+          emptyMessage={tPage("empty")}
         />
       )}
     </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { CycleStatus } from "../types/cycle-count.types";
@@ -16,9 +17,9 @@ export function CycleStatusBadge({
   label,
   className,
 }: CycleStatusBadgeProps) {
+  const t = useTranslations("CycleCounts.status");
   const colors = CYCLE_STATUS_COLOR_MAP[status];
-  const displayLabel =
-    label ?? status.replace("_", " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  const displayLabel = label ?? t(status);
 
   return (
     <Badge

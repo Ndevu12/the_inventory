@@ -4,6 +4,7 @@ import * as React from "react"
 import { Link } from "@/i18n/navigation"
 import { useRouter } from "@/i18n/navigation"
 import type { PaginationState, SortingState } from "@tanstack/react-table"
+import { useTranslations } from "next-intl"
 import { PlusIcon } from "lucide-react"
 import { toast } from "sonner"
 
@@ -16,6 +17,10 @@ import type { Customer } from "../types/sales.types"
 
 export function CustomerListPage() {
   const router = useRouter()
+  const t = useTranslations("Sales.customers.list")
+  const tCol = useTranslations("Sales.customers.columns")
+  const tCust = useTranslations("Sales.customerStatus")
+  const tShared = useTranslations("Sales.shared")
 
   const [pagination, setPagination] = React.useState<PaginationState>({
     pageIndex: 0,
@@ -43,23 +48,38 @@ export function CustomerListPage() {
     (customer: Customer) => {
       router.push(`/sales/customers/${customer.id}/edit`)
     },
-    [router]
+    [router],
   )
 
   const handleDelete = React.useCallback(
     (customer: Customer) => {
-      if (!confirm(`Delete customer "${customer.name}"?`)) return
+      if (!confirm(t("deleteConfirm", { name: customer.name }))) return
       deleteMutation.mutate(customer.id, {
-        onSuccess: () => toast.success(`Customer "${customer.name}" deleted`),
-        onError: () => toast.error("Failed to delete customer"),
+        onSuccess: () =>
+          toast.success(t("toastDeleted", { name: customer.name })),
+        onError: () => toast.error(t("toastDeleteFailed")),
       })
     },
-    [deleteMutation]
+    [deleteMutation, t],
+  )
+
+  const columnLabels = React.useMemo(
+    () => ({
+      tColumns: (key: string) => tCol(key),
+      emDash: tShared("emDash"),
+      activeLabel: tCust("active"),
+      inactiveLabel: tCust("inactive"),
+    }),
+    [tCol, tShared, tCust],
   )
 
   const columns = React.useMemo(
-    () => getCustomerColumns({ onEdit: handleEdit, onDelete: handleDelete }),
-    [handleEdit, handleDelete]
+    () =>
+      getCustomerColumns(
+        { onEdit: handleEdit, onDelete: handleDelete },
+        columnLabels,
+      ),
+    [handleEdit, handleDelete, columnLabels],
   )
 
   const customers = data?.results ?? []
@@ -68,12 +88,12 @@ export function CustomerListPage() {
   return (
     <div className="flex flex-1 flex-col gap-6 p-6">
       <PageHeader
-        title="Customers"
-        description="Manage your customer directory"
+        title={t("title")}
+        description={t("description")}
         actions={
           <Button render={<Link href="/sales/customers/new" />}>
             <PlusIcon className="size-4" data-icon="inline-start" />
-            New Customer
+            {t("newButton")}
           </Button>
         }
       />

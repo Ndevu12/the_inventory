@@ -1,6 +1,7 @@
 "use client"
 
 import { use } from "react"
+import { useTranslations } from "next-intl"
 import { Link } from "@/i18n/navigation"
 import { PencilIcon } from "lucide-react"
 
@@ -21,6 +22,7 @@ interface ProductDetailPageProps {
 }
 
 export function ProductDetailPage({ params }: ProductDetailPageProps) {
+  const t = useTranslations("Inventory")
   const { id } = use(params)
   const productId = Number(id)
 
@@ -44,9 +46,9 @@ export function ProductDetailPage({ params }: ProductDetailPageProps) {
   if (!product) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Product Not Found" />
+        <PageHeader title={t("products.notFoundTitle")} />
         <p className="text-muted-foreground">
-          The product you are looking for does not exist.
+          {t("products.notFoundBody")}
         </p>
       </div>
     )
@@ -56,11 +58,11 @@ export function ProductDetailPage({ params }: ProductDetailPageProps) {
     <div className="space-y-6">
       <PageHeader
         title={product.name}
-        description={`SKU: ${product.sku}`}
+        description={t("products.detailSku", { sku: product.sku })}
         actions={
           <Button variant="outline" render={<Link href={`/products/${productId}/edit`} />}>
             <PencilIcon className="mr-2 size-4" />
-            Edit
+            {t("products.detailEdit")}
           </Button>
         }
       />

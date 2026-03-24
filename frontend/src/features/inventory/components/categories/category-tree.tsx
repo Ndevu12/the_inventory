@@ -1,21 +1,22 @@
-"use client";
+"use client"
 
-import { useState } from "react";
+import { useState } from "react"
+import { useTranslations } from "next-intl"
 import {
   ChevronRight,
   Pencil,
   Trash2,
   FolderTree,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import type { Category } from "../../types/inventory.types";
+} from "lucide-react"
+import { cn } from "@/lib/utils"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import type { Category } from "../../types/inventory.types"
 
 interface CategoryTreeProps {
-  categories: Category[];
-  onEdit: (category: Category) => void;
-  onDelete: (category: Category) => void;
+  categories: Category[]
+  onEdit: (category: Category) => void
+  onDelete: (category: Category) => void
 }
 
 export function CategoryTree({
@@ -23,31 +24,32 @@ export function CategoryTree({
   onEdit,
   onDelete,
 }: CategoryTreeProps) {
-  const [expanded, setExpanded] = useState<Set<number>>(new Set());
+  const t = useTranslations("Inventory")
+  const [expanded, setExpanded] = useState<Set<number>>(new Set())
 
   function toggle(id: number) {
     setExpanded((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
   }
 
   if (categories.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16 text-muted-foreground">
         <FolderTree className="mb-3 size-10 opacity-40" />
-        <p className="text-sm font-medium">No categories found</p>
-        <p className="mt-1 text-xs">Create a category to get started.</p>
+        <p className="text-sm font-medium">{t("categories.emptyTitle")}</p>
+        <p className="mt-1 text-xs">{t("categories.emptyHint")}</p>
       </div>
-    );
+    )
   }
 
   return (
     <div className="rounded-lg border bg-card">
       {categories.map((cat, idx) => {
-        const isExpanded = expanded.has(cat.id);
+        const isExpanded = expanded.has(cat.id)
 
         return (
           <div
@@ -78,7 +80,7 @@ export function CategoryTree({
               </div>
 
               <Badge variant={cat.is_active ? "secondary" : "outline"}>
-                {cat.is_active ? "Active" : "Inactive"}
+                {cat.is_active ? t("shared.active") : t("shared.inactive")}
               </Badge>
 
               <div className="flex items-center gap-1">
@@ -86,7 +88,7 @@ export function CategoryTree({
                   variant="ghost"
                   size="icon-sm"
                   onClick={() => onEdit(cat)}
-                  aria-label={`Edit ${cat.name}`}
+                  aria-label={t("shared.editNamed", { name: cat.name })}
                 >
                   <Pencil className="size-3.5" />
                 </Button>
@@ -94,7 +96,7 @@ export function CategoryTree({
                   variant="ghost"
                   size="icon-sm"
                   onClick={() => onDelete(cat)}
-                  aria-label={`Delete ${cat.name}`}
+                  aria-label={t("shared.deleteNamed", { name: cat.name })}
                 >
                   <Trash2 className="size-3.5 text-destructive" />
                 </Button>
@@ -104,31 +106,39 @@ export function CategoryTree({
             {isExpanded && (
               <div className="border-t bg-muted/25 px-12 py-3">
                 <p className="text-sm text-muted-foreground">
-                  {cat.description || "No description provided."}
+                  {cat.description || t("shared.noDescription")}
                 </p>
                 <div className="mt-2 flex gap-4 text-xs text-muted-foreground">
                   <span>
-                    Created{" "}
-                    {new Date(cat.created_at).toLocaleDateString(undefined, {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
+                    {t("shared.createdOn", {
+                      date: new Date(cat.created_at).toLocaleDateString(
+                        undefined,
+                        {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        },
+                      ),
                     })}
                   </span>
                   <span>
-                    Updated{" "}
-                    {new Date(cat.updated_at).toLocaleDateString(undefined, {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
+                    {t("shared.updatedOn", {
+                      date: new Date(cat.updated_at).toLocaleDateString(
+                        undefined,
+                        {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        },
+                      ),
                     })}
                   </span>
                 </div>
               </div>
             )}
           </div>
-        );
+        )
       })}
     </div>
-  );
+  )
 }

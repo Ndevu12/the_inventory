@@ -2,9 +2,11 @@
  * Dashboard home rendering (feature shell); data hooks are mocked.
  */
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { NextIntlClientProvider } from "next-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { DashboardPage } from "@/features/dashboard/pages/dashboard-page";
+import messages from "../../../public/locales/en.json";
 import { useAuthStore } from "@/lib/auth-store";
 import {
   renderWithProviders,
@@ -65,16 +67,22 @@ describe("DashboardPage rendering", () => {
   });
 
   it("renders the dashboard shell with loading placeholders", async () => {
-    renderWithProviders(<DashboardPage />);
+    renderWithProviders(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <DashboardPage />
+      </NextIntlClientProvider>,
+    );
 
     await waitFor(() => {
       expect(
-        screen.getByRole("heading", { name: /^dashboard$/i }),
+        screen.getByRole("heading", {
+          name: messages.Dashboard.page.title,
+        }),
       ).toBeInTheDocument();
     });
 
     expect(
-      screen.getByText(/overview of your inventory/i),
+      screen.getByText(messages.Dashboard.page.subtitle),
     ).toBeInTheDocument();
   });
 });

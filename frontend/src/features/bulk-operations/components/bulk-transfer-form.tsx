@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { PlusIcon, Trash2Icon } from "lucide-react";
 import {
@@ -23,10 +24,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useBulkProducts, useBulkLocations, useBulkTransfer } from "../hooks/use-bulk";
+import {
+  useBulkProducts,
+  useBulkLocations,
+  useBulkTransfer,
+} from "../hooks/use-bulk";
 import { useTransferItemsStore } from "../stores/bulk-items-store";
 import {
-  bulkTransferSchema,
+  createBulkTransferSchema,
   type BulkTransferFormValues,
 } from "../helpers/bulk-schemas";
 import { BulkResultSummary } from "./bulk-result-summary";
@@ -34,6 +39,18 @@ import type { BulkOperationResult, BulkTransferPayload } from "../api/bulk-api";
 
 export function BulkTransferForm() {
   const [result, setResult] = React.useState<BulkOperationResult | null>(null);
+  const tTransfer = useTranslations("BulkOperations.transfer");
+  const tVal = useTranslations("BulkOperations.validation");
+  const tShared = useTranslations("BulkOperations.shared");
+
+  const schema = React.useMemo(
+    () =>
+      createBulkTransferSchema({
+        sourceLocationRequired: tVal("sourceLocationRequired"),
+        destinationLocationRequired: tVal("destinationLocationRequired"),
+      }),
+    [tVal],
+  );
 
   const { data: productsData, isLoading: productsLoading } = useBulkProducts();
   const { data: locationsData, isLoading: locationsLoading } = useBulkLocations();
@@ -46,7 +63,7 @@ export function BulkTransferForm() {
     useTransferItemsStore();
 
   const form = useForm<BulkTransferFormValues>({
-    resolver: zodResolver(bulkTransferSchema),
+    resolver: zodResolver(schema),
     defaultValues: {
       from_location: undefined as unknown as number,
       to_location: undefined as unknown as number,
@@ -62,7 +79,7 @@ export function BulkTransferForm() {
   function onSubmit(values: BulkTransferFormValues) {
     const validItems = lines.filter((l) => l.product_id && l.quantity > 0);
     if (validItems.length === 0) {
-      toast.error("Add at least one product to transfer");
+      toast.error(tTransfer("toastNoItems"));
       return;
     }
 
@@ -81,16 +98,21 @@ export function BulkTransferForm() {
       onSuccess: (data) => {
         setResult(data);
         if (data.failure_count === 0) {
-          toast.success(`All ${data.total_count} items transferred successfully`);
+          toast.success(
+            tTransfer("toastAllSuccess", { count: data.total_count }),
+          );
         } else {
           toast.warning(
-            `${data.success_count} of ${data.total_count} items transferred`,
+            tTransfer("toastPartial", {
+              success: data.success_count,
+              total: data.total_count,
+            }),
           );
         }
       },
       onError: (error) => {
         const message =
-          (error as { message?: string }).message ?? "Bulk transfer failed";
+          (error as { message?: string }).message ?? tTransfer("toastError");
         toast.error(message);
       },
     });
@@ -113,14 +135,12 @@ export function BulkTransferForm() {
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Transfer Details</CardTitle>
-          <CardDescription>
-            Move stock from one location to another in bulk.
-          </CardDescription>
+          <CardTitle>{tTransfer("cardTitle")}</CardTitle>
+          <CardDescription>{tTransfer("cardDescription")}</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-6 sm:grid-cols-2">
           <FormField
-            label="Source Location"
+            label={tTransfer("sourceLocation")}
             error={form.formState.errors.from_location?.message}
           >
             <Select
@@ -134,36 +154,10 @@ export function BulkTransferForm() {
             >
               <SelectTrigger className="w-full">
                 <SelectValue
-                  placeholder={locationsLoading ? "Loading..." : "Select source"}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {locations.map((l) => (
-                  <SelectItem key={l.id} value={l.id.toString()}>
-                    {l.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </FormField>
-
-          <FormField
-            label="Destination Location"
-            error={form.formState.errors.to_location?.message}
-          >
-            <Select
-              value={form.watch("to_location")?.toString() ?? ""}
-              onValueChange={(val) =>
-                form.setValue("to_location", Number(val), {
-                  shouldValidate: true,
-                })
-              }
-              disabled={locationsLoading}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue
                   placeholder={
-                    locationsLoading ? "Loading..." : "Select destination"
+                    locationsLoading
+                      ? tShared("loading")
+                      : tShared("selectSource")
                   }
                 />
               </SelectTrigger>
@@ -178,11 +172,43 @@ export function BulkTransferForm() {
           </FormField>
 
           <FormField
-            label="Reference"
+            label={tTransfer("destinationLocation")}
+            error={form.formState.errors.to_location?.message}
+          >
+            <Select
+              value={form.watch("to_location")?.toString() ?? ""}
+              onValueChange={(val) =>
+                form.setValue("to_location", Number(val), {
+                  shouldValidate: true,
+                })
+              }
+              disabled={locationsLoading}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue
+                  placeholder={
+                    locationsLoading
+                      ? tShared("loading")
+                      : tShared("selectDestination")
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {locations.map((l) => (
+                  <SelectItem key={l.id} value={l.id.toString()}>
+                    {l.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FormField>
+
+          <FormField
+            label={tShared("reference")}
             error={form.formState.errors.reference?.message}
           >
             <Input
-              placeholder="Optional reference number"
+              placeholder={tShared("referencePlaceholder")}
               {...form.register("reference")}
             />
           </FormField>
@@ -193,22 +219,22 @@ export function BulkTransferForm() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Products</CardTitle>
+              <CardTitle>{tTransfer("productsTitle")}</CardTitle>
               <CardDescription>
-                Add products and quantities to transfer.
+                {tTransfer("productsDescription")}
               </CardDescription>
             </div>
             <Button type="button" variant="outline" size="sm" onClick={addLine}>
               <PlusIcon className="mr-1 size-4" />
-              Add Product
+              {tShared("addProduct")}
             </Button>
           </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
             <div className="grid grid-cols-[1fr_120px_40px] gap-3 text-sm font-medium text-muted-foreground">
-              <span>Product</span>
-              <span>Quantity</span>
+              <span>{tShared("product")}</span>
+              <span>{tShared("quantity")}</span>
               <span />
             </div>
             {lines.map((line) => (
@@ -226,7 +252,9 @@ export function BulkTransferForm() {
                   <SelectTrigger className="w-full">
                     <SelectValue
                       placeholder={
-                        productsLoading ? "Loading..." : "Select product"
+                        productsLoading
+                          ? tShared("loading")
+                          : tShared("selectProduct")
                       }
                     />
                   </SelectTrigger>
@@ -265,12 +293,12 @@ export function BulkTransferForm() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Notes</CardTitle>
+          <CardTitle>{tShared("notes")}</CardTitle>
         </CardHeader>
         <CardContent>
           <Textarea
             rows={3}
-            placeholder="Optional notes about this transfer..."
+            placeholder={tTransfer("notesPlaceholder")}
             {...form.register("notes")}
           />
         </CardContent>
@@ -278,7 +306,9 @@ export function BulkTransferForm() {
 
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={transferMutation.isPending}>
-          {transferMutation.isPending ? "Processing..." : "Execute Transfer"}
+          {transferMutation.isPending
+            ? tShared("processing")
+            : tTransfer("execute")}
         </Button>
       </div>
     </form>

@@ -14,14 +14,28 @@ interface SOColumnActions {
   onDelete?: (so: SalesOrder) => void
 }
 
+export interface SOColumnLabels {
+  tColumns: (key: string) => string
+  emDash: string
+  viewLabel: string
+  confirmLabel: string
+  cancelLabel: string
+  deleteLabel: string
+  locale: string
+}
+
 export function getSOColumns(
   actions: SOColumnActions,
+  labels: SOColumnLabels,
 ): ColumnDef<SalesOrder>[] {
   return [
     {
       accessorKey: "order_number",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Order #" />
+        <DataTableColumnHeader
+          column={column}
+          title={labels.tColumns("orderNumber")}
+        />
       ),
       cell: ({ row }) => (
         <span className="font-medium">{row.getValue("order_number")}</span>
@@ -30,21 +44,27 @@ export function getSOColumns(
     {
       accessorKey: "customer_name",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Customer" />
+        <DataTableColumnHeader
+          column={column}
+          title={labels.tColumns("customer")}
+        />
       ),
-      cell: ({ row }) => row.getValue("customer_name") || "—",
+      cell: ({ row }) => row.getValue("customer_name") || labels.emDash,
       enableSorting: false,
     },
     {
       accessorKey: "order_date",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Order Date" />
+        <DataTableColumnHeader
+          column={column}
+          title={labels.tColumns("orderDate")}
+        />
       ),
       cell: ({ row }) => {
         const date = new Date(row.getValue<string>("order_date"))
         return (
           <span className="whitespace-nowrap text-sm">
-            {date.toLocaleDateString(undefined, {
+            {date.toLocaleDateString(labels.locale, {
               year: "numeric",
               month: "short",
               day: "numeric",
@@ -55,7 +75,7 @@ export function getSOColumns(
     },
     {
       accessorKey: "status",
-      header: "Status",
+      header: labels.tColumns("status"),
       cell: ({ row }) => (
         <SOStatusBadge status={row.original.status} />
       ),
@@ -64,13 +84,16 @@ export function getSOColumns(
     {
       accessorKey: "total_price",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Total" />
+        <DataTableColumnHeader
+          column={column}
+          title={labels.tColumns("total")}
+        />
       ),
       cell: ({ row }) => {
         const val = row.getValue<string>("total_price")
         return (
           <span className="whitespace-nowrap font-medium tabular-nums">
-            {parseFloat(val).toLocaleString(undefined, {
+            {parseFloat(val).toLocaleString(labels.locale, {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}
@@ -81,20 +104,25 @@ export function getSOColumns(
     },
     {
       accessorKey: "can_fulfill",
-      header: "Fulfillment",
-      cell: ({ row }) => <CanFulfillBadge canFulfill={row.original.can_fulfill} />,
+      header: labels.tColumns("fulfillment"),
+      cell: ({ row }) => (
+        <CanFulfillBadge canFulfill={row.original.can_fulfill} />
+      ),
       enableSorting: false,
     },
     {
       accessorKey: "created_at",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Created" />
+        <DataTableColumnHeader
+          column={column}
+          title={labels.tColumns("created")}
+        />
       ),
       cell: ({ row }) => {
         const date = new Date(row.getValue<string>("created_at"))
         return (
           <span className="whitespace-nowrap text-sm text-muted-foreground">
-            {date.toLocaleDateString(undefined, {
+            {date.toLocaleDateString(labels.locale, {
               year: "numeric",
               month: "short",
               day: "numeric",
@@ -111,28 +139,31 @@ export function getSOColumns(
 
         if (actions.onView) {
           rowActions.push({
-            label: "View",
+            label: labels.viewLabel,
             onClick: () => actions.onView!(so),
           })
         }
 
         if (actions.onConfirm && so.status === "draft") {
           rowActions.push({
-            label: "Confirm",
+            label: labels.confirmLabel,
             onClick: () => actions.onConfirm!(so),
           })
         }
 
-        if (actions.onCancel && (so.status === "draft" || so.status === "confirmed")) {
+        if (
+          actions.onCancel &&
+          (so.status === "draft" || so.status === "confirmed")
+        ) {
           rowActions.push({
-            label: "Cancel",
+            label: labels.cancelLabel,
             onClick: () => actions.onCancel!(so),
           })
         }
 
         if (actions.onDelete && so.status === "draft") {
           rowActions.push({
-            label: "Delete",
+            label: labels.deleteLabel,
             onClick: () => actions.onDelete!(so),
             variant: "destructive",
             separator: true,

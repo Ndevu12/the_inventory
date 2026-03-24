@@ -4,14 +4,13 @@ import * as React from "react"
 import { Link } from "@/i18n/navigation"
 import { useRouter } from "@/i18n/navigation"
 import type { PaginationState, SortingState } from "@tanstack/react-table"
+import { useLocale, useTranslations } from "next-intl"
 import { PlusIcon } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/layout/page-header"
-import {
-  DataTableFacetedFilter,
-} from "@/components/data-table/data-table-faceted-filter"
+import { DataTableFacetedFilter } from "@/components/data-table/data-table-faceted-filter"
 import { SOTable } from "../components/sales-orders/so-table"
 import { getSOColumns } from "../components/so-columns"
 import {
@@ -20,12 +19,19 @@ import {
   useCancelSalesOrder,
   useDeleteSalesOrder,
 } from "../hooks/use-sales-orders"
-import { SO_STATUS_OPTIONS } from "../helpers/sales-constants"
+import { SO_STATUS_FILTER_VALUES } from "../helpers/sales-constants"
 import type { ApiError } from "@/types/api-common"
 import type { SalesOrder, SalesOrderListParams } from "../types/sales.types"
 
 export function SOListPage() {
   const router = useRouter()
+  const locale = useLocale()
+  const t = useTranslations("Sales.salesOrders.list")
+  const tCol = useTranslations("Sales.salesOrders.columns")
+  const tAct = useTranslations("Sales.salesOrders.actions")
+  const tSoStatus = useTranslations("Sales.soStatus")
+  const tShared = useTranslations("Sales.shared")
+
   const confirmMutation = useConfirmSalesOrder()
   const cancelMutation = useCancelSalesOrder()
   const deleteMutation = useDeleteSalesOrder()
@@ -73,58 +79,86 @@ export function SOListPage() {
 
   const handleConfirm = React.useCallback(
     (so: SalesOrder) => {
-      if (!confirm(`Confirm sales order "${so.order_number}"?`)) return
+      if (!confirm(t("confirmPrompt", { orderNumber: so.order_number }))) return
       confirmMutation.mutate(so.id, {
-        onSuccess: () => toast.success(`Order "${so.order_number}" confirmed`),
+        onSuccess: () =>
+          toast.success(t("toastConfirmed", { orderNumber: so.order_number })),
         onError: (error: unknown) => {
           const e = error as unknown as ApiError
-          toast.error(e.message || "Failed to confirm order")
+          toast.error(e.message || t("confirmFailed"))
         },
       })
     },
-    [confirmMutation],
+    [confirmMutation, t],
   )
 
   const handleCancel = React.useCallback(
     (so: SalesOrder) => {
-      if (!confirm(`Cancel sales order "${so.order_number}"?`)) return
+      if (!confirm(t("cancelPrompt", { orderNumber: so.order_number }))) return
       cancelMutation.mutate(so.id, {
-        onSuccess: () => toast.success(`Order "${so.order_number}" cancelled`),
+        onSuccess: () =>
+          toast.success(t("toastCancelled", { orderNumber: so.order_number })),
         onError: (error: unknown) => {
           const e = error as unknown as ApiError
-          toast.error(e.message || "Failed to cancel order")
+          toast.error(e.message || t("cancelFailed"))
         },
       })
     },
-    [cancelMutation],
+    [cancelMutation, t],
   )
 
   const handleDelete = React.useCallback(
     (so: SalesOrder) => {
-      if (!confirm(`Delete sales order "${so.order_number}"?`)) return
+      if (!confirm(t("deletePrompt", { orderNumber: so.order_number }))) return
       deleteMutation.mutate(so.id, {
-        onSuccess: () => toast.success(`Order "${so.order_number}" deleted`),
+        onSuccess: () =>
+          toast.success(t("toastDeleted", { orderNumber: so.order_number })),
         onError: (error: unknown) => {
           const e = error as unknown as ApiError
-          toast.error(e.message || "Failed to delete order")
+          toast.error(e.message || t("deleteFailed"))
         },
       })
     },
-    [deleteMutation],
+    [deleteMutation, t],
+  )
+
+  const columnLabels = React.useMemo(
+    () => ({
+      tColumns: (key: string) => tCol(key),
+      emDash: tShared("emDash"),
+      viewLabel: tAct("view"),
+      confirmLabel: tAct("confirm"),
+      cancelLabel: tAct("cancel"),
+      deleteLabel: tAct("delete"),
+      locale,
+    }),
+    [tCol, tShared, tAct, locale],
   )
 
   const columns = React.useMemo(
     () =>
-      getSOColumns({
-        onView: handleView,
-        onConfirm: handleConfirm,
-        onCancel: handleCancel,
-        onDelete: handleDelete,
-      }),
-    [handleView, handleConfirm, handleCancel, handleDelete],
+      getSOColumns(
+        {
+          onView: handleView,
+          onConfirm: handleConfirm,
+          onCancel: handleCancel,
+          onDelete: handleDelete,
+        },
+        columnLabels,
+      ),
+    [handleView, handleConfirm, handleCancel, handleDelete, columnLabels],
   )
 
   const pageCount = data ? Math.ceil(data.count / pagination.pageSize) : 0
+
+  const statusFilterOptions = React.useMemo(
+    () =>
+      SO_STATUS_FILTER_VALUES.map((value) => ({
+        value,
+        label: tSoStatus(value),
+      })),
+    [tSoStatus],
+  )
 
   const fakeColumn = React.useMemo(
     () =>
@@ -142,12 +176,12 @@ export function SOListPage() {
   return (
     <div className="flex flex-1 flex-col gap-6 p-6">
       <PageHeader
-        title="Sales Orders"
-        description="Manage sales orders and track fulfillment"
+        title={t("title")}
+        description={t("description")}
         actions={
           <Button render={<Link href="/sales/sales-orders/new" />}>
             <PlusIcon className="size-4" data-icon="inline-start" />
-            New Order
+            {t("newButton")}
           </Button>
         }
       />
@@ -164,8 +198,8 @@ export function SOListPage() {
         filterContent={
           <DataTableFacetedFilter
             column={fakeColumn}
-            title="Status"
-            options={SO_STATUS_OPTIONS}
+            title={t("statusFilter")}
+            options={statusFilterOptions}
           />
         }
       />

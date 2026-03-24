@@ -1,7 +1,9 @@
 "use client";
 
+import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -59,6 +61,20 @@ export function ReservationForm({
   onCancel,
   isSubmitting = false,
 }: ReservationFormProps) {
+  const t = useTranslations("Reservations.form");
+  const tVal = useTranslations("Reservations.form.validation");
+  const tCommon = useTranslations("Common.actions");
+
+  const schema = useMemo(
+    () =>
+      createReservationSchema({
+        productRequired: tVal("productRequired"),
+        locationRequired: tVal("locationRequired"),
+        quantityRequired: tVal("quantityRequired"),
+      }),
+    [tVal],
+  );
+
   const {
     register,
     handleSubmit,
@@ -66,7 +82,7 @@ export function ReservationForm({
     setValue,
     formState: { errors },
   } = useForm<CreateReservationFormValues>({
-    resolver: zodResolver(createReservationSchema),
+    resolver: zodResolver(schema),
     defaultValues: {
       quantity: "1",
       notes: "",
@@ -90,12 +106,12 @@ export function ReservationForm({
     <form onSubmit={handleSubmit(handleFormSubmit)}>
       <Card>
         <CardHeader>
-          <CardTitle>New Reservation</CardTitle>
+          <CardTitle>{t("cardTitle")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label>Product *</Label>
+              <Label>{t("product")}</Label>
               <Select
                 value={watch("product")?.toString() ?? ""}
                 onValueChange={(val) =>
@@ -103,7 +119,7 @@ export function ReservationForm({
                 }
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select a product..." />
+                  <SelectValue placeholder={t("productPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
                   {products.map((p) => (
@@ -121,7 +137,7 @@ export function ReservationForm({
             </div>
 
             <div className="space-y-2">
-              <Label>Location *</Label>
+              <Label>{t("location")}</Label>
               <Select
                 value={watch("location")?.toString() ?? ""}
                 onValueChange={(val) =>
@@ -129,7 +145,7 @@ export function ReservationForm({
                 }
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select a location..." />
+                  <SelectValue placeholder={t("locationPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
                   {locations.map((l) => (
@@ -149,7 +165,7 @@ export function ReservationForm({
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="quantity">Quantity *</Label>
+              <Label htmlFor="quantity">{t("quantity")}</Label>
               <Input
                 id="quantity"
                 type="number"
@@ -164,20 +180,24 @@ export function ReservationForm({
             </div>
 
             <div className="space-y-2">
-              <Label>Sales Order (optional)</Label>
+              <Label>{t("salesOrderOptional")}</Label>
               <Select
                 value={watch("sales_order") || ""}
                 onValueChange={(val) =>
-                  setValue("sales_order", (val === "__none__" ? "" : val) as string, {
-                    shouldValidate: true,
-                  })
+                  setValue(
+                    "sales_order",
+                    (val === "__none__" ? "" : val) as string,
+                    {
+                      shouldValidate: true,
+                    },
+                  )
                 }
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="None" />
+                  <SelectValue placeholder={t("salesOrderNone")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__none__">None</SelectItem>
+                  <SelectItem value="__none__">{t("salesOrderNone")}</SelectItem>
                   {salesOrders.map((so) => (
                     <SelectItem key={so.id} value={so.id.toString()}>
                       {so.order_number}
@@ -194,21 +214,21 @@ export function ReservationForm({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="notes">Notes (optional)</Label>
+            <Label htmlFor="notes">{t("notesOptional")}</Label>
             <Textarea
               id="notes"
               rows={3}
-              placeholder="Any additional notes..."
+              placeholder={t("notesPlaceholder")}
               {...register("notes")}
             />
           </div>
         </CardContent>
         <CardFooter className="flex justify-end gap-2">
           <Button type="button" variant="outline" onClick={onCancel}>
-            Cancel
+            {tCommon("cancel")}
           </Button>
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Creating..." : "Create Reservation"}
+            {isSubmitting ? t("submitting") : t("submit")}
           </Button>
         </CardFooter>
       </Card>

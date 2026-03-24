@@ -6,12 +6,14 @@ import { DataTableColumnHeader } from "@/components/data-table/data-table-column
 import type { InventoryCycle } from "../types/cycle-count.types";
 import { CycleStatusBadge } from "./cycle-status-badge";
 
-export function getCycleColumns(): ColumnDef<InventoryCycle, unknown>[] {
+export function getCycleColumns(
+  t: (key: string) => string,
+): ColumnDef<InventoryCycle, unknown>[] {
   return [
     {
       accessorKey: "name",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Name" />
+        <DataTableColumnHeader column={column} title={t("name")} />
       ),
       cell: ({ row }) => (
         <Link
@@ -25,13 +27,13 @@ export function getCycleColumns(): ColumnDef<InventoryCycle, unknown>[] {
     },
     {
       accessorKey: "location_name",
-      header: "Location",
-      cell: ({ row }) => row.original.location_name ?? "All Locations",
+      header: t("location"),
+      cell: ({ row }) => row.original.location_name ?? t("allLocations"),
       enableSorting: false,
     },
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("status"),
       cell: ({ row }) => <CycleStatusBadge status={row.original.status} />,
       filterFn: (row, _id, filterValue: string[]) => {
         if (!filterValue || filterValue.length === 0) return true;
@@ -41,14 +43,14 @@ export function getCycleColumns(): ColumnDef<InventoryCycle, unknown>[] {
     {
       accessorKey: "scheduled_date",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Scheduled" />
+        <DataTableColumnHeader column={column} title={t("scheduled")} />
       ),
       cell: ({ row }) =>
         new Date(row.original.scheduled_date).toLocaleDateString(),
     },
     {
       id: "progress",
-      header: "Progress",
+      header: t("progress"),
       cell: ({ row }) => {
         const { counted_lines, total_lines } = row.original;
         return (
@@ -61,14 +63,15 @@ export function getCycleColumns(): ColumnDef<InventoryCycle, unknown>[] {
     },
     {
       accessorKey: "started_by_username",
-      header: "Started By",
-      cell: ({ row }) => row.original.started_by_username ?? "—",
+      header: t("startedBy"),
+      cell: ({ row }) =>
+        row.original.started_by_username ?? "\u2014",
       enableSorting: false,
     },
     {
       accessorKey: "created_at",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Created" />
+        <DataTableColumnHeader column={column} title={t("created")} />
       ),
       cell: ({ row }) =>
         new Date(row.original.created_at).toLocaleDateString(),

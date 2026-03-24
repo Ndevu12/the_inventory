@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useLocale, useTranslations } from "next-intl";
 import type { ExpiringLotsData, ExpiringLot } from "../types/dashboard.types";
 import {
   DashboardWidgetError,
@@ -39,14 +40,19 @@ function expiryVariant(daysLeft: number | null): "default" | "secondary" | "dest
   return "outline";
 }
 
-function expiryLabel(daysLeft: number | null): string {
-  if (daysLeft === null) return "Unknown";
-  if (daysLeft <= 0) return "Expired";
-  if (daysLeft === 1) return "1 day";
-  return `${daysLeft} days`;
-}
-
 function LotRow({ lot }: { lot: ExpiringLot }) {
+  const t = useTranslations("Dashboard.expiringLots");
+  const locale = useLocale();
+
+  const expiryText =
+    lot.days_to_expiry === null
+      ? t("expiryUnknown")
+      : lot.days_to_expiry <= 0
+        ? t("expiryExpired")
+        : lot.days_to_expiry === 1
+          ? t("expiryOneDay")
+          : t("expiryDays", { count: lot.days_to_expiry });
+
   return (
     <TableRow>
       <TableCell className="font-mono text-xs">{lot.lot_number}</TableCell>
@@ -59,11 +65,11 @@ function LotRow({ lot }: { lot: ExpiringLot }) {
         </div>
       </TableCell>
       <TableCell className="text-right tabular-nums">
-        {lot.quantity_remaining.toLocaleString()}
+        {lot.quantity_remaining.toLocaleString(locale)}
       </TableCell>
       <TableCell className="text-right">
         <Badge variant={expiryVariant(lot.days_to_expiry)}>
-          {expiryLabel(lot.days_to_expiry)}
+          {expiryText}
         </Badge>
       </TableCell>
     </TableRow>
@@ -77,14 +83,18 @@ export function ExpiringLotsCard({
   error,
   onRetry,
 }: ExpiringLotsCardProps) {
+  const t = useTranslations("Dashboard");
+  const tLots = useTranslations("Dashboard.expiringLots");
+  const genericError = t("error.generic");
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <AlertTriangle className="size-5 text-amber-500" />
-          Expiring Lots
+          {tLots("title")}
         </CardTitle>
-        <CardDescription>Lots expiring within the next 30 days</CardDescription>
+        <CardDescription>{tLots("description")}</CardDescription>
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -95,7 +105,7 @@ export function ExpiringLotsCard({
           </div>
         ) : isError ? (
           <DashboardWidgetError
-            message={getDashboardErrorMessage(error)}
+            message={getDashboardErrorMessage(error, genericError)}
             onRetry={onRetry}
             minHeight="200px"
           />
@@ -107,21 +117,21 @@ export function ExpiringLotsCard({
           </div>
         ) : !data.has_lot_data ? (
           <p className="text-sm text-muted-foreground">
-            No lot tracking data available
+            {tLots("noLotData")}
           </p>
         ) : data.expiring_lots.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            No lots expiring in the next 30 days
+            {tLots("noExpiring")}
           </p>
         ) : (
           <div className="max-h-[400px] overflow-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Lot #</TableHead>
-                  <TableHead>Product</TableHead>
-                  <TableHead className="text-right">Qty</TableHead>
-                  <TableHead className="text-right">Expires</TableHead>
+                  <TableHead>{tLots("colLot")}</TableHead>
+                  <TableHead>{tLots("colProduct")}</TableHead>
+                  <TableHead className="text-right">{tLots("colQty")}</TableHead>
+                  <TableHead className="text-right">{tLots("colExpires")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

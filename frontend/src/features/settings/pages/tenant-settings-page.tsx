@@ -4,6 +4,7 @@ import * as React from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { toast } from "sonner"
+import { useTranslations } from "next-intl"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -11,13 +12,25 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { PageHeader } from "@/components/layout/page-header"
 import { useTenant, useUpdateTenant } from "../hooks/use-settings"
 import {
-  tenantProfileSchema,
+  createTenantProfileSchema,
   type TenantProfileFormValues,
 } from "../helpers/tenant-schemas"
 import { TenantProfileForm } from "../components/tenant-profile-form"
 import { SubscriptionInfoCard } from "../components/subscription-info-card"
 
 export function TenantSettingsPage() {
+  const t = useTranslations("SettingsTenant.tenant")
+  const tVal = useTranslations("SettingsTenant.tenant.validation")
+
+  const tenantProfileSchema = React.useMemo(
+    () =>
+      createTenantProfileSchema({
+        nameRequired: tVal("nameRequired"),
+        hexColor: tVal("hexColor"),
+      }),
+    [tVal],
+  )
+
   const { data: tenant, isLoading } = useTenant()
   const updateMutation = useUpdateTenant()
 
@@ -43,10 +56,10 @@ export function TenantSettingsPage() {
   function onSubmit(values: TenantProfileFormValues) {
     updateMutation.mutate(values, {
       onSuccess: () => {
-        toast.success("Tenant settings updated")
+        toast.success(t("toast.updated"))
       },
       onError: () => {
-        toast.error("Failed to update tenant settings")
+        toast.error(t("toast.updateFailed"))
       },
     })
   }
@@ -69,9 +82,7 @@ export function TenantSettingsPage() {
   if (!tenant) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-4 p-6">
-        <p className="text-muted-foreground">
-          Unable to load tenant information
-        </p>
+        <p className="text-muted-foreground">{t("loadError")}</p>
       </div>
     )
   }
@@ -79,8 +90,8 @@ export function TenantSettingsPage() {
   return (
     <div className="flex flex-1 flex-col gap-6 p-6">
       <PageHeader
-        title="Tenant Settings"
-        description="Manage your organisation profile and branding"
+        title={t("page.title")}
+        description={t("page.description")}
       />
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -90,10 +101,8 @@ export function TenantSettingsPage() {
         >
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Profile</CardTitle>
-              <CardDescription>
-                Update your tenant name and branding
-              </CardDescription>
+              <CardTitle className="text-lg">{t("profile.title")}</CardTitle>
+              <CardDescription>{t("profile.description")}</CardDescription>
             </CardHeader>
             <CardContent>
               <TenantProfileForm form={form} />
@@ -113,10 +122,10 @@ export function TenantSettingsPage() {
                   }
                 }}
               >
-                Reset
+                {t("reset")}
               </Button>
               <Button type="submit" disabled={updateMutation.isPending}>
-                {updateMutation.isPending ? "Saving..." : "Save Changes"}
+                {updateMutation.isPending ? t("saving") : t("save")}
               </Button>
             </CardFooter>
           </Card>

@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import type { PaginationState } from "@tanstack/react-table";
 import { PlusIcon } from "lucide-react";
@@ -19,18 +20,24 @@ import {
   useCancelReservation,
 } from "../hooks/use-reservations";
 import { useReservationFiltersStore } from "../stores/reservation-filters-store";
-import { RESERVATION_STATUSES } from "../helpers/reservation-constants";
+import { RESERVATION_STATUS_VALUES } from "../helpers/reservation-constants";
 import { ReservationTable } from "../components/reservation-table";
 import type { StockReservation } from "../types/reservation.types";
-
-const STATUS_OPTIONS: FacetedFilterOption[] = RESERVATION_STATUSES.map((s) => ({
-  label: s.label,
-  value: s.value,
-}));
 
 export function ReservationListPage() {
   const router = useRouter();
   const filters = useReservationFiltersStore();
+  const t = useTranslations("Reservations");
+  const tStatus = useTranslations("Reservations.status");
+
+  const STATUS_OPTIONS: FacetedFilterOption[] = useMemo(
+    () =>
+      RESERVATION_STATUS_VALUES.map((value) => ({
+        value,
+        label: tStatus(value),
+      })),
+    [tStatus],
+  );
 
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
@@ -48,36 +55,40 @@ export function ReservationListPage() {
   const fulfillMutation = useFulfillReservation();
   const cancelMutation = useCancelReservation();
 
+  const errMessage = useCallback(
+    (error: unknown) =>
+      (error as { message?: string }).message ?? t("errors.unknown"),
+    [t],
+  );
+
   const handleFulfill = useCallback(
     (reservation: StockReservation) => {
       fulfillMutation.mutate(reservation.id, {
         onSuccess: () => {
-          toast.success(`Reservation #${reservation.id} fulfilled`);
+          toast.success(t("toast.fulfilled", { id: reservation.id }));
         },
         onError: (error) => {
           toast.error(
-            `Failed to fulfill: ${(error as { message?: string }).message ?? "Unknown error"}`,
+            t("toast.fulfillFailed", { message: errMessage(error) }),
           );
         },
       });
     },
-    [fulfillMutation],
+    [fulfillMutation, t, errMessage],
   );
 
   const handleCancel = useCallback(
     (reservation: StockReservation) => {
       cancelMutation.mutate(reservation.id, {
         onSuccess: () => {
-          toast.success(`Reservation #${reservation.id} cancelled`);
+          toast.success(t("toast.cancelled", { id: reservation.id }));
         },
         onError: (error) => {
-          toast.error(
-            `Failed to cancel: ${(error as { message?: string }).message ?? "Unknown error"}`,
-          );
+          toast.error(t("toast.cancelFailed", { message: errMessage(error) }));
         },
       });
     },
-    [cancelMutation],
+    [cancelMutation, t, errMessage],
   );
 
   const pageCount = data ? Math.ceil(data.count / pagination.pageSize) : 0;
@@ -85,12 +96,12 @@ export function ReservationListPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Reservations"
-        description="Manage stock reservations for sales orders and manual holds."
+        title={t("list.title")}
+        description={t("list.description")}
         actions={
           <Button onClick={() => router.push("/reservations/new")}>
             <PlusIcon className="mr-2 size-4" />
-            New Reservation
+            {t("list.newReservation")}
           </Button>
         }
       />
@@ -107,7 +118,7 @@ export function ReservationListPage() {
         isLoading={isLoading}
         filterContent={
           <DataTableFacetedFilter
-            title="Status"
+            title={t("list.filterStatus")}
             options={STATUS_OPTIONS}
           />
         }

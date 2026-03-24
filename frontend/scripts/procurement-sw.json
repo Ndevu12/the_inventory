@@ -1,0 +1,246 @@
+{
+  "shared": {
+    "emDash": "—",
+    "unknownError": "Hitilafu isiyojulikana",
+    "nameSeparator": " — "
+  },
+  "paymentTerms": {
+    "net_30": "Net 30",
+    "net_60": "Net 60",
+    "net_90": "Net 90",
+    "cod": "Malipo wakati wa utoaji",
+    "prepaid": "Malipo ya mapema"
+  },
+  "poStatus": {
+    "draft": "Rasimu",
+    "confirmed": "Imethibitishwa",
+    "received": "Imepokelewa",
+    "cancelled": "Imefutwa"
+  },
+  "grnProcessStatus": {
+    "pending": "Inasubiri",
+    "processed": "Imesindikwa"
+  },
+  "suppliers": {
+    "list": {
+      "title": "Wasambazaji",
+      "description": "Simamia orodha yako ya wasambazaji",
+      "newButton": "Msambazaji mpya",
+      "searchPlaceholder": "Tafuta wasambazaji...",
+      "empty": "Hakuna wasambazaji waliopatikana.",
+      "deleteConfirm": "Futa msambazaji \"{name}\"?",
+      "toastDeleted": "Msambazaji \"{name}\" amefutwa",
+      "toastDeleteFailed": "Imeshindwa kufuta msambazaji"
+    },
+    "create": {
+      "title": "Msambazaji mpya",
+      "description": "Ongeza msambazaji mpya kwenye orodha yako",
+      "toastCreated": "Msambazaji \"{name}\" ameundwa",
+      "toastCreateFailed": "Imeshindwa kuunda msambazaji",
+      "creating": "Inaunda...",
+      "submit": "Unda msambazaji"
+    },
+    "edit": {
+      "title": "Hariri {name}",
+      "description": "Sasisha maelezo ya msambazaji",
+      "notFound": "Msambazaji hapatikani",
+      "backToList": "Rudi kwa wasambazaji",
+      "toastUpdated": "Msambazaji \"{name}\" amesasishwa",
+      "toastUpdateFailed": "Imeshindwa kusasisha msambazaji",
+      "saving": "Inahifadhi...",
+      "submit": "Hifadhi mabadiliko"
+    },
+    "columns": {
+      "code": "Msimbo",
+      "name": "Jina",
+      "contact": "Mawasiliano",
+      "email": "Barua pepe",
+      "phone": "Simu",
+      "paymentTerms": "Masharti ya malipo",
+      "leadTime": "Muda wa utoaji",
+      "status": "Hali",
+      "leadTimeDays": "{count, plural, one {siku #} other {siku #}}"
+    },
+    "form": {
+      "code": "Msimbo",
+      "name": "Jina",
+      "contactName": "Jina la mhusika",
+      "email": "Barua pepe",
+      "phone": "Simu",
+      "leadTimeDays": "Muda wa utoaji (siku)",
+      "paymentTerms": "Masharti ya malipo",
+      "address": "Anwani",
+      "notes": "Maelezo",
+      "active": "Hai",
+      "selectTerms": "Chagua masharti",
+      "placeholders": {
+        "code": "mf. SUP-001",
+        "companyName": "Jina la kampuni",
+        "contactPerson": "Mhusika",
+        "email": "barua@mfano.com",
+        "phone": "+255 700 000 000",
+        "address": "Mtaa, jiji, nambari ya posta",
+        "notes": "Maelezo ya ndani kuhusu msambazaji huyu"
+      }
+    },
+    "validation": {
+      "codeRequired": "Msimbo unahitajika",
+      "nameRequired": "Jina linahitajika",
+      "emailInvalid": "Barua pepe si halali",
+      "leadTimeMin": "Lazima iwe 0 au zaidi"
+    }
+  },
+  "purchaseOrders": {
+    "list": {
+      "title": "Maagizo ya ununuzi",
+      "description": "Simamia maagizo yaliyowekwa kwa wasambazaji.",
+      "newButton": "Agizo jipya la ununuzi",
+      "searchPlaceholder": "Tafuta maagizo ya ununuzi...",
+      "empty": "Hakuna maagizo ya ununuzi yaliyopatikana.",
+      "statusFilter": "Hali",
+      "toastConfirmed": "Agizo la ununuzi {orderNumber} limethibitishwa",
+      "toastCancelled": "Agizo la ununuzi {orderNumber} limefutwa",
+      "confirmFailed": "Imeshindwa kuthibitisha: {message}",
+      "cancelFailed": "Imeshindwa kufuta: {message}",
+      "cancelConfirm": "Futa agizo la ununuzi \"{orderNumber}\"?"
+    },
+    "create": {
+      "title": "Unda agizo la ununuzi",
+      "description": "Weka agizo jipya kwa msambazaji.",
+      "toastSuccess": "Agizo la ununuzi limeundwa kwa mafanikio",
+      "toastError": "Imeshindwa kuunda agizo la ununuzi: {message}"
+    },
+    "detail": {
+      "title": "Agizo: {orderNumber}",
+      "titleLoading": "Agizo la ununuzi",
+      "backToList": "Rudi kwenye orodha",
+      "toastConfirmed": "Agizo la ununuzi limethibitishwa",
+      "toastCancelled": "Agizo la ununuzi limefutwa",
+      "cancelConfirm": "Futa agizo hili la ununuzi?",
+      "confirmFailed": "Imeshindwa kuthibitisha: {message}",
+      "cancelFailed": "Imeshindwa kufuta: {message}"
+    },
+    "columns": {
+      "orderNumber": "Nambari ya agizo",
+      "supplier": "Msambazaji",
+      "status": "Hali",
+      "orderDate": "Tarehe ya agizo",
+      "expectedDelivery": "Uwasilishaji unaotarajiwa",
+      "total": "Jumla",
+      "created": "Imeundwa"
+    },
+    "actions": {
+      "view": "Tazama",
+      "confirm": "Thibitisha",
+      "cancel": "Futa"
+    },
+    "form": {
+      "orderDetailsTitle": "Maelezo ya agizo",
+      "orderDetailsDescription": "Taarifa za msingi za agizo la ununuzi",
+      "supplier": "Msambazaji",
+      "selectSupplier": "Chagua msambazaji...",
+      "orderDate": "Tarehe ya agizo",
+      "expectedDeliveryDate": "Tarehe ya uwasilishaji unaotarajiwa",
+      "notes": "Maelezo",
+      "notesPlaceholder": "Maelezo ya ndani kuhusu agizo hili...",
+      "lineItemsTitle": "Vipengele vya mstari",
+      "lineItemsDescription": "Bidhaa za kuagiza kwa msambazaji huyu",
+      "addLine": "Ongeza mstari",
+      "colProduct": "Bidhaa",
+      "colQuantity": "Idadi",
+      "colUnitCost": "Gharama ya kitengo",
+      "colLineTotal": "Jumla ya mstari",
+      "grandTotal": "Jumla kuu",
+      "selectProduct": "Chagua bidhaa...",
+      "unitCostPlaceholder": "0.00",
+      "creating": "Inaunda...",
+      "submit": "Unda agizo la ununuzi"
+    },
+    "detailView": {
+      "confirming": "Inathibitisha...",
+      "confirm": "Thibitisha",
+      "cancelling": "Inafuta...",
+      "cancelOrder": "Futa agizo",
+      "orderDate": "Tarehe ya agizo",
+      "expectedDelivery": "Uwasilishaji unaotarajiwa",
+      "totalCost": "Jumla ya gharama",
+      "created": "Imeundwa",
+      "notes": "Maelezo",
+      "lineItemsTitle": "Vipengele vya mstari",
+      "lineItemsCount": "{count, plural, one {kipengee #} other {vipengee #}} kwenye agizo hili",
+      "colProduct": "Bidhaa",
+      "colSku": "SKU",
+      "colQuantity": "Idadi",
+      "colUnitCost": "Gharama ya kitengo",
+      "colLineTotal": "Jumla ya mstari",
+      "grandTotal": "Jumla kuu"
+    },
+    "validation": {
+      "productRequired": "Bidhaa inahitajika",
+      "quantityMin": "Idadi lazima iwe angalau 1",
+      "unitCostRequired": "Gharama ya kitengo inahitajika",
+      "unitCostPositive": "Lazima iwe nambari chanya",
+      "supplierRequired": "Msambazaji anahitajika",
+      "orderDateRequired": "Tarehe ya agizo inahitajika",
+      "atLeastOneLine": "Angalau kipengele kimoja cha mstari kinahitajika"
+    }
+  },
+  "grn": {
+    "list": {
+      "title": "Hati za bidhaa zilizopokelewa",
+      "description": "Fuatilia na usindike bidhaa zilizopokelewa dhidi ya maagizo ya ununuzi",
+      "newButton": "Hati mpya ya GRN",
+      "empty": "Hakuna hati za GRN zilizopatikana.",
+      "statusFilter": "Hali",
+      "processConfirm": "Sindika GRN \"{grnNumber}\"? Itaunda harakati za hesabu na haiwezi kutenduliwa.",
+      "toastProcessed": "GRN \"{grnNumber}\" imesindikwa — harakati za hesabu zimeundwa",
+      "toastProcessFailed": "Imeshindwa kusindika GRN",
+      "deleteConfirm": "Futa GRN \"{grnNumber}\"?",
+      "toastDeleted": "GRN \"{grnNumber}\" imefutwa",
+      "toastDeleteFailed": "Imeshindwa kufuta GRN"
+    },
+    "create": {
+      "title": "Hati mpya ya bidhaa zilizopokelewa",
+      "description": "Rekodi bidhaa zilizopokelewa kutoka agizo la ununuzi",
+      "toastCreated": "GRN \"{grnNumber}\" imeundwa",
+      "toastError": "Imeshindwa kuunda GRN",
+      "creating": "Inaunda...",
+      "submit": "Unda GRN"
+    },
+    "columns": {
+      "grnNumber": "Nambari ya GRN",
+      "purchaseOrder": "Agizo la ununuzi",
+      "receivedDate": "Tarehe ya kupokea",
+      "location": "Mahali",
+      "status": "Hali",
+      "created": "Imeundwa"
+    },
+    "actions": {
+      "view": "Tazama",
+      "receiveGoods": "Pokea bidhaa"
+    },
+    "form": {
+      "detailsTitle": "Maelezo ya GRN",
+      "detailsDescription": "Rekodi bidhaa zilizopokelewa dhidi ya agizo la ununuzi.",
+      "grnNumber": "Nambari ya GRN",
+      "purchaseOrder": "Agizo la ununuzi",
+      "receivedDate": "Tarehe ya kupokea",
+      "location": "Mahali",
+      "notesSectionTitle": "Maelezo ya ziada",
+      "notes": "Maelezo",
+      "placeholders": {
+        "grnNumber": "mf. GRN-2026-001",
+        "notes": "Hali ya bidhaa, tofauti, nk."
+      },
+      "loading": "Inapakia...",
+      "selectPO": "Chagua agizo la ununuzi",
+      "selectLocation": "Chagua mahali"
+    },
+    "validation": {
+      "grnNumberRequired": "Nambari ya GRN inahitajika",
+      "purchaseOrderRequired": "Agizo la ununuzi linahitajika",
+      "receivedDateRequired": "Tarehe ya kupokea inahitajika",
+      "locationRequired": "Mahali panahitajika"
+    }
+  }
+}

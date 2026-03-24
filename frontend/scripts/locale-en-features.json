@@ -1,0 +1,291 @@
+{
+  "BulkOperations": {
+    "errors": {
+      "unknown": "Unknown error"
+    },
+    "page": {
+      "title": "Bulk Operations",
+      "description": "Perform stock transfers, adjustments, and revaluations in bulk."
+    },
+    "tabs": {
+      "transfer": "Bulk Transfer",
+      "adjustment": "Bulk Adjustment",
+      "revalue": "Bulk Revalue"
+    },
+    "shared": {
+      "loading": "Loading...",
+      "selectProduct": "Select product",
+      "selectSource": "Select source",
+      "selectDestination": "Select destination",
+      "selectLocation": "Select location",
+      "addProduct": "Add Product",
+      "product": "Product",
+      "quantity": "Quantity",
+      "newQuantity": "New Quantity",
+      "newUnitCost": "New Unit Cost",
+      "processing": "Processing...",
+      "notes": "Notes",
+      "reference": "Reference",
+      "referencePlaceholder": "Optional reference number"
+    },
+    "transfer": {
+      "cardTitle": "Transfer Details",
+      "cardDescription": "Move stock from one location to another in bulk.",
+      "sourceLocation": "Source Location",
+      "destinationLocation": "Destination Location",
+      "productsTitle": "Products",
+      "productsDescription": "Add products and quantities to transfer.",
+      "notesPlaceholder": "Optional notes about this transfer...",
+      "execute": "Execute Transfer",
+      "toastNoItems": "Add at least one product to transfer",
+      "toastAllSuccess": "All {count} items transferred successfully",
+      "toastPartial": "{success} of {total} items transferred",
+      "toastError": "Bulk transfer failed"
+    },
+    "adjustment": {
+      "cardTitle": "Adjustment Details",
+      "cardDescription": "Set new stock quantities for products at a specific location.",
+      "location": "Location",
+      "productsTitle": "Products",
+      "productsDescription": "Specify the new quantity for each product.",
+      "notesPlaceholder": "Optional notes about this adjustment...",
+      "execute": "Execute Adjustment",
+      "toastNoItems": "Add at least one product to adjust",
+      "toastAllSuccess": "All {count} items adjusted successfully",
+      "toastPartial": "{success} of {total} items adjusted",
+      "toastError": "Bulk adjustment failed"
+    },
+    "revalue": {
+      "cardTitle": "Products to Revalue",
+      "cardDescription": "Set new unit costs for each product. This updates the product record directly without creating stock movements.",
+      "unitCostPlaceholder": "0.00",
+      "execute": "Execute Revalue",
+      "toastNoItems": "Add at least one product with a valid unit cost",
+      "toastAllSuccess": "All {count} products revalued successfully",
+      "toastPartial": "{success} of {total} products revalued",
+      "toastError": "Bulk revalue failed"
+    },
+    "result": {
+      "titleSuccess": "Operation Completed Successfully",
+      "titleFailed": "Operation Failed",
+      "titlePartial": "Operation Partially Completed",
+      "description": "{success} of {total} items processed successfully",
+      "total": "Total",
+      "succeeded": "Succeeded",
+      "failed": "Failed",
+      "errorsTitle": "Errors",
+      "errorsDescription": "The following items could not be processed",
+      "errorLine": "Item {index} (Product {productId})",
+      "startNew": "Start New Operation"
+    },
+    "validation": {
+      "sourceLocationRequired": "Source location is required",
+      "destinationLocationRequired": "Destination location is required",
+      "locationRequired": "Location is required"
+    }
+  },
+  "CycleCounts": {
+    "errors": {
+      "unknown": "Unknown error"
+    },
+    "list": {
+      "title": "Cycle Counts",
+      "description": "Schedule and manage physical inventory count cycles.",
+      "newCycle": "New Cycle Count",
+      "filterStatus": "Status",
+      "searchPlaceholder": "Search cycle counts...",
+      "empty": "No cycle counts found."
+    },
+    "create": {
+      "title": "Start Cycle Count",
+      "description": "Create a new physical inventory count cycle.",
+      "toastSuccess": "Cycle count started successfully",
+      "toastFailed": "Failed to start cycle: {message}"
+    },
+    "form": {
+      "cardTitle": "New Cycle Count",
+      "name": "Name *",
+      "namePlaceholder": "e.g., Q1 2026 Full Count",
+      "locationOptional": "Location (optional)",
+      "allLocationsPlaceholder": "All Locations (Full Warehouse)",
+      "allLocationsOption": "All Locations (Full Warehouse)",
+      "scheduledDate": "Scheduled Date *",
+      "notesOptional": "Notes (optional)",
+      "notesPlaceholder": "Any additional notes about this cycle count...",
+      "submit": "Start Cycle Count",
+      "submitting": "Starting...",
+      "validation": {
+        "nameRequired": "Name is required",
+        "scheduledRequired": "Scheduled date is required"
+      }
+    },
+    "notFound": {
+      "title": "Cycle Not Found",
+      "body": "The cycle count you are looking for does not exist."
+    },
+    "detail": {
+      "description": "{location} — {scheduled}: {date}",
+      "allLocations": "All Locations",
+      "scheduled": "Scheduled",
+      "markComplete": "Mark Complete",
+      "completing": "Completing..."
+    },
+    "tabs": {
+      "countLines": "Count Lines ({counted}/{total})",
+      "variances": "Variances"
+    },
+    "status": {
+      "scheduled": "Scheduled",
+      "in_progress": "In Progress",
+      "completed": "Completed",
+      "reconciled": "Reconciled"
+    },
+    "toast": {
+      "recordSuccess": "Count recorded",
+      "recordFailed": "Failed to record count: {message}",
+      "completeSuccess": "Cycle marked as completed",
+      "completeFailed": "Failed to complete cycle: {message}",
+      "reconcileSuccess": "Cycle reconciled successfully",
+      "reconcileFailed": "Failed to reconcile: {message}"
+    },
+    "countLine": {
+      "pendingTitle": "Pending Counts",
+      "pendingRemaining": "{count, plural, one {# item remaining} other {# items remaining}}",
+      "countedTitle": "Counted",
+      "countedSummary": "{count, plural, one {# item counted} other {# items counted}}",
+      "recordCount": "Record Count",
+      "physicalCount": "Physical Count *",
+      "notes": "Notes",
+      "notesPlaceholder": "Optional notes...",
+      "save": "Save",
+      "saving": "Saving...",
+      "recount": "Recount",
+      "systemQty": "System qty: {qty}",
+      "systemLabel": "System:",
+      "countedLabel": "Counted:",
+      "locationSystemLine": "{location} — {systemQty}",
+      "emptyLines": "No count lines found for this cycle.",
+      "validation": {
+        "quantityInt": "Quantity must be a whole number",
+        "quantityNonNegative": "Quantity cannot be negative"
+      }
+    },
+    "variance": {
+      "summaryTotalLines": "Total Lines",
+      "summaryShortages": "Shortages",
+      "summarySurpluses": "Surpluses",
+      "summaryMatches": "Matches",
+      "resolveTitle": "Resolve Variances",
+      "resolveNeedCount": "{count, plural, one {# line with variances needs resolution} other {# lines with variances need resolution}}",
+      "acceptAll": "Accept All",
+      "investigateAll": "Investigate All",
+      "rejectAll": "Reject All",
+      "resolution": "Resolution",
+      "resolutionPlaceholder": "Select resolution...",
+      "inlineSystem": "System: {qty}",
+      "inlineCounted": "Counted: {qty}",
+      "rootCause": "Root Cause",
+      "rootCausePlaceholder": "Optional explanation...",
+      "reconcile": "Reconcile Cycle",
+      "reconciling": "Reconciling...",
+      "matchingTitle": "Matching Lines",
+      "matchingNoVariance": "{count, plural, one {# line with no variance (auto-accepted)} other {# lines with no variance (auto-accepted)}}",
+      "qtyMatch": "Qty: {qty} (match)",
+      "completeToReview": "Complete all counts and mark the cycle as completed to review variances.",
+      "emptyVariances": "No variances recorded.",
+      "type": {
+        "shortage": "Shortage",
+        "surplus": "Surplus",
+        "match": "Match"
+      },
+      "resolutionOption": {
+        "accepted": "Accept (Create Adjustment)",
+        "investigating": "Investigate",
+        "rejected": "Reject (No Change)"
+      }
+    },
+    "table": {
+      "name": "Name",
+      "location": "Location",
+      "allLocations": "All Locations",
+      "status": "Status",
+      "scheduled": "Scheduled",
+      "progress": "Progress",
+      "startedBy": "Started By",
+      "created": "Created"
+    },
+    "varianceTable": {
+      "product": "Product",
+      "location": "Location",
+      "systemQty": "System Qty",
+      "physicalQty": "Physical Qty",
+      "variance": "Variance",
+      "type": "Type",
+      "resolution": "Resolution",
+      "resolvedBy": "Resolved By"
+    }
+  },
+  "Reservations": {
+    "errors": {
+      "unknown": "Unknown error"
+    },
+    "list": {
+      "title": "Reservations",
+      "description": "Manage stock reservations for sales orders and manual holds.",
+      "newReservation": "New Reservation",
+      "filterStatus": "Status"
+    },
+    "table": {
+      "searchPlaceholder": "Search reservations...",
+      "empty": "No reservations found.",
+      "product": "Product",
+      "location": "Location",
+      "qty": "Qty",
+      "status": "Status",
+      "salesOrder": "Sales Order",
+      "reservedBy": "Reserved By",
+      "expires": "Expires",
+      "created": "Created",
+      "fulfill": "Fulfill",
+      "cancelReservation": "Cancel"
+    },
+    "toast": {
+      "fulfilled": "Reservation #{id} fulfilled",
+      "fulfillFailed": "Failed to fulfill: {message}",
+      "cancelled": "Reservation #{id} cancelled",
+      "cancelFailed": "Failed to cancel: {message}",
+      "createSuccess": "Reservation created successfully",
+      "createFailed": "Failed to create reservation: {message}"
+    },
+    "create": {
+      "title": "Create Reservation",
+      "description": "Reserve stock for a sales order or manual hold."
+    },
+    "form": {
+      "cardTitle": "New Reservation",
+      "product": "Product *",
+      "productPlaceholder": "Select a product...",
+      "location": "Location *",
+      "locationPlaceholder": "Select a location...",
+      "quantity": "Quantity *",
+      "salesOrderOptional": "Sales Order (optional)",
+      "salesOrderNone": "None",
+      "notesOptional": "Notes (optional)",
+      "notesPlaceholder": "Any additional notes...",
+      "submit": "Create Reservation",
+      "submitting": "Creating...",
+      "validation": {
+        "productRequired": "Product is required",
+        "locationRequired": "Location is required",
+        "quantityRequired": "Quantity is required"
+      }
+    },
+    "status": {
+      "pending": "Pending",
+      "confirmed": "Confirmed",
+      "fulfilled": "Fulfilled",
+      "cancelled": "Cancelled",
+      "expired": "Expired"
+    }
+  }
+}

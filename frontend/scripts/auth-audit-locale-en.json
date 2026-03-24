@@ -1,0 +1,198 @@
+{
+  "Auth": {
+    "loading": "Loading…",
+    "invalidCredentials": "Invalid username or password",
+    "registrationFailed": "Registration failed",
+    "acceptInvitationFailed": "Could not accept invitation",
+    "login": {
+      "title": "Welcome back",
+      "subtitle": "Sign in to The Inventory",
+      "noOrgPrompt": "Don't have an organization?",
+      "createOrgLink": "Create one",
+      "username": "Username",
+      "password": "Password",
+      "usernamePlaceholder": "Enter your username",
+      "passwordPlaceholder": "Enter your password",
+      "signIn": "Sign in",
+      "signingIn": "Signing in…"
+    },
+    "marketing": {
+      "title": "Powerful inventory management",
+      "subtitle": "Everything you need to run your inventory efficiently",
+      "catalogTitle": "Catalog management",
+      "catalogDescription": "Organize products with SKUs, descriptions, images, and hierarchical categories",
+      "trackingTitle": "Real-time tracking",
+      "trackingDescription": "Follow stock movements across warehouses with instant updates",
+      "alertsTitle": "Smart alerts",
+      "alertsDescription": "Set reorder points and get notified when stock runs low",
+      "searchTitle": "Advanced search",
+      "searchDescription": "Find products, categories, and locations with full-text search"
+    },
+    "register": {
+      "title": "Create your organization",
+      "description": "Register a new organization and set up your account as the owner.",
+      "organizationName": "Organization name",
+      "organizationPlaceholder": "Acme Corp",
+      "slugLabel": "URL slug (optional)",
+      "slugHint": "— URL-friendly identifier, e.g. acme-corp",
+      "slugPlaceholder": "acme-corp",
+      "username": "Username",
+      "usernamePlaceholder": "jdoe",
+      "email": "Email",
+      "emailPlaceholder": "jane@acme.com",
+      "firstName": "First name",
+      "firstNamePlaceholder": "Jane",
+      "lastName": "Last name",
+      "lastNamePlaceholder": "Doe",
+      "password": "Password",
+      "passwordPlaceholder": "Min. 8 characters",
+      "submit": "Create organization",
+      "submitting": "Creating…",
+      "hasAccountPrompt": "Already have an account?",
+      "signInLink": "Sign in"
+    },
+    "account": {
+      "loadError": "Unable to load your account. Try signing in again.",
+      "pageTitle": "Account",
+      "pageDescription": "Your profile and password apply to every tenant you belong to.",
+      "profileTitle": "Profile",
+      "profileDescription": "Your name and email apply to each organization you are part of.",
+      "username": "Username",
+      "usernameReadOnlyHint": "Username cannot be changed here.",
+      "email": "Email",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "reset": "Reset",
+      "saveProfile": "Save profile",
+      "savingProfile": "Saving…",
+      "passwordTitle": "Password",
+      "passwordDescription": "Use a strong password you don't reuse on other sites.",
+      "currentPassword": "Current password",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm new password",
+      "updatePassword": "Update password",
+      "updatingPassword": "Updating…",
+      "workspaceTitle": "Current workspace",
+      "workspaceNoTenantDescription": "Select an organization from the header switcher to work on inventory.",
+      "workspaceDescription": "Inventory data and actions are scoped to this organization.",
+      "organisation": "Organization",
+      "slug": "Slug",
+      "yourRole": "Your role"
+    },
+    "guard": {
+      "loading": "Loading…"
+    },
+    "invitation": {
+      "invalidTitle": "Invalid invitation",
+      "invalidDescription": "This invitation link is invalid, expired, or has already been used.",
+      "goToLogin": "Go to sign in",
+      "processed": {
+        "accepted": {
+          "title": "Invitation accepted",
+          "description": "This invitation has already been accepted."
+        },
+        "cancelled": {
+          "title": "Invitation cancelled",
+          "description": "This invitation was cancelled."
+        },
+        "expired": {
+          "title": "Invitation expired",
+          "description": "This invitation has expired."
+        }
+      },
+      "processedUnknownTitle": "Invitation ({status})",
+      "processedUnknownDescription": "This invitation is no longer pending.",
+      "joinTitle": "Join {tenant}",
+      "invitedAs": "You are invited to join as",
+      "invitationFor": "Invitation for {email}",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "username": "Username",
+      "password": "Password",
+      "firstNamePlaceholder": "Jane",
+      "lastNamePlaceholder": "Doe",
+      "usernamePlaceholder": "jdoe",
+      "passwordPlaceholderNew": "Min. 8 characters",
+      "existingAccountHint": "An account already exists with this email. Enter your password to confirm your identity and join the organization.",
+      "existingPassword": "Password",
+      "existingPasswordPlaceholder": "Your password",
+      "joining": "Joining…",
+      "joinTenant": "Join {tenant}",
+      "expires": "Expires on {date}"
+    },
+    "validation": {
+      "usernameRequired": "Username is required",
+      "passwordRequired": "Password is required",
+      "emailRequired": "Email is required",
+      "validEmail": "A valid email address is required",
+      "currentPasswordRequired": "Current password is required",
+      "newPasswordMin": "New password must be at least 8 characters",
+      "confirmPasswordRequired": "Please confirm your new password",
+      "passwordsMismatch": "Passwords do not match",
+      "organizationNameRequired": "Organization name is required",
+      "slugFormat": "Slug must be lowercase letters, numbers, and hyphens only",
+      "registerPasswordMin": "Password must be at least 8 characters"
+    }
+  },
+  "Audit": {
+    "system": "System",
+    "emDash": "—",
+    "tenantPage": {
+      "title": "Audit log",
+      "description": "Audit trail for compliance and operational tracking.",
+      "exportCsv": "Export CSV",
+      "exportFailed": "CSV export failed",
+      "empty": "No audit log entries."
+    },
+    "platformPage": {
+      "title": "Platform audit log",
+      "description": "Unified audit trail across all tenants. Superuser only.",
+      "exportCsv": "Export CSV",
+      "exportExcel": "Export Excel",
+      "exportCsvSuccess": "CSV exported successfully",
+      "exportExcelSuccess": "Excel exported successfully",
+      "exportCsvFailed": "CSV export failed",
+      "exportExcelFailed": "Excel export failed",
+      "empty": "No platform audit log entries.",
+      "allTenants": "All tenants",
+      "tenantPlaceholder": "All tenants"
+    },
+    "columns": {
+      "timestamp": "Timestamp",
+      "action": "Action",
+      "product": "Product",
+      "user": "User",
+      "ipAddress": "IP address",
+      "tenant": "Tenant",
+      "view": "View"
+    },
+    "filters": {
+      "actionType": "Action type",
+      "fromDate": "From date",
+      "toDate": "To date"
+    },
+    "detail": {
+      "title": "Audit log entry #{id}",
+      "recordedOn": "Recorded on {datetime}",
+      "action": "Action",
+      "product": "Product",
+      "user": "User",
+      "ipAddress": "IP address",
+      "detailsJson": "Details (JSON)"
+    },
+    "actionLabels": {
+      "stock_received": "Stock received",
+      "stock_issued": "Stock issued",
+      "stock_transferred": "Stock transferred",
+      "stock_adjusted": "Stock adjusted",
+      "reservation_created": "Reservation created",
+      "reservation_fulfilled": "Reservation fulfilled",
+      "reservation_cancelled": "Reservation cancelled",
+      "cycle_count_started": "Cycle count started",
+      "cycle_count_reconciled": "Cycle count reconciled",
+      "bulk_operation": "Bulk operation",
+      "tenant_accessed": "Tenant accessed",
+      "tenant_export": "Tenant data exported"
+    }
+  }
+}

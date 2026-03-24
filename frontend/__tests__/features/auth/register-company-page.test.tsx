@@ -3,9 +3,11 @@
  */
 import type { ComponentProps } from "react";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { NextIntlClientProvider } from "next-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { RegisterCompanyPage } from "@/features/auth/pages/register-company-page";
+import messages from "../../../public/locales/en.json";
 import { clearQueryClientCache } from "@/lib/providers";
 import {
   renderWithProviders,
@@ -46,7 +48,11 @@ describe("RegisterCompanyPage rendering", () => {
 
   it("renders the registration shell when public signup is enabled", async () => {
     clearQueryClientCache();
-    renderWithProviders(<RegisterCompanyPage />);
+    renderWithProviders(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <RegisterCompanyPage />
+      </NextIntlClientProvider>,
+    );
 
     await waitFor(() => {
       expect(screen.getByText(/create your organization/i)).toBeInTheDocument();

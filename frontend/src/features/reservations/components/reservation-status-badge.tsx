@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { ReservationStatus } from "../types/reservation.types";
@@ -16,8 +17,9 @@ export function ReservationStatusBadge({
   label,
   className,
 }: ReservationStatusBadgeProps) {
+  const t = useTranslations("Reservations.status");
   const colors = STATUS_COLOR_MAP[status];
-  const displayLabel = label ?? status.charAt(0).toUpperCase() + status.slice(1);
+  const displayLabel = label ?? t(status);
 
   return (
     <Badge

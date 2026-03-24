@@ -1,15 +1,18 @@
-import { cn } from "@/lib/utils";
+"use client"
+
+import { useTranslations } from "next-intl"
+import { cn } from "@/lib/utils"
 
 interface CapacityBarProps {
-  currentUtilization: number;
-  maxCapacity: number | null;
-  className?: string;
+  currentUtilization: number
+  maxCapacity: number | null
+  className?: string
 }
 
 function utilizationColor(pct: number) {
-  if (pct < 50) return "bg-emerald-500";
-  if (pct < 80) return "bg-amber-500";
-  return "bg-red-500";
+  if (pct < 50) return "bg-emerald-500"
+  if (pct < 80) return "bg-amber-500"
+  return "bg-red-500"
 }
 
 export function CapacityBar({
@@ -17,6 +20,8 @@ export function CapacityBar({
   maxCapacity,
   className,
 }: CapacityBarProps) {
+  const t = useTranslations("Inventory")
+
   if (maxCapacity === null) {
     return (
       <div
@@ -28,15 +33,15 @@ export function CapacityBar({
         <span className="tabular-nums font-medium text-foreground">
           {currentUtilization}
         </span>
-        <span>units &middot; unlimited</span>
+        <span>{t("shared.capacityUnlimited")}</span>
       </div>
-    );
+    )
   }
 
   const pct =
     maxCapacity > 0
       ? Math.min((currentUtilization / maxCapacity) * 100, 100)
-      : 0;
+      : 0
 
   return (
     <div className={cn("space-y-1", className)}>
@@ -56,5 +61,5 @@ export function CapacityBar({
         />
       </div>
     </div>
-  );
+  )
 }

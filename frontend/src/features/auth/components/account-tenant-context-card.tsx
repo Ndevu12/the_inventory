@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import {
   Card,
   CardContent,
@@ -10,6 +12,7 @@ import {
 import { useAuth } from "../context/auth-context";
 
 export function AccountTenantContextCard() {
+  const t = useTranslations("Auth.account");
   const { tenantSlug, memberships } = useAuth();
   const current = memberships.find((m) => m.tenant__slug === tenantSlug);
 
@@ -17,11 +20,8 @@ export function AccountTenantContextCard() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Current workspace</CardTitle>
-          <CardDescription>
-            Select an organisation from the switcher in the header to work in
-            inventory.
-          </CardDescription>
+          <CardTitle className="text-lg">{t("workspaceTitle")}</CardTitle>
+          <CardDescription>{t("workspaceNoTenantDescription")}</CardDescription>
         </CardHeader>
       </Card>
     );
@@ -30,22 +30,20 @@ export function AccountTenantContextCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">Current workspace</CardTitle>
-        <CardDescription>
-          Inventory data and actions are scoped to this organisation.
-        </CardDescription>
+        <CardTitle className="text-lg">{t("workspaceTitle")}</CardTitle>
+        <CardDescription>{t("workspaceDescription")}</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-2 text-sm">
         <div>
-          <p className="text-muted-foreground">Organisation</p>
+          <p className="text-muted-foreground">{t("organisation")}</p>
           <p className="font-medium">{current.tenant__name}</p>
         </div>
         <div>
-          <p className="text-muted-foreground">Slug</p>
+          <p className="text-muted-foreground">{t("slug")}</p>
           <p className="font-mono text-xs">{current.tenant__slug}</p>
         </div>
         <div>
-          <p className="text-muted-foreground">Your role</p>
+          <p className="text-muted-foreground">{t("yourRole")}</p>
           <p className="font-medium capitalize">{current.role}</p>
         </div>
       </CardContent>

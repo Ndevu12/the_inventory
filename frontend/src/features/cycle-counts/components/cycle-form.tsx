@@ -1,7 +1,9 @@
 "use client";
 
+import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -44,6 +46,19 @@ export function CycleForm({
   onCancel,
   isSubmitting = false,
 }: CycleFormProps) {
+  const t = useTranslations("CycleCounts.form");
+  const tVal = useTranslations("CycleCounts.form.validation");
+  const tCommon = useTranslations("Common.actions");
+
+  const schema = useMemo(
+    () =>
+      createCycleSchema({
+        nameRequired: tVal("nameRequired"),
+        scheduledRequired: tVal("scheduledRequired"),
+      }),
+    [tVal],
+  );
+
   const {
     register,
     handleSubmit,
@@ -51,7 +66,7 @@ export function CycleForm({
     setValue,
     formState: { errors },
   } = useForm<CreateCycleFormValues>({
-    resolver: zodResolver(createCycleSchema),
+    resolver: zodResolver(schema),
     defaultValues: {
       name: "",
       location: "",
@@ -73,15 +88,15 @@ export function CycleForm({
     <form onSubmit={handleSubmit(handleFormSubmit)}>
       <Card>
         <CardHeader>
-          <CardTitle>New Cycle Count</CardTitle>
+          <CardTitle>{t("cardTitle")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="name">Name *</Label>
+              <Label htmlFor="name">{t("name")}</Label>
               <Input
                 id="name"
-                placeholder="e.g., Q1 2026 Full Count"
+                placeholder={t("namePlaceholder")}
                 {...register("name")}
               />
               {errors.name && (
@@ -92,7 +107,7 @@ export function CycleForm({
             </div>
 
             <div className="space-y-2">
-              <Label>Location (optional)</Label>
+              <Label>{t("locationOptional")}</Label>
               <Select
                 value={watch("location") || ""}
                 onValueChange={(val) => {
@@ -105,11 +120,11 @@ export function CycleForm({
                 }}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="All Locations (Full Warehouse)" />
+                  <SelectValue placeholder={t("allLocationsPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__all__">
-                    All Locations (Full Warehouse)
+                    {t("allLocationsOption")}
                   </SelectItem>
                   {locations.map((l) => (
                     <SelectItem key={l.id} value={l.id.toString()}>
@@ -123,7 +138,7 @@ export function CycleForm({
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="scheduled_date">Scheduled Date *</Label>
+              <Label htmlFor="scheduled_date">{t("scheduledDate")}</Label>
               <Input
                 id="scheduled_date"
                 type="date"
@@ -138,21 +153,21 @@ export function CycleForm({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="notes">Notes (optional)</Label>
+            <Label htmlFor="notes">{t("notesOptional")}</Label>
             <Textarea
               id="notes"
               rows={3}
-              placeholder="Any additional notes about this cycle count..."
+              placeholder={t("notesPlaceholder")}
               {...register("notes")}
             />
           </div>
         </CardContent>
         <CardFooter className="flex justify-end gap-2">
           <Button type="button" variant="outline" onClick={onCancel}>
-            Cancel
+            {tCommon("cancel")}
           </Button>
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Starting..." : "Start Cycle Count"}
+            {isSubmitting ? t("submitting") : t("submit")}
           </Button>
         </CardFooter>
       </Card>

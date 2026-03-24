@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -16,7 +17,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { User } from "@/lib/auth-store";
-import { profileSchema, type ProfileFormValues } from "../helpers/auth-schemas";
+import {
+  createProfileSchema,
+  type ProfileFormValues,
+} from "../helpers/auth-schemas";
 import { useUpdateProfile } from "../hooks/use-auth";
 
 interface AccountProfileFormProps {
@@ -24,14 +28,26 @@ interface AccountProfileFormProps {
 }
 
 export function AccountProfileForm({ user }: AccountProfileFormProps) {
+  const t = useTranslations("Auth.account");
+  const tVal = useTranslations("Auth.validation");
   const updateMutation = useUpdateProfile();
+
+  const schema = React.useMemo(
+    () =>
+      createProfileSchema({
+        emailRequired: tVal("emailRequired"),
+        validEmail: tVal("validEmail"),
+      }),
+    [tVal],
+  );
+
   const {
     register,
     handleSubmit,
     reset,
     formState: { errors, isDirty },
   } = useForm<ProfileFormValues>({
-    resolver: zodResolver(profileSchema),
+    resolver: zodResolver(schema),
     defaultValues: {
       email: user.email,
       first_name: user.first_name ?? "",
@@ -58,15 +74,13 @@ export function AccountProfileForm({ user }: AccountProfileFormProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">Profile</CardTitle>
-        <CardDescription>
-          Your name and email apply across every organisation you belong to.
-        </CardDescription>
+        <CardTitle className="text-lg">{t("profileTitle")}</CardTitle>
+        <CardDescription>{t("profileDescription")}</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit(onSubmit)}>
         <CardContent className="grid gap-4">
           <div className="grid gap-2">
-            <Label htmlFor="account-username">Username</Label>
+            <Label htmlFor="account-username">{t("username")}</Label>
             <Input
               id="account-username"
               value={user.username}
@@ -75,11 +89,11 @@ export function AccountProfileForm({ user }: AccountProfileFormProps) {
               className="bg-muted"
             />
             <p className="text-xs text-muted-foreground">
-              Username cannot be changed here.
+              {t("usernameReadOnlyHint")}
             </p>
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="account-email">Email</Label>
+            <Label htmlFor="account-email">{t("email")}</Label>
             <Input
               id="account-email"
               type="email"
@@ -94,7 +108,7 @@ export function AccountProfileForm({ user }: AccountProfileFormProps) {
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="grid gap-2">
-              <Label htmlFor="account-first-name">First name</Label>
+              <Label htmlFor="account-first-name">{t("firstName")}</Label>
               <Input
                 id="account-first-name"
                 autoComplete="given-name"
@@ -109,7 +123,7 @@ export function AccountProfileForm({ user }: AccountProfileFormProps) {
               )}
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="account-last-name">Last name</Label>
+              <Label htmlFor="account-last-name">{t("lastName")}</Label>
               <Input
                 id="account-last-name"
                 autoComplete="family-name"
@@ -138,10 +152,10 @@ export function AccountProfileForm({ user }: AccountProfileFormProps) {
               })
             }
           >
-            Reset
+            {t("reset")}
           </Button>
           <Button type="submit" disabled={updateMutation.isPending || !isDirty}>
-            {updateMutation.isPending ? "Saving…" : "Save profile"}
+            {updateMutation.isPending ? t("savingProfile") : t("saveProfile")}
           </Button>
         </CardFooter>
       </form>

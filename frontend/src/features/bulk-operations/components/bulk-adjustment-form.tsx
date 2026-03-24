@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { PlusIcon, Trash2Icon } from "lucide-react";
 import {
@@ -23,10 +24,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useBulkProducts, useBulkLocations, useBulkAdjustment } from "../hooks/use-bulk";
+import {
+  useBulkProducts,
+  useBulkLocations,
+  useBulkAdjustment,
+} from "../hooks/use-bulk";
 import { useAdjustmentItemsStore } from "../stores/bulk-items-store";
 import {
-  bulkAdjustmentSchema,
+  createBulkAdjustmentSchema,
   type BulkAdjustmentFormValues,
 } from "../helpers/bulk-schemas";
 import { BulkResultSummary } from "./bulk-result-summary";
@@ -34,6 +39,17 @@ import type { BulkOperationResult, BulkAdjustmentPayload } from "../api/bulk-api
 
 export function BulkAdjustmentForm() {
   const [result, setResult] = React.useState<BulkOperationResult | null>(null);
+  const tAdjust = useTranslations("BulkOperations.adjustment");
+  const tVal = useTranslations("BulkOperations.validation");
+  const tShared = useTranslations("BulkOperations.shared");
+
+  const schema = React.useMemo(
+    () =>
+      createBulkAdjustmentSchema({
+        locationRequired: tVal("locationRequired"),
+      }),
+    [tVal],
+  );
 
   const { data: productsData, isLoading: productsLoading } = useBulkProducts();
   const { data: locationsData, isLoading: locationsLoading } = useBulkLocations();
@@ -46,7 +62,7 @@ export function BulkAdjustmentForm() {
     useAdjustmentItemsStore();
 
   const form = useForm<BulkAdjustmentFormValues>({
-    resolver: zodResolver(bulkAdjustmentSchema),
+    resolver: zodResolver(schema),
     defaultValues: {
       location: undefined as unknown as number,
       notes: "",
@@ -62,7 +78,7 @@ export function BulkAdjustmentForm() {
       (l) => l.product_id && l.new_quantity >= 0,
     );
     if (validItems.length === 0) {
-      toast.error("Add at least one product to adjust");
+      toast.error(tAdjust("toastNoItems"));
       return;
     }
 
@@ -79,16 +95,21 @@ export function BulkAdjustmentForm() {
       onSuccess: (data) => {
         setResult(data);
         if (data.failure_count === 0) {
-          toast.success(`All ${data.total_count} items adjusted successfully`);
+          toast.success(
+            tAdjust("toastAllSuccess", { count: data.total_count }),
+          );
         } else {
           toast.warning(
-            `${data.success_count} of ${data.total_count} items adjusted`,
+            tAdjust("toastPartial", {
+              success: data.success_count,
+              total: data.total_count,
+            }),
           );
         }
       },
       onError: (error) => {
         const message =
-          (error as { message?: string }).message ?? "Bulk adjustment failed";
+          (error as { message?: string }).message ?? tAdjust("toastError");
         toast.error(message);
       },
     });
@@ -111,14 +132,12 @@ export function BulkAdjustmentForm() {
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Adjustment Details</CardTitle>
-          <CardDescription>
-            Set new stock quantities for products at a specific location.
-          </CardDescription>
+          <CardTitle>{tAdjust("cardTitle")}</CardTitle>
+          <CardDescription>{tAdjust("cardDescription")}</CardDescription>
         </CardHeader>
         <CardContent>
           <FormField
-            label="Location"
+            label={tAdjust("location")}
             error={form.formState.errors.location?.message}
           >
             <Select
@@ -133,7 +152,9 @@ export function BulkAdjustmentForm() {
               <SelectTrigger className="w-full sm:w-80">
                 <SelectValue
                   placeholder={
-                    locationsLoading ? "Loading..." : "Select location"
+                    locationsLoading
+                      ? tShared("loading")
+                      : tShared("selectLocation")
                   }
                 />
               </SelectTrigger>
@@ -153,22 +174,22 @@ export function BulkAdjustmentForm() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Products</CardTitle>
+              <CardTitle>{tAdjust("productsTitle")}</CardTitle>
               <CardDescription>
-                Specify the new quantity for each product.
+                {tAdjust("productsDescription")}
               </CardDescription>
             </div>
             <Button type="button" variant="outline" size="sm" onClick={addLine}>
               <PlusIcon className="mr-1 size-4" />
-              Add Product
+              {tShared("addProduct")}
             </Button>
           </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
             <div className="grid grid-cols-[1fr_140px_40px] gap-3 text-sm font-medium text-muted-foreground">
-              <span>Product</span>
-              <span>New Quantity</span>
+              <span>{tShared("product")}</span>
+              <span>{tShared("newQuantity")}</span>
               <span />
             </div>
             {lines.map((line) => (
@@ -186,7 +207,9 @@ export function BulkAdjustmentForm() {
                   <SelectTrigger className="w-full">
                     <SelectValue
                       placeholder={
-                        productsLoading ? "Loading..." : "Select product"
+                        productsLoading
+                          ? tShared("loading")
+                          : tShared("selectProduct")
                       }
                     />
                   </SelectTrigger>
@@ -225,12 +248,12 @@ export function BulkAdjustmentForm() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Notes</CardTitle>
+          <CardTitle>{tShared("notes")}</CardTitle>
         </CardHeader>
         <CardContent>
           <Textarea
             rows={3}
-            placeholder="Optional notes about this adjustment..."
+            placeholder={tAdjust("notesPlaceholder")}
             {...form.register("notes")}
           />
         </CardContent>
@@ -238,7 +261,9 @@ export function BulkAdjustmentForm() {
 
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={adjustMutation.isPending}>
-          {adjustMutation.isPending ? "Processing..." : "Execute Adjustment"}
+          {adjustMutation.isPending
+            ? tShared("processing")
+            : tAdjust("execute")}
         </Button>
       </div>
     </form>

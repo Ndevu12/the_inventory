@@ -1,7 +1,7 @@
 "use client";
 
 import { use, useCallback, useEffect } from "react";
-import { useRouter } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
 import { CheckCircle2Icon, ClipboardCheckIcon } from "lucide-react";
 import { toast } from "sonner";
 
@@ -29,7 +29,7 @@ interface CycleDetailPageProps {
 export function CycleDetailPage({ params }: CycleDetailPageProps) {
   const { id } = use(params);
   const cycleId = Number(id);
-  const router = useRouter();
+  const t = useTranslations("CycleCounts");
 
   const { data: cycle, isLoading } = useCycle(cycleId);
   const recordMutation = useRecordCount(cycleId);
@@ -56,6 +56,12 @@ export function CycleDetailPage({ params }: CycleDetailPageProps) {
     else setStep("count");
   }, [cycle?.status, setStep, cycle]);
 
+  const errMessage = useCallback(
+    (error: unknown) =>
+      (error as { message?: string }).message ?? t("errors.unknown"),
+    [t],
+  );
+
   const handleRecordCount = useCallback(
     (
       _lineId: number,
@@ -68,32 +74,32 @@ export function CycleDetailPage({ params }: CycleDetailPageProps) {
         { product, location, counted_quantity: countedQuantity, notes },
         {
           onSuccess: () => {
-            toast.success("Count recorded");
+            toast.success(t("toast.recordSuccess"));
           },
           onError: (error) => {
             toast.error(
-              `Failed to record count: ${(error as { message?: string }).message ?? "Unknown error"}`,
+              t("toast.recordFailed", { message: errMessage(error) }),
             );
           },
         },
       );
     },
-    [recordMutation],
+    [recordMutation, t, errMessage],
   );
 
   const handleComplete = useCallback(() => {
     completeMutation.mutate(cycleId, {
       onSuccess: () => {
-        toast.success("Cycle marked as completed");
+        toast.success(t("toast.completeSuccess"));
         setStep("variances");
       },
       onError: (error) => {
         toast.error(
-          `Failed to complete cycle: ${(error as { message?: string }).message ?? "Unknown error"}`,
+          t("toast.completeFailed", { message: errMessage(error) }),
         );
       },
     });
-  }, [completeMutation, cycleId, setStep]);
+  }, [completeMutation, cycleId, setStep, t, errMessage]);
 
   const handleReconcile = useCallback(() => {
     if (!cycle) return;
@@ -101,7 +107,10 @@ export function CycleDetailPage({ params }: CycleDetailPageProps) {
     const countedLines = cycle.lines.filter(
       (l) => l.counted_quantity !== null,
     );
-    const payload: Record<string, { resolution: VarianceResolution; root_cause?: string }> = {};
+    const payload: Record<
+      string,
+      { resolution: VarianceResolution; root_cause?: string }
+    > = {};
 
     for (const line of countedLines) {
       const variance = line.variance ?? 0;
@@ -119,17 +128,17 @@ export function CycleDetailPage({ params }: CycleDetailPageProps) {
       { resolutions: payload },
       {
         onSuccess: () => {
-          toast.success("Cycle reconciled successfully");
+          toast.success(t("toast.reconcileSuccess"));
           reset();
         },
         onError: (error) => {
           toast.error(
-            `Failed to reconcile: ${(error as { message?: string }).message ?? "Unknown error"}`,
+            t("toast.reconcileFailed", { message: errMessage(error) }),
           );
         },
       },
     );
-  }, [cycle, resolutions, reconcileMutation, reset]);
+  }, [cycle, resolutions, reconcileMutation, reset, t, errMessage]);
 
   if (isLoading) {
     return (
@@ -143,10 +152,8 @@ export function CycleDetailPage({ params }: CycleDetailPageProps) {
   if (!cycle) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Cycle Not Found" />
-        <p className="text-muted-foreground">
-          The cycle count you are looking for does not exist.
-        </p>
+        <PageHeader title={t("notFound.title")} />
+        <p className="text-muted-foreground">{t("notFound.body")}</p>
       </div>
     );
   }
@@ -156,11 +163,17 @@ export function CycleDetailPage({ params }: CycleDetailPageProps) {
   const isReconciled = cycle.status === "reconciled";
   const allCounted = cycle.lines.every((l) => l.counted_quantity !== null);
 
+  const scheduledDate = new Date(cycle.scheduled_date).toLocaleDateString();
+
   return (
     <div className="space-y-6">
       <PageHeader
         title={cycle.name}
-        description={`${cycle.location_name ?? "All Locations"} — Scheduled: ${new Date(cycle.scheduled_date).toLocaleDateString()}`}
+        description={t("detail.description", {
+          location: cycle.location_name ?? t("detail.allLocations"),
+          scheduled: t("detail.scheduled"),
+          date: scheduledDate,
+        })}
         actions={
           <div className="flex items-center gap-2">
             <CycleStatusBadge status={cycle.status} />
@@ -170,7 +183,9 @@ export function CycleDetailPage({ params }: CycleDetailPageProps) {
                 disabled={completeMutation.isPending}
               >
                 <CheckCircle2Icon className="mr-2 size-4" />
-                {completeMutation.isPending ? "Completing..." : "Mark Complete"}
+                {completeMutation.isPending
+                  ? t("detail.completing")
+                  : t("detail.markComplete")}
               </Button>
             )}
           </div>
@@ -184,10 +199,13 @@ export function CycleDetailPage({ params }: CycleDetailPageProps) {
         <TabsList>
           <TabsTrigger value="count" disabled={isReconciled}>
             <ClipboardCheckIcon className="mr-2 size-4" />
-            Count Lines ({cycle.counted_lines}/{cycle.total_lines})
+            {t("tabs.countLines", {
+              counted: cycle.counted_lines,
+              total: cycle.total_lines,
+            })}
           </TabsTrigger>
           <TabsTrigger value="variances" disabled={isInProgress}>
-            Variances
+            {t("tabs.variances")}
           </TabsTrigger>
         </TabsList>
 

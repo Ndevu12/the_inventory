@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import {
   Card,
   CardContent,
@@ -17,6 +18,7 @@ interface BulkResultSummaryProps {
 }
 
 export function BulkResultSummary({ result, onReset }: BulkResultSummaryProps) {
+  const t = useTranslations("BulkOperations.result");
   const allSucceeded = result.failure_count === 0;
   const allFailed = result.success_count === 0;
 
@@ -35,14 +37,16 @@ export function BulkResultSummary({ result, onReset }: BulkResultSummaryProps) {
             <div>
               <CardTitle>
                 {allSucceeded
-                  ? "Operation Completed Successfully"
+                  ? t("titleSuccess")
                   : allFailed
-                    ? "Operation Failed"
-                    : "Operation Partially Completed"}
+                    ? t("titleFailed")
+                    : t("titlePartial")}
               </CardTitle>
               <CardDescription>
-                {result.success_count} of {result.total_count} items processed
-                successfully
+                {t("description", {
+                  success: result.success_count,
+                  total: result.total_count,
+                })}
               </CardDescription>
             </div>
           </div>
@@ -51,21 +55,23 @@ export function BulkResultSummary({ result, onReset }: BulkResultSummaryProps) {
           <div className="grid grid-cols-3 gap-4">
             <div className="rounded-lg border p-4 text-center">
               <p className="text-2xl font-bold">{result.total_count}</p>
-              <p className="text-sm text-muted-foreground">Total</p>
+              <p className="text-sm text-muted-foreground">{t("total")}</p>
             </div>
             <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-center dark:border-emerald-900 dark:bg-emerald-950">
               <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">
                 {result.success_count}
               </p>
               <p className="text-sm text-emerald-600 dark:text-emerald-500">
-                Succeeded
+                {t("succeeded")}
               </p>
             </div>
             <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-center dark:border-red-900 dark:bg-red-950">
               <p className="text-2xl font-bold text-red-700 dark:text-red-400">
                 {result.failure_count}
               </p>
-              <p className="text-sm text-red-600 dark:text-red-500">Failed</p>
+              <p className="text-sm text-red-600 dark:text-red-500">
+                {t("failed")}
+              </p>
             </div>
           </div>
         </CardContent>
@@ -74,10 +80,8 @@ export function BulkResultSummary({ result, onReset }: BulkResultSummaryProps) {
       {result.errors.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-destructive">Errors</CardTitle>
-            <CardDescription>
-              The following items could not be processed
-            </CardDescription>
+            <CardTitle className="text-destructive">{t("errorsTitle")}</CardTitle>
+            <CardDescription>{t("errorsDescription")}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
@@ -89,7 +93,10 @@ export function BulkResultSummary({ result, onReset }: BulkResultSummaryProps) {
                   <XCircleIcon className="mt-0.5 size-4 shrink-0 text-destructive" />
                   <div className="text-sm">
                     <span className="font-medium">
-                      Item #{err.index + 1} (Product {err.product_id})
+                      {t("errorLine", {
+                        index: err.index + 1,
+                        productId: err.product_id,
+                      })}
                     </span>
                     <span className="text-muted-foreground"> — {err.error}</span>
                   </div>
@@ -100,7 +107,7 @@ export function BulkResultSummary({ result, onReset }: BulkResultSummaryProps) {
         </Card>
       )}
 
-      <Button onClick={onReset}>Start New Operation</Button>
+      <Button onClick={onReset}>{t("startNew")}</Button>
     </div>
   );
 }

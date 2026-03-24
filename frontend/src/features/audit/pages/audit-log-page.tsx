@@ -4,6 +4,7 @@ import * as React from "react"
 import type { PaginationState } from "@tanstack/react-table"
 import { DownloadIcon } from "lucide-react"
 import { toast } from "sonner"
+import { useTranslations } from "next-intl"
 
 import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/layout/page-header"
@@ -15,6 +16,7 @@ import { AuditDetailDialog } from "../components/audit-detail-dialog"
 import type { AuditEntry, AuditListParams } from "../types/audit.types"
 
 export function AuditLogPage() {
+  const tPage = useTranslations("Audit.tenantPage")
   const filters = useAuditFiltersStore()
 
   const [pagination, setPagination] = React.useState<PaginationState>({
@@ -64,19 +66,19 @@ export function AuditLogPage() {
       const url = exportAuditCsv(params)
       window.open(url, "_blank")
     } catch {
-      toast.error("Failed to export CSV")
+      toast.error(tPage("exportFailed"))
     }
-  }, [params])
+  }, [params, tPage])
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-6">
       <PageHeader
-        title="Audit Log"
-        description="Compliance audit trail for regulatory and operational tracking."
+        title={tPage("title")}
+        description={tPage("description")}
         actions={
           <Button variant="outline" onClick={handleExportCsv}>
             <DownloadIcon className="mr-2 size-4" />
-            Export CSV
+            {tPage("exportCsv")}
           </Button>
         }
       />

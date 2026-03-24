@@ -1,6 +1,2 @@
-import type { FacetedFilterOption } from "@/components/data-table"
-
-export const GRN_PROCESSED_OPTIONS: FacetedFilterOption[] = [
-  { label: "Pending", value: "false" },
-  { label: "Processed", value: "true" },
-]
+/** Faceted filter values for `is_processed` (stringified booleans). */
+export const GRN_IS_PROCESSED_FILTER_VALUES = ["false", "true"] as const

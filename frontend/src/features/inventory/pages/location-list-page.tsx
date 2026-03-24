@@ -1,47 +1,49 @@
-"use client";
+"use client"
 
-import { useState, useDeferredValue } from "react";
-import { PlusIcon, SearchIcon } from "lucide-react";
-import { PageHeader } from "@/components/layout/page-header";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { useLocations } from "../hooks/use-locations";
-import { LocationTree } from "../components/locations/location-tree";
-import { LocationFormDialog } from "../components/locations/location-form-dialog";
-import type { StockLocation } from "../types/location.types";
+import { useState, useDeferredValue } from "react"
+import { useTranslations } from "next-intl"
+import { PlusIcon, SearchIcon } from "lucide-react"
+import { PageHeader } from "@/components/layout/page-header"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { useLocations } from "../hooks/use-locations"
+import { LocationTree } from "../components/locations/location-tree"
+import { LocationFormDialog } from "../components/locations/location-form-dialog"
+import type { StockLocation } from "../types/location.types"
 
 export function LocationListPage() {
-  const [search, setSearch] = useState("");
-  const deferredSearch = useDeferredValue(search);
+  const t = useTranslations("Inventory")
+  const [search, setSearch] = useState("")
+  const deferredSearch = useDeferredValue(search)
 
-  const params: Record<string, string> = {};
-  if (deferredSearch) params.search = deferredSearch;
+  const params: Record<string, string> = {}
+  if (deferredSearch) params.search = deferredSearch
 
-  const { data, isLoading } = useLocations(params);
+  const { data, isLoading } = useLocations(params)
 
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false)
   const [editingLocation, setEditingLocation] =
-    useState<StockLocation | null>(null);
+    useState<StockLocation | null>(null)
 
   const openCreate = () => {
-    setEditingLocation(null);
-    setDialogOpen(true);
-  };
+    setEditingLocation(null)
+    setDialogOpen(true)
+  }
 
   const openEdit = (loc: StockLocation) => {
-    setEditingLocation(loc);
-    setDialogOpen(true);
-  };
+    setEditingLocation(loc)
+    setDialogOpen(true)
+  }
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Stock Locations"
-        description="Manage warehouse locations and track capacity utilization."
+        title={t("locations.title")}
+        description={t("locations.description")}
         actions={
           <Button onClick={openCreate}>
             <PlusIcon className="size-4" data-icon="inline-start" />
-            Add Location
+            {t("locations.addLocation")}
           </Button>
         }
       />
@@ -50,7 +52,7 @@ export function LocationListPage() {
         <div className="relative max-w-sm flex-1">
           <SearchIcon className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search locations..."
+            placeholder={t("locations.searchPlaceholder")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
@@ -70,5 +72,5 @@ export function LocationListPage() {
         location={editingLocation}
       />
     </div>
-  );
+  )
 }

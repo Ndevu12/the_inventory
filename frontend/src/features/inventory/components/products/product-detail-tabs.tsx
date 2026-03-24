@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslations } from "next-intl"
 import {
   Tabs,
   TabsList,
@@ -54,13 +55,17 @@ export function ProductDetailTabs({
   isLoadingMovements,
   isLoadingLots,
 }: ProductDetailTabsProps) {
+  const t = useTranslations("Inventory")
+
   return (
     <Tabs defaultValue="info">
       <TabsList>
-        <TabsTrigger value="info">Info</TabsTrigger>
-        <TabsTrigger value="stock">Stock Records</TabsTrigger>
-        <TabsTrigger value="movements">Movements</TabsTrigger>
-        <TabsTrigger value="lots">Lots</TabsTrigger>
+        <TabsTrigger value="info">{t("products.tabs.info")}</TabsTrigger>
+        <TabsTrigger value="stock">{t("products.tabs.stock")}</TabsTrigger>
+        <TabsTrigger value="movements">
+          {t("products.tabs.movements")}
+        </TabsTrigger>
+        <TabsTrigger value="lots">{t("products.tabs.lots")}</TabsTrigger>
       </TabsList>
 
       <TabsContent value="info" className="mt-4">
@@ -83,22 +88,44 @@ export function ProductDetailTabs({
 }
 
 function InfoTab({ product }: { product: Product }) {
+  const t = useTranslations("Inventory")
   const fields = [
-    { label: "SKU", value: product.sku },
-    { label: "Name", value: product.name },
-    { label: "Category", value: product.category_name ?? "—" },
-    { label: "Unit of Measure", value: product.unit_of_measure_display },
-    { label: "Unit Cost", value: formatCurrency(product.unit_cost) },
-    { label: "Reorder Point", value: product.reorder_point },
-    { label: "Status", value: product.is_active ? "Active" : "Inactive" },
-    { label: "Created", value: formatDateTime(product.created_at) },
-    { label: "Updated", value: formatDateTime(product.updated_at) },
+    { label: t("products.detail.fields.sku"), value: product.sku },
+    { label: t("products.detail.fields.name"), value: product.name },
+    {
+      label: t("products.detail.fields.category"),
+      value: product.category_name ?? t("shared.emDash"),
+    },
+    {
+      label: t("products.detail.fields.unitOfMeasure"),
+      value: product.unit_of_measure_display,
+    },
+    {
+      label: t("products.detail.fields.unitCost"),
+      value: formatCurrency(product.unit_cost),
+    },
+    {
+      label: t("products.detail.fields.reorderPoint"),
+      value: product.reorder_point,
+    },
+    {
+      label: t("products.detail.fields.status"),
+      value: product.is_active ? t("shared.active") : t("shared.inactive"),
+    },
+    {
+      label: t("products.detail.fields.created"),
+      value: formatDateTime(product.created_at),
+    },
+    {
+      label: t("products.detail.fields.updated"),
+      value: formatDateTime(product.updated_at),
+    },
   ]
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Product Details</CardTitle>
+        <CardTitle>{t("products.detail.title")}</CardTitle>
       </CardHeader>
       <CardContent>
         <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -111,7 +138,9 @@ function InfoTab({ product }: { product: Product }) {
         </dl>
         {product.description && (
           <div className="mt-4">
-            <dt className="text-sm text-muted-foreground">Description</dt>
+            <dt className="text-sm text-muted-foreground">
+              {t("products.detail.description")}
+            </dt>
             <dd
               className="prose prose-sm dark:prose-invert mt-1 max-w-none"
               dangerouslySetInnerHTML={{ __html: product.description }}
@@ -130,25 +159,34 @@ function StockTab({
   records?: StockRecord[]
   isLoading?: boolean
 }) {
+  const t = useTranslations("Inventory")
   if (isLoading) return <TableSkeleton />
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Stock by Location</CardTitle>
+        <CardTitle>{t("products.stockTab.title")}</CardTitle>
       </CardHeader>
       <CardContent>
         {!records?.length ? (
-          <p className="text-sm text-muted-foreground">No stock records.</p>
+          <p className="text-sm text-muted-foreground">
+            {t("products.stockTab.empty")}
+          </p>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Location</TableHead>
-                <TableHead className="text-right">Quantity</TableHead>
-                <TableHead className="text-right">Reserved</TableHead>
-                <TableHead className="text-right">Available</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>{t("products.stockTab.location")}</TableHead>
+                <TableHead className="text-right">
+                  {t("products.stockTab.quantity")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("products.stockTab.reserved")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("products.stockTab.available")}
+                </TableHead>
+                <TableHead>{t("products.stockTab.status")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -166,9 +204,11 @@ function StockTab({
                   </TableCell>
                   <TableCell>
                     {r.is_low_stock ? (
-                      <Badge variant="destructive">Low Stock</Badge>
+                      <Badge variant="destructive">
+                        {t("shared.lowStock")}
+                      </Badge>
                     ) : (
-                      <Badge variant="secondary">OK</Badge>
+                      <Badge variant="secondary">{t("shared.ok")}</Badge>
                     )}
                   </TableCell>
                 </TableRow>
@@ -188,26 +228,31 @@ function MovementsTab({
   movements?: StockMovement[]
   isLoading?: boolean
 }) {
+  const t = useTranslations("Inventory")
   if (isLoading) return <TableSkeleton />
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Recent Movements</CardTitle>
+        <CardTitle>{t("products.movementsTab.title")}</CardTitle>
       </CardHeader>
       <CardContent>
         {!movements?.length ? (
-          <p className="text-sm text-muted-foreground">No movements yet.</p>
+          <p className="text-sm text-muted-foreground">
+            {t("products.movementsTab.empty")}
+          </p>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Type</TableHead>
-                <TableHead className="text-right">Qty</TableHead>
-                <TableHead>From</TableHead>
-                <TableHead>To</TableHead>
-                <TableHead>Reference</TableHead>
-                <TableHead>Date</TableHead>
+                <TableHead>{t("products.movementsTab.type")}</TableHead>
+                <TableHead className="text-right">
+                  {t("products.movementsTab.qty")}
+                </TableHead>
+                <TableHead>{t("products.movementsTab.from")}</TableHead>
+                <TableHead>{t("products.movementsTab.to")}</TableHead>
+                <TableHead>{t("products.movementsTab.reference")}</TableHead>
+                <TableHead>{t("products.movementsTab.date")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -221,10 +266,14 @@ function MovementsTab({
                   <TableCell className="text-right tabular-nums">
                     {m.quantity}
                   </TableCell>
-                  <TableCell>{m.from_location_name ?? "—"}</TableCell>
-                  <TableCell>{m.to_location_name ?? "—"}</TableCell>
+                  <TableCell>
+                    {m.from_location_name ?? t("shared.emDash")}
+                  </TableCell>
+                  <TableCell>
+                    {m.to_location_name ?? t("shared.emDash")}
+                  </TableCell>
                   <TableCell className="max-w-[150px] truncate">
-                    {m.reference || "—"}
+                    {m.reference || t("shared.emDash")}
                   </TableCell>
                   <TableCell>{formatDate(m.created_at)}</TableCell>
                 </TableRow>
@@ -244,25 +293,32 @@ function LotsTab({
   lots?: StockLot[]
   isLoading?: boolean
 }) {
+  const t = useTranslations("Inventory")
   if (isLoading) return <TableSkeleton />
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Lots / Batches</CardTitle>
+        <CardTitle>{t("products.lotsTab.title")}</CardTitle>
       </CardHeader>
       <CardContent>
         {!lots?.length ? (
-          <p className="text-sm text-muted-foreground">No lots tracked.</p>
+          <p className="text-sm text-muted-foreground">
+            {t("products.lotsTab.empty")}
+          </p>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Lot #</TableHead>
-                <TableHead className="text-right">Received</TableHead>
-                <TableHead className="text-right">Remaining</TableHead>
-                <TableHead>Expiry</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>{t("products.lotsTab.lotNumber")}</TableHead>
+                <TableHead className="text-right">
+                  {t("products.lotsTab.received")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("products.lotsTab.remaining")}
+                </TableHead>
+                <TableHead>{t("products.lotsTab.expiry")}</TableHead>
+                <TableHead>{t("products.lotsTab.status")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -285,14 +341,14 @@ function LotsTab({
                         isExpired={lot.is_expired}
                       />
                     ) : (
-                      "—"
+                      t("shared.emDash")
                     )}
                   </TableCell>
                   <TableCell>
                     <Badge
                       variant={lot.is_active ? "default" : "secondary"}
                     >
-                      {lot.is_active ? "Active" : "Inactive"}
+                      {lot.is_active ? t("shared.active") : t("shared.inactive")}
                     </Badge>
                   </TableCell>
                 </TableRow>
@@ -314,6 +370,7 @@ function ExpiryDisplay({
   daysToExpiry: number | null
   isExpired: boolean
 }) {
+  const t = useTranslations("Inventory")
   let variant: "destructive" | "secondary" | "outline" = "outline"
   if (isExpired) variant = "destructive"
   else if (daysToExpiry !== null && daysToExpiry <= 30) variant = "secondary"
@@ -321,8 +378,8 @@ function ExpiryDisplay({
   return (
     <Badge variant={variant}>
       {formatDate(date)}
-      {daysToExpiry !== null && !isExpired && ` (${daysToExpiry}d)`}
-      {isExpired && " (expired)"}
+      {daysToExpiry !== null && !isExpired && ` ${t("shared.daysSuffix", { days: daysToExpiry })}`}
+      {isExpired && ` ${t("shared.expiredSuffix")}`}
     </Badge>
   )
 }

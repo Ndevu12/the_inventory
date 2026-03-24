@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslations } from "next-intl"
 import { DataTable } from "@/components/data-table"
 import type { ColumnDef, PaginationState } from "@tanstack/react-table"
 import type { GoodsReceivedNote } from "../../types/grn.types"
@@ -23,6 +24,8 @@ export function GRNTable({
   isLoading,
   filterContent,
 }: GRNTableProps) {
+  const t = useTranslations("Procurement.grn.list")
+
   return (
     <DataTable
       columns={columns}
@@ -32,7 +35,7 @@ export function GRNTable({
       onPaginationChange={onPaginationChange}
       filterContent={filterContent}
       isLoading={isLoading}
-      emptyMessage="No GRNs found."
+      emptyMessage={t("empty")}
     />
   )
 }

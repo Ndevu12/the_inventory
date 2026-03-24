@@ -10,12 +10,21 @@ import {
   UsersIcon,
   ShoppingCartIcon,
   ShoppingBagIcon,
+  PackageCheckIcon,
+  ReceiptIcon,
+  UsersRoundIcon,
   BarChart3Icon,
   SettingsIcon,
   LayoutDashboardIcon,
   CalendarCheckIcon,
+  ClipboardListIcon,
   ScrollTextIcon,
+  DatabaseIcon,
+  ArrowRightLeftIcon,
+  BoxesIcon,
+  type LucideIcon,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import {
   Command,
   CommandDialog,
@@ -27,65 +36,71 @@ import {
   CommandSeparator,
 } from "@/components/ui/command";
 
-interface SearchRoute {
-  title: string;
+type SearchNavItem = {
+  itemKey: string;
   href: string;
-  icon: React.ComponentType<{ className?: string }>;
-}
+  icon: LucideIcon;
+};
 
-const SEARCH_ROUTES: { group: string; items: SearchRoute[] }[] = [
+type SearchNavGroup = {
+  groupKey: string;
+  items: SearchNavItem[];
+};
+
+/** Same `Nav` message keys and routes as the sidebar subset exposed in the palette. */
+const SEARCH_NAV_GROUPS: SearchNavGroup[] = [
   {
-    group: "Overview",
+    groupKey: "overview",
     items: [
-      { title: "Dashboard", href: "/", icon: LayoutDashboardIcon },
+      { itemKey: "dashboard", href: "/", icon: LayoutDashboardIcon },
     ],
   },
   {
-    group: "Inventory",
+    groupKey: "inventory",
     items: [
-      { title: "Products", href: "/products", icon: PackageIcon },
-      { title: "Categories", href: "/categories", icon: TagsIcon },
-      { title: "Stock Locations", href: "/stock/locations", icon: WarehouseIcon },
-      { title: "Stock Records", href: "/stock/records", icon: PackageIcon },
-      { title: "Stock Movements", href: "/stock/movements", icon: PackageIcon },
-      { title: "Stock Lots", href: "/stock/lots", icon: PackageIcon },
+      { itemKey: "products", href: "/products", icon: PackageIcon },
+      { itemKey: "categories", href: "/categories", icon: TagsIcon },
+      { itemKey: "stockLocations", href: "/stock/locations", icon: WarehouseIcon },
+      { itemKey: "stockRecords", href: "/stock/records", icon: DatabaseIcon },
+      { itemKey: "stockMovements", href: "/stock/movements", icon: ArrowRightLeftIcon },
+      { itemKey: "stockLots", href: "/stock/lots", icon: BoxesIcon },
     ],
   },
   {
-    group: "Orders",
+    groupKey: "orders",
     items: [
-      { title: "Reservations", href: "/reservations", icon: CalendarCheckIcon },
-      { title: "Cycle Counts", href: "/cycle-counts", icon: CalendarCheckIcon },
+      { itemKey: "reservations", href: "/reservations", icon: CalendarCheckIcon },
+      { itemKey: "cycleCounts", href: "/cycle-counts", icon: ClipboardListIcon },
     ],
   },
   {
-    group: "Procurement",
+    groupKey: "procurement",
     items: [
-      { title: "Suppliers", href: "/procurement/suppliers", icon: TruckIcon },
-      { title: "Purchase Orders", href: "/procurement/purchase-orders", icon: ShoppingCartIcon },
-      { title: "Goods Received", href: "/procurement/goods-received", icon: ShoppingCartIcon },
+      { itemKey: "suppliers", href: "/procurement/suppliers", icon: TruckIcon },
+      { itemKey: "purchaseOrders", href: "/procurement/purchase-orders", icon: ShoppingCartIcon },
+      { itemKey: "goodsReceived", href: "/procurement/goods-received", icon: ReceiptIcon },
     ],
   },
   {
-    group: "Sales",
+    groupKey: "sales",
     items: [
-      { title: "Customers", href: "/sales/customers", icon: UsersIcon },
-      { title: "Sales Orders", href: "/sales/sales-orders", icon: ShoppingBagIcon },
-      { title: "Dispatches", href: "/sales/dispatches", icon: ShoppingBagIcon },
+      { itemKey: "customers", href: "/sales/customers", icon: UsersIcon },
+      { itemKey: "salesOrders", href: "/sales/sales-orders", icon: ShoppingBagIcon },
+      { itemKey: "dispatches", href: "/sales/dispatches", icon: PackageCheckIcon },
     ],
   },
   {
-    group: "Analytics",
+    groupKey: "analytics",
     items: [
-      { title: "Reports", href: "/reports", icon: BarChart3Icon },
-      { title: "Audit Log", href: "/audit-log", icon: ScrollTextIcon },
+      { itemKey: "reports", href: "/reports", icon: BarChart3Icon },
+      { itemKey: "auditLog", href: "/audit-log", icon: ScrollTextIcon },
     ],
   },
   {
-    group: "Settings",
+    groupKey: "settings",
     items: [
-      { title: "Settings", href: "/settings", icon: SettingsIcon },
-      { title: "Team Members", href: "/settings/members", icon: UsersIcon },
+      { itemKey: "tenant", href: "/settings", icon: SettingsIcon },
+      { itemKey: "teamMembers", href: "/settings/members", icon: UsersRoundIcon },
     ],
   },
 ];
@@ -114,6 +129,8 @@ export function useSearchCommand() {
 
 export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
   const router = useRouter();
+  const tNav = useTranslations("Nav");
+  const tCommon = useTranslations("Common");
 
   const navigate = useCallback(
     (href: string) => {
@@ -126,20 +143,20 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
   return (
     <CommandDialog open={open} onOpenChange={onOpenChange}>
       <Command>
-        <CommandInput placeholder="Search pages..." />
+        <CommandInput placeholder={tCommon("commandSearchPlaceholder")} />
         <CommandList>
-          <CommandEmpty>No results found.</CommandEmpty>
-          {SEARCH_ROUTES.map((group, index) => (
-            <div key={group.group}>
+          <CommandEmpty>{tCommon("noResults")}</CommandEmpty>
+          {SEARCH_NAV_GROUPS.map((group, index) => (
+            <div key={group.groupKey}>
               {index > 0 && <CommandSeparator />}
-              <CommandGroup heading={group.group}>
+              <CommandGroup heading={tNav(`groups.${group.groupKey}`)}>
                 {group.items.map((item) => (
                   <CommandItem
                     key={item.href}
                     onSelect={() => navigate(item.href)}
                   >
                     <item.icon className="mr-2 size-4" />
-                    <span>{item.title}</span>
+                    <span>{tNav(`items.${item.itemKey}`)}</span>
                   </CommandItem>
                 ))}
               </CommandGroup>

@@ -3,6 +3,7 @@
 import * as React from "react"
 import { use } from "react"
 import { useRouter } from "@/i18n/navigation"
+import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 
 import { PageHeader } from "@/components/layout/page-header"
@@ -22,40 +23,41 @@ export function SODetailPage({ params }: SODetailPageProps) {
   const { id } = use(params)
   const orderId = Number(id)
   const router = useRouter()
+  const t = useTranslations("Sales.salesOrders.detail")
   const { data: order, isLoading, error } = useSalesOrder(orderId)
   const confirmMutation = useConfirmSalesOrder()
   const cancelMutation = useCancelSalesOrder()
 
   const handleConfirm = React.useCallback(() => {
     if (!order) return
-    if (!confirm(`Confirm sales order "${order.order_number}"?`)) return
+    if (!confirm(t("confirmPrompt", { orderNumber: order.order_number })))
+      return
     confirmMutation.mutate(order.id, {
-      onSuccess: () => toast.success(`Order "${order.order_number}" confirmed`),
+      onSuccess: () =>
+        toast.success(t("toastConfirmed", { orderNumber: order.order_number })),
       onError: (err: unknown) => {
         const e = err as unknown as ApiError
-        toast.error(e.message || "Failed to confirm order")
+        toast.error(e.message || t("confirmFailed"))
       },
     })
-  }, [order, confirmMutation])
+  }, [order, confirmMutation, t])
 
   const handleCancel = React.useCallback(() => {
     if (!order) return
-    if (!confirm(`Cancel sales order "${order.order_number}"? This cannot be undone.`)) return
+    if (!confirm(t("cancelPrompt", { orderNumber: order.order_number }))) return
     cancelMutation.mutate(order.id, {
-      onSuccess: () => toast.success(`Order "${order.order_number}" cancelled`),
+      onSuccess: () =>
+        toast.success(t("toastCancelled", { orderNumber: order.order_number })),
       onError: (err: unknown) => {
         const e = err as unknown as ApiError
-        toast.error(e.message || "Failed to cancel order")
+        toast.error(e.message || t("cancelFailed"))
       },
     })
-  }, [order, cancelMutation])
+  }, [order, cancelMutation, t])
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-6">
-      <PageHeader
-        title="Sales Order Details"
-        description="View order information, line items, and manage order status"
-      />
+      <PageHeader title={t("title")} description={t("description")} />
       <SODetailView
         order={order}
         isLoading={isLoading}

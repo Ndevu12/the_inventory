@@ -1,6 +1,7 @@
 "use client"
 
 import type { UseFormReturn } from "react-hook-form"
+import { useTranslations } from "next-intl"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -13,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import {
-  PAYMENT_TERMS_OPTIONS,
+  PAYMENT_TERMS_VALUES,
   paymentTermsLabel,
 } from "../../helpers/procurement-constants"
 import type { CreateSupplierFormValues } from "../../helpers/supplier-schemas"
@@ -23,6 +24,9 @@ interface SupplierFormProps {
 }
 
 export function SupplierForm({ form }: SupplierFormProps) {
+  const t = useTranslations("Procurement.suppliers.form")
+  const tPh = useTranslations("Procurement.suppliers.form.placeholders")
+  const tPay = useTranslations("Procurement.paymentTerms")
   const {
     register,
     formState: { errors },
@@ -37,11 +41,11 @@ export function SupplierForm({ form }: SupplierFormProps) {
     <div className="grid gap-6 sm:grid-cols-2">
       <div className="space-y-2">
         <Label htmlFor="code">
-          Code <span className="text-destructive">*</span>
+          {t("code")} <span className="text-destructive">*</span>
         </Label>
         <Input
           id="code"
-          placeholder="e.g. SUP-001"
+          placeholder={tPh("code")}
           aria-invalid={!!errors.code}
           {...register("code")}
         />
@@ -52,11 +56,11 @@ export function SupplierForm({ form }: SupplierFormProps) {
 
       <div className="space-y-2">
         <Label htmlFor="name">
-          Name <span className="text-destructive">*</span>
+          {t("name")} <span className="text-destructive">*</span>
         </Label>
         <Input
           id="name"
-          placeholder="Company name"
+          placeholder={tPh("companyName")}
           aria-invalid={!!errors.name}
           {...register("name")}
         />
@@ -66,20 +70,20 @@ export function SupplierForm({ form }: SupplierFormProps) {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="contact_name">Contact Name</Label>
+        <Label htmlFor="contact_name">{t("contactName")}</Label>
         <Input
           id="contact_name"
-          placeholder="Contact person"
+          placeholder={tPh("contactPerson")}
           {...register("contact_name")}
         />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="email">{t("email")}</Label>
         <Input
           id="email"
           type="email"
-          placeholder="email@example.com"
+          placeholder={tPh("email")}
           aria-invalid={!!errors.email}
           {...register("email")}
         />
@@ -89,16 +93,16 @@ export function SupplierForm({ form }: SupplierFormProps) {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="phone">Phone</Label>
+        <Label htmlFor="phone">{t("phone")}</Label>
         <Input
           id="phone"
-          placeholder="+1 (555) 000-0000"
+          placeholder={tPh("phone")}
           {...register("phone")}
         />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="lead_time_days">Lead Time (days)</Label>
+        <Label htmlFor="lead_time_days">{t("leadTimeDays")}</Label>
         <Input
           id="lead_time_days"
           type="number"
@@ -114,7 +118,7 @@ export function SupplierForm({ form }: SupplierFormProps) {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="payment_terms">Payment Terms</Label>
+        <Label htmlFor="payment_terms">{t("paymentTerms")}</Label>
         <Select
           value={paymentTerms}
           onValueChange={(val) =>
@@ -124,15 +128,15 @@ export function SupplierForm({ form }: SupplierFormProps) {
           }
         >
           <SelectTrigger id="payment_terms" className="w-full">
-            <SelectValue placeholder="Select terms">
+            <SelectValue placeholder={t("selectTerms")}>
               {(value: string | null) =>
-                value ? paymentTermsLabel(value) : null}
+                value ? paymentTermsLabel(value, (k) => tPay(k)) : null}
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
-            {PAYMENT_TERMS_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
+            {PAYMENT_TERMS_VALUES.map((opt) => (
+              <SelectItem key={opt} value={opt}>
+                {tPay(opt)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -140,19 +144,19 @@ export function SupplierForm({ form }: SupplierFormProps) {
       </div>
 
       <div className="sm:col-span-2 space-y-2">
-        <Label htmlFor="address">Address</Label>
+        <Label htmlFor="address">{t("address")}</Label>
         <Textarea
           id="address"
-          placeholder="Street address, city, state, zip"
+          placeholder={tPh("address")}
           {...register("address")}
         />
       </div>
 
       <div className="sm:col-span-2 space-y-2">
-        <Label htmlFor="notes">Notes</Label>
+        <Label htmlFor="notes">{t("notes")}</Label>
         <Textarea
           id="notes"
-          placeholder="Internal notes about this supplier"
+          placeholder={tPh("notes")}
           {...register("notes")}
         />
       </div>
@@ -166,7 +170,7 @@ export function SupplierForm({ form }: SupplierFormProps) {
           }
         />
         <Label htmlFor="is_active" className="cursor-pointer">
-          Active
+          {t("active")}
         </Label>
       </div>
     </div>

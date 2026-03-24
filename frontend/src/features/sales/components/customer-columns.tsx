@@ -11,14 +11,25 @@ interface CustomerColumnActions {
   onDelete: (customer: Customer) => void
 }
 
+export interface CustomerColumnLabels {
+  tColumns: (key: string) => string
+  emDash: string
+  activeLabel: string
+  inactiveLabel: string
+}
+
 export function getCustomerColumns(
-  actions: CustomerColumnActions
+  actions: CustomerColumnActions,
+  labels: CustomerColumnLabels,
 ): ColumnDef<Customer>[] {
   return [
     {
       accessorKey: "code",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Code" />
+        <DataTableColumnHeader
+          column={column}
+          title={labels.tColumns("code")}
+        />
       ),
       cell: ({ row }) => (
         <span className="font-medium">{row.getValue("code")}</span>
@@ -27,36 +38,42 @@ export function getCustomerColumns(
     {
       accessorKey: "name",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Name" />
+        <DataTableColumnHeader
+          column={column}
+          title={labels.tColumns("name")}
+        />
       ),
     },
     {
       accessorKey: "contact_name",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Contact" />
+        <DataTableColumnHeader
+          column={column}
+          title={labels.tColumns("contact")}
+        />
       ),
-      cell: ({ row }) => row.getValue("contact_name") || "—",
+      cell: ({ row }) => row.getValue("contact_name") || labels.emDash,
     },
     {
       accessorKey: "email",
-      header: "Email",
-      cell: ({ row }) => row.getValue("email") || "—",
+      header: labels.tColumns("email"),
+      cell: ({ row }) => row.getValue("email") || labels.emDash,
       enableSorting: false,
     },
     {
       accessorKey: "phone",
-      header: "Phone",
-      cell: ({ row }) => row.getValue("phone") || "—",
+      header: labels.tColumns("phone"),
+      cell: ({ row }) => row.getValue("phone") || labels.emDash,
       enableSorting: false,
     },
     {
       accessorKey: "is_active",
-      header: "Status",
+      header: labels.tColumns("status"),
       cell: ({ row }) => {
         const active = row.getValue<boolean>("is_active")
         return (
           <Badge variant={active ? "default" : "secondary"}>
-            {active ? "Active" : "Inactive"}
+            {active ? labels.activeLabel : labels.inactiveLabel}
           </Badge>
         )
       },

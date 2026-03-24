@@ -1,10 +1,10 @@
-"use client";
+"use client"
 
-import { useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod/v4";
-import { toast } from "sonner";
+import { useEffect, useMemo } from "react"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useTranslations } from "next-intl"
+import { toast } from "sonner"
 import {
   Dialog,
   DialogContent,
@@ -12,27 +12,22 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import { useCreateLocation, useUpdateLocation } from "../../hooks/use-locations";
-import type { StockLocation, StockLocationFormData } from "../../types/location.types";
-
-const locationSchema = z.object({
-  name: z.string().min(1, "Name is required").max(255, "Name is too long"),
-  description: z.string(),
-  is_active: z.boolean(),
-  max_capacity: z.string(),
-});
-
-type FormValues = z.infer<typeof locationSchema>;
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Checkbox } from "@/components/ui/checkbox"
+import { useCreateLocation, useUpdateLocation } from "../../hooks/use-locations"
+import {
+  createLocationSchema,
+  type LocationFormValues,
+} from "../../helpers/location-form-schema"
+import type { StockLocation, StockLocationFormData } from "../../types/location.types"
 
 interface LocationFormDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  location?: StockLocation | null;
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  location?: StockLocation | null
 }
 
 export function LocationFormDialog({
@@ -40,9 +35,19 @@ export function LocationFormDialog({
   onOpenChange,
   location,
 }: LocationFormDialogProps) {
-  const isEditing = !!location;
-  const createMutation = useCreateLocation();
-  const updateMutation = useUpdateLocation();
+  const t = useTranslations("Inventory")
+  const isEditing = !!location
+  const createMutation = useCreateLocation()
+  const updateMutation = useUpdateLocation()
+
+  const locationSchema = useMemo(
+    () =>
+      createLocationSchema({
+        nameRequired: t("locations.form.validation.nameRequired"),
+        nameMax: t("locations.form.validation.nameMax"),
+      }),
+    [t],
+  )
 
   const {
     register,
@@ -51,7 +56,7 @@ export function LocationFormDialog({
     watch,
     setValue,
     formState: { errors },
-  } = useForm<FormValues>({
+  } = useForm<LocationFormValues>({
     resolver: zodResolver(locationSchema),
     defaultValues: {
       name: "",
@@ -59,7 +64,7 @@ export function LocationFormDialog({
       is_active: true,
       max_capacity: "",
     },
-  });
+  })
 
   useEffect(() => {
     if (open) {
@@ -68,45 +73,45 @@ export function LocationFormDialog({
         description: location?.description ?? "",
         is_active: location?.is_active ?? true,
         max_capacity: location?.max_capacity?.toString() ?? "",
-      });
+      })
     }
-  }, [open, location, reset]);
+  }, [open, location, reset])
 
-  const isActive = watch("is_active");
+  const isActive = watch("is_active")
 
-  const onSubmit = (data: FormValues) => {
+  const onSubmit = (data: LocationFormValues) => {
     const payload: StockLocationFormData = {
       name: data.name,
       description: data.description,
       is_active: data.is_active,
       max_capacity: data.max_capacity ? Number(data.max_capacity) : null,
-    };
+    }
 
     if (isEditing && location) {
       updateMutation.mutate(
         { id: location.id, data: payload },
         {
           onSuccess: () => {
-            toast.success(`"${data.name}" updated`);
-            onOpenChange(false);
+            toast.success(t("locations.toastUpdated", { name: data.name }))
+            onOpenChange(false)
           },
           onError: (err) =>
-            toast.error(err.message || "Failed to update location"),
+            toast.error(err.message || t("locations.toastUpdateFailed")),
         },
-      );
+      )
     } else {
       createMutation.mutate(payload, {
         onSuccess: () => {
-          toast.success(`"${data.name}" created`);
-          onOpenChange(false);
+          toast.success(t("locations.toastCreated", { name: data.name }))
+          onOpenChange(false)
         },
         onError: (err) =>
-          toast.error(err.message || "Failed to create location"),
-      });
+          toast.error(err.message || t("locations.toastCreateFailed")),
+      })
     }
-  };
+  }
 
-  const isPending = createMutation.isPending || updateMutation.isPending;
+  const isPending = createMutation.isPending || updateMutation.isPending
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -114,23 +119,26 @@ export function LocationFormDialog({
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogHeader>
             <DialogTitle>
-              {isEditing ? "Edit Location" : "New Location"}
+              {isEditing
+                ? t("locations.form.editTitle")
+                : t("locations.form.createTitle")}
             </DialogTitle>
             <DialogDescription>
               {isEditing
-                ? "Update the details for this stock location."
-                : "Add a new stock location to your warehouse."}
+                ? t("locations.form.editDescription")
+                : t("locations.form.createDescription")}
             </DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
               <label htmlFor="loc-name" className="text-sm font-medium">
-                Name <span className="text-destructive">*</span>
+                {t("locations.form.name")}{" "}
+                <span className="text-destructive">*</span>
               </label>
               <Input
                 id="loc-name"
-                placeholder="e.g. Warehouse A, Shelf B2"
+                placeholder={t("locations.form.namePlaceholder")}
                 {...register("name")}
                 aria-invalid={!!errors.name}
               />
@@ -143,11 +151,11 @@ export function LocationFormDialog({
 
             <div className="space-y-2">
               <label htmlFor="loc-desc" className="text-sm font-medium">
-                Description
+                {t("locations.form.description")}
               </label>
               <Textarea
                 id="loc-desc"
-                placeholder="Describe this location..."
+                placeholder={t("locations.form.descriptionPlaceholder")}
                 rows={3}
                 {...register("description")}
               />
@@ -155,18 +163,17 @@ export function LocationFormDialog({
 
             <div className="space-y-2">
               <label htmlFor="loc-capacity" className="text-sm font-medium">
-                Max Capacity
+                {t("locations.form.maxCapacity")}
               </label>
               <Input
                 id="loc-capacity"
                 type="number"
                 min={1}
-                placeholder="Leave empty for unlimited"
+                placeholder={t("locations.form.capacityPlaceholder")}
                 {...register("max_capacity")}
               />
               <p className="text-xs text-muted-foreground">
-                Maximum stock units this location can hold. Leave empty for
-                unlimited capacity.
+                {t("locations.form.capacityHint")}
               </p>
             </div>
 
@@ -182,18 +189,22 @@ export function LocationFormDialog({
                 htmlFor="loc-active"
                 className="cursor-pointer text-sm font-medium"
               >
-                Active
+                {t("locations.form.active")}
               </label>
             </div>
           </div>
 
           <DialogFooter>
             <Button type="submit" disabled={isPending}>
-              {isPending ? "Saving..." : isEditing ? "Update" : "Create"}
+              {isPending
+                ? t("locations.form.saving")
+                : isEditing
+                  ? t("locations.form.submitUpdate")
+                  : t("locations.form.submitCreate")}
             </Button>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

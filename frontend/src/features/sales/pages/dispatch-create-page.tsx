@@ -1,6 +1,7 @@
 "use client"
 
 import { useRouter } from "@/i18n/navigation"
+import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 
 import { PageHeader } from "@/components/layout/page-header"
@@ -16,6 +17,7 @@ import type { DispatchCreatePayload } from "../types/dispatch.types"
 
 export function DispatchCreatePage() {
   const router = useRouter()
+  const t = useTranslations("Sales.dispatches.create")
   const createMutation = useCreateDispatch()
   const { data: soData, isLoading: sosLoading } = useDispatchSalesOrders()
   const { data: locData, isLoading: locsLoading } = useDispatchLocations()
@@ -32,22 +34,21 @@ export function DispatchCreatePage() {
     }
     createMutation.mutate(payload, {
       onSuccess: (dispatch) => {
-        toast.success(`Dispatch "${dispatch.dispatch_number}" created`)
+        toast.success(
+          t("toastCreated", { dispatchNumber: dispatch.dispatch_number }),
+        )
         router.push("/sales/dispatches")
       },
       onError: (error: unknown) => {
         const e = error as unknown as ApiError
-        toast.error(e.message || "Failed to create dispatch")
+        toast.error(e.message || t("toastCreateFailed"))
       },
     })
   }
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-6">
-      <PageHeader
-        title="New Dispatch"
-        description="Create a dispatch to ship goods against a sales order"
-      />
+      <PageHeader title={t("title")} description={t("description")} />
       <DispatchForm
         salesOrders={salesOrders}
         salesOrdersLoading={sosLoading}

@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { Package, Loader2, Box, AlertCircle, Search, Zap } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import {
   Card,
@@ -19,20 +20,39 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FeatureCard } from "../components/feature-card";
 import { FeaturesList } from "../components/feature-list";
-import { registerSchema, type RegisterFormValues } from "../helpers/auth-schemas";
+import {
+  createRegisterSchema,
+  type RegisterFormValues,
+} from "../helpers/auth-schemas";
 import { useAuthConfig, useRegister } from "../hooks/use-auth";
 
 export function RegisterCompanyPage() {
   const router = useRouter();
+  const t = useTranslations("Auth");
+  const tReg = useTranslations("Auth.register");
+  const tVal = useTranslations("Auth.validation");
+  const tMarketing = useTranslations("Auth.marketing");
   const { data: config, isLoading: configLoading } = useAuthConfig();
   const registerMutation = useRegister();
+
+  const schema = React.useMemo(
+    () =>
+      createRegisterSchema({
+        organizationNameRequired: tVal("organizationNameRequired"),
+        slugFormat: tVal("slugFormat"),
+        usernameRequired: tVal("usernameRequired"),
+        validEmail: tVal("validEmail"),
+        passwordMin: tVal("registerPasswordMin"),
+      }),
+    [tVal],
+  );
 
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<RegisterFormValues>({
-    resolver: zodResolver(registerSchema),
+    resolver: zodResolver(schema),
     defaultValues: {
       organization_name: "",
       organization_slug: "",
@@ -66,7 +86,7 @@ export function RegisterCompanyPage() {
     registerMutation.mutate(payload, {
       onError: (error) => {
         const msg =
-          (error as { message?: string }).message ?? "Registration failed";
+          (error as { message?: string }).message ?? t("registrationFailed");
         toast.error(msg);
       },
     });
@@ -78,7 +98,7 @@ export function RegisterCompanyPage() {
         <Card className="w-full max-w-md">
           <CardContent className="flex flex-col items-center gap-4 py-8">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">Loading...</p>
+            <p className="text-sm text-muted-foreground">{t("loading")}</p>
           </CardContent>
         </Card>
       </div>
@@ -88,25 +108,22 @@ export function RegisterCompanyPage() {
   return (
     <div className="flex min-h-screen items-center justify-center px-4 py-8">
       <div className="w-full max-w-6xl grid grid-cols-1 gap-8 md:grid-cols-2 items-start">
-        {/* Left side: Registration Form */}
         <div>
           <Card>
             <CardHeader className="text-center">
               <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
                 <Package className="h-6 w-6 text-primary" />
               </div>
-              <CardTitle className="text-xl">Create your organization</CardTitle>
-              <CardDescription>
-                Register a new organization and set up your account as the owner.
-              </CardDescription>
+              <CardTitle className="text-xl">{tReg("title")}</CardTitle>
+              <CardDescription>{tReg("description")}</CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="organization_name">Organization name</Label>
+                  <Label htmlFor="organization_name">{tReg("organizationName")}</Label>
                   <Input
                     id="organization_name"
-                    placeholder="Acme Corp"
+                    placeholder={tReg("organizationPlaceholder")}
                     autoComplete="organization"
                     disabled={registerMutation.isPending}
                     {...register("organization_name")}
@@ -120,14 +137,14 @@ export function RegisterCompanyPage() {
 
                 <div className="grid gap-2">
                   <Label htmlFor="organization_slug">
-                    Slug (optional)
+                    {tReg("slugLabel")}
                     <span className="ml-1 font-normal text-muted-foreground">
-                      — URL-safe ID, e.g. acme-corp
+                      {tReg("slugHint")}
                     </span>
                   </Label>
                   <Input
                     id="organization_slug"
-                    placeholder="acme-corp"
+                    placeholder={tReg("slugPlaceholder")}
                     disabled={registerMutation.isPending}
                     {...register("organization_slug")}
                   />
@@ -139,10 +156,10 @@ export function RegisterCompanyPage() {
                 </div>
 
                 <div className="grid gap-2">
-                  <Label htmlFor="owner_username">Username</Label>
+                  <Label htmlFor="owner_username">{tReg("username")}</Label>
                   <Input
                     id="owner_username"
-                    placeholder="johndoe"
+                    placeholder={tReg("usernamePlaceholder")}
                     autoComplete="username"
                     disabled={registerMutation.isPending}
                     {...register("owner_username")}
@@ -155,11 +172,11 @@ export function RegisterCompanyPage() {
                 </div>
 
                 <div className="grid gap-2">
-                  <Label htmlFor="owner_email">Email</Label>
+                  <Label htmlFor="owner_email">{tReg("email")}</Label>
                   <Input
                     id="owner_email"
                     type="email"
-                    placeholder="john@acme.com"
+                    placeholder={tReg("emailPlaceholder")}
                     autoComplete="email"
                     disabled={registerMutation.isPending}
                     {...register("owner_email")}
@@ -173,19 +190,19 @@ export function RegisterCompanyPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
-                    <Label htmlFor="owner_first_name">First name</Label>
+                    <Label htmlFor="owner_first_name">{tReg("firstName")}</Label>
                     <Input
                       id="owner_first_name"
-                      placeholder="John"
+                      placeholder={tReg("firstNamePlaceholder")}
                       disabled={registerMutation.isPending}
                       {...register("owner_first_name")}
                     />
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="owner_last_name">Last name</Label>
+                    <Label htmlFor="owner_last_name">{tReg("lastName")}</Label>
                     <Input
                       id="owner_last_name"
-                      placeholder="Doe"
+                      placeholder={tReg("lastNamePlaceholder")}
                       disabled={registerMutation.isPending}
                       {...register("owner_last_name")}
                     />
@@ -193,11 +210,11 @@ export function RegisterCompanyPage() {
                 </div>
 
                 <div className="grid gap-2">
-                  <Label htmlFor="owner_password">Password</Label>
+                  <Label htmlFor="owner_password">{tReg("password")}</Label>
                   <Input
                     id="owner_password"
                     type="password"
-                    placeholder="Min. 8 characters"
+                    placeholder={tReg("passwordPlaceholder")}
                     autoComplete="new-password"
                     disabled={registerMutation.isPending}
                     {...register("owner_password")}
@@ -218,16 +235,16 @@ export function RegisterCompanyPage() {
                   {registerMutation.isPending && (
                     <Loader2 className="mr-2 size-4 animate-spin" />
                   )}
-                  {registerMutation.isPending ? "Creating…" : "Create organization"}
+                  {registerMutation.isPending ? tReg("submitting") : tReg("submit")}
                 </Button>
 
                 <p className="text-center text-sm text-muted-foreground">
-                  Already have an account?{" "}
+                  {tReg("hasAccountPrompt")}{" "}
                   <Link
                     href="/login"
                     className="text-primary underline hover:no-underline"
                   >
-                    Sign in
+                    {tReg("signInLink")}
                   </Link>
                 </p>
               </form>
@@ -235,31 +252,30 @@ export function RegisterCompanyPage() {
           </Card>
         </div>
 
-        {/* Right side: Features */}
         <div className="hidden md:block">
           <FeaturesList
-            title="Powerful Inventory Management"
-            subtitle="Everything you need to manage inventory efficiently"
+            title={tMarketing("title")}
+            subtitle={tMarketing("subtitle")}
           >
             <FeatureCard
               icon={Box}
-              title="Catalog Management"
-              description="Organize products with SKUs, descriptions, images, and hierarchical categories"
+              title={tMarketing("catalogTitle")}
+              description={tMarketing("catalogDescription")}
             />
             <FeatureCard
               icon={Zap}
-              title="Real-time Tracking"
-              description="Track stock movements across multiple warehouses with instant updates"
+              title={tMarketing("trackingTitle")}
+              description={tMarketing("trackingDescription")}
             />
             <FeatureCard
               icon={AlertCircle}
-              title="Smart Alerts"
-              description="Set reorder points and receive instant notifications when stock runs low"
+              title={tMarketing("alertsTitle")}
+              description={tMarketing("alertsDescription")}
             />
             <FeatureCard
               icon={Search}
-              title="Advanced Search"
-              description="Find products, categories, and locations with powerful full-text search"
+              title={tMarketing("searchTitle")}
+              description={tMarketing("searchDescription")}
             />
           </FeaturesList>
         </div>

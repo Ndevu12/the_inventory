@@ -3,6 +3,7 @@
 import * as React from "react"
 import type { ColumnDef } from "@tanstack/react-table"
 import { toast } from "sonner"
+import { useTranslations } from "next-intl"
 
 import { PageHeader } from "@/components/layout/page-header"
 import {
@@ -43,13 +44,18 @@ import {
 } from "../hooks/use-billing"
 import type { BillingTenant, SubscriptionPlan, SubscriptionStatus } from "../types/settings.types"
 import {
-  SUBSCRIPTION_PLAN_MAP,
-  SUBSCRIPTION_STATUS_MAP,
+  SUBSCRIPTION_PLAN_VALUES,
+  SUBSCRIPTION_STATUS_VALUES,
 } from "../helpers/settings-constants"
 import { exportTenantData } from "../api/billing-api"
 import { DownloadIcon, PencilIcon, PlayIcon, StopCircleIcon } from "lucide-react"
 
 export function BillingPage() {
+  const tb = useTranslations("SettingsPlatform.billing")
+  const tPlans = useTranslations("SettingsTenant.plans")
+  const tSubStatus = useTranslations("SettingsTenant.subscriptionStatus")
+  const tCommon = useTranslations("Common.actions")
+
   const [tenantToEdit, setTenantToEdit] = React.useState<BillingTenant | null>(null)
   const [tenantToSuspend, setTenantToSuspend] = React.useState<BillingTenant | null>(null)
   const [tenantToReactivate, setTenantToReactivate] = React.useState<BillingTenant | null>(null)
@@ -64,44 +70,44 @@ export function BillingPage() {
     if (!tenantToSuspend) return
     suspendMutation.mutate(tenantToSuspend.id, {
       onSuccess: () => {
-        toast.success(`${tenantToSuspend.name} has been suspended`)
+        toast.success(tb("toast.suspended", { name: tenantToSuspend.name }))
         setTenantToSuspend(null)
       },
-      onError: () => toast.error("Failed to suspend tenant"),
+      onError: () => toast.error(tb("toast.suspendFailed")),
     })
-  }, [tenantToSuspend, suspendMutation])
+  }, [tenantToSuspend, suspendMutation, tb])
 
   const handleReactivateConfirm = React.useCallback(() => {
     if (!tenantToReactivate) return
     reactivateMutation.mutate(tenantToReactivate.id, {
       onSuccess: () => {
-        toast.success(`${tenantToReactivate.name} has been reactivated`)
+        toast.success(tb("toast.reactivated", { name: tenantToReactivate.name }))
         setTenantToReactivate(null)
       },
-      onError: () => toast.error("Failed to reactivate tenant"),
+      onError: () => toast.error(tb("toast.reactivateFailed")),
     })
-  }, [tenantToReactivate, reactivateMutation])
+  }, [tenantToReactivate, reactivateMutation, tb])
 
   const handleExportTenant = React.useCallback(
     async (tenant: BillingTenant) => {
       setExportingId(tenant.id)
       try {
         await exportTenantData(tenant.id)
-        toast.success(`Export for ${tenant.name} downloaded`)
+        toast.success(tb("toast.exportSuccess", { name: tenant.name }))
       } catch {
-        toast.error("Failed to export tenant data")
+        toast.error(tb("toast.exportFailed"))
       } finally {
         setExportingId(null)
       }
     },
-    [],
+    [tb],
   )
 
   const columns: ColumnDef<BillingTenant>[] = React.useMemo(
     () => [
       {
         accessorKey: "name",
-        header: "Tenant",
+        header: tb("columns.tenant"),
         cell: ({ row }) => (
           <div className="flex flex-col">
             <span className="font-medium">{row.original.name}</span>
@@ -111,16 +117,16 @@ export function BillingPage() {
       },
       {
         accessorKey: "subscription_plan",
-        header: "Plan",
+        header: tb("columns.plan"),
         cell: ({ row }) => (
           <Badge variant="outline">
-            {SUBSCRIPTION_PLAN_MAP[row.original.subscription_plan as SubscriptionPlan]}
+            {tPlans(row.original.subscription_plan as SubscriptionPlan)}
           </Badge>
         ),
       },
       {
         accessorKey: "subscription_status",
-        header: "Status",
+        header: tb("columns.status"),
         cell: ({ row }) => (
           <Badge
             variant={
@@ -131,33 +137,39 @@ export function BillingPage() {
                   : "secondary"
             }
           >
-            {SUBSCRIPTION_STATUS_MAP[row.original.subscription_status as SubscriptionStatus]}
+            {tSubStatus(row.original.subscription_status as SubscriptionStatus)}
           </Badge>
         ),
       },
       {
         id: "active",
-        header: "Active",
+        header: tb("columns.active"),
         cell: ({ row }) => (
           <Badge variant={row.original.is_active ? "default" : "secondary"}>
-            {row.original.is_active ? "Yes" : "No"}
+            {row.original.is_active ? tb("yes") : tb("no")}
           </Badge>
         ),
       },
       {
         id: "usage",
-        header: "Usage",
+        header: tb("columns.usage"),
         cell: ({ row }) => {
-          const t = row.original
-          const usersOver = t.user_count >= t.effective_max_users
-          const productsOver = t.product_count >= t.effective_max_products
+          const tenant = row.original
+          const usersOver = tenant.user_count >= tenant.effective_max_users
+          const productsOver = tenant.product_count >= tenant.effective_max_products
           return (
             <div className="flex flex-col gap-0.5 text-sm">
               <span className={usersOver ? "text-destructive" : ""}>
-                {t.user_count}/{t.effective_max_users} users
+                {tb("usageUsers", {
+                  current: tenant.user_count,
+                  max: tenant.effective_max_users,
+                })}
               </span>
               <span className={productsOver ? "text-destructive" : ""}>
-                {t.product_count}/{t.effective_max_products} products
+                {tb("usageProducts", {
+                  current: tenant.product_count,
+                  max: tenant.effective_max_products,
+                })}
               </span>
             </div>
           )
@@ -176,7 +188,7 @@ export function BillingPage() {
                 className="size-8"
                 onClick={() => handleExportTenant(tenant)}
                 disabled={isExporting}
-                title="Export tenant data"
+                title={tb("ariaExport")}
               >
                 <DownloadIcon className="size-4" />
               </Button>
@@ -185,7 +197,7 @@ export function BillingPage() {
                 size="icon"
                 className="size-8"
                 onClick={() => setTenantToEdit(tenant)}
-                title="Change plan"
+                title={tb("ariaChangePlan")}
               >
                 <PencilIcon className="size-4" />
               </Button>
@@ -195,7 +207,7 @@ export function BillingPage() {
                   size="icon"
                   className="size-8 text-muted-foreground hover:text-destructive"
                   onClick={() => setTenantToSuspend(tenant)}
-                  title="Suspend"
+                  title={tb("ariaSuspend")}
                 >
                   <StopCircleIcon className="size-4" />
                 </Button>
@@ -205,7 +217,7 @@ export function BillingPage() {
                   size="icon"
                   className="size-8 text-muted-foreground hover:text-green-600"
                   onClick={() => setTenantToReactivate(tenant)}
-                  title="Reactivate"
+                  title={tb("ariaReactivate")}
                 >
                   <PlayIcon className="size-4" />
                 </Button>
@@ -217,14 +229,14 @@ export function BillingPage() {
         enableHiding: false,
       },
     ],
-    []
+    [tb, tPlans, tSubStatus, handleExportTenant, exportingId],
   )
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-6">
       <PageHeader
-        title="Billing & Subscriptions"
-        description="Manage tenant plans, usage, and billing (superuser only)"
+        title={tb("page.title")}
+        description={tb("page.description")}
       />
 
       <DataTable
@@ -232,9 +244,9 @@ export function BillingPage() {
         data={tenants}
         searchValue=""
         onSearchChange={() => {}}
-        searchPlaceholder="Search tenants..."
+        searchPlaceholder={tb("searchPlaceholder")}
         isLoading={isLoading}
-        emptyMessage="No tenants found."
+        emptyMessage={tb("emptyMessage")}
       />
 
       <AlertDialog
@@ -245,20 +257,21 @@ export function BillingPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Suspend tenant</AlertDialogTitle>
+            <AlertDialogTitle>{tb("suspendDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to suspend <strong>{tenantToSuspend?.name}</strong>? The tenant
-              will not be able to log in or access data until reactivated.
+              {tb("suspendDialog.descriptionLead")}{" "}
+              <strong>{tenantToSuspend?.name}</strong>
+              {tb("suspendDialog.descriptionTrail")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{tCommon("cancel")}</AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
               onClick={handleSuspendConfirm}
               disabled={suspendMutation.isPending}
             >
-              {suspendMutation.isPending ? "Suspending…" : "Suspend"}
+              {suspendMutation.isPending ? tb("suspending") : tb("suspend")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -272,19 +285,20 @@ export function BillingPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Reactivate tenant</AlertDialogTitle>
+            <AlertDialogTitle>{tb("reactivateDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to reactivate <strong>{tenantToReactivate?.name}</strong>? The
-              tenant will be able to log in and access data again.
+              {tb("reactivateDialog.descriptionLead")}{" "}
+              <strong>{tenantToReactivate?.name}</strong>
+              {tb("reactivateDialog.descriptionTrail")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{tCommon("cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleReactivateConfirm}
               disabled={reactivateMutation.isPending}
             >
-              {reactivateMutation.isPending ? "Reactivating…" : "Reactivate"}
+              {reactivateMutation.isPending ? tb("reactivating") : tb("reactivate")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -294,7 +308,7 @@ export function BillingPage() {
         tenant={tenantToEdit}
         onClose={() => setTenantToEdit(null)}
         onSuccess={() => {
-          toast.success("Subscription updated")
+          toast.success(tb("toast.subscriptionUpdated"))
           setTenantToEdit(null)
         }}
         updateMutation={updateMutation}
@@ -314,6 +328,11 @@ function ChangePlanDialog({
   onSuccess: () => void
   updateMutation: ReturnType<typeof useUpdateBillingTenant>
 }) {
+  const tcp = useTranslations("SettingsPlatform.billing.changePlan")
+  const tPlans = useTranslations("SettingsTenant.plans")
+  const tSubStatus = useTranslations("SettingsTenant.subscriptionStatus")
+  const tCommon = useTranslations("Common.actions")
+
   const [plan, setPlan] = React.useState<SubscriptionPlan>("free")
   const [status, setStatus] = React.useState<SubscriptionStatus>("active")
   const [notes, setNotes] = React.useState("")
@@ -326,12 +345,17 @@ function ChangePlanDialog({
     }
   }, [tenant])
 
+  const tb = useTranslations("SettingsPlatform.billing")
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!tenant) return
     updateMutation.mutate(
       { id: tenant.id, payload: { subscription_plan: plan, subscription_status: status, billing_notes: notes || undefined } },
-      { onSuccess, onError: () => toast.error("Failed to update subscription") }
+      {
+        onSuccess,
+        onError: () => toast.error(tb("toast.subscriptionUpdateFailed")),
+      },
     )
   }
 
@@ -341,56 +365,55 @@ function ChangePlanDialog({
     <Dialog open={!!tenant} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Change plan — {tenant.name}</DialogTitle>
-          <DialogDescription>
-            Update subscription plan, status, or billing notes.
-          </DialogDescription>
+          <DialogTitle>{tcp("title", { name: tenant.name })}</DialogTitle>
+          <DialogDescription>{tcp("description")}</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid gap-4 py-4">
           <div className="grid gap-2">
-            <Label>Plan</Label>
+            <Label>{tcp("plan")}</Label>
             <Select value={plan} onValueChange={(v) => setPlan(v as SubscriptionPlan)}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="free">Free</SelectItem>
-                <SelectItem value="starter">Starter</SelectItem>
-                <SelectItem value="professional">Professional</SelectItem>
-                <SelectItem value="enterprise">Enterprise</SelectItem>
+                {SUBSCRIPTION_PLAN_VALUES.map((p) => (
+                  <SelectItem key={p} value={p}>
+                    {tPlans(p)}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
           <div className="grid gap-2">
-            <Label>Status</Label>
+            <Label>{tcp("status")}</Label>
             <Select value={status} onValueChange={(v) => setStatus(v as SubscriptionStatus)}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="trial">Trial</SelectItem>
-                <SelectItem value="past_due">Past Due</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
-                <SelectItem value="suspended">Suspended</SelectItem>
+                {SUBSCRIPTION_STATUS_VALUES.map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {tSubStatus(s)}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
           <div className="grid gap-2">
-            <Label>Billing notes (optional)</Label>
+            <Label>{tcp("billingNotes")}</Label>
             <Textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Payment issues, custom arrangements, etc."
+              placeholder={tcp("billingNotesPlaceholder")}
               rows={3}
             />
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
+              {tCommon("cancel")}
             </Button>
             <Button type="submit" disabled={updateMutation.isPending}>
-              {updateMutation.isPending ? "Saving…" : "Save"}
+              {updateMutation.isPending ? tcp("saving") : tCommon("save")}
             </Button>
           </DialogFooter>
         </form>

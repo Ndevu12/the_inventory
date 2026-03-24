@@ -1,8 +1,9 @@
-"use client";
+"use client"
 
-import { useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect, useMemo } from "react"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useTranslations } from "next-intl"
 import {
   Dialog,
   DialogContent,
@@ -10,23 +11,23 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
-  categorySchema,
+  createCategorySchema,
   type CategoryFormValues,
-} from "../../helpers/category-schemas";
-import type { Category } from "../../types/inventory.types";
+} from "../../helpers/category-schemas"
+import type { Category } from "../../types/inventory.types"
 
 interface CategoryFormDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  category: Category | null;
-  onSubmit: (values: CategoryFormValues) => void;
-  isSubmitting: boolean;
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  category: Category | null
+  onSubmit: (values: CategoryFormValues) => void
+  isSubmitting: boolean
 }
 
 export function CategoryFormDialog({
@@ -36,7 +37,19 @@ export function CategoryFormDialog({
   onSubmit,
   isSubmitting,
 }: CategoryFormDialogProps) {
-  const isEdit = !!category;
+  const t = useTranslations("Inventory")
+  const tCommon = useTranslations("Common.actions")
+  const isEdit = !!category
+
+  const categorySchema = useMemo(
+    () =>
+      createCategorySchema({
+        nameRequired: t("categories.form.validation.nameRequired"),
+        nameMax: t("categories.form.validation.nameMax"),
+        slugMax: t("categories.form.validation.slugMax"),
+      }),
+    [t],
+  )
 
   const {
     register,
@@ -53,7 +66,7 @@ export function CategoryFormDialog({
       description: "",
       is_active: true,
     },
-  });
+  })
 
   useEffect(() => {
     if (open) {
@@ -66,32 +79,35 @@ export function CategoryFormDialog({
               is_active: category.is_active,
             }
           : { name: "", slug: "", description: "", is_active: true },
-      );
+      )
     }
-  }, [open, category, reset]);
+  }, [open, category, reset])
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {isEdit ? "Edit Category" : "Create Category"}
+            {isEdit
+              ? t("categories.form.editTitle")
+              : t("categories.form.createTitle")}
           </DialogTitle>
           <DialogDescription>
             {isEdit
-              ? "Update the category details below."
-              : "Fill in the details to create a new category."}
+              ? t("categories.form.editDescription")
+              : t("categories.form.createDescription")}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-1.5">
             <label htmlFor="cat-name" className="text-sm font-medium">
-              Name <span className="text-destructive">*</span>
+              {t("categories.form.name")}{" "}
+              <span className="text-destructive">*</span>
             </label>
             <Input
               id="cat-name"
-              placeholder="e.g. Electronics"
+              placeholder={t("categories.form.namePlaceholder")}
               {...register("name")}
               aria-invalid={!!errors.name}
             />
@@ -104,11 +120,11 @@ export function CategoryFormDialog({
 
           <div className="space-y-1.5">
             <label htmlFor="cat-slug" className="text-sm font-medium">
-              Slug
+              {t("categories.form.slug")}
             </label>
             <Input
               id="cat-slug"
-              placeholder="auto-generated if empty"
+              placeholder={t("categories.form.slugPlaceholder")}
               {...register("slug")}
               aria-invalid={!!errors.slug}
             />
@@ -118,18 +134,17 @@ export function CategoryFormDialog({
               </p>
             )}
             <p className="text-xs text-muted-foreground">
-              URL-friendly identifier. Leave blank to auto-generate from the
-              name.
+              {t("categories.form.slugHint")}
             </p>
           </div>
 
           <div className="space-y-1.5">
             <label htmlFor="cat-desc" className="text-sm font-medium">
-              Description
+              {t("categories.form.description")}
             </label>
             <Textarea
               id="cat-desc"
-              placeholder="Optional description..."
+              placeholder={t("categories.form.descriptionPlaceholder")}
               rows={3}
               {...register("description")}
             />
@@ -144,7 +159,7 @@ export function CategoryFormDialog({
               }
             />
             <label htmlFor="cat-active" className="text-sm">
-              Active
+              {t("categories.form.active")}
             </label>
           </div>
 
@@ -154,18 +169,18 @@ export function CategoryFormDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
             >
-              Cancel
+              {tCommon("cancel")}
             </Button>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting
-                ? "Saving…"
+                ? t("categories.form.saving")
                 : isEdit
-                  ? "Update Category"
-                  : "Create Category"}
+                  ? t("categories.form.updateSubmit")
+                  : t("categories.form.createSubmit")}
             </Button>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

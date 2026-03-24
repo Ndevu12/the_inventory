@@ -14,14 +14,30 @@ interface DispatchColumnActions {
   onDelete?: (dispatch: Dispatch) => void
 }
 
+export interface DispatchColumnLabels {
+  tColumns: (key: string) => string
+  emDash: string
+  processedLabel: string
+  pendingLabel: string
+  viewLabel: string
+  reviewStockLabel: string
+  processDispatchLabel: string
+  deleteLabel: string
+  locale: string
+}
+
 export function getDispatchColumns(
   actions: DispatchColumnActions,
+  labels: DispatchColumnLabels,
 ): ColumnDef<Dispatch>[] {
   return [
     {
       accessorKey: "dispatch_number",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Dispatch #" />
+        <DataTableColumnHeader
+          column={column}
+          title={labels.tColumns("dispatchNumber")}
+        />
       ),
       cell: ({ row }) => (
         <span className="font-medium">
@@ -32,21 +48,27 @@ export function getDispatchColumns(
     {
       accessorKey: "sales_order_number",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Sales Order" />
+        <DataTableColumnHeader
+          column={column}
+          title={labels.tColumns("salesOrder")}
+        />
       ),
-      cell: ({ row }) => row.getValue("sales_order_number") || "—",
+      cell: ({ row }) => row.getValue("sales_order_number") || labels.emDash,
       enableSorting: false,
     },
     {
       accessorKey: "dispatch_date",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Dispatch Date" />
+        <DataTableColumnHeader
+          column={column}
+          title={labels.tColumns("dispatchDate")}
+        />
       ),
       cell: ({ row }) => {
         const date = new Date(row.getValue<string>("dispatch_date"))
         return (
           <span className="whitespace-nowrap text-sm">
-            {date.toLocaleDateString(undefined, {
+            {date.toLocaleDateString(labels.locale, {
               year: "numeric",
               month: "short",
               day: "numeric",
@@ -58,19 +80,22 @@ export function getDispatchColumns(
     {
       accessorKey: "from_location_name",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="From Location" />
+        <DataTableColumnHeader
+          column={column}
+          title={labels.tColumns("fromLocation")}
+        />
       ),
-      cell: ({ row }) => row.getValue("from_location_name") || "—",
+      cell: ({ row }) => row.getValue("from_location_name") || labels.emDash,
       enableSorting: false,
     },
     {
       accessorKey: "is_processed",
-      header: "Status",
+      header: labels.tColumns("status"),
       cell: ({ row }) => {
         const processed = row.getValue<boolean>("is_processed")
         return (
           <Badge variant={processed ? "default" : "secondary"}>
-            {processed ? "Processed" : "Pending"}
+            {processed ? labels.processedLabel : labels.pendingLabel}
           </Badge>
         )
       },
@@ -79,13 +104,16 @@ export function getDispatchColumns(
     {
       accessorKey: "created_at",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Created" />
+        <DataTableColumnHeader
+          column={column}
+          title={labels.tColumns("created")}
+        />
       ),
       cell: ({ row }) => {
         const date = new Date(row.getValue<string>("created_at"))
         return (
           <span className="whitespace-nowrap text-sm text-muted-foreground">
-            {date.toLocaleDateString(undefined, {
+            {date.toLocaleDateString(labels.locale, {
               year: "numeric",
               month: "short",
               day: "numeric",
@@ -102,28 +130,28 @@ export function getDispatchColumns(
 
         if (actions.onView) {
           rowActions.push({
-            label: "View",
+            label: labels.viewLabel,
             onClick: () => actions.onView!(dispatch),
           })
         }
 
         if (actions.onReviewStock && !dispatch.is_processed) {
           rowActions.push({
-            label: "Review stock / partial ship",
+            label: labels.reviewStockLabel,
             onClick: () => actions.onReviewStock!(dispatch),
           })
         }
 
         if (actions.onProcess && !dispatch.is_processed) {
           rowActions.push({
-            label: "Process Dispatch",
+            label: labels.processDispatchLabel,
             onClick: () => actions.onProcess!(dispatch),
           })
         }
 
         if (actions.onDelete && !dispatch.is_processed) {
           rowActions.push({
-            label: "Delete",
+            label: labels.deleteLabel,
             onClick: () => actions.onDelete!(dispatch),
             variant: "destructive",
             separator: true,

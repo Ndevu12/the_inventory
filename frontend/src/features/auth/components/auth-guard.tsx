@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
 
 import { useAuth } from "../context/auth-context";
 import { useBootstrapAuth } from "../hooks/use-auth";
@@ -21,14 +22,13 @@ interface AuthGuardProps {
  */
 export function AuthGuard({ children }: AuthGuardProps) {
   const router = useRouter();
+  const t = useTranslations("Auth.guard");
   const { isReady, isAuthenticated, accessToken } = useAuth();
   const { refreshToken } = useAuthStore();
   const hasToken = !!accessToken;
 
-  // Bootstrap only runs when we have tokens but no user (page reload). After login we skip.
   useBootstrapAuth();
 
-  // Redirect only when we truly have no valid auth. api-client logs out on 401+refresh failure.
   useEffect(() => {
     if (!isReady) return;
     if (!hasToken) {
@@ -45,7 +45,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
       <div className="flex h-screen w-screen items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-muted border-t-primary" />
-          <p className="text-sm text-muted-foreground">Loading...</p>
+          <p className="text-sm text-muted-foreground">{t("loading")}</p>
         </div>
       </div>
     );

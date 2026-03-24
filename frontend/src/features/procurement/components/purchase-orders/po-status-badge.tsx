@@ -1,9 +1,10 @@
 "use client"
 
+import { useTranslations } from "next-intl"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import type { PurchaseOrderStatus } from "../../types/procurement.types"
-import { PO_STATUS_COLOR_MAP, PO_STATUS_MAP } from "../../helpers/procurement-constants"
+import { PO_STATUS_COLOR_MAP } from "../../helpers/procurement-constants"
 
 interface POStatusBadgeProps {
   status: PurchaseOrderStatus
@@ -12,8 +13,9 @@ interface POStatusBadgeProps {
 }
 
 export function POStatusBadge({ status, label, className }: POStatusBadgeProps) {
+  const t = useTranslations("Procurement.poStatus")
   const colors = PO_STATUS_COLOR_MAP[status]
-  const displayLabel = label ?? PO_STATUS_MAP[status] ?? status
+  const displayLabel = label ?? t(status)
 
   return (
     <Badge

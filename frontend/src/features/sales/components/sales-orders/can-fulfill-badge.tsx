@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslations } from "next-intl"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { CheckCircleIcon, XCircleIcon } from "lucide-react"
@@ -10,6 +11,8 @@ interface CanFulfillBadgeProps {
 }
 
 export function CanFulfillBadge({ canFulfill, className }: CanFulfillBadgeProps) {
+  const t = useTranslations("Sales.salesOrders.fulfillment")
+
   return (
     <Badge
       variant="outline"
@@ -26,7 +29,7 @@ export function CanFulfillBadge({ canFulfill, className }: CanFulfillBadgeProps)
       ) : (
         <XCircleIcon className="size-3" />
       )}
-      {canFulfill ? "Can Fulfill" : "Insufficient Stock"}
+      {canFulfill ? t("canFulfill") : t("insufficientStock")}
     </Badge>
   )
 }

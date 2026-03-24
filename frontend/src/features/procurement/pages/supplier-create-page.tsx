@@ -1,8 +1,10 @@
 "use client"
 
+import * as React from "react"
 import { useRouter } from "@/i18n/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { Link } from "@/i18n/navigation"
 
@@ -11,17 +13,31 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { PageHeader } from "@/components/layout/page-header"
 import { useCreateSupplier } from "../hooks/use-suppliers"
 import {
-  createSupplierSchema,
+  buildCreateSupplierSchema,
   type CreateSupplierFormValues,
 } from "../helpers/supplier-schemas"
 import { SupplierForm } from "../components/suppliers/supplier-form"
 
 export function SupplierCreatePage() {
   const router = useRouter()
+  const t = useTranslations("Procurement.suppliers.create")
+  const tVal = useTranslations("Procurement.suppliers.validation")
+  const tCommon = useTranslations("Common.actions")
   const createMutation = useCreateSupplier()
 
+  const supplierSchema = React.useMemo(
+    () =>
+      buildCreateSupplierSchema({
+        codeRequired: tVal("codeRequired"),
+        nameRequired: tVal("nameRequired"),
+        emailInvalid: tVal("emailInvalid"),
+        leadTimeMin: tVal("leadTimeMin"),
+      }),
+    [tVal],
+  )
+
   const form = useForm<CreateSupplierFormValues>({
-    resolver: zodResolver(createSupplierSchema),
+    resolver: zodResolver(supplierSchema),
     defaultValues: {
       code: "",
       name: "",
@@ -39,21 +55,18 @@ export function SupplierCreatePage() {
   function onSubmit(values: CreateSupplierFormValues) {
     createMutation.mutate(values, {
       onSuccess: (supplier) => {
-        toast.success(`Supplier "${supplier.name}" created`)
+        toast.success(t("toastCreated", { name: supplier.name }))
         router.push("/procurement/suppliers")
       },
       onError: () => {
-        toast.error("Failed to create supplier")
+        toast.error(t("toastCreateFailed"))
       },
     })
   }
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-6">
-      <PageHeader
-        title="New Supplier"
-        description="Add a new supplier to your directory"
-      />
+      <PageHeader title={t("title")} description={t("description")} />
 
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <Card>
@@ -62,10 +75,10 @@ export function SupplierCreatePage() {
           </CardContent>
           <CardFooter className="flex justify-end gap-2">
             <Button variant="outline" render={<Link href="/procurement/suppliers" />}>
-              Cancel
+              {tCommon("cancel")}
             </Button>
             <Button type="submit" disabled={createMutation.isPending}>
-              {createMutation.isPending ? "Creating..." : "Create Supplier"}
+              {createMutation.isPending ? t("creating") : t("submit")}
             </Button>
           </CardFooter>
         </Card>

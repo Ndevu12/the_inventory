@@ -1,16 +1,28 @@
 import { z } from "zod"
 
-export const createDispatchSchema = z.object({
-  dispatch_number: z.string().max(100),
-  sales_order: z
-    .number()
-    .refine((val) => val > 0, { message: "Sales order is required" }),
-  dispatch_date: z.string().min(1, "Dispatch date is required"),
-  from_location: z
-    .number()
-    .refine((val) => val > 0, { message: "From location is required" }),
-  notes: z.string().default(""),
-})
+export interface CreateDispatchSchemaMessages {
+  salesOrderRequired: string
+  dispatchDateRequired: string
+  fromLocationRequired: string
+}
 
-export type CreateDispatchInput = z.input<typeof createDispatchSchema>
-export type CreateDispatchFormValues = z.output<typeof createDispatchSchema>
+export function buildCreateDispatchSchema(messages: CreateDispatchSchemaMessages) {
+  return z.object({
+    dispatch_number: z.string().max(100),
+    sales_order: z
+      .number()
+      .refine((val) => val > 0, { message: messages.salesOrderRequired }),
+    dispatch_date: z.string().min(1, messages.dispatchDateRequired),
+    from_location: z
+      .number()
+      .refine((val) => val > 0, { message: messages.fromLocationRequired }),
+    notes: z.string().default(""),
+  })
+}
+
+export type CreateDispatchInput = z.input<
+  ReturnType<typeof buildCreateDispatchSchema>
+>
+export type CreateDispatchFormValues = z.output<
+  ReturnType<typeof buildCreateDispatchSchema>
+>

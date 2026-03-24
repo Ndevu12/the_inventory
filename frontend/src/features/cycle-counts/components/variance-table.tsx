@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -27,7 +28,7 @@ import type {
   VarianceResolution,
   VarianceSummary,
 } from "../types/cycle-count.types";
-import { RESOLUTION_OPTIONS } from "../helpers/cycle-constants";
+import { VARIANCE_RESOLUTION_VALUES } from "../helpers/cycle-constants";
 import { getVarianceColumns } from "./variance-columns";
 import type { LineResolution } from "../stores/cycle-wizard-store";
 
@@ -39,7 +40,10 @@ interface VarianceReviewProps {
   isCompleted: boolean;
   resolutions: Record<number, LineResolution>;
   onSetResolution: (lineId: number, resolution: LineResolution) => void;
-  onBulkResolution: (lineIds: number[], resolution: VarianceResolution) => void;
+  onBulkResolution: (
+    lineIds: number[],
+    resolution: VarianceResolution,
+  ) => void;
   onReconcile: () => void;
   isReconciling?: boolean;
 }
@@ -56,6 +60,8 @@ export function VarianceReview({
   onReconcile,
   isReconciling = false,
 }: VarianceReviewProps) {
+  const t = useTranslations("CycleCounts.variance");
+
   if (isReconciled && variances.length > 0) {
     return <ReconciledVarianceTable variances={variances} summary={summary} />;
   }
@@ -71,18 +77,30 @@ export function VarianceReview({
   return (
     <div className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-4">
-        <SummaryCard label="Total Lines" value={summary.total_lines} />
-        <SummaryCard label="Shortages" value={summary.shortages} variant="destructive" />
-        <SummaryCard label="Surpluses" value={summary.surpluses} variant="info" />
-        <SummaryCard label="Matches" value={summary.matches} variant="success" />
+        <SummaryCard label={t("summaryTotalLines")} value={summary.total_lines} />
+        <SummaryCard
+          label={t("summaryShortages")}
+          value={summary.shortages}
+          variant="destructive"
+        />
+        <SummaryCard
+          label={t("summarySurpluses")}
+          value={summary.surpluses}
+          variant="info"
+        />
+        <SummaryCard
+          label={t("summaryMatches")}
+          value={summary.matches}
+          variant="success"
+        />
       </div>
 
       {isCompleted && linesWithVariance.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Resolve Variances</CardTitle>
+            <CardTitle className="text-base">{t("resolveTitle")}</CardTitle>
             <CardDescription>
-              {linesWithVariance.length} line{linesWithVariance.length !== 1 ? "s" : ""} with variances need resolution
+              {t("resolveNeedCount", { count: linesWithVariance.length })}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -97,7 +115,7 @@ export function VarianceReview({
                   )
                 }
               >
-                Accept All
+                {t("acceptAll")}
               </Button>
               <Button
                 variant="outline"
@@ -109,7 +127,7 @@ export function VarianceReview({
                   )
                 }
               >
-                Investigate All
+                {t("investigateAll")}
               </Button>
               <Button
                 variant="outline"
@@ -121,7 +139,7 @@ export function VarianceReview({
                   )
                 }
               >
-                Reject All
+                {t("rejectAll")}
               </Button>
             </div>
 
@@ -130,7 +148,10 @@ export function VarianceReview({
                 const variance = line.variance ?? 0;
                 const res = resolutions[line.id];
                 return (
-                  <div key={line.id} className="space-y-2 py-3 first:pt-0 last:pb-0">
+                  <div
+                    key={line.id}
+                    className="space-y-2 py-3 first:pt-0 last:pb-0"
+                  >
                     <div className="flex items-center justify-between">
                       <div>
                         <span className="font-medium">{line.product_name}</span>
@@ -143,9 +164,13 @@ export function VarianceReview({
                       </div>
                       <div className="flex items-center gap-3 text-sm">
                         <span className="text-muted-foreground">
-                          System: {line.system_quantity}
+                          {t("inlineSystem", { qty: line.system_quantity })}
                         </span>
-                        <span>Counted: {line.counted_quantity}</span>
+                        <span>
+                          {t("inlineCounted", {
+                            qty: line.counted_quantity ?? "",
+                          })}
+                        </span>
                         <span
                           className={cn(
                             "font-semibold",
@@ -159,7 +184,7 @@ export function VarianceReview({
                     </div>
                     <div className="grid gap-3 sm:grid-cols-2">
                       <div className="space-y-1">
-                        <Label className="text-xs">Resolution</Label>
+                        <Label className="text-xs">{t("resolution")}</Label>
                         <Select
                           value={res?.resolution ?? ""}
                           onValueChange={(val) =>
@@ -170,22 +195,22 @@ export function VarianceReview({
                           }
                         >
                           <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select resolution..." />
+                            <SelectValue placeholder={t("resolutionPlaceholder")} />
                           </SelectTrigger>
                           <SelectContent>
-                            {RESOLUTION_OPTIONS.map((opt) => (
-                              <SelectItem key={opt.value} value={opt.value}>
-                                {opt.label}
+                            {VARIANCE_RESOLUTION_VALUES.map((opt) => (
+                              <SelectItem key={opt} value={opt}>
+                                {t(`resolutionOption.${opt}`)}
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-xs">Root Cause</Label>
+                        <Label className="text-xs">{t("rootCause")}</Label>
                         <Textarea
                           rows={1}
-                          placeholder="Optional explanation..."
+                          placeholder={t("rootCausePlaceholder")}
                           value={res?.root_cause ?? ""}
                           onChange={(e) =>
                             onSetResolution(line.id, {
@@ -206,7 +231,7 @@ export function VarianceReview({
               onClick={onReconcile}
               disabled={isReconciling || !allNonZeroResolved}
             >
-              {isReconciling ? "Reconciling..." : "Reconcile Cycle"}
+              {isReconciling ? t("reconciling") : t("reconcile")}
             </Button>
           </CardFooter>
         </Card>
@@ -215,15 +240,18 @@ export function VarianceReview({
       {isCompleted && linesWithMatch.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Matching Lines</CardTitle>
+            <CardTitle className="text-base">{t("matchingTitle")}</CardTitle>
             <CardDescription>
-              {linesWithMatch.length} line{linesWithMatch.length !== 1 ? "s" : ""} with no variance (auto-accepted)
+              {t("matchingNoVariance", { count: linesWithMatch.length })}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="divide-y text-sm">
               {linesWithMatch.map((line) => (
-                <div key={line.id} className="flex items-center justify-between py-2 first:pt-0 last:pb-0">
+                <div
+                  key={line.id}
+                  className="flex items-center justify-between py-2 first:pt-0 last:pb-0"
+                >
                   <div>
                     <span className="font-medium">{line.product_name}</span>
                     <span className="ml-2 text-xs text-muted-foreground">
@@ -231,7 +259,7 @@ export function VarianceReview({
                     </span>
                   </div>
                   <span className="text-green-600 dark:text-green-400">
-                    Qty: {line.system_quantity} (match)
+                    {t("qtyMatch", { qty: line.system_quantity })}
                   </span>
                 </div>
               ))}
@@ -243,7 +271,7 @@ export function VarianceReview({
       {!isCompleted && !isReconciled && (
         <Card>
           <CardContent className="py-8 text-center text-muted-foreground">
-            Complete all counts and mark the cycle as completed to review variances.
+            {t("completeToReview")}
           </CardContent>
         </Card>
       )}
@@ -258,21 +286,41 @@ function ReconciledVarianceTable({
   variances: InventoryVariance[];
   summary: VarianceSummary;
 }) {
-  const columns = useMemo(() => getVarianceColumns(), []);
+  const t = useTranslations("CycleCounts.variance");
+  const tCol = useTranslations("CycleCounts.varianceTable");
+  const tType = useTranslations("CycleCounts.variance.type");
+  const tRes = useTranslations("CycleCounts.variance.resolutionOption");
+
+  const columns = useMemo(
+    () => getVarianceColumns(tCol, tType, tRes),
+    [tCol, tType, tRes],
+  );
 
   return (
     <div className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-4">
-        <SummaryCard label="Total Lines" value={summary.total_lines} />
-        <SummaryCard label="Shortages" value={summary.shortages} variant="destructive" />
-        <SummaryCard label="Surpluses" value={summary.surpluses} variant="info" />
-        <SummaryCard label="Matches" value={summary.matches} variant="success" />
+        <SummaryCard label={t("summaryTotalLines")} value={summary.total_lines} />
+        <SummaryCard
+          label={t("summaryShortages")}
+          value={summary.shortages}
+          variant="destructive"
+        />
+        <SummaryCard
+          label={t("summarySurpluses")}
+          value={summary.surpluses}
+          variant="info"
+        />
+        <SummaryCard
+          label={t("summaryMatches")}
+          value={summary.matches}
+          variant="success"
+        />
       </div>
 
       <DataTable
         columns={columns}
         data={variances}
-        emptyMessage="No variances recorded."
+        emptyMessage={t("emptyVariances")}
       />
     </div>
   );

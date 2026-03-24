@@ -1,0 +1,224 @@
+{
+  "Common": {
+    "searchAria": "Search",
+    "searchPlaceholder": "Search…",
+    "commandSearchPlaceholder": "Search pages…",
+    "noResults": "No results.",
+    "actions": {
+      "save": "Save",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "edit": "Edit",
+      "create": "Create",
+      "new": "New",
+      "back": "Back",
+      "close": "Close",
+      "submit": "Submit",
+      "search": "Search",
+      "filter": "Filter",
+      "export": "Export",
+      "import": "Import"
+    },
+    "states": {
+      "loading": "Loading…",
+      "error": "Error",
+      "retry": "Retry"
+    },
+    "validation": {
+      "requiredField": "This field is required."
+    },
+    "themeToggleAria": "Toggle theme"
+  },
+  "LanguageSwitcher": {
+    "ariaLabel": "Language"
+  },
+  "App": {
+    "description": "Multi-tenant inventory management system"
+  },
+  "Errors": {
+    "loadFailed": "Failed to load data.",
+    "networkError": "Network error. Please try again.",
+    "permissionDenied": "You do not have permission to perform this action."
+  },
+  "Nav": {
+    "groups": {
+      "overview": "Overview",
+      "inventory": "Inventory",
+      "orders": "Orders",
+      "procurement": "Procurement",
+      "sales": "Sales",
+      "analytics": "Analytics",
+      "settings": "Settings"
+    },
+    "items": {
+      "dashboard": "Dashboard",
+      "products": "Products",
+      "categories": "Categories",
+      "stockLocations": "Stock Locations",
+      "stockRecords": "Stock Records",
+      "stockMovements": "Stock Movements",
+      "stockLots": "Stock Lots",
+      "reservations": "Reservations",
+      "cycleCounts": "Cycle Counts",
+      "bulkOperations": "Bulk Operations",
+      "suppliers": "Suppliers",
+      "purchaseOrders": "Purchase Orders",
+      "goodsReceived": "Goods Received",
+      "customers": "Customers",
+      "salesOrders": "Sales Orders",
+      "dispatches": "Dispatches",
+      "reports": "Reports",
+      "auditLog": "Audit Log",
+      "platformAuditLog": "Platform Audit Log",
+      "account": "Account",
+      "tenant": "Tenant",
+      "teamMembers": "Team Members",
+      "platformUsers": "Users",
+      "invitations": "Invitations",
+      "billing": "Billing"
+    }
+  },
+  "Shell": {
+    "tenantLoading": "Loading…",
+    "selectTenant": "Select Tenant",
+    "organizations": "Organizations",
+    "loadingOrganizations": "Loading organizations…",
+    "noOrganizations": "No organizations found",
+    "userFallback": "User",
+    "memberFallback": "Member",
+    "profileAccount": "Profile & account",
+    "exitImpersonation": "Exit impersonation",
+    "logOut": "Log out"
+  },
+  "Breadcrumbs": {
+    "home": "Dashboard",
+    "products": "Products",
+    "categories": "Categories",
+    "stock": "Stock",
+    "locations": "Locations",
+    "records": "Records",
+    "movements": "Movements",
+    "lots": "Lots",
+    "reservations": "Reservations",
+    "cycle-counts": "Cycle Counts",
+    "bulk-operations": "Bulk Operations",
+    "procurement": "Procurement",
+    "suppliers": "Suppliers",
+    "purchase-orders": "Purchase Orders",
+    "goods-received": "Goods Received",
+    "sales": "Sales",
+    "customers": "Customers",
+    "sales-orders": "Sales Orders",
+    "dispatches": "Dispatches",
+    "reports": "Reports",
+    "stock-valuation": "Stock Valuation",
+    "movement-history": "Movement History",
+    "low-stock": "Low Stock",
+    "overstock": "Overstock",
+    "purchase-summary": "Purchase Summary",
+    "sales-summary": "Sales Summary",
+    "availability": "Availability",
+    "product-expiry": "Product Expiry",
+    "variances": "Variances",
+    "traceability": "Traceability",
+    "audit-log": "Audit Log",
+    "settings": "Settings",
+    "members": "Team Members",
+    "new": "New",
+    "edit": "Edit"
+  },
+  "Dashboard": {
+    "page": {
+      "title": "Dashboard",
+      "subtitle": "Overview of your inventory, orders, and operations."
+    },
+    "kpi": {
+      "totalProducts": {
+        "title": "Total products",
+        "description": "Active products in the catalog"
+      },
+      "locations": {
+        "title": "Locations",
+        "description": "Active stock locations"
+      },
+      "lowStock": {
+        "title": "Low stock",
+        "description": "Products below reorder point"
+      },
+      "reserved": {
+        "title": "Reserved",
+        "description": "{available} available"
+      },
+      "purchaseOrders": {
+        "title": "Purchase orders",
+        "description": "Total purchase orders"
+      },
+      "salesOrders": {
+        "title": "Sales orders",
+        "description": "Total sales orders"
+      },
+      "reservedValue": {
+        "title": "Reserved value",
+        "description": "Value of reserved stock"
+      },
+      "stockRecords": {
+        "title": "Stock records",
+        "description": "Product–location lines"
+      }
+    },
+    "stockByLocation": {
+      "title": "Stock by location",
+      "description": "Available and reserved quantities by location",
+      "empty": "No stock data",
+      "legendReserved": "Reserved",
+      "legendAvailable": "Available"
+    },
+    "movementTrends": {
+      "title": "Movement trends",
+      "description": "Daily stock movements over the last 30 days",
+      "seriesLabel": "Movements"
+    },
+    "orderStatus": {
+      "title": "Order status",
+      "description": "Breakdown by current status",
+      "tabPurchase": "Purchase orders",
+      "tabSales": "Sales orders",
+      "empty": "No orders yet",
+      "totalLabel": "Total",
+      "statusLabels": {
+        "Draft": "Draft",
+        "Confirmed": "Confirmed",
+        "Received": "Received",
+        "Fulfilled": "Fulfilled",
+        "Cancelled": "Cancelled"
+      }
+    },
+    "pendingReservations": {
+      "title": "Pending reservations",
+      "description": "Summary of active reservations",
+      "empty": "No active reservations",
+      "pending": "Pending",
+      "confirmed": "Confirmed",
+      "units": "units",
+      "orderCount": "{count, plural, one {# order} other {# orders}}"
+    },
+    "expiringLots": {
+      "title": "Lots expiring soon",
+      "description": "Lots expiring in the next 30 days",
+      "noLotData": "No lot tracking data",
+      "noExpiring": "No lots expire in the next 30 days",
+      "colLot": "Lot #",
+      "colProduct": "Product",
+      "colQty": "Qty",
+      "colExpires": "Expires",
+      "expiryUnknown": "Unknown",
+      "expiryExpired": "Expired",
+      "expiryOneDay": "1 day",
+      "expiryDays": "{count} days"
+    },
+    "error": {
+      "generic": "Something went wrong. Please try again.",
+      "retry": "Retry"
+    }
+  }
+}

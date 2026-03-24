@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { Link } from "@/i18n/navigation"
+import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -29,12 +30,12 @@ import {
 } from "../../hooks/use-dispatches"
 import type { Dispatch } from "../../types/dispatch.types"
 
-function errorMessage(err: unknown): string {
+function errorMessage(err: unknown, fallback: string): string {
   if (err && typeof err === "object" && "message" in err) {
     const m = (err as ApiError).message
     if (typeof m === "string" && m) return m
   }
-  return "Something went wrong."
+  return fallback
 }
 
 interface DispatchFulfillmentDialogProps {
@@ -51,6 +52,9 @@ export function DispatchFulfillmentDialog({
   dispatch,
   introText,
 }: DispatchFulfillmentDialogProps) {
+  const t = useTranslations("Sales.dispatches.fulfillmentDialog")
+  const tList = useTranslations("Sales.dispatches.list")
+
   const dispatchId = dispatch?.id ?? null
   const previewQuery = useDispatchFulfillmentPreview(dispatchId, open)
   const processMutation = useProcessDispatch()
@@ -62,16 +66,18 @@ export function DispatchFulfillmentDialog({
       {
         onSuccess: () => {
           toast.success(
-            `Dispatch "${dispatch.dispatch_number}" processed — issued available quantities.`,
+            tList("toastProcessedPartial", {
+              dispatchNumber: dispatch.dispatch_number,
+            }),
           )
           onOpenChange(false)
         },
         onError: (error: unknown) => {
-          toast.error(errorMessage(error))
+          toast.error(errorMessage(error, t("genericError")))
         },
       },
     )
-  }, [dispatch, onOpenChange, processMutation])
+  }, [dispatch, onOpenChange, processMutation, t, tList])
 
   const soHref = dispatch
     ? `/sales/sales-orders/${dispatch.sales_order}`
@@ -81,30 +87,25 @@ export function DispatchFulfillmentDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl" showCloseButton>
         <DialogHeader>
-          <DialogTitle>Stock at dispatch source</DialogTitle>
+          <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription className="space-y-2">
             {introText ? (
               <span className="text-foreground block">{introText}</span>
             ) : null}
-            <span className="block">
-              Per line: ordered quantity vs unreserved stock at the dispatch
-              source. You can issue only what is available now, open the sales
-              order to reduce line quantities or cancel the dispatch, or
-              receive/transfer stock into this location first.
-            </span>
+            <span className="block">{t("description")}</span>
           </DialogDescription>
         </DialogHeader>
 
         {previewQuery.isLoading ? (
-          <p className="text-muted-foreground text-sm">Loading preview…</p>
+          <p className="text-muted-foreground text-sm">{t("loading")}</p>
         ) : previewQuery.isError ? (
           <p className="text-destructive text-sm">
-            {errorMessage(previewQuery.error)}
+            {errorMessage(previewQuery.error, t("genericError"))}
           </p>
         ) : previewQuery.data ? (
           <div className="space-y-2">
             <p className="text-muted-foreground text-xs">
-              From:{" "}
+              {t("fromLabel")}{" "}
               <span className="text-foreground font-medium">
                 {previewQuery.data.from_location.name}
               </span>
@@ -113,10 +114,12 @@ export function DispatchFulfillmentDialog({
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Product</TableHead>
-                    <TableHead className="text-right">Ordered</TableHead>
-                    <TableHead className="text-right">Available</TableHead>
-                    <TableHead className="text-right">Ship now</TableHead>
+                    <TableHead>{t("colProduct")}</TableHead>
+                    <TableHead className="text-right">{t("colOrdered")}</TableHead>
+                    <TableHead className="text-right">
+                      {t("colAvailable")}
+                    </TableHead>
+                    <TableHead className="text-right">{t("colShipNow")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -150,7 +153,7 @@ export function DispatchFulfillmentDialog({
         <DialogFooter showCloseButton>
           {dispatch ? (
             <Button variant="outline" render={<Link href={soHref} />}>
-              Open sales order
+              {t("openSalesOrder")}
             </Button>
           ) : null}
           <Button
@@ -161,7 +164,7 @@ export function DispatchFulfillmentDialog({
             }
             onClick={handleIssueAvailable}
           >
-            Issue available quantities
+            {t("issueAvailable")}
           </Button>
         </DialogFooter>
       </DialogContent>

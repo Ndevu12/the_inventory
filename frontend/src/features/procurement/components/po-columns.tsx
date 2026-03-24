@@ -12,14 +12,33 @@ interface POColumnActions {
   onCancel?: (po: PurchaseOrder) => void
 }
 
+export interface POColumnLabels {
+  tColumns: (key: string) => string
+  emDash: string
+  viewLabel: string
+  confirmLabel: string
+  cancelLabel: string
+  locale: string
+}
+
 export function getPurchaseOrderColumns(
   actions: POColumnActions,
+  labels: POColumnLabels,
 ): ColumnDef<PurchaseOrder>[] {
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat(labels.locale, {
+      style: "currency",
+      currency: "USD",
+    }).format(value)
+
   return [
     {
       accessorKey: "order_number",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Order #" />
+        <DataTableColumnHeader
+          column={column}
+          title={labels.tColumns("orderNumber")}
+        />
       ),
       cell: ({ row }) => (
         <span className="font-medium">{row.getValue("order_number")}</span>
@@ -28,13 +47,13 @@ export function getPurchaseOrderColumns(
     {
       accessorKey: "supplier_name",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Supplier" />
+        <DataTableColumnHeader column={column} title={labels.tColumns("supplier")} />
       ),
       enableSorting: false,
     },
     {
       accessorKey: "status",
-      header: "Status",
+      header: labels.tColumns("status"),
       cell: ({ row }) => (
         <POStatusBadge status={row.original.status} />
       ),
@@ -46,42 +65,44 @@ export function getPurchaseOrderColumns(
     {
       accessorKey: "order_date",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Order Date" />
+        <DataTableColumnHeader column={column} title={labels.tColumns("orderDate")} />
       ),
       cell: ({ row }) =>
-        new Date(row.original.order_date).toLocaleDateString(),
+        new Date(row.original.order_date).toLocaleDateString(labels.locale),
     },
     {
       accessorKey: "expected_delivery_date",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Expected Delivery" />
+        <DataTableColumnHeader
+          column={column}
+          title={labels.tColumns("expectedDelivery")}
+        />
       ),
       cell: ({ row }) => {
         const date = row.original.expected_delivery_date
-        return date ? new Date(date).toLocaleDateString() : "—"
+        return date
+          ? new Date(date).toLocaleDateString(labels.locale)
+          : labels.emDash
       },
     },
     {
       accessorKey: "total_cost",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Total" />
+        <DataTableColumnHeader column={column} title={labels.tColumns("total")} />
       ),
       cell: ({ row }) => {
         const total = Number(row.original.total_cost)
-        return new Intl.NumberFormat("en-US", {
-          style: "currency",
-          currency: "USD",
-        }).format(total)
+        return formatCurrency(total)
       },
       enableSorting: false,
     },
     {
       accessorKey: "created_at",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Created" />
+        <DataTableColumnHeader column={column} title={labels.tColumns("created")} />
       ),
       cell: ({ row }) =>
-        new Date(row.original.created_at).toLocaleDateString(),
+        new Date(row.original.created_at).toLocaleDateString(labels.locale),
     },
     {
       id: "actions",
@@ -89,21 +110,21 @@ export function getPurchaseOrderColumns(
         const po = row.original
         const rowActions: RowAction<PurchaseOrder>[] = [
           {
-            label: "View",
+            label: labels.viewLabel,
             onClick: () => actions.onView(po),
           },
         ]
 
         if (po.status === "draft" && actions.onConfirm) {
           rowActions.push({
-            label: "Confirm",
+            label: labels.confirmLabel,
             onClick: () => actions.onConfirm!(po),
           })
         }
 
         if ((po.status === "draft" || po.status === "confirmed") && actions.onCancel) {
           rowActions.push({
-            label: "Cancel",
+            label: labels.cancelLabel,
             onClick: () => actions.onCancel!(po),
             variant: "destructive",
             separator: true,

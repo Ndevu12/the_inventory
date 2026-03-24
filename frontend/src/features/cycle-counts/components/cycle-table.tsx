@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { useTranslations } from "next-intl";
 import type { PaginationState } from "@tanstack/react-table";
 import { DataTable } from "@/components/data-table";
 import type { InventoryCycle } from "../types/cycle-count.types";
@@ -27,7 +28,12 @@ export function CycleTable({
   filterContent,
   isLoading = false,
 }: CycleTableProps) {
-  const columns = useMemo(() => getCycleColumns(), []);
+  const t = useTranslations("CycleCounts.list");
+  const tTable = useTranslations("CycleCounts.table");
+  const columns = useMemo(
+    () => getCycleColumns(tTable),
+    [tTable],
+  );
 
   return (
     <DataTable
@@ -38,10 +44,10 @@ export function CycleTable({
       onPaginationChange={onPaginationChange}
       searchValue={searchValue}
       onSearchChange={onSearchChange}
-      searchPlaceholder="Search cycle counts..."
+      searchPlaceholder={t("searchPlaceholder")}
       filterContent={filterContent}
       isLoading={isLoading}
-      emptyMessage="No cycle counts found."
+      emptyMessage={t("empty")}
     />
   );
 }

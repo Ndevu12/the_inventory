@@ -1,44 +1,34 @@
 import type { PaymentTerms, PurchaseOrderStatus } from "../types/procurement.types"
 
-export const PAYMENT_TERMS_OPTIONS: {
-  value: PaymentTerms
-  label: string
-}[] = [
-  { value: "net_30", label: "Net 30" },
-  { value: "net_60", label: "Net 60" },
-  { value: "net_90", label: "Net 90" },
-  { value: "cod", label: "Cash on Delivery" },
-  { value: "prepaid", label: "Prepaid" },
-]
-
-export const PAYMENT_TERMS_MAP: Record<PaymentTerms, string> =
-  Object.fromEntries(
-    PAYMENT_TERMS_OPTIONS.map((o) => [o.value, o.label])
-  ) as Record<PaymentTerms, string>
+export const PAYMENT_TERMS_VALUES = [
+  "net_30",
+  "net_60",
+  "net_90",
+  "cod",
+  "prepaid",
+] as const satisfies readonly PaymentTerms[]
 
 /** Human-readable label for a stored payment_terms code (API value). */
-export function paymentTermsLabel(code: string | null | undefined): string {
+export function paymentTermsLabel(
+  code: string | null | undefined,
+  t: (key: string) => string,
+): string {
   if (code == null || code === "") return ""
   const trimmed = code.trim() as PaymentTerms
-  return PAYMENT_TERMS_MAP[trimmed] ?? code
+  if ((PAYMENT_TERMS_VALUES as readonly string[]).includes(trimmed)) {
+    return t(trimmed)
+  }
+  return code
 }
 
 // ─── Purchase Order Statuses ────────────────────────────────────────────────
 
-export const PO_STATUS_OPTIONS: {
-  value: PurchaseOrderStatus
-  label: string
-}[] = [
-  { value: "draft", label: "Draft" },
-  { value: "confirmed", label: "Confirmed" },
-  { value: "received", label: "Received" },
-  { value: "cancelled", label: "Cancelled" },
-]
-
-export const PO_STATUS_MAP: Record<PurchaseOrderStatus, string> =
-  Object.fromEntries(
-    PO_STATUS_OPTIONS.map((o) => [o.value, o.label])
-  ) as Record<PurchaseOrderStatus, string>
+export const PO_STATUS_VALUES = [
+  "draft",
+  "confirmed",
+  "received",
+  "cancelled",
+] as const satisfies readonly PurchaseOrderStatus[]
 
 export const PO_STATUS_COLOR_MAP: Record<
   PurchaseOrderStatus,
