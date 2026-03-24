@@ -1936,7 +1936,10 @@
       "pickDate": "Pick a date",
       "all": "All",
       "selectMethod": "Select method",
-      "selectPeriod": "Select period"
+      "selectPeriod": "Select period",
+      "csv": "CSV",
+      "pdf": "PDF",
+      "emptyDefault": "Hakuna data kwa ajili ya ripoti hii."
     },
     "filters": {
       "valuationMethod": "Valuation Method",

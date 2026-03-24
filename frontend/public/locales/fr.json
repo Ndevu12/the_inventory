@@ -1936,7 +1936,10 @@
       "pickDate": "Choisir une date",
       "all": "Tous",
       "selectMethod": "Choisir la méthode",
-      "selectPeriod": "Choisir la période"
+      "selectPeriod": "Choisir la période",
+      "csv": "CSV",
+      "pdf": "PDF",
+      "emptyDefault": "Aucune donnée pour ce rapport."
     },
     "filters": {
       "valuationMethod": "Méthode de valorisation",
