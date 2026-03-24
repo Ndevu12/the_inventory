@@ -47,6 +47,12 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
+Django’s `manage.py` and the project package live under **`src/`**. The repository root also holds `seeders/` and `tests/`; run Django from `src` so imports resolve correctly (this matches CI and Docker).
+
+```bash
+cd src
+```
+
 ### 4. Run database migrations
 
 ```bash
@@ -87,6 +93,8 @@ Visit [http://localhost:8000](http://localhost:8000) for the site, or [http://lo
 
 ## Docker
 
+The image copies the full repository to `/app`, sets `PYTHONPATH=/app/src:/app`, and the entrypoint runs migrations and Gunicorn from **`/app/src`** (same layout as local `cd src`).
+
 Build and run using Docker:
 
 ```bash
@@ -105,21 +113,22 @@ For complete environment variable documentation and deployment guides (Docker, R
 ## Project Structure
 
 ```
-the_inventory/          # Project configuration (settings, URLs, WSGI)
-├── settings/
-│   ├── base.py         # Shared settings
-│   ├── dev.py          # Development overrides (DEBUG=True)
-│   └── production.py   # Production overrides
-├── templates/          # Project-level templates (base, 404, 500)
-└── static/             # Project-level static files
+src/
+├── manage.py           # Django entry point (run commands from this directory)
+├── the_inventory/      # Project configuration (settings, URLs, WSGI)
+│   ├── settings/
+│   ├── templates/
+│   └── static/
+├── api/, home/, inventory/, procurement/, reports/, sales/, search/, tenants/  # Django apps
+└── locale/             # Backend translation catalogs
 
-home/                   # Landing / home page app
-search/                 # Site-wide search app
-inventory/              # [Phase 1] Core inventory (products, stock, movements)
+seeders/                # Seeding app (management commands) — repo root
+tests/                  # Test suite — repo root
+frontend/               # Next.js tenant UI
 docs/                   # Project documentation (Architecture, Roadmap)
 ```
 
-See [Architecture](docs/ARCHITECTURE.md) for the full technical design, including the Phase 1 schema and future apps (`procurement/`, `sales/`, `reports/`, `api/`).
+See [Architecture](docs/ARCHITECTURE.md) for the full technical design, including the Phase 1 schema and app boundaries.
 
 ## Project Docs & Meta
 
@@ -138,14 +147,16 @@ Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md)
 
 This project follows the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.md).
 
-Our CI workflow runs on pushes and pull requests to `main`, and will:
+Our CI workflow runs on pushes and pull requests to `main` and `develop`, and will:
 
-- Run `python manage.py check`
-- Run `python manage.py test`
-- Run `python manage.py makemigrations --check --dry-run`
-- Run `ruff check .`
+- Set `PYTHONPATH` to `<repo>/src:<repo>` (so `seeders` and `tests` import correctly)
+- From **`src/`**:
+    - Run `python manage.py check`
+    - Run `python manage.py test tests`
+    - Run `python manage.py makemigrations --check --dry-run`
+- From the repo root: `ruff check src tests seeders`
 
-You can run the same commands locally using the instructions in `CONTRIBUTING.md` (including installing dev dependencies from `requirements-dev.txt`).
+You can mirror that locally with `cd src && python manage.py …` and `ruff check src tests seeders` from the repository root; see [Contributing](CONTRIBUTING.md) (install dev tools from `requirements-dev.txt`).
 
 ## License
 

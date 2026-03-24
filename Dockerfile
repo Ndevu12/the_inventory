@@ -12,7 +12,8 @@ EXPOSE 8000 10000
 # 2. Set PORT variable that is used by Gunicorn. This should match "EXPOSE"
 #    command.
 ENV PYTHONUNBUFFERED=1 \
-    PORT=8000
+    PORT=8000 \
+    PYTHONPATH=/app/src:/app
 
 # Install system packages required by Wagtail and Django.
 RUN apt-get update --yes --quiet && apt-get install --yes --quiet --no-install-recommends \
@@ -26,9 +27,9 @@ RUN apt-get update --yes --quiet && apt-get install --yes --quiet --no-install-r
 
 # Install the project requirements (includes gunicorn).
 COPY requirements.txt /
-RUN pip install -r /requirements.txt
+RUN pip install --root-user-action=ignore -r /requirements.txt
 
-# Use /app folder as a directory where the source code is stored.
+# Repo root at /app (seeders, tests, frontend); Django project in /app/src.
 WORKDIR /app
 
 # Set this directory to be owned by the "wagtail" user. This Wagtail project
@@ -46,6 +47,8 @@ USER wagtail
 # Collect static files using the same STORAGES["staticfiles"] as production
 # (ManifestStaticFilesStorage). Default manage.py uses dev settings, which
 # skips the manifest; runtime then raises "Missing staticfiles manifest entry".
+WORKDIR /app/src
+
 RUN DJANGO_SETTINGS_MODULE=the_inventory.settings.production \
     SECRET_KEY=collectstatic-build-only-not-used-at-runtime \
     python manage.py collectstatic --noinput --clear

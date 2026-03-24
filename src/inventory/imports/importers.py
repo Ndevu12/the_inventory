@@ -22,6 +22,8 @@ from django.db import transaction
 
 from tenants.context import get_current_tenant
 
+_UNSET_LOCALE = object()
+
 
 @dataclass
 class ImportResult:
@@ -46,12 +48,30 @@ class BaseImporter:
 
     REQUIRED_COLUMNS: tuple[str, ...] = ()
     MODEL = None
+    #: Set True for :class:`~wagtail.models.TranslatableMixin` catalog rows.
+    REQUIRES_WAGTAIL_LOCALE = False
 
     def __init__(self, *, rows: list[dict], tenant=None, user=None):
         self.rows = rows
         self.tenant = tenant or get_current_tenant()
         self.user = user
         self.result = ImportResult()
+        self._default_wagtail_locale_cache = _UNSET_LOCALE
+
+    def get_default_wagtail_locale(self):
+        """Wagtail locale for tenant canonical language, else first configured locale."""
+        if self._default_wagtail_locale_cache is not _UNSET_LOCALE:
+            return self._default_wagtail_locale_cache
+        from wagtail.models import Locale
+
+        from api.language import resolve_canonical_language_code, wagtail_locale_for_language
+
+        code = resolve_canonical_language_code(self.tenant)
+        loc = wagtail_locale_for_language(code)
+        if loc is None:
+            loc = Locale.objects.order_by("pk").first()
+        self._default_wagtail_locale_cache = loc
+        return loc
 
     def run(self) -> ImportResult:
         if not self.rows:
@@ -60,6 +80,14 @@ class BaseImporter:
 
         self._validate_columns()
         if self.result.errors:
+            return self.result
+
+        if self.REQUIRES_WAGTAIL_LOCALE and self.get_default_wagtail_locale() is None:
+            self.result.add_error(
+                0,
+                "",
+                "No Wagtail locale configured. Add at least one locale in Wagtail admin.",
+            )
             return self.result
 
         instances = []
@@ -117,6 +145,7 @@ class ProductImporter(BaseImporter):
     """
 
     REQUIRED_COLUMNS = ("sku", "name")
+    REQUIRES_WAGTAIL_LOCALE = True
 
     @property
     def MODEL(self):
@@ -158,6 +187,7 @@ class ProductImporter(BaseImporter):
             reorder_point=int(row["reorder_point"].strip()) if row.get("reorder_point", "").strip() else 0,
             is_active=row.get("is_active", "true").strip().lower() not in ("false", "0", "no"),
             tenant=self.tenant,
+            locale=self.get_default_wagtail_locale(),
             created_by=self.user,
         )
 
@@ -172,6 +202,7 @@ class SupplierImporter(BaseImporter):
     """
 
     REQUIRED_COLUMNS = ("code", "name")
+    REQUIRES_WAGTAIL_LOCALE = True
 
     @property
     def MODEL(self):
@@ -200,6 +231,7 @@ class SupplierImporter(BaseImporter):
         return Supplier(
             code=row["code"].strip(),
             name=row["name"].strip(),
+            locale=self.get_default_wagtail_locale(),
             contact_name=row.get("contact_name", "").strip(),
             email=row.get("email", "").strip(),
             phone=row.get("phone", "").strip(),
@@ -222,6 +254,7 @@ class CustomerImporter(BaseImporter):
     """
 
     REQUIRED_COLUMNS = ("code", "name")
+    REQUIRES_WAGTAIL_LOCALE = True
 
     @property
     def MODEL(self):
@@ -238,6 +271,7 @@ class CustomerImporter(BaseImporter):
         return Customer(
             code=row["code"].strip(),
             name=row["name"].strip(),
+            locale=self.get_default_wagtail_locale(),
             contact_name=row.get("contact_name", "").strip(),
             email=row.get("email", "").strip(),
             phone=row.get("phone", "").strip(),

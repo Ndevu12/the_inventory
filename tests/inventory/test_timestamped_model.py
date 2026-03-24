@@ -405,7 +405,7 @@ class TenantAwareManagerTestCase(TestCase):
             slug="cat-a",
             tenant=self.tenant_a,
         )
-        cat_b = Category.objects.create(
+        Category.objects.create(
             name="Category B",
             slug="cat-b",
             tenant=self.tenant_b,

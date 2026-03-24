@@ -135,7 +135,7 @@ class Command(BaseCommand):
                 tenant = Tenant.objects.get(slug="default")
                 if verbose:
                     self.stdout.write(
-                        self.style.SUCCESS(f"✓ Using existing Default tenant")
+                        self.style.SUCCESS("✓ Using existing Default tenant")
                     )
                 return tenant
             except Tenant.DoesNotExist:
@@ -157,10 +157,10 @@ class Command(BaseCommand):
                 if verbose:
                     if created:
                         self.stdout.write(
-                            self.style.SUCCESS(f"✓ Created Default tenant")
+                            self.style.SUCCESS("✓ Created Default tenant")
                         )
                     else:
                         self.stdout.write(
-                            self.style.SUCCESS(f"✓ Using existing Default tenant")
+                            self.style.SUCCESS("✓ Using existing Default tenant")
                         )
                 return tenant

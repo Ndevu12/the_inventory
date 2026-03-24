@@ -2,7 +2,7 @@
 
 import pytest
 from django.contrib.auth import get_user_model
-from tenants.models import Tenant, TenantMembership, TenantRole
+from tenants.models import TenantMembership, TenantRole
 from tenants.context import set_current_tenant, clear_current_tenant
 from tests.fixtures.factories import create_tenant as factory_create_tenant
 

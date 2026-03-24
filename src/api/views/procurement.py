@@ -70,7 +70,7 @@ class PurchaseOrderViewSet(
                 purchase_order=po,
                 confirmed_by=request.user,
             )
-        except DjangoValidationError as e:
+        except DjangoValidationError:
             logger.exception("Validation error while confirming purchase order %s", po.pk)
             return Response(
                 {"detail": "Could not confirm this purchase order due to validation errors."},
@@ -85,7 +85,7 @@ class PurchaseOrderViewSet(
         service = ProcurementService()
         try:
             service.cancel_order(purchase_order=po)
-        except DjangoValidationError as e:
+        except DjangoValidationError:
             logger.exception("Validation error while cancelling purchase order %s", po.pk)
             return Response(
                 {"detail": "Could not cancel this purchase order due to validation errors."},
@@ -118,7 +118,7 @@ class GoodsReceivedNoteViewSet(TenantScopedInventoryMixin, viewsets.ModelViewSet
                 goods_received_note=grn,
                 received_by=request.user,
             )
-        except DjangoValidationError as e:
+        except DjangoValidationError:
             logger.exception("Validation error while receiving goods for GRN %s", grn.pk)
             return Response(
                 {"detail": "Could not process this goods received note due to validation errors."},
