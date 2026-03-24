@@ -12,9 +12,9 @@ from django.test import SimpleTestCase
 
 class LocaleCatalogTests(SimpleTestCase):
     def test_django_po_files_compile(self) -> None:
-        root = Path(__file__).resolve().parent.parent
+        repo_root = Path(__file__).resolve().parent.parent
         for lang in ("fr", "sw", "rw", "es", "ar"):
-            po = root / "locale" / lang / "LC_MESSAGES" / "django.po"
+            po = repo_root / "src" / "locale" / lang / "LC_MESSAGES" / "django.po"
             self.assertTrue(
                 po.is_file(),
                 f"Missing {po}",

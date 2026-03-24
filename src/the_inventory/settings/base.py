@@ -18,23 +18,26 @@ from django.conf import global_settings
 
 from .env_utils import env_bool, env_int, env_list, env_str
 
-# Load environment variables from .env file
+PROJECT_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = PROJECT_DIR.parent
+# Repository root (parent of src/); .env, frontend/, etc. live here.
+REPO_ROOT = BASE_DIR.parent
+
+# Load environment variables from .env at repository root
+_env_file = REPO_ROOT / ".env"
 try:
     from dotenv import load_dotenv
-    load_dotenv()
+
+    load_dotenv(_env_file)
 except ImportError:
     # If python-dotenv is not installed, manually load .env
-    env_file = Path(__file__).resolve().parent.parent.parent / ".env"
-    if env_file.exists():
-        with open(env_file) as f:
+    if _env_file.exists():
+        with open(_env_file) as f:
             for line in f:
                 line = line.strip()
                 if line and not line.startswith("#") and "=" in line:
                     key, value = line.split("=", 1)
                     os.environ.setdefault(key.strip(), value.strip())
-
-PROJECT_DIR = Path(__file__).resolve().parent.parent
-BASE_DIR = PROJECT_DIR.parent
 
 
 # Quick-start development settings - unsuitable for production

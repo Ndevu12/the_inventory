@@ -283,7 +283,6 @@ class StockRecordViewSet(TranslatableAPIReadMixin, TenantScopedInventoryMixin, v
     @action(detail=False, methods=["get"])
     def low_stock(self, request):
         """Return stock records that are at or below the product's reorder point."""
-        tenant = self._get_current_tenant()
         records = [r for r in self.get_queryset() if r.is_low_stock]
         serializer = self.get_serializer(records, many=True)
         return Response(serializer.data)
@@ -375,7 +374,7 @@ class StockMovementViewSet(TranslatableAPIReadMixin,
                 {"detail": str(e)},
                 status=status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
-        except DjangoValidationError as e:
+        except DjangoValidationError:
             return Response(
                 {"detail": "Invalid stock movement data."},
                 status=status.HTTP_422_UNPROCESSABLE_ENTITY,

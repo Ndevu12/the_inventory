@@ -24,16 +24,16 @@ class Command(BaseCommand):
             "--output",
             default=None,
             help=(
-                "Output path (default: <BASE_DIR>/frontend/src/i18n/locales-config.json)"
+                "Output path (default: <REPO_ROOT>/frontend/src/i18n/locales-config.json)"
             ),
         )
 
     def handle(self, *args, **options):
-        base = Path(settings.BASE_DIR)
+        repo_root = Path(settings.REPO_ROOT)
         out = (
             Path(options["output"])
             if options["output"]
-            else base / "frontend" / "src" / "i18n" / "locales-config.json"
+            else repo_root / "frontend" / "src" / "i18n" / "locales-config.json"
         )
 
         try:

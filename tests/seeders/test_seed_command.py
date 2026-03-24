@@ -1,7 +1,7 @@
 """Tests for seed_database management command with tenant context."""
 
 from io import StringIO
-from django.test import TestCase, TransactionTestCase
+from django.test import TransactionTestCase
 from django.core.management import call_command
 from django.core.management.base import CommandError
 
@@ -77,7 +77,7 @@ class SeedDatabaseCommandTest(TransactionTestCase):
     def test_seed_command_uses_specified_tenant(self):
         """Test: seed_database seeds into specified tenant when --tenant is provided."""
         # Create a specific tenant
-        acme_tenant = create_tenant(name="Acme Corp", slug="acme-corp")
+        create_tenant(name="Acme Corp", slug="acme-corp")
 
         # Call command with --tenant flag
         call_command(

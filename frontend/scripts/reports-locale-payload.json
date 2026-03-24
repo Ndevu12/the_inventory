@@ -10,7 +10,10 @@
       "pickDate": "Pick a date",
       "all": "All",
       "selectMethod": "Select method",
-      "selectPeriod": "Select period"
+      "selectPeriod": "Select period",
+      "csv": "CSV",
+      "pdf": "PDF",
+      "emptyDefault": "No data for this report."
     },
     "filters": {
       "valuationMethod": "Valuation Method",
@@ -229,7 +232,10 @@
       "pickDate": "Choisir une date",
       "all": "Tous",
       "selectMethod": "Choisir la méthode",
-      "selectPeriod": "Choisir la période"
+      "selectPeriod": "Choisir la période",
+      "csv": "CSV",
+      "pdf": "PDF",
+      "emptyDefault": "Aucune donnée pour ce rapport."
     },
     "filters": {
       "valuationMethod": "Méthode de valorisation",
@@ -448,7 +454,10 @@
       "pickDate": "Elegir fecha",
       "all": "Todos",
       "selectMethod": "Seleccionar método",
-      "selectPeriod": "Seleccionar período"
+      "selectPeriod": "Seleccionar período",
+      "csv": "CSV",
+      "pdf": "PDF",
+      "emptyDefault": "No hay datos para este informe."
     },
     "filters": {
       "valuationMethod": "Método de valoración",
@@ -667,7 +676,10 @@
       "pickDate": "اختر تاريخًا",
       "all": "الكل",
       "selectMethod": "اختر الطريقة",
-      "selectPeriod": "اختر الفترة"
+      "selectPeriod": "اختر الفترة",
+      "csv": "CSV",
+      "pdf": "PDF",
+      "emptyDefault": "لا توجد بيانات لهذا التقرير."
     },
     "filters": {
       "valuationMethod": "طريقة التقييم",
@@ -877,220 +889,223 @@
   },
   "rw": {
     "index": {
-      "title": "Reports",
-      "description": "Generate and export inventory, procurement, and sales reports"
+      "title": "Raporo",
+      "description": "Kora no gusohora raporo z'ububiko, z'ibicuruzwa n'ubucuruzi"
     },
     "shared": {
-      "dateFrom": "From",
-      "dateTo": "To",
-      "pickDate": "Pick a date",
-      "all": "All",
-      "selectMethod": "Select method",
-      "selectPeriod": "Select period"
+      "dateFrom": "Kuva",
+      "dateTo": "Kugeza",
+      "pickDate": "Hitamo itariki",
+      "all": "Byose",
+      "selectMethod": "Hitamo uburyo",
+      "selectPeriod": "Hitamo igihe",
+      "csv": "CSV",
+      "pdf": "PDF",
+      "emptyDefault": "Nta makuru ahari kuri iyi raporo."
     },
     "filters": {
-      "valuationMethod": "Valuation Method",
-      "period": "Period",
-      "movementType": "Movement type",
-      "varianceType": "Variance type",
-      "lookAheadDays": "Look-ahead (days)",
-      "thresholdMultiplier": "Threshold multiplier",
-      "productSku": "Product SKU",
-      "lotNumber": "Lot number"
+      "valuationMethod": "Uburyo bwo gushyira agaciro",
+      "period": "Igihe",
+      "movementType": "Ubwoko bw'impinduka",
+      "varianceType": "Ubwoko bw'itandukaniro",
+      "lookAheadDays": "Iminsi yo gutegereza imbere",
+      "thresholdMultiplier": "Ingano y'inzura y'ingenzi",
+      "productSku": "SKU y'igicuruzwa",
+      "lotNumber": "Nimero ya loti"
     },
     "options": {
       "period": {
-        "daily": "Daily",
-        "weekly": "Weekly",
-        "monthly": "Monthly"
+        "daily": "Buri munsi",
+        "weekly": "Buri cyumweru",
+        "monthly": "Buri kwezi"
       },
       "valuation": {
-        "weighted_average": "Weighted Average",
-        "latest_cost": "Latest Cost"
+        "weighted_average": "Intera y'ingenzi",
+        "latest_cost": "Igiciro cy'ubu"
       },
       "movement": {
-        "receipt": "Receipt",
-        "issue": "Issue",
-        "transfer": "Transfer",
-        "adjustment": "Adjustment",
-        "return": "Return"
+        "receipt": "Kwakira",
+        "issue": "Gutanga",
+        "transfer": "Kohereza",
+        "adjustment": "Guhindura",
+        "return": "Gusubiza"
       },
       "variance": {
-        "shortage": "Shortage",
-        "surplus": "Surplus",
-        "match": "Match"
+        "shortage": "Ubusa",
+        "surplus": "Urwunguko rw'inyongera",
+        "match": "Biringaniye"
       }
     },
     "expiryBadge": {
-      "expired": "Expired",
-      "expiring": "Expiring"
+      "expired": "Byarangiye",
+      "expiring": "Biri kugenda birangira"
     },
     "columns": {
       "cellEmpty": "—",
       "sku": "SKU",
-      "product": "Product",
-      "category": "Category",
-      "quantity": "Quantity",
-      "unitCost": "Unit Cost",
-      "totalValue": "Total Value",
-      "type": "Type",
-      "qty": "Qty",
-      "from": "From",
-      "to": "To",
-      "reference": "Reference",
-      "date": "Date",
-      "reorderPoint": "Reorder Point",
-      "currentStock": "Current Stock",
-      "deficit": "Deficit",
-      "threshold": "Threshold",
-      "excess": "Excess",
-      "period": "Period",
-      "orders": "Orders",
-      "totalCost": "Total Cost",
-      "totalRevenue": "Total Revenue",
-      "totalQty": "Total Qty",
-      "reserved": "Reserved",
-      "available": "Available",
-      "reservedValue": "Reserved Value",
-      "status": "Status",
-      "lotNumber": "Lot Number",
-      "expiryDate": "Expiry Date",
-      "daysLeft": "Days Left",
-      "qtyRemaining": "Qty Remaining",
-      "supplier": "Supplier",
-      "cycle": "Cycle",
-      "location": "Location",
-      "systemQty": "System Qty",
-      "physicalQty": "Physical Qty",
-      "variance": "Variance",
-      "resolution": "Resolution",
-      "action": "Action",
-      "fromToLocation": "From / Location",
-      "salesOrder": "Sales Order",
-      "name": "Name",
-      "scheduled": "Scheduled",
-      "lines": "Lines",
-      "variances": "Variances",
-      "shortages": "Shortages",
-      "surpluses": "Surpluses",
-      "netVariance": "Net Variance",
-      "allLocations": "All"
+      "product": "Igicuruzwa",
+      "category": "Icyiciro",
+      "quantity": "Umubare",
+      "unitCost": "Igiciro ku kimwe",
+      "totalValue": "Agaciro gasanzwe",
+      "type": "Ubwoko",
+      "qty": "Umubare",
+      "from": "Kuva",
+      "to": "Kugeza",
+      "reference": "Icyitonderwa",
+      "date": "Itariki",
+      "reorderPoint": "Inkengero yo kongeramo",
+      "currentStock": "Ububiko buri ubu",
+      "deficit": "Ubusa",
+      "threshold": "Inkengero",
+      "excess": "Inyongera",
+      "period": "Igihe",
+      "orders": "Amabwiriza",
+      "totalCost": "Igiciro cyose",
+      "totalRevenue": "Inyungu zose",
+      "totalQty": "Umubare wose",
+      "reserved": "Byasigiwe",
+      "available": "Bihari",
+      "reservedValue": "Agaciro kasigiwe",
+      "status": "Imiterere",
+      "lotNumber": "Nimero ya loti",
+      "expiryDate": "Itariki isoza",
+      "daysLeft": "Iminsi isigaranye",
+      "qtyRemaining": "Umubare usigaranye",
+      "supplier": "Utanga",
+      "cycle": "Uruziga",
+      "location": "Ahantu",
+      "systemQty": "Umubare mu sisitemu",
+      "physicalQty": "Umubare w'ukuri",
+      "variance": "Itandukaniro",
+      "resolution": "Igisubizo",
+      "action": "Igikorwa",
+      "fromToLocation": "Kuva / Ahantu",
+      "salesOrder": "Tegeko ry'ubucuruzi",
+      "name": "Izina",
+      "scheduled": "Byateguriwe",
+      "lines": "Imirongo",
+      "variances": "Itandukaniro",
+      "shortages": "Ubusa",
+      "surpluses": "Urwunguko",
+      "netVariance": "Itandukaniro rishya",
+      "allLocations": "Ahantu hose"
     },
     "cards": {
       "stockValuation": {
-        "title": "Stock Valuation",
-        "description": "View total inventory value using weighted average or latest cost methods"
+        "title": "Agaciro k'ububiko",
+        "description": "Reba agaciro kose k'ububiko ukoresheje intera y'ingenzi cyangwa igiciro cy'ubu"
       },
       "movementHistory": {
-        "title": "Movement History",
-        "description": "Browse all stock movements with date range and type filters"
+        "title": "Amateka y'impinduka",
+        "description": "Shakisha impinduka zose z'ububiko ukoresheje itariki n'ubwoko"
       },
       "lowStock": {
-        "title": "Low Stock",
-        "description": "Products at or below their reorder point"
+        "title": "Ububiko buke",
+        "description": "Ibicuruzwa biri ku inkengero cyangwa biri munsi yayo yo kongeramo"
       },
       "overstock": {
-        "title": "Overstock",
-        "description": "Products exceeding their reorder point threshold"
+        "title": "Ubwinshi bw'ububiko",
+        "description": "Ibicuruzwa byarenze inkengero yo kongeramo"
       },
       "purchaseSummary": {
-        "title": "Purchase Summary",
-        "description": "Purchase order totals grouped by period"
+        "title": "Incamake y'ibicuruzwa byaguze",
+        "description": "Igiteranyo cy'amabwiriza yo kugura hakurikijwe igihe"
       },
       "salesSummary": {
-        "title": "Sales Summary",
-        "description": "Sales order totals grouped by period"
+        "title": "Incamake y'ubucuruzi",
+        "description": "Igiteranyo cy'amabwiriza y'ubucuruzi hakurikijwe igihe"
       },
       "availability": {
-        "title": "Availability",
-        "description": "Per-product stock, reserved, and available quantities"
+        "title": "Kuboneka",
+        "description": "Umubare w'ububiko, wasigiwe n'uboneka ku bicuruzwa"
       },
       "productExpiry": {
-        "title": "Product Expiry",
-        "description": "Lots expiring soon or already expired"
+        "title": "Iherezo ry'igihe cy'ibicuruzwa",
+        "description": "Loti zizarangira vuba cyangwa zarangiye"
       },
       "variances": {
-        "title": "Variances",
-        "description": "Inventory variance report from cycle counts"
+        "title": "Itandukaniro",
+        "description": "Raporo y'itandukaniro ry'ububiko ivuye mu kubara"
       },
       "traceability": {
-        "title": "Traceability",
-        "description": "Full movement chain for a specific product and lot"
+        "title": "Guhuriza uruzi",
+        "description": "Urutonde rwuzuye rw'impinduka ku gicuruzwa na loti"
       }
     },
     "pages": {
       "stockValuation": {
-        "title": "Stock Valuation",
-        "description": "Inventory value by product using selected costing method",
-        "summaryTotalProducts": "Total Products",
-        "summaryTotalQuantity": "Total Quantity",
-        "summaryTotalValue": "Total Value",
-        "empty": "No stock valuation data."
+        "title": "Agaciro k'ububiko",
+        "description": "Agaciro k'ububiko ku bicuruzwa ukoresheje uburyo bwahisemo",
+        "summaryTotalProducts": "Igiteranyo cy'ibicuruzwa",
+        "summaryTotalQuantity": "Umubare wose",
+        "summaryTotalValue": "Agaciro kose",
+        "empty": "Nta makuru y'agaciro k'ububiko."
       },
       "movementHistory": {
-        "title": "Movement History",
-        "description": "All stock movements with filters",
-        "empty": "No movements found for the selected filters."
+        "title": "Amateka y'impinduka",
+        "description": "Impinduka zose z'ububiko n'imiyoboro",
+        "empty": "Nta mpinduka zabonetse ku miyoboro yahisemo."
       },
       "lowStock": {
-        "title": "Low Stock Report",
-        "description": "Products at or below their reorder point",
-        "empty": "No low-stock items found."
+        "title": "Raporo y'ububiko buke",
+        "description": "Ibicuruzwa biri ku inkengero cyangwa biri munsi yayo yo kongeramo",
+        "empty": "Nta bicuruzwa bihari by'ububiko buke."
       },
       "overstock": {
-        "title": "Overstock Report",
-        "description": "Products exceeding their reorder point by the threshold multiplier",
-        "empty": "No overstock items found."
+        "title": "Raporo y'ubwinshi bw'ububiko",
+        "description": "Ibicuruzwa byarenze inkengero yo kongeramo ku buryo bw'ingano y'ingenzi",
+        "empty": "Nta bicuruzwa bihari by'ubwinshi bw'ububiko."
       },
       "purchaseSummary": {
-        "title": "Purchase Summary",
-        "description": "Purchase order totals grouped by period",
-        "totalOrders": "Total Orders",
-        "totalCost": "Total Cost",
-        "empty": "No purchase summary data for the selected period."
+        "title": "Incamake y'ibicuruzwa byaguze",
+        "description": "Igiteranyo cy'amabwiriza yo kugura hakurikijwe igihe",
+        "totalOrders": "Igiteranyo cy'amabwiriza",
+        "totalCost": "Igiciro cyose",
+        "empty": "Nta makuru y'incamake y'ibyaguwe ku gihe cyahisemo."
       },
       "salesSummary": {
-        "title": "Sales Summary",
-        "description": "Sales order totals grouped by period",
-        "totalOrders": "Total Orders",
-        "totalRevenue": "Total Revenue",
-        "empty": "No sales summary data for the selected period."
+        "title": "Incamake y'ubucuruzi",
+        "description": "Igiteranyo cy'amabwiriza y'ubucuruzi hakurikijwe igihe",
+        "totalOrders": "Igiteranyo cy'amabwiriza",
+        "totalRevenue": "Inyungu zose",
+        "empty": "Nta makuru y'incamake y'ubucuruzi ku gihe cyahisemo."
       },
       "availability": {
-        "title": "Availability Report",
-        "description": "Per-product stock, reserved, and available quantities",
-        "products": "Products",
-        "totalReservedValue": "Total Reserved Value",
-        "empty": "No availability data."
+        "title": "Raporo y'uboneka",
+        "description": "Umubare w'ububiko, wasigiwe n'uboneka ku bicuruzwa",
+        "products": "Ibicuruzwa",
+        "totalReservedValue": "Agaciro kasigiwe kose",
+        "empty": "Nta makuru y'uboneka."
       },
       "productExpiry": {
-        "title": "Product Expiry Report",
-        "description": "Lots expiring soon or already expired",
-        "expired": "Expired lots",
-        "expiringSoon": "Expiring soon",
-        "totalLots": "Total lots (in window)",
-        "empty": "No expiry data for the selected window."
+        "title": "Raporo y'iherezo ry'igihe",
+        "description": "Loti zizarangira vuba cyangwa zarangiye",
+        "expired": "Loti zarangiye",
+        "expiringSoon": "Zizarangira vuba",
+        "totalLots": "Igiteranyo cy'loti (muri iyi nkengero y'igihe)",
+        "empty": "Nta makuru y'iherezo ry'igihe ku mpera y'igihe cyahisemo."
       },
       "variances": {
-        "title": "Variance Report",
-        "description": "Inventory variances from cycle counts",
-        "totalVariances": "Total variances",
-        "shortages": "Shortages",
-        "surpluses": "Surpluses",
-        "netVariance": "Net variance",
-        "empty": "No variances found for the selected filters."
+        "title": "Raporo y'itandukaniro",
+        "description": "Itandukaniro ry'ububiko rivuye mu kubara",
+        "totalVariances": "Igiteranyo cy'itandukaniro",
+        "shortages": "Ubusa",
+        "surpluses": "Urwunguko",
+        "netVariance": "Itandukaniro rishya",
+        "empty": "Nta tandukaniro ryabonetse ku miyoboro yahisemo."
       },
       "traceability": {
-        "title": "Product Traceability",
-        "description": "Full movement chain for a specific product and lot",
-        "placeholderSku": "Enter SKU",
-        "placeholderLot": "Enter lot number",
-        "promptEnterSkuAndLot": "Enter a product SKU and lot number to load the traceability chain.",
-        "productLabel": "Product",
-        "lotLabel": "Lot",
-        "expiresWithDate": "Expires {date}",
-        "supplierWithName": "Supplier: {name}",
-        "empty": "No traceability events found."
+        "title": "Guhuriza uruzi rw'igicuruzwa",
+        "description": "Urutonde rwuzuye rw'impinduka ku gicuruzwa na loti",
+        "placeholderSku": "Injiza SKU",
+        "placeholderLot": "Injiza nimero ya loti",
+        "promptEnterSkuAndLot": "Injiza SKU y'igicuruzwa na nimero ya loti kugira ngo ubone uruzi rw'impinduka.",
+        "productLabel": "Igicuruzwa",
+        "lotLabel": "Loti",
+        "expiresWithDate": "Birarangira {date}",
+        "supplierWithName": "Utanga: {name}",
+        "empty": "Nta bikorwa byo guhuriza uruzi byabonetse."
       }
     }
   },
@@ -1105,7 +1120,10 @@
       "pickDate": "Pick a date",
       "all": "All",
       "selectMethod": "Select method",
-      "selectPeriod": "Select period"
+      "selectPeriod": "Select period",
+      "csv": "CSV",
+      "pdf": "PDF",
+      "emptyDefault": "Hakuna data kwa ajili ya ripoti hii."
     },
     "filters": {
       "valuationMethod": "Valuation Method",

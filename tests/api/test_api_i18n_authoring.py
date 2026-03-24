@@ -79,7 +79,7 @@ class ProductAuthoringAPITests(I18NAuthoringSetupMixin, APITestCase):
             tenant=self.tenant,
         )
         response = self.client.post(
-            f"/api/v1/products/?language=fr",
+            "/api/v1/products/?language=fr",
             {
                 "translation_of": p_en.pk,
                 "sku": p_en.sku,

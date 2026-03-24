@@ -14,7 +14,6 @@ from django.core.management import call_command
 from django.core.management.base import CommandError
 
 from tenants.models import Tenant
-from tenants.context import get_current_tenant, set_current_tenant
 from seeders.tenant_seeder import TenantSeeder
 from seeders.seeder_manager import SeederManager
 from inventory.models import (
@@ -521,7 +520,7 @@ class SeederManagerTenantTestCase(TransactionTestCase):
         tenant = Tenant.objects.create(name="Test", slug="test")
 
         manager = SeederManager(verbose=False)
-        result = manager.seed(tenant=tenant)
+        manager.seed(tenant=tenant)
 
         # Verify data was created
         self.assertGreater(Category.objects.count(), 0)
@@ -663,7 +662,7 @@ class SeedCommandTenantTestCase(TransactionTestCase):
 
     def test_seed_command_output_shows_tenant_info(self):
         """Test: seed_database output includes tenant information."""
-        custom_tenant = Tenant.objects.create(name="Test Tenant", slug="test-tenant")
+        Tenant.objects.create(name="Test Tenant", slug="test-tenant")
 
         call_command(
             "seed_database",

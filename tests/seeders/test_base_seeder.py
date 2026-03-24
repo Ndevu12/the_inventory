@@ -1,6 +1,6 @@
 """Tests for BaseSeeder and its tenant context functionality."""
 
-from django.test import TestCase, TransactionTestCase
+from django.test import TransactionTestCase
 from tenants.models import Tenant
 from inventory.models.product import Product
 from inventory.models.category import Category

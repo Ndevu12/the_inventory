@@ -9,7 +9,6 @@ explicit tenant filtering per TSS-04.
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import PermissionDenied
-from django.http import HttpRequest
 from django.test import RequestFactory, TestCase
 
 from tenants.context import clear_current_tenant, set_current_tenant

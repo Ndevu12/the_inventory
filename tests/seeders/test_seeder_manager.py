@@ -1,9 +1,8 @@
 """Tests for SeederManager."""
 
-from django.test import TestCase, TransactionTestCase
+from django.test import TransactionTestCase
 from tenants.models import Tenant
 from seeders import SeederManager
-from seeders.tenant_seeder import TenantSeeder
 
 
 class SeederManagerTestCase(TransactionTestCase):
@@ -93,7 +92,7 @@ class SeederManagerTestCase(TransactionTestCase):
     def test_seeder_manager_accepts_tenant_parameter(self):
         """Test that SeederManager.seed() accepts optional tenant parameter."""
         # Create a tenant first
-        custom_tenant = Tenant.objects.create(
+        Tenant.objects.create(
             name="Custom",
             slug="custom",
             is_active=True,
@@ -217,14 +216,14 @@ class SeederManagerTestCase(TransactionTestCase):
         from inventory.models import Category
 
         manager1 = SeederManager(verbose=False, clear_data=False)
-        result1 = manager1.seed()
+        manager1.seed()
 
         categories_after_first = Category.objects.count()
         self.assertGreater(categories_after_first, 0)
 
         # Run with clear_data=True
         manager2 = SeederManager(verbose=False, clear_data=True)
-        result2 = manager2.seed()
+        manager2.seed()
 
         # Categories should be repopulated (data should be cleared and reseeded)
         categories_after_clear = Category.objects.count()
@@ -253,7 +252,7 @@ class SeederManagerTestCase(TransactionTestCase):
         # Note: We don't run seed() here because child seeders haven't been updated
         # to filter by tenant yet (TS-04 handles that). This test just verifies
         # that SeederManager accepts and stores the tenant parameter.
-        manager2 = SeederManager(verbose=False, clear_data=False)
+        _ = SeederManager(verbose=False, clear_data=False)
 
         # Verify different tenants can be created and distinguished
         self.assertNotEqual(tenant1.id, custom_tenant.id)

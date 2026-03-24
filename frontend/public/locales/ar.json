@@ -1936,7 +1936,10 @@
       "pickDate": "اختر تاريخًا",
       "all": "الكل",
       "selectMethod": "اختر الطريقة",
-      "selectPeriod": "اختر الفترة"
+      "selectPeriod": "اختر الفترة",
+      "csv": "CSV",
+      "pdf": "PDF",
+      "emptyDefault": "لا توجد بيانات لهذا التقرير."
     },
     "filters": {
       "valuationMethod": "طريقة التقييم",

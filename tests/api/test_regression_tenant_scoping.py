@@ -23,8 +23,8 @@ from tests.fixtures.factories import (
     create_category, create_location, create_product, create_stock_record,
     create_tenant,
 )
-from tenants.context import get_current_tenant, set_current_tenant
-from tenants.models import Tenant, TenantMembership, TenantRole
+from tenants.context import set_current_tenant
+from tenants.models import TenantMembership, TenantRole
 
 User = get_user_model()
 

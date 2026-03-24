@@ -48,7 +48,7 @@ class BulkTransferView(APIView):
                 created_by=created_by,
                 fail_fast=data.get("fail_fast", False),
             )
-        except InventoryError as e:
+        except InventoryError:
             logger.exception("Bulk transfer operation failed with an inventory error.")
             return Response(
                 {"detail": "Bulk transfer operation could not be completed due to a conflict."},
@@ -90,7 +90,7 @@ class BulkAdjustmentView(APIView):
                 created_by=created_by,
                 fail_fast=data.get("fail_fast", False),
             )
-        except InventoryError as e:
+        except InventoryError:
             logger.exception("Bulk adjustment operation failed with an inventory error.")
             return Response(
                 {"detail": "Bulk adjustment operation could not be completed due to a conflict."},
@@ -131,7 +131,7 @@ class BulkRevalueView(APIView):
                 items=items,
                 fail_fast=data.get("fail_fast", False),
             )
-        except InventoryError as e:
+        except InventoryError:
             logger.exception("Bulk revalue operation failed with an inventory error.")
             return Response(
                 {"detail": "Bulk revalue operation could not be completed due to a conflict."},

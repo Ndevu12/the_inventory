@@ -42,19 +42,25 @@ Thank you for your interest in contributing! This guide will help you get starte
    pip install -r requirements-dev.txt  # Ruff and other dev tools
    ```
 
-4. **Run migrations:**
+4. **Run Django commands from `src/`** (where `manage.py` lives). The repo root holds `seeders/` and `tests/`; loading `the_inventory` adjusts `sys.path` so `INSTALLED_APPS` and the test suite resolve. From the repository root:
+
+   ```bash
+   cd src
+   ```
+
+5. **Run migrations:**
 
    ```bash
    python manage.py migrate
    ```
 
-5. **Create a superuser** (for accessing the Wagtail admin):
+6. **Create a superuser** (for accessing the Wagtail admin):
 
    ```bash
    python manage.py createsuperuser
    ```
 
-6. **Start the development server:**
+7. **Start the development server:**
 
    ```bash
    python manage.py runserver
@@ -69,7 +75,7 @@ The project supports flexible environment configuration for different setups:
 | Context | Configuration | Details |
 |---------|---------------|---------|
 | **Local Development** | Default (dev settings) | No `.env` needed; SQLite, DEBUG=True, localhost CORS |
-| **Local with `.env`** | Copy `.env.example` to `.env.local` | Override defaults for testing production-like setups |
+| **Local with `.env`** | `.env` at **repository root** (optional) | Backend loads it via settings; copy from `.env.example` as needed |
 | **Docker/Containers** | Platform environment variables | Set via Render, Docker Compose, K8s, etc. |
 | **Frontend (Next.js)** | `.env.local` in `frontend/` | Must have `NEXT_PUBLIC_API_URL` pointing to backend |
 
@@ -83,17 +89,20 @@ For complete setup instructions, environment variables reference, and troublesho
 ## Project Layout
 
 ```
-the_inventory/          # Project config (settings, URLs, WSGI)
-├── settings/
-│   ├── base.py         # Shared settings (all environments)
-│   ├── dev.py          # Development (DEBUG=True, SQLite)
-│   └── production.py   # Production (ManifestStaticFilesStorage)
-home/                   # Home page app
-search/                 # Site-wide search
+src/
+├── manage.py
+├── the_inventory/      # Project config (settings, URLs, WSGI)
+│   └── settings/       # base, dev, production
+├── api/, home/, inventory/, procurement/, reports/, sales/, search/, tenants/
+└── locale/
+
+seeders/                # Django app + seeding commands (repo root)
+tests/                  # Django / pytest-style tests (repo root)
+frontend/               # Next.js app
 docs/                   # Documentation (Roadmap, Architecture)
 ```
 
-New feature apps (e.g. `inventory/`, `procurement/`) are created at the project root alongside `home/` and `search/`.
+New Django apps live under **`src/`** next to the other apps. The **`seeders`** package stays at the repository root by design.
 
 ## Branching Strategy
 
@@ -116,24 +125,36 @@ New feature apps (e.g. `inventory/`, `procurement/`) are created at the project 
 
 ## Running Tests & Checks
 
-```bash
-python manage.py test
-```
-
-Before submitting a PR, also verify:
+From **`src/`** (after `cd src`):
 
 ```bash
-# Django system checks
+python manage.py test tests
 python manage.py check
-
-# Ensure no missing migrations
 python manage.py makemigrations --check --dry-run
-
-# Ruff linting (matches CI)
-ruff check .
 ```
 
-When adding new features, **include tests**. Place them in `<app>/tests.py` or `<app>/tests/` for larger test suites.
+The test suite lives in the top-level **`tests`** package (repo root), not inside an installed app, so pass the **`tests`** label (or a dotted path such as `tests.api`) so Django discovers `TestCase` modules.
+
+**Ruff** is run from the **repository root** so paths match CI:
+
+```bash
+cd ..   # if you are still inside src/
+ruff check src tests seeders
+```
+
+CI sets `PYTHONPATH=<workspace>/src:<workspace>` and uses `working-directory: src` for Django steps. Locally, `cd src && python manage.py …` is enough because importing `the_inventory` adds the repo root and `src` to `sys.path`.
+
+When adding new features, **include tests** under the top-level **`tests/`** package (mirroring the app or domain you are changing).
+
+### Docker
+
+From the repository root, build the image to confirm the Dockerfile and entrypoint (migrate + Gunicorn from `src/`) still work:
+
+```bash
+docker build -t the_inventory .
+```
+
+See [README — Docker](README.md#docker) for `docker run` examples and environment variables.
 
 ## Submitting a Pull Request
 
@@ -151,9 +172,10 @@ When adding new features, **include tests**. Place them in `<app>/tests.py` or `
 
 ### PR Checklist
 
-- [ ] Tests pass (`python manage.py test`)
-- [ ] No missing migrations (`python manage.py makemigrations --check --dry-run`)
-- [ ] `python manage.py check` reports no issues
+- [ ] Tests pass (`cd src && python manage.py test tests`)
+- [ ] No missing migrations (`cd src && python manage.py makemigrations --check --dry-run`)
+- [ ] `cd src && python manage.py check` reports no issues
+- [ ] Ruff clean from repo root (`ruff check src tests seeders`)
 - [ ] New features include tests
 - [ ] New models include migrations
 - [ ] Documentation updated if needed

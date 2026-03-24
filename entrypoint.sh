@@ -1,6 +1,10 @@
 #!/bin/sh
 set -xe
 
+# Django lives in src/ (repo root is parent of this script in Docker: /app).
+APP_ROOT=$(cd "$(dirname "$0")" && pwd)
+cd "$APP_ROOT/src" || exit 1
+
 # Ensure environment variables are set with fallbacks
 export DJANGO_SETTINGS_MODULE="${DJANGO_SETTINGS_MODULE:-the_inventory.settings.production}"
 export DATABASE_URL="${DATABASE_URL}"
