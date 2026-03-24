@@ -12,14 +12,20 @@ class ProductSeeder(BaseSeeder):
         """Create products across different categories."""
         self.log("Creating products...")
 
-        # Get categories for the current tenant
-        phones = Category.objects.get(slug="phones", tenant=self.tenant)
-        laptops = Category.objects.get(slug="laptops", tenant=self.tenant)
-        accessories = Category.objects.get(slug="accessories", tenant=self.tenant)
-        desks = Category.objects.get(slug="desks", tenant=self.tenant)
-        chairs = Category.objects.get(slug="chairs", tenant=self.tenant)
-        pens = Category.objects.get(slug="pens-pencils", tenant=self.tenant)
-        paper = Category.objects.get(slug="paper-notepads", tenant=self.tenant)
+        loc = self.canonical_locale
+
+        # Categories for the tenant's canonical catalog locale (same as API list/detail ids)
+        phones = Category.objects.get(slug="phones", tenant=self.tenant, locale=loc)
+        laptops = Category.objects.get(slug="laptops", tenant=self.tenant, locale=loc)
+        accessories = Category.objects.get(
+            slug="accessories", tenant=self.tenant, locale=loc,
+        )
+        desks = Category.objects.get(slug="desks", tenant=self.tenant, locale=loc)
+        chairs = Category.objects.get(slug="chairs", tenant=self.tenant, locale=loc)
+        pens = Category.objects.get(slug="pens-pencils", tenant=self.tenant, locale=loc)
+        paper = Category.objects.get(
+            slug="paper-notepads", tenant=self.tenant, locale=loc,
+        )
 
         products = [
             # Phones
@@ -185,9 +191,13 @@ class ProductSeeder(BaseSeeder):
             product, created = Product.objects.get_or_create(
                 sku=product_data["sku"],
                 tenant=self.tenant,
-                defaults=product_data,
+                locale=loc,
+                defaults={**product_data, "locale": loc},
             )
             if created:
                 self.log(f"  Created: {product.sku} - {product.name}")
 
-        self.log(f"Total products created: {Product.objects.filter(tenant=self.tenant).count()}")
+        self.log(
+            "Total products created: "
+            f"{Product.objects.filter(tenant=self.tenant, locale=loc).count()}"
+        )

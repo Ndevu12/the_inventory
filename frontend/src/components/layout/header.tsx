@@ -1,14 +1,17 @@
 "use client";
 
 import { SearchIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Breadcrumbs } from "./breadcrumbs";
 import { ThemeToggle } from "./theme-toggle";
 import { SearchCommand, useSearchCommand } from "./search-command";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 export function Header() {
+  const t = useTranslations("Common");
   const { open: searchOpen, setOpen: setSearchOpen } = useSearchCommand();
 
   return (
@@ -24,7 +27,7 @@ export function Header() {
           variant="ghost"
           size="icon-sm"
           onClick={() => setSearchOpen(true)}
-          aria-label="Search"
+          aria-label={t("searchAria")}
           className="sm:hidden"
         >
           <SearchIcon className="size-4" />
@@ -35,11 +38,12 @@ export function Header() {
           onClick={() => setSearchOpen(true)}
         >
           <SearchIcon className="mr-2 size-4" />
-          Search...
+          {t("searchPlaceholder")}
           <kbd className="pointer-events-none ml-auto inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
             <span className="text-xs">⌘</span>K
           </kbd>
         </Button>
+        <LanguageSwitcher />
         <ThemeToggle />
       </div>
 

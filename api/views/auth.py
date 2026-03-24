@@ -16,6 +16,7 @@ from api.serializers.auth import (
     RegisterTenantSerializer,
     UserProfileSerializer,
     UserSerializer,
+    memberships_payload_for_user,
 )
 from tenants.models import Tenant, TenantMembership, TenantRole
 
@@ -137,11 +138,7 @@ class RegisterTenantView(APIView):
             )
 
         refresh = RefreshToken.for_user(user)
-        memberships = list(
-            TenantMembership.objects.filter(user=user, is_active=True)
-            .select_related("tenant")
-            .values("tenant__id", "tenant__name", "tenant__slug", "role", "is_default")
-        )
+        memberships = memberships_payload_for_user(user)
 
         return Response(
             {
@@ -153,6 +150,7 @@ class RegisterTenantView(APIView):
                     "name": tenant.name,
                     "slug": tenant.slug,
                     "role": TenantRole.OWNER,
+                    "preferred_language": tenant.preferred_language,
                 },
                 "memberships": memberships,
             },
@@ -225,11 +223,7 @@ class ImpersonateStartView(APIView):
         refresh = RefreshToken.for_user(target_user)
         refresh["impersonated_by"] = real_user.pk
 
-        memberships = list(
-            TenantMembership.objects.filter(user=target_user, is_active=True)
-            .select_related("tenant")
-            .values("tenant__id", "tenant__name", "tenant__slug", "role", "is_default")
-        )
+        memberships = memberships_payload_for_user(target_user)
 
         AuditService().log(
             tenant=audit_tenant,
@@ -253,6 +247,7 @@ class ImpersonateStartView(APIView):
                         "name": tenant.name,
                         "slug": tenant.slug,
                         "role": membership.role,
+                        "preferred_language": tenant.preferred_language,
                     }
                     if tenant
                     else None

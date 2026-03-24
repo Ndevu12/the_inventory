@@ -10,8 +10,25 @@ from tenants.models import TenantMembership
 User = get_user_model()
 
 
+def memberships_payload_for_user(user):
+    """Membership rows for API responses (login, /me/, register, impersonate)."""
+    return list(
+        TenantMembership.objects.filter(user=user, is_active=True)
+        .select_related("tenant")
+        .order_by("-is_default", "pk")
+        .values(
+            "tenant__id",
+            "tenant__name",
+            "tenant__slug",
+            "tenant__preferred_language",
+            "role",
+            "is_default",
+        )
+    )
+
+
 class InventoryTokenObtainPairSerializer(TokenObtainPairSerializer):
-    """Extends the default JWT login response with user and tenant info."""
+    """Extends the default JWT login response with user, tenant, and all memberships."""
 
     def validate(self, attrs):
         data = super().validate(attrs)
@@ -29,9 +46,12 @@ class InventoryTokenObtainPairSerializer(TokenObtainPairSerializer):
                 "name": membership.tenant.name,
                 "slug": membership.tenant.slug,
                 "role": membership.role,
+                "preferred_language": membership.tenant.preferred_language,
             }
         else:
             data["tenant"] = None
+
+        data["memberships"] = memberships_payload_for_user(self.user)
 
         return data
 
@@ -82,14 +102,11 @@ class MeResponseSerializer(serializers.Serializer):
             "name": tenant.name,
             "slug": tenant.slug,
             "role": membership.role if membership else None,
+            "preferred_language": tenant.preferred_language,
         }
 
     def get_memberships(self, obj):
-        return list(
-            TenantMembership.objects.filter(user=obj["user"], is_active=True)
-            .select_related("tenant")
-            .values("tenant__id", "tenant__name", "tenant__slug", "role", "is_default")
-        )
+        return memberships_payload_for_user(obj["user"])
 
 
 class ChangePasswordSerializer(serializers.Serializer):

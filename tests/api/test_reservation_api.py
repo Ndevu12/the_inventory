@@ -41,9 +41,12 @@ class APISetupMixin:
         )
 
     def _make_viewer_credentials(self):
-        """Switch client to a non-staff authenticated user."""
+        """Switch client to a non-staff tenant member (viewer role)."""
         viewer = User.objects.create_user(
             username="viewer", password="viewpass", is_staff=False,
+        )
+        create_tenant_membership(
+            self.tenant, viewer, role=TenantRole.VIEWER, is_default=True,
         )
         token = Token.objects.create(user=viewer)
         self.client.credentials(HTTP_AUTHORIZATION=f"Token {token.key}")
@@ -411,10 +414,10 @@ class ProductAvailabilityTests(APISetupMixin, APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 0)
 
-    def test_non_staff_cannot_read_availability(self):
-        """Product endpoints require staff; availability inherits that."""
+    def test_tenant_viewer_can_read_availability(self):
+        """Viewers with tenant membership can read availability (tenant RBAC)."""
         self._make_viewer_credentials()
         response = self.client.get(
             f"/api/v1/products/{self.product.pk}/availability/",
         )
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)

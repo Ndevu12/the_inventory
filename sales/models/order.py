@@ -1,5 +1,6 @@
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 from django.db.models import UniqueConstraint
 from wagtail.search import index
 
@@ -7,10 +8,10 @@ from inventory.models.base import TimeStampedModel
 
 
 class SalesOrderStatus(models.TextChoices):
-    DRAFT = "draft", "Draft"
-    CONFIRMED = "confirmed", "Confirmed"
-    FULFILLED = "fulfilled", "Fulfilled"
-    CANCELLED = "cancelled", "Cancelled"
+    DRAFT = "draft", _("Draft")
+    CONFIRMED = "confirmed", _("Confirmed")
+    FULFILLED = "fulfilled", _("Fulfilled")
+    CANCELLED = "cancelled", _("Cancelled")
 
 
 class SalesOrder(TimeStampedModel):

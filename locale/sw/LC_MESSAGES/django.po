@@ -1,0 +1,237 @@
+# Swahili translations for The Inventory (Django / Wagtail project strings).
+# Copyright (C) The Inventory contributors
+# This file is distributed under the same license as the project.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: The Inventory\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-03-24 09:38+0000\n"
+"PO-Revision-Date: 2026-03-24 12:00+0000\n"
+"Last-Translator: The Inventory <>\n"
+"Language-Team: Swahili\n"
+"Language: sw\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: inventory/templates/inventory/low_stock_alerts.html:102
+#: reports/templates/reports/low_stock_report.html:49
+msgid "No low-stock products found."
+msgstr "Hakuna bidhaa za hifadhi ndogo zilizopatikana."
+
+#: inventory/templates/inventory/panels/expiring_lots.html:12
+msgid "Lot tracking is not in use."
+msgstr "Ufuatiliaji wa loti hautumiki."
+
+#: inventory/templates/inventory/panels/expiring_lots.html:52
+msgid "No lots expiring within 30 days."
+msgstr "Hakuna loti zinazoisha ndani ya siku 30."
+
+#: inventory/templates/inventory/panels/low_stock.html:55
+msgid "All products are above their reorder points."
+msgstr "Bidhaa zote ziko juu ya viwango vya kuagiza tena."
+
+#: inventory/templates/inventory/panels/pending_reservations.html:12
+msgid "No reservations have been created yet."
+msgstr "Bado hakuna uhifadhi ulioundwa."
+
+#: inventory/templates/inventory/panels/pending_reservations.html:42
+msgid "No active reservations at this time."
+msgstr "Hakuna uhifadhi hai kwa sasa."
+
+#: inventory/templates/inventory/panels/recent_movements.html:54
+msgid "No stock movements recorded yet."
+msgstr "Bado hakuna harakati za hifadhi zilirekodiwa."
+
+#: inventory/templates/inventory/search.html:48
+msgid "No matching products."
+msgstr "Hakuna bidhaa zinazolingana."
+
+#: inventory/templates/inventory/search.html:77
+msgid "No matching categories."
+msgstr "Hakuna jamii zinazolingana."
+
+#: inventory/templates/inventory/search.html:106
+msgid "No matching locations."
+msgstr "Hakuna maeneo yanayolingana."
+
+#: inventory/templates/inventory/search.html:111
+msgid ""
+"Enter a search term above to find products, categories, and stock locations."
+msgstr ""
+"Weka neno la utafutaji hapo juu kupata bidhaa, jamii na maeneo ya hifadhi."
+
+#: reports/templates/reports/expiry_report.html:96
+msgid "No expired or expiring lots found."
+msgstr "Hakuna loti zilizoisha au zinazo karibia kuisha."
+
+#: reports/templates/reports/movement_history.html:86
+msgid "No movements found."
+msgstr "Hakuna harakati zilizopatikana."
+
+#: reports/templates/reports/overstock_report.html:53
+msgid "No overstocked products found."
+msgstr "Hakuna bidhaa za ziada zilizopatikana."
+
+#: reports/templates/reports/purchase_summary.html:72
+msgid "No purchase orders found for the selected period."
+msgstr "Hakuna maagizo ya ununuzi kwa kipindi kilichochaguliwa."
+
+#: reports/templates/reports/sales_summary.html:72
+msgid "No sales orders found for the selected period."
+msgstr "Hakuna maagizo ya mauzo kwa kipindi kilichochaguliwa."
+
+#: reports/templates/reports/stock_valuation.html:70
+msgid "No stock to value."
+msgstr "Hakuna hifadhi ya kuweka thamani."
+
+#: tenants/templates/tenants/admin/confirm_deactivate.html:5
+#, python-format
+msgid ""
+"Are you sure you want to deactivate tenant \"%(name)s\"? Inactive tenants "
+"cannot log in or access data."
+msgstr ""
+"Je, una uhakika unataka kuzima mpangaji \"%(name)s\"? Wapangaji wasio hai "
+"hawawezi kuingia au kufikia data."
+
+#: tenants/templates/tenants/admin/confirm_deactivate.html:8
+msgid "Yes, deactivate"
+msgstr "Ndiyo, zima"
+
+#: tenants/templates/tenants/admin/confirm_deactivate.html:9
+msgid "No, don't deactivate"
+msgstr "Hapana, usizime"
+
+#: tenants/templates/tenants/admin/confirm_reactivate.html:5
+#, python-format
+msgid "Are you sure you want to reactivate tenant \"%(name)s\"?"
+msgstr "Je, una uhakika unataka kuamsha mpangaji \"%(name)s\"?"
+
+#: tenants/templates/tenants/admin/confirm_reactivate.html:8
+msgid "Yes, reactivate"
+msgstr "Ndiyo, amsha"
+
+#: tenants/templates/tenants/admin/confirm_reactivate.html:9
+msgid "No, cancel"
+msgstr "Hapana, ghairi"
+
+#: tenants/templates/tenants/panels/recent_tenants.html:46
+msgid "No tenants created yet."
+msgstr "Bado hakuna wapangaji walioundwa."
+
+#: tenants/wagtail_forms.py:25
+msgid "Owner"
+msgstr "Mmiliki"
+
+#: tenants/wagtail_forms.py:27
+msgid "No owner"
+msgstr "Hana mmiliki"
+
+#: tenants/wagtail_forms.py:28
+msgid "Select existing user"
+msgstr "Chagua mtumiaji aliyepo"
+
+#: tenants/wagtail_forms.py:29
+msgid "Create new user (set password)"
+msgstr "Unda mtumiaji mpya (weka nenosiri)"
+
+#: tenants/wagtail_forms.py:30
+msgid "Create new user (send invitation)"
+msgstr "Unda mtumiaji mpya (tuma mwaliko)"
+
+#: tenants/wagtail_forms.py:37
+msgid "User"
+msgstr "Mtumiaji"
+
+#: tenants/wagtail_forms.py:39
+msgid "Select a user"
+msgstr "Chagua mtumiaji"
+
+#: tenants/wagtail_forms.py:42
+msgid "Username"
+msgstr "Jina la mtumiaji"
+
+#: tenants/wagtail_forms.py:45
+msgid "For new users only."
+msgstr "Kwa watumiaji wapya tu."
+
+#: tenants/wagtail_forms.py:48
+msgid "Email"
+msgstr "Barua pepe"
+
+#: tenants/wagtail_forms.py:50
+msgid "Required when creating a new user."
+msgstr "Inahitajika unapounda mtumiaji mpya."
+
+#: tenants/wagtail_forms.py:53
+msgid "Password"
+msgstr "Nenosiri"
+
+#: tenants/wagtail_forms.py:56
+msgid "Required when creating new user with password."
+msgstr "Inahitajika unapounda mtumiaji mpya kwa nenosiri."
+
+#: tenants/wagtail_forms.py:59
+msgid "Send invitation email to owner"
+msgstr "Tuma barua pepe ya mwaliko kwa mmiliki"
+
+#: tenants/wagtail_forms.py:62
+msgid "Send an email with the invitation link (when using invitation mode)."
+msgstr "Tuma barua pepe na kiungo cha mwaliko (hali ya mwaliko)."
+
+#: tenants/wagtail_forms.py:89
+msgid "A tenant with this slug already exists."
+msgstr "Mpangaji na kitambulishi hiki tayari yupo."
+
+#: tenants/wagtail_forms.py:102
+msgid "Please select an existing user as owner."
+msgstr "Tafadhali chagua mtumiaji aliyepo kama mmiliki."
+
+#: tenants/wagtail_forms.py:108 tenants/wagtail_forms.py:124
+msgid "Username is required for new users."
+msgstr "Jina la mtumiaji linahitajika kwa watumiaji wapya."
+
+#: tenants/wagtail_forms.py:113
+msgid "Email is required for new users."
+msgstr "Barua pepe inahitajika kwa watumiaji wapya."
+
+#: tenants/wagtail_forms.py:118
+msgid "Password is required when creating a new user."
+msgstr "Nenosiri linahitajika unapounda mtumiaji mpya."
+
+#: tenants/wagtail_forms.py:129
+msgid "Email is required for invitation."
+msgstr "Barua pepe inahitajika kwa mwaliko."
+
+#: tenants/wagtail_views.py:60 tenants/wagtail_views.py:61
+msgid "Deactivate tenant"
+msgstr "Zima mpangaji"
+
+#: tenants/wagtail_views.py:85
+#, python-format
+msgid "Tenant '%(name)s' has been deactivated."
+msgstr "Mpangaji '%(name)s' amezimwa."
+
+#: tenants/wagtail_views.py:114 tenants/wagtail_views.py:115
+msgid "Reactivate tenant"
+msgstr "Amsha mpangaji"
+
+#: tenants/wagtail_views.py:138
+#, python-format
+msgid "Tenant '%(name)s' has been reactivated."
+msgstr "Mpangaji '%(name)s' ameamshwa."
+
+#: tenants/wagtail_views.py:213
+msgid "You cannot impersonate yourself."
+msgstr "Huwezi kujifanya mwingine."
+
+#: tenants/wagtail_views.py:231
+#, python-format
+msgid "Now viewing as %(user)s."
+msgstr "Sasa unatazama kama %(user)s."
+
+#: tenants/wagtail_views.py:262
+msgid "Impersonation ended."
+msgstr "Kujifanya mwingine kumekwisha."

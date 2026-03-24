@@ -43,6 +43,17 @@ def stock_record_key(product_id: int, location_id: int) -> str:
     return f"{STOCK_RECORD_PREFIX}:{_tenant_id()}:{product_id}:{location_id}"
 
 
+def stock_record_serialized_cache_key(
+    product_id: int,
+    location_id: int,
+    language_code: str | None = None,
+) -> str:
+    """Key for cached API payloads that include translated ``product_name`` (per language)."""
+    base = stock_record_key(product_id, location_id)
+    lang = (language_code or "").strip() or "default"
+    return f"{base}:serialized:{lang}"
+
+
 def stock_product_pattern(product_id: int) -> str:
     """Prefix for all locations of a given product within the current tenant."""
     return f"{STOCK_RECORD_PREFIX}:{_tenant_id()}:{product_id}:"
@@ -82,10 +93,15 @@ def cache_set(key: str, value: Any, kind: str = "stock") -> None:
 # ------------------------------------------------------------------
 
 def invalidate_stock_record(product_id: int, location_id: int) -> None:
-    """Delete a single stock-record cache entry."""
+    """Delete a single stock-record cache entry and any per-language API payloads."""
     key = stock_record_key(product_id, location_id)
     cache.delete(key)
     logger.debug("Cache INVALIDATE: %s", key)
+    pattern = f"{key}:serialized:*"
+    delete_pattern = getattr(cache, "delete_pattern", None)
+    if callable(delete_pattern):
+        delete_pattern(pattern)
+        logger.debug("Cache INVALIDATE pattern: %s", pattern)
 
 
 def invalidate_product_stock(product_id: int, location_ids: list[int] | None = None) -> None:

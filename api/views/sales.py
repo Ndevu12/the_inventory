@@ -6,10 +6,13 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.response import Response
+from drf_spectacular.utils import extend_schema
 
 from sales.models import Customer, Dispatch, SalesOrder
 from sales.services.sales import SalesService
 
+from api.mixins import TranslatableAPIReadMixin
+from api.schema_i18n import OPENAPI_LANGUAGE_QUERY_PARAMETER
 from api.serializers.sales import (
     CustomerSerializer,
     DispatchSerializer,
@@ -18,7 +21,8 @@ from api.serializers.sales import (
 from api.views.inventory import TenantScopedInventoryMixin
 
 
-class CustomerViewSet(TenantScopedInventoryMixin, viewsets.ModelViewSet):
+@extend_schema(parameters=[OPENAPI_LANGUAGE_QUERY_PARAMETER])
+class CustomerViewSet(TranslatableAPIReadMixin, TenantScopedInventoryMixin, viewsets.ModelViewSet):
     queryset = Customer.objects.all()
     serializer_class = CustomerSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -32,7 +36,12 @@ class CustomerViewSet(TenantScopedInventoryMixin, viewsets.ModelViewSet):
         return super().get_queryset().filter(tenant=tenant)
 
 
-class SalesOrderViewSet(TenantScopedInventoryMixin, viewsets.ModelViewSet):
+@extend_schema(parameters=[OPENAPI_LANGUAGE_QUERY_PARAMETER])
+class SalesOrderViewSet(
+    TranslatableAPIReadMixin,
+    TenantScopedInventoryMixin,
+    viewsets.ModelViewSet,
+):
     queryset = SalesOrder.objects.select_related("customer").prefetch_related(
         "lines", "lines__product",
     ).all()

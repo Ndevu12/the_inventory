@@ -1,0 +1,20 @@
+{
+  "Common": {
+    "searchAria": "Buscar",
+    "searchPlaceholder": "Buscar…"
+  },
+  "LanguageSwitcher": {
+    "ariaLabel": "Idioma",
+    "languages": {
+      "en": "Inglés",
+      "fr": "Francés",
+      "sw": "Suajili",
+      "rw": "Kinyarwanda",
+      "es": "Español",
+      "ar": "Árabe"
+    }
+  },
+  "App": {
+    "description": "Sistema de gestión de inventario multi-inquilino"
+  }
+}

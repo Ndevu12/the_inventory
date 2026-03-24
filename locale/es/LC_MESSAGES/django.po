@@ -1,0 +1,238 @@
+# Spanish translations for The Inventory (Django / Wagtail project strings).
+# Copyright (C) The Inventory contributors
+# This file is distributed under the same license as the project.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: The Inventory\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-03-24 09:38+0000\n"
+"PO-Revision-Date: 2026-03-24 12:00+0000\n"
+"Last-Translator: The Inventory <>\n"
+"Language-Team: Spanish\n"
+"Language: es\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: inventory/templates/inventory/low_stock_alerts.html:102
+#: reports/templates/reports/low_stock_report.html:49
+msgid "No low-stock products found."
+msgstr "No se encontraron productos con stock bajo."
+
+#: inventory/templates/inventory/panels/expiring_lots.html:12
+msgid "Lot tracking is not in use."
+msgstr "El seguimiento de lotes no está en uso."
+
+#: inventory/templates/inventory/panels/expiring_lots.html:52
+msgid "No lots expiring within 30 days."
+msgstr "No hay lotes que caduquen en 30 días."
+
+#: inventory/templates/inventory/panels/low_stock.html:55
+msgid "All products are above their reorder points."
+msgstr "Todos los productos están por encima de su punto de pedido."
+
+#: inventory/templates/inventory/panels/pending_reservations.html:12
+msgid "No reservations have been created yet."
+msgstr "Aún no se han creado reservas."
+
+#: inventory/templates/inventory/panels/pending_reservations.html:42
+msgid "No active reservations at this time."
+msgstr "No hay reservas activas en este momento."
+
+#: inventory/templates/inventory/panels/recent_movements.html:54
+msgid "No stock movements recorded yet."
+msgstr "Aún no hay movimientos de stock registrados."
+
+#: inventory/templates/inventory/search.html:48
+msgid "No matching products."
+msgstr "No hay productos coincidentes."
+
+#: inventory/templates/inventory/search.html:77
+msgid "No matching categories."
+msgstr "No hay categorías coincidentes."
+
+#: inventory/templates/inventory/search.html:106
+msgid "No matching locations."
+msgstr "No hay ubicaciones coincidentes."
+
+#: inventory/templates/inventory/search.html:111
+msgid ""
+"Enter a search term above to find products, categories, and stock locations."
+msgstr ""
+"Introduzca arriba un término de búsqueda para encontrar productos, "
+"categorías y ubicaciones de stock."
+
+#: reports/templates/reports/expiry_report.html:96
+msgid "No expired or expiring lots found."
+msgstr "No se encontraron lotes caducados o próximos a caducar."
+
+#: reports/templates/reports/movement_history.html:86
+msgid "No movements found."
+msgstr "No se encontraron movimientos."
+
+#: reports/templates/reports/overstock_report.html:53
+msgid "No overstocked products found."
+msgstr "No se encontraron productos con sobrestock."
+
+#: reports/templates/reports/purchase_summary.html:72
+msgid "No purchase orders found for the selected period."
+msgstr "No se encontraron órdenes de compra para el período seleccionado."
+
+#: reports/templates/reports/sales_summary.html:72
+msgid "No sales orders found for the selected period."
+msgstr "No se encontraron pedidos de venta para el período seleccionado."
+
+#: reports/templates/reports/stock_valuation.html:70
+msgid "No stock to value."
+msgstr "No hay stock que valorar."
+
+#: tenants/templates/tenants/admin/confirm_deactivate.html:5
+#, python-format
+msgid ""
+"Are you sure you want to deactivate tenant \"%(name)s\"? Inactive tenants "
+"cannot log in or access data."
+msgstr ""
+"¿Seguro que desea desactivar el inquilino \"%(name)s\"? Los inquilinos "
+"inactivos no pueden iniciar sesión ni acceder a los datos."
+
+#: tenants/templates/tenants/admin/confirm_deactivate.html:8
+msgid "Yes, deactivate"
+msgstr "Sí, desactivar"
+
+#: tenants/templates/tenants/admin/confirm_deactivate.html:9
+msgid "No, don't deactivate"
+msgstr "No, no desactivar"
+
+#: tenants/templates/tenants/admin/confirm_reactivate.html:5
+#, python-format
+msgid "Are you sure you want to reactivate tenant \"%(name)s\"?"
+msgstr "¿Seguro que desea reactivar el inquilino \"%(name)s\"?"
+
+#: tenants/templates/tenants/admin/confirm_reactivate.html:8
+msgid "Yes, reactivate"
+msgstr "Sí, reactivar"
+
+#: tenants/templates/tenants/admin/confirm_reactivate.html:9
+msgid "No, cancel"
+msgstr "No, cancelar"
+
+#: tenants/templates/tenants/panels/recent_tenants.html:46
+msgid "No tenants created yet."
+msgstr "Aún no se han creado inquilinos."
+
+#: tenants/wagtail_forms.py:25
+msgid "Owner"
+msgstr "Propietario"
+
+#: tenants/wagtail_forms.py:27
+msgid "No owner"
+msgstr "Sin propietario"
+
+#: tenants/wagtail_forms.py:28
+msgid "Select existing user"
+msgstr "Seleccionar usuario existente"
+
+#: tenants/wagtail_forms.py:29
+msgid "Create new user (set password)"
+msgstr "Crear usuario nuevo (establecer contraseña)"
+
+#: tenants/wagtail_forms.py:30
+msgid "Create new user (send invitation)"
+msgstr "Crear usuario nuevo (enviar invitación)"
+
+#: tenants/wagtail_forms.py:37
+msgid "User"
+msgstr "Usuario"
+
+#: tenants/wagtail_forms.py:39
+msgid "Select a user"
+msgstr "Seleccione un usuario"
+
+#: tenants/wagtail_forms.py:42
+msgid "Username"
+msgstr "Nombre de usuario"
+
+#: tenants/wagtail_forms.py:45
+msgid "For new users only."
+msgstr "Solo para usuarios nuevos."
+
+#: tenants/wagtail_forms.py:48
+msgid "Email"
+msgstr "Correo electrónico"
+
+#: tenants/wagtail_forms.py:50
+msgid "Required when creating a new user."
+msgstr "Obligatorio al crear un usuario nuevo."
+
+#: tenants/wagtail_forms.py:53
+msgid "Password"
+msgstr "Contraseña"
+
+#: tenants/wagtail_forms.py:56
+msgid "Required when creating new user with password."
+msgstr "Obligatorio al crear un usuario nuevo con contraseña."
+
+#: tenants/wagtail_forms.py:59
+msgid "Send invitation email to owner"
+msgstr "Enviar correo de invitación al propietario"
+
+#: tenants/wagtail_forms.py:62
+msgid "Send an email with the invitation link (when using invitation mode)."
+msgstr "Enviar un correo con el enlace de invitación (modo invitación)."
+
+#: tenants/wagtail_forms.py:89
+msgid "A tenant with this slug already exists."
+msgstr "Ya existe un inquilino con este identificador."
+
+#: tenants/wagtail_forms.py:102
+msgid "Please select an existing user as owner."
+msgstr "Seleccione un usuario existente como propietario."
+
+#: tenants/wagtail_forms.py:108 tenants/wagtail_forms.py:124
+msgid "Username is required for new users."
+msgstr "El nombre de usuario es obligatorio para usuarios nuevos."
+
+#: tenants/wagtail_forms.py:113
+msgid "Email is required for new users."
+msgstr "El correo es obligatorio para usuarios nuevos."
+
+#: tenants/wagtail_forms.py:118
+msgid "Password is required when creating a new user."
+msgstr "La contraseña es obligatoria al crear un usuario nuevo."
+
+#: tenants/wagtail_forms.py:129
+msgid "Email is required for invitation."
+msgstr "El correo es obligatorio para la invitación."
+
+#: tenants/wagtail_views.py:60 tenants/wagtail_views.py:61
+msgid "Deactivate tenant"
+msgstr "Desactivar inquilino"
+
+#: tenants/wagtail_views.py:85
+#, python-format
+msgid "Tenant '%(name)s' has been deactivated."
+msgstr "El inquilino '%(name)s' ha sido desactivado."
+
+#: tenants/wagtail_views.py:114 tenants/wagtail_views.py:115
+msgid "Reactivate tenant"
+msgstr "Reactivar inquilino"
+
+#: tenants/wagtail_views.py:138
+#, python-format
+msgid "Tenant '%(name)s' has been reactivated."
+msgstr "El inquilino '%(name)s' ha sido reactivado."
+
+#: tenants/wagtail_views.py:213
+msgid "You cannot impersonate yourself."
+msgstr "No puede suplantarse a sí mismo."
+
+#: tenants/wagtail_views.py:231
+#, python-format
+msgid "Now viewing as %(user)s."
+msgstr "Ahora está viendo como %(user)s."
+
+#: tenants/wagtail_views.py:262
+msgid "Impersonation ended."
+msgstr "Suplantación finalizada."

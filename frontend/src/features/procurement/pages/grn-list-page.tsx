@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import Link from "next/link"
+import { Link } from "@/i18n/navigation"
 import type { PaginationState } from "@tanstack/react-table"
 import { PlusIcon } from "lucide-react"
 import { toast } from "sonner"

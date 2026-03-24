@@ -1,7 +1,11 @@
 """Base seeder class providing common functionality for all seeders."""
 
 from abc import ABC, abstractmethod
+
 from django.db import transaction
+from wagtail.models import TranslatableMixin
+
+from seeders.locale_support import canonical_wagtail_locale_for_tenant
 
 
 class BaseSeeder(ABC):
@@ -38,6 +42,7 @@ class BaseSeeder(ABC):
         """
         self.verbose = verbose
         self.tenant = None
+        self.canonical_locale = None
 
     def log(self, message):
         """Print a message if verbose mode is enabled."""
@@ -62,6 +67,7 @@ class BaseSeeder(ABC):
         Ensures atomicity: either all data is created or none.
         """
         self.tenant = tenant
+        self.canonical_locale = canonical_wagtail_locale_for_tenant(tenant)
         try:
             with transaction.atomic():
                 self.seed()
@@ -91,6 +97,8 @@ class BaseSeeder(ABC):
                 "Ensure tenant is passed to execute()."
             )
         kwargs["tenant"] = self.tenant
+        if self.canonical_locale is not None and issubclass(model, TranslatableMixin):
+            kwargs.setdefault("locale", self.canonical_locale)
         return model.objects.create(**kwargs)
 
     def add_root_with_tenant(self, model, **kwargs):
@@ -114,4 +122,6 @@ class BaseSeeder(ABC):
                 "Ensure tenant is passed to execute()."
             )
         kwargs["tenant"] = self.tenant
+        if self.canonical_locale is not None and issubclass(model, TranslatableMixin):
+            kwargs.setdefault("locale", self.canonical_locale)
         return model.add_root(**kwargs)

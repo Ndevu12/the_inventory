@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter } from "@/i18n/navigation"
 import { useAuth } from "@/features/auth/context/auth-context"
 import { usePlatformAuditLog } from "../hooks/use-audit"
 import {

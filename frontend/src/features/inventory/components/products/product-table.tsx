@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter } from "@/i18n/navigation"
 import type { PaginationState } from "@tanstack/react-table"
 import { DataTable } from "@/components/data-table/data-table"
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header"

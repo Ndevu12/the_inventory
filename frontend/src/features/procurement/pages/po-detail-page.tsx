@@ -1,7 +1,7 @@
 "use client"
 
 import { use } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter } from "@/i18n/navigation"
 import { ArrowLeftIcon } from "lucide-react"
 import { toast } from "sonner"
 

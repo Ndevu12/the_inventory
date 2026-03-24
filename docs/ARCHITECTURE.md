@@ -7,14 +7,16 @@ This document describes the technical design of **The Inventory** — an open-so
 ## High-Level Overview
 
 ```
-┌─────────────────────────────────────────────────┐
-│                   Browser / Client               │
-└────────────────────────┬────────────────────────┘
-                         │
-          ┌──────────────┴──────────────┐
-          │       Django / Wagtail       │
-          │        (WSGI server)         │
-          └──────────────┬──────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│                     Browser / clients                         │
+└─────────────┬───────────────────────────────┬────────────────┘
+              │                               │
+   ┌──────────▼──────────┐         ┌──────────▼──────────┐
+   │  Next.js frontend   │         │  Wagtail / Django   │
+   │  (tenant inventory) │  JSON   │  admin (platform)   │
+   └──────────┬──────────┘  REST   └──────────┬──────────┘
+              │          ┌─────────────────────┘
+              └──────────┤  Django / Wagtail (WSGI)
                          │
      ┌───────────┬───────┴───────┬───────────┐
      │           │               │           │
@@ -30,7 +32,16 @@ This document describes the technical design of **The Inventory** — an open-so
                     └─────────┘
 ```
 
-Users interact with The Inventory primarily through the **Wagtail admin** interface. The standard Django admin is available at `/django-admin/` for low-level access when needed.
+**Who uses which surface**
+
+| Audience | Primary UI | Protocol |
+| -------- | ---------- | -------- |
+| **Tenant companies** (inventory operators) | [frontend/](../frontend/) (Next.js) | **DRF** at `/api/v1/` (JWT and related auth) |
+| **Platform / internal staff** | **Wagtail admin** at `/admin/` | Session, reports, tenant management, imports; **optional** registered snippets for inventory entities when you want monitoring or support tooling in admin |
+
+**Current default:** inventory listing menus are not in Wagtail ([inventory/wagtail_hooks.py](../inventory/wagtail_hooks.py)). **Evolving the architecture** to register Product, Category, or related models as **tenant-scoped** snippets (see [tenants/snippets.py](../tenants/snippets.py)) is fine for **staff monitoring, audits, or translation workflows**—as long as **tenant companies** still treat the **Next.js app + `/api/v1/`** as their **primary** place for day-to-day inventory operations. Domain models use Wagtail-friendly patterns (`panels`, `ClusterableModel`, images) because the stack is Wagtail-based; that does not imply admin is the main operator UI.
+
+The standard Django admin remains at `/django-admin/` for low-level access when needed.
 
 ---
 
@@ -40,7 +51,7 @@ Users interact with The Inventory primarily through the **Wagtail admin** interf
 |---|---|---|
 | Language | Python 3.12+ | |
 | Web framework | Django 6.0 | |
-| CMS / Admin UI | Wagtail 7.3 | Primary interface for all CRUD |
+| CMS / Admin UI | Wagtail 7.3 | Platform/staff UI; tenant inventory CRUD via API + Next.js |
 | Database | SQLite (dev) / PostgreSQL (prod) | Split settings pattern |
 | Search | Wagtail search (database backend) | Elasticsearch planned for Phase 4 |
 | Tagging | `django-taggit` | Bundled with Wagtail |
@@ -56,37 +67,28 @@ Users interact with The Inventory primarily through the **Wagtail admin** interf
 
 ### Frontend / UI Stack
 
-The backend operates as a **headless API server** serving JSON data to a separate modern frontend, while retaining the Wagtail admin UI for staff.  Wagtail admin templates remain for internal CMS use.
+The backend is a **headless API** for **tenant** applications: the **[frontend/](../frontend/)** Next.js app calls **DRF** at `/api/v1/`. **Wagtail admin** serves **platform** workflows (tenants, reports under `/admin/`, imports, dashboards)—not the main path for tenant inventory operators.
 
 | Layer | Technology | Role |
 |---|---|---|
-| Interactivity | [HTMX](https://htmx.org/) | Server-driven partial page updates, live search, inline editing |
-| Client-side state | [Alpine.js](https://alpinejs.dev/) | Dropdowns, modals, toggles, small reactive state |
-| Styling | [Tailwind CSS](https://tailwindcss.com/) | Utility-first CSS for custom views |
-| Admin CRUD | Wagtail Snippets | Built-in model editing UI with permissions |
+| Tenant app | **Next.js** (App Router) | Primary inventory UX for companies; consumes REST API |
+| API | **Django REST Framework** | CRUD, auth, OpenAPI (`drf-spectacular`) |
+| Platform admin | **Wagtail 7** | Staff UI, reports; inventory snippets **if registered** (monitoring/support—not primary for tenant operators) |
+| Legacy / optional templates | Django templates, **HTMX**, **Alpine.js**, **Tailwind** | Some reports, imports, or custom views under Wagtail—not the tenant Next.js app |
 
-**Why this stack?**
+**Internationalization:** UI strings in the Next.js app use **next-intl**; catalog **content** uses **Wagtail i18n + wagtail-localize** (`TranslatableMixin`) with **linked rows per locale**. Tenant **reads** use `GET ?language=` (then tenant default, then `Accept-Language`) to overlay translated strings while list endpoints keep **canonical locale ids**. **Writes** (`POST`/`PATCH`/`PUT`) use `?language=` when set; otherwise the tenant **canonical** locale (`Accept-Language` is not used on writes). **POST** in a non-canonical locale requires body field **`translation_of`**: the primary key of the **canonical** row (the id from default list responses). **PATCH** with `?language=` updates that locale’s row (creating the linked translation when missing). Wagtail admin remains available for staff where snippets are registered. Task breakdown: [TASKS.MD](TASKS.MD) (I18N-*).
 
-- Inventory management is **CRUD-heavy and staff-facing** — naturally fits Django's request-response model.
-- HTMX gives SPA-like responsiveness (partial updates, debounced search, form submissions) without a JavaScript framework.
-- Alpine.js handles the small bits of client-side state (expand/collapse, confirm dialogs) that HTMX doesn't cover.
-- Tailwind CSS provides a modern look for custom views without fighting Django's template system.
-- No npm, no webpack, no Vite — HTMX and Alpine.js are loaded via `<script>` tags (CDN or vendored static files).
+**Why this split?**
 
-**How the two UIs coexist:**
+- **Multi-tenant SaaS:** companies use a dedicated SPA experience while the same Django project powers APIs, permissions, and Wagtail for operators.
+- **Wagtail** remains valuable for media, search fields, tree models, and staff tooling without forcing tenants through `/admin/` for day-to-day stock work.
 
-| Surface | Stack | Examples |
-|---|---|---|
-| Wagtail admin (Snippets) | Wagtail's built-in UI (React internals, no customization needed) | Category CRUD, Product editing, Location tree |
-| Custom inventory views | Django templates + HTMX + Alpine.js + Tailwind | Dashboard, stock movement forms, low-stock alerts, search |
+**Dependencies (representative):**
 
-**Dependencies added:**
+- `django-cors-headers`, `djangorestframework-simplejwt` — SPA auth and CORS
+- `django-htmx` — where HTMX-backed Wagtail or Django views exist
 
-```
-django-htmx       # HTMX middleware & template helpers
-```
-
-> Alpine.js, HTMX, and Tailwind CSS are loaded as static assets — no Python packages needed for them.
+> The Next.js app lives under `frontend/` with its own `package.json`; Python packages do not install React.
 
 ---
 
@@ -144,6 +146,9 @@ the_inventory/              ← Project root
 │   ├── ARCHITECTURE.md     ← This file
 │   └── ROADMAP.md          ← Development roadmap & phases
 │
+├── frontend/               ← Next.js tenant app (calls `/api/v1/`)
+│   └── package.json        ← Node dependencies (separate from requirements.txt)
+│
 │   ── Apps ──
 │
 ├── inventory/              ← [Phase 1] Core inventory models & logic
@@ -183,7 +188,7 @@ the_inventory/              ← Project root
 │   │       ├── test_stock_summary.py
 │   │       ├── test_low_stock.py
 │   │       └── test_recent_movements.py
-│   ├── wagtail_hooks.py    ← Wagtail admin customizations
+│   ├── wagtail_hooks.py    ← Inventory removed from Wagtail menus; API is tenant path
 │   ├── migrations/
 │   └── templates/inventory/
 │
@@ -280,11 +285,11 @@ class TimeStampedModel(models.Model):
 | Model | Type | Key Fields | Purpose |
 |---|---|---|---|
 | `TimeStampedModel` | Abstract base | `tenant` (FK), `created_at`, `updated_at`, `created_by` | Tenant scoping + audit trail on all models |
-| `Category` | Wagtail Snippet (`treebeard.MP_Node`) | `name`, `slug`, `description`, `is_active` | Hierarchical product categories |
-| `Product` | Wagtail Snippet (`ClusterableModel`) | `sku` (unique), `name`, `description`, `category` (FK), `unit_of_measure`, `unit_cost`, `reorder_point`, `is_active` | Items in the catalog |
+| `Category` | Django model (`treebeard.MP_Node`; Wagtail `panels`) | `name`, `slug`, `description`, `is_active` | Hierarchical product categories; **primary CRUD via DRF** for tenant operators |
+| `Product` | Django model (`ClusterableModel`; Wagtail `panels`) | `sku` (unique), `name`, `description`, `category` (FK), `unit_of_measure`, `unit_cost`, `reorder_point`, `is_active` | Catalog items; **primary CRUD via DRF** for tenant operators |
 | `ProductImage` | `Orderable` inline on Product | `image` (FK → wagtailimages), `caption` | Multiple images per product |
 | `ProductTag` | `TaggedItemBase` | `content_object` (ParentalKey → Product) | Free-form tags via `django-taggit` |
-| `StockLocation` | Wagtail Snippet (`treebeard.MP_Node`) | `name`, `description`, `is_active` | Hierarchical physical locations |
+| `StockLocation` | Django model (`treebeard.MP_Node`; Wagtail `panels`) | `name`, `description`, `is_active` | Hierarchical physical locations; **primary CRUD via DRF** for tenant operators |
 | `StockRecord` | Django Model | `product` (FK), `location` (FK), `quantity` | Current stock per product per location |
 | `StockMovement` | Django Model | `product` (FK), `from_location` (FK, nullable), `to_location` (FK, nullable), `quantity`, `unit_cost`, `movement_type`, `reference`, `notes` | Audit log of every stock change |
 
@@ -394,8 +399,8 @@ Validation rules:
 
 Each `Product` defines a `reorder_point` (default: 0). A stock record is **low** when `StockRecord.quantity <= Product.reorder_point`. Low-stock items surface via:
 
-- A filtered view in the Wagtail admin (using `django-filter`)
-- A Wagtail admin dashboard widget
+- **API** and Next.js client (e.g. availability / reporting endpoints)
+- Wagtail admin dashboard widgets (staff)
 - Future: webhook/email notifications (Phase 4)
 
 #### Future-Proofing Notes
@@ -405,7 +410,7 @@ These notes explain how the Phase 1 schema accommodates future phases without re
 - **Supplier link (Phase 2):** `procurement/` will add a `Supplier` model and either a FK on `Product` or a `SupplierProduct` junction table. The Phase 1 `Product` model does not need a supplier field yet.
 - **Order references (Phase 2):** `StockMovement.reference` stores PO/SO numbers as free text. Phase 2 apps may add a dedicated FK alongside this field for structured lookups.
 - **Stock valuation (Phase 3):** `StockMovement.unit_cost` captures point-in-time cost. Combined with movement history, this supports FIFO, LIFO, or weighted-average valuation without schema changes.
-- **API (Phase 4):** All models have clean `__str__` methods and simple FKs — straightforward to serialize with Django REST Framework.
+- **API (Phase 4, current):** DRF viewsets under `/api/v1/` are the **primary** CRUD path for tenant inventory; models use clean FKs and serializers.
 
 ---
 
@@ -417,7 +422,7 @@ These notes explain how the Phase 1 schema accommodates future phases without re
 
 | Model | Type | Purpose |
 |---|---|---|
-| `Supplier` | Wagtail Snippet | Vendor / supplier details (code, contacts, lead times, payment terms, soft-delete) |
+| `Supplier` | Django model (Wagtail `panels`; snippet registration optional for staff) | Vendor / supplier details; **primary CRUD via DRF** for tenant operators |
 | `PurchaseOrder` | Django Model | Order placed with a supplier (status workflow: draft → confirmed → received / cancelled) |
 | `PurchaseOrderLine` | Django Model | Line items (FK → Product, quantity, unit cost; unique per PO + product) |
 | `GoodsReceivedNote` | Django Model | Confirmation of goods arrival — triggers `receive` StockMovements via `ProcurementService` |
@@ -430,7 +435,7 @@ These notes explain how the Phase 1 schema accommodates future phases without re
 
 | Model | Type | Purpose |
 |---|---|---|
-| `Customer` | Wagtail Snippet | Customer / client details (code, contacts, soft-delete) |
+| `Customer` | Django model (Wagtail `panels`) | Customer / client details; **primary CRUD via DRF** for tenant operators |
 | `SalesOrder` | Django Model | Order from a customer (status workflow: draft → confirmed → fulfilled / cancelled) |
 | `SalesOrderLine` | Django Model | Line items (FK → Product, quantity, unit price; unique per SO + product) |
 | `Dispatch` | Django Model | Shipment record — triggers `issue` StockMovements via `SalesService` |
@@ -584,6 +589,8 @@ Multi-tenancy infrastructure enabling multiple organizations to share a single d
 
 **Subscription Hooks:** `Tenant.subscription_plan` (free/starter/professional/enterprise), `subscription_status` (active/trial/past_due/cancelled/suspended), `max_users`, `max_products`.  Helper methods `is_within_user_limit()` and `is_within_product_limit()` enforce plan limits.
 
+**Wagtail snippets:** Only **`Tenant`** is registered as a snippet viewset in the default tree ([tenants/snippets.py](../tenants/snippets.py)). **`TenantScopedSnippetViewSet`** is the base class for registering **tenant-scoped** inventory (or other) models when you want them visible in Wagtail for **monitoring, support, or admin workflows**. Doing so is a **deliberate product/architecture decision**; it does **not** replace the **API + Next.js** path as the **primary** channel for tenant operators’ routine inventory work.
+
 ### Seeding with Multi-Tenancy
 
 The seeder system (in `inventory/seeders/`) automatically handles tenant context during data initialization:
@@ -671,13 +678,13 @@ For Tenant model details, see [tenants/models.py](../tenants/models.py).
 
 | Path | Handler | Purpose |
 |---|---|---|
-| `/admin/` | `wagtail.admin.urls` | Wagtail admin (primary UI) |
+| `/admin/` | `wagtail.admin.urls` | Wagtail admin (**platform** UI: tenants, reports, imports, etc.) |
 | `/django-admin/` | `django.contrib.admin` | Django admin (low-level) |
 | `/documents/` | `wagtail.documents.urls` | Document library |
 | `/search/` | `search.views.search` | Site-wide search |
 | `/` (catch-all) | `wagtail.urls` | Wagtail page serving |
 
-| `/api/v1/` | DRF `DefaultRouter` | REST API (Phase 4) |
+| `/api/v1/` | DRF `DefaultRouter` | **REST API — primary tenant inventory CRUD** |
 
 ---
 

@@ -53,7 +53,7 @@
 - **Gunicorn**: WSGI application server (production)
 
 ### Frontend
-- **npm/yarn**: Node package manager
+- **Yarn**: Node package manager (use Yarn for the frontend; lockfile: `frontend/yarn.lock`)
 - **Next.js**: Build and dev server
 - **TypeScript**: Type checking
 - **ESLint**: Code linting
@@ -120,7 +120,7 @@ celery -A the_inventory beat -l info
 cd frontend
 
 # Install dependencies
-npm install
+yarn install
 
 # Create environment file
 cp .env.local.example .env.local
@@ -129,19 +129,19 @@ cp .env.local.example .env.local
 ### Frontend Development
 ```bash
 # Run development server
-npm run dev
+yarn dev
 
 # Build for production
-npm run build
+yarn build
 
 # Run production build
-npm start
+yarn start
 
 # Run linter
-npm run lint
+yarn lint
 
-# Type checking
-npm run type-check
+# Type checking (no script; invoke TypeScript directly)
+yarn exec tsc --noEmit
 ```
 
 ### Docker Development

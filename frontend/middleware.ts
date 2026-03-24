@@ -1,16 +1,17 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import createMiddleware from "next-intl/middleware";
+import { type NextRequest, NextResponse } from "next/server";
 
-/**
- * Middleware for handling API requests.
- *
- * The actual rewriting of /api/* to the backend server (configured via API_SERVER_URL)
- * is handled by next.config.ts, not here.
- */
+import { routing } from "./src/i18n/routing";
+
+const intlMiddleware = createMiddleware(routing);
+
 export function middleware(request: NextRequest) {
-  return NextResponse.next();
+  if (request.nextUrl.pathname.startsWith("/api")) {
+    return NextResponse.next();
+  }
+  return intlMiddleware(request);
 }
 
 export const config = {
-  matcher: ["/api/:path*"],
+  matcher: ["/((?!api|_next|_vercel|.*\\..*).*)"],
 };

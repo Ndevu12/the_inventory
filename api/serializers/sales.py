@@ -10,8 +10,25 @@ from sales.models import (
     SalesOrderLine,
 )
 
+from api.serializers.localized_strings import (
+    attribute_in_display_locale,
+    display_locale_from_context,
+)
+from tenants.middleware import get_effective_tenant
 
-class CustomerSerializer(serializers.ModelSerializer):
+from api.serializers.translatable_representation import TranslatableRepresentationMixin
+from api.serializers.translatable_writable import TranslatableWritableMixin
+
+
+class CustomerSerializer(
+    TranslatableWritableMixin,
+    TranslatableRepresentationMixin,
+    serializers.ModelSerializer,
+):
+    """Translatable: ``name``, ``contact_name``, ``address``, ``notes``."""
+
+    translatable_overlay_fields = ("name", "contact_name", "address", "notes")
+
     class Meta:
         model = Customer
         fields = [
@@ -21,10 +38,30 @@ class CustomerSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["created_at", "updated_at"]
 
+    def validate_code(self, value):
+        request = self.context.get("request")
+        tenant = self.context.get("tenant") or (
+            get_effective_tenant(request) if request else None
+        )
+        loc = self.context.get("wagtail_write_locale")
+        qs = Customer.objects.filter(code=value)
+        if tenant:
+            qs = qs.filter(tenant=tenant)
+        if loc:
+            qs = qs.filter(locale_id=loc.id)
+        qs = self._same_translation_group_qs(qs, self.instance)
+        if qs.exists():
+            raise serializers.ValidationError(
+                "A customer with this code already exists for this tenant."
+            )
+        return value
+
 
 class SalesOrderLineSerializer(serializers.ModelSerializer):
+    """``product_name`` uses the request display locale for translated catalog products."""
+
     product_sku = serializers.CharField(source="product.sku", read_only=True)
-    product_name = serializers.CharField(source="product.name", read_only=True)
+    product_name = serializers.SerializerMethodField()
     line_total = serializers.DecimalField(
         max_digits=12, decimal_places=2, read_only=True,
     )
@@ -37,6 +74,11 @@ class SalesOrderLineSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id"]
 
+    def get_product_name(self, obj):
+        return attribute_in_display_locale(
+            obj.product, "name", display_locale_from_context(self.context),
+        )
+
 
 class SalesOrderLineWriteSerializer(serializers.Serializer):
     product = serializers.PrimaryKeyRelatedField(
@@ -47,9 +89,9 @@ class SalesOrderLineWriteSerializer(serializers.Serializer):
 
 
 class SalesOrderSerializer(serializers.ModelSerializer):
-    customer_name = serializers.CharField(
-        source="customer.name", read_only=True,
-    )
+    """``customer_name`` uses the request display locale for translated customers."""
+
+    customer_name = serializers.SerializerMethodField()
     status_display = serializers.CharField(
         source="get_status_display", read_only=True,
     )
@@ -68,6 +110,11 @@ class SalesOrderSerializer(serializers.ModelSerializer):
             "created_at", "updated_at",
         ]
         read_only_fields = ["status", "created_at", "updated_at"]
+
+    def get_customer_name(self, obj):
+        return attribute_in_display_locale(
+            obj.customer, "name", display_locale_from_context(self.context),
+        )
 
     def get_can_fulfill(self, obj):
         """True when every order line can be met by available stock across all locations."""

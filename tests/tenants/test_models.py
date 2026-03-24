@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.test import TestCase
 
@@ -18,6 +19,13 @@ class TenantModelTest(TestCase):
         self.assertTrue(t.is_active)
         self.assertEqual(t.subscription_plan, SubscriptionPlan.FREE)
         self.assertEqual(t.subscription_status, SubscriptionStatus.ACTIVE)
+        self.assertEqual(t.preferred_language, "en")
+
+    def test_preferred_language_must_be_supported(self):
+        t = create_tenant(name="Lang Co", slug="lang-co")
+        t.preferred_language = "xx"
+        with self.assertRaises(ValidationError):
+            t.full_clean()
 
     def test_slug_uniqueness(self):
         create_tenant(slug="unique-slug")

@@ -2,12 +2,16 @@
 
 from django.db.models import Sum
 from django_filters.rest_framework import DjangoFilterBackend
+from drf_spectacular.utils import extend_schema
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.filters import OrderingFilter
 from rest_framework.response import Response
 
+from api.mixins import TranslatableAPIReadMixin
 from api.permissions import ReadOnlyOrStaff
+from api.schema_i18n import OPENAPI_LANGUAGE_QUERY_PARAMETER
 from api.serializers.reservation import (
     StockReservationCreateSerializer,
     StockReservationSerializer,
@@ -20,11 +24,16 @@ from inventory.exceptions import (
 from inventory.models import StockRecord, StockReservation
 from inventory.models.reservation import ReservationStatus
 from inventory.services.reservation import ReservationService
+from tenants.context import get_current_tenant
+from tenants.middleware import resolve_tenant_for_request
+from tenants.permissions import get_membership
 
 _ACTIVE_STATUSES = [ReservationStatus.PENDING, ReservationStatus.CONFIRMED]
 
 
-class StockReservationViewSet(viewsets.GenericViewSet,
+@extend_schema(parameters=[OPENAPI_LANGUAGE_QUERY_PARAMETER])
+class StockReservationViewSet(TranslatableAPIReadMixin,
+                              viewsets.GenericViewSet,
                               viewsets.mixins.ListModelMixin,
                               viewsets.mixins.RetrieveModelMixin,
                               viewsets.mixins.CreateModelMixin):
@@ -49,6 +58,20 @@ class StockReservationViewSet(viewsets.GenericViewSet,
         if self.action == "create":
             return StockReservationCreateSerializer
         return StockReservationSerializer
+
+    def _get_current_tenant(self):
+        tenant = get_current_tenant()
+        if tenant is None:
+            tenant = resolve_tenant_for_request(self.request)
+        if tenant is None:
+            raise PermissionDenied("No tenant context available.")
+        if not get_membership(self.request.user, tenant):
+            raise PermissionDenied("User does not belong to this tenant.")
+        return tenant
+
+    def get_queryset(self):
+        tenant = self._get_current_tenant()
+        return super().get_queryset().filter(tenant=tenant)
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -78,7 +101,9 @@ class StockReservationViewSet(viewsets.GenericViewSet,
                 status=status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
 
-        output = StockReservationSerializer(reservation)
+        output = StockReservationSerializer(
+            reservation, context=self.get_serializer_context(),
+        )
         return Response(output.data, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=["post"])
@@ -102,7 +127,9 @@ class StockReservationViewSet(viewsets.GenericViewSet,
             )
 
         reservation.refresh_from_db()
-        output = StockReservationSerializer(reservation)
+        output = StockReservationSerializer(
+            reservation, context=self.get_serializer_context(),
+        )
         return Response(output.data)
 
     @action(detail=True, methods=["post"])
@@ -120,7 +147,9 @@ class StockReservationViewSet(viewsets.GenericViewSet,
             )
 
         reservation.refresh_from_db()
-        output = StockReservationSerializer(reservation)
+        output = StockReservationSerializer(
+            reservation, context=self.get_serializer_context(),
+        )
         return Response(output.data)
 
 

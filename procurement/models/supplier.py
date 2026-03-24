@@ -1,19 +1,23 @@
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 from django.db.models import UniqueConstraint
 from wagtail.admin.panels import FieldPanel, FieldRowPanel, MultiFieldPanel, TabbedInterface
+from wagtail.models import TranslatableMixin
 from wagtail.search import index
+from wagtail_localize.fields import SynchronizedField
+
 from inventory.models.base import TimeStampedModel
 
 
 class PaymentTerms(models.TextChoices):
-    NET_30 = "net_30", "Net 30"
-    NET_60 = "net_60", "Net 60"
-    NET_90 = "net_90", "Net 90"
-    COD = "cod", "Cash on Delivery"
-    PREPAID = "prepaid", "Prepaid"
+    NET_30 = "net_30", _("Net 30")
+    NET_60 = "net_60", _("Net 60")
+    NET_90 = "net_90", _("Net 90")
+    COD = "cod", _("Cash on Delivery")
+    PREPAID = "prepaid", _("Prepaid")
 
 
-class Supplier(TimeStampedModel):
+class Supplier(TranslatableMixin, TimeStampedModel):
     """Vendor or supplier of goods.
 
     Tracks contact information, lead times, and payment terms.
@@ -66,6 +70,10 @@ class Supplier(TimeStampedModel):
         help_text="Internal notes about this supplier.",
     )
 
+    override_translatable_fields = [
+        SynchronizedField("code"),
+    ]
+
     panels = [
         TabbedInterface([
             MultiFieldPanel(
@@ -113,8 +121,12 @@ class Supplier(TimeStampedModel):
         ordering = ["name"]
         constraints = [
             UniqueConstraint(
-                fields=["tenant", "code"],
-                name="unique_supplier_code_per_tenant",
+                fields=["tenant", "code", "locale"],
+                name="unique_supplier_code_per_tenant_locale",
+            ),
+            UniqueConstraint(
+                fields=["translation_key", "locale"],
+                name="unique_translation_key_locale_procurement_supplier",
             ),
         ]
 

@@ -1,0 +1,20 @@
+{
+  "Common": {
+    "searchAria": "Search",
+    "searchPlaceholder": "Search…"
+  },
+  "LanguageSwitcher": {
+    "ariaLabel": "Language",
+    "languages": {
+      "en": "English",
+      "fr": "French",
+      "sw": "Swahili",
+      "rw": "Kinyarwanda",
+      "es": "Spanish",
+      "ar": "Arabic"
+    }
+  },
+  "App": {
+    "description": "Multi-tenant inventory management system"
+  }
+}

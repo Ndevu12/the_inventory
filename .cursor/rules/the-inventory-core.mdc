@@ -1,0 +1,24 @@
+---
+description: Core stack, architecture boundaries, and collaboration norms for The Inventory
+alwaysApply: true
+---
+
+# The Inventory — core context
+
+## Stack
+
+- **Backend:** Django 6, Wagtail 7, DRF at `/api/v1/` (JWT via `djangorestframework-simplejwt`), SQLite dev / PostgreSQL prod.
+- **Tenant UX:** Next.js in `frontend/` — primary inventory UI; consumes the REST API, not Wagtail admin for day-to-day ops.
+- **Platform:** Wagtail admin at `/admin/` for staff; optional snippet registration for monitoring/support only.
+
+## Design conventions
+
+- Prefer **OOP**: domain logic in **`<Domain>Service`** classes; CBVs / Wagtail view classes where applicable.
+- **Multi-tenancy:** respect existing tenant scoping on models and API; do not leak data across tenants.
+- **Headless rule:** new tenant-facing behavior should go through **API + Next.js**, not only Wagtail pages, unless the task is explicitly platform-admin.
+
+## Collaboration
+
+- Keep changes **minimal and scoped** to the request; match surrounding style, imports, and test patterns.
+- Do **not** add unsolicited markdown docs (e.g. per-task writeups) unless the user asks.
+- Run or add **tests** under `tests/` when changing behavior; follow existing `TestCase` layout by domain.

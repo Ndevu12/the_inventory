@@ -1,0 +1,28 @@
+---
+description: Django, Wagtail, DRF, and Python conventions for this repo
+globs: "**/*.py"
+alwaysApply: false
+---
+
+# Python / Django / Wagtail
+
+## Layout
+
+- Apps: `inventory/`, `procurement/`, `sales/`, `tenants/`, `api/`, etc. Settings: `the_inventory/settings/`.
+- **Migrations:** add via `makemigrations`; keep operations reversible when practical.
+
+## Models and API
+
+- Follow existing patterns: `panels`, `ClusterableModel`, Wagtail images/search fields where the codebase already does.
+- **Translatable content:** align with `TranslatableMixin`, `locale`, and `translation_key` patterns already on catalog models; check `tenants/wagtail_locales.py` and Wagtail locale setup before inventing new i18n shapes.
+- **DRF:** serializers in `api/serializers/`; keep OpenAPI (`drf-spectacular`) compatibility in mind for schema consumers.
+
+## Tests
+
+- Place tests under `tests/` mirroring domain (`tests/api/`, `tests/tenants/`, …).
+- Use Django `TestCase` / APIClient patterns consistent with neighboring files.
+
+```python
+# Prefer extending existing test modules and factories/fixtures
+# rather than new one-off scripts in the repo root.
+```

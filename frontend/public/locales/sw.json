@@ -1,0 +1,20 @@
+{
+  "Common": {
+    "searchAria": "Tafuta",
+    "searchPlaceholder": "Tafuta…"
+  },
+  "LanguageSwitcher": {
+    "ariaLabel": "Lugha",
+    "languages": {
+      "en": "Kiingereza",
+      "fr": "Kifaransa",
+      "sw": "Kiswahili",
+      "rw": "Kinyarwanda",
+      "es": "Kihispania",
+      "ar": "Kiarabu"
+    }
+  },
+  "App": {
+    "description": "Mfumo wa usimamizi wa hesabu za wateja wengi"
+  }
+}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import type { PaginationState } from "@tanstack/react-table";
 import { PlusIcon } from "lucide-react";
 import { toast } from "sonner";

@@ -1,22 +1,20 @@
-import type { Metadata } from "next";
-import { Providers } from "@/lib/providers";
-import { APP_NAME } from "@/lib/utils/constants";
 import "./globals.css";
 
-export const metadata: Metadata = {
-  title: APP_NAME,
-  description: "Multi-tenant inventory management system",
-};
+import { DEFAULT_LOCALE } from "@/i18n/routing";
 
+/**
+ * Root layout must include `<html>` and `<body>` (Next.js requirement).
+ * Locale-specific `lang` / `dir` are updated client-side in `LocaleLayoutShell`.
+ */
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={DEFAULT_LOCALE} dir="ltr" suppressHydrationWarning>
       <body className="antialiased" suppressHydrationWarning>
-        <Providers>{children}</Providers>
+        {children}
       </body>
     </html>
   );

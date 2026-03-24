@@ -6,6 +6,10 @@ Description: This file describes the environment variable configuration for the 
 
 ```
 
+## Standards
+
+- On frontend(Next.js app) use yarn as the core packagemanager over the npm
+
 ## What to avoid
 
 - Never write document per each task asked to work on unless explicitly asked. 

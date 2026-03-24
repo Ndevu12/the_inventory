@@ -2,11 +2,13 @@ from django.db import models
 from django.db.models import UniqueConstraint
 from treebeard.mp_tree import MP_Node
 from wagtail.admin.panels import FieldPanel, FieldRowPanel, MultiFieldPanel, TabbedInterface
+from wagtail.models import TranslatableMixin
 from wagtail.search import index
+
 from .base import TimeStampedModel
 
 
-class Category(TimeStampedModel, MP_Node):
+class Category(TranslatableMixin, TimeStampedModel, MP_Node):
     """Hierarchical product category using treebeard materialised path."""
 
     name = models.CharField(
@@ -76,7 +78,11 @@ class Category(TimeStampedModel, MP_Node):
         verbose_name_plural = "categories"
         constraints = [
             UniqueConstraint(
-                fields=["tenant", "slug"],
-                name="unique_category_slug_per_tenant",
+                fields=["translation_key", "locale"],
+                name="unique_translation_key_locale_inventory_category",
+            ),
+            UniqueConstraint(
+                fields=["tenant", "slug", "locale"],
+                name="unique_category_slug_per_tenant_locale",
             ),
         ]

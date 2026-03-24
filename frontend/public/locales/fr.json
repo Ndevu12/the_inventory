@@ -1,0 +1,20 @@
+{
+  "Common": {
+    "searchAria": "Rechercher",
+    "searchPlaceholder": "Rechercher…"
+  },
+  "LanguageSwitcher": {
+    "ariaLabel": "Langue",
+    "languages": {
+      "en": "Anglais",
+      "fr": "Français",
+      "sw": "Swahili",
+      "rw": "Kinyarwanda",
+      "es": "Espagnol",
+      "ar": "Arabe"
+    }
+  },
+  "App": {
+    "description": "Système de gestion des stocks multi-locataires"
+  }
+}

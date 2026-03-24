@@ -3,7 +3,7 @@
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { PlusIcon } from "lucide-react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { MovementTable } from "../components/movements/movement-table";
 
 export function MovementListPage() {

@@ -1,7 +1,7 @@
 "use client";
 
 import { use, useCallback, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { CheckCircle2Icon, ClipboardCheckIcon } from "lucide-react";
 import { toast } from "sonner";
 

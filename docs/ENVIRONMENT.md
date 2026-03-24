@@ -12,6 +12,7 @@ This guide explains how to configure **The Inventory** for different environment
 - [Frontend Environment Variables](#frontend-environment-variables)
 - [Environment-Specific Defaults](#environment-specific-defaults)
 - [Setup Guides](#setup-guides)
+- [Translations (Django & Next.js)](#translations-django--nextjs)
 - [Troubleshooting](#troubleshooting)
 
 ---
@@ -31,7 +32,7 @@ cp frontend/.env.local.example frontend/.env.local
 python manage.py runserver
 
 # 4. In another terminal, start Next.js frontend
-cd frontend && npm run dev
+cd frontend && yarn dev
 ```
 
 **That's it!** Default values work for local development:
@@ -738,12 +739,12 @@ NEXT_PUBLIC_APP_NAME="The Inventory (Local)"
 
 3. **Install dependencies:**
    ```bash
-   npm install
+   yarn install
    ```
 
 4. **Start development server:**
    ```bash
-   npm run dev
+   yarn dev
    ```
    Visit: http://localhost:3000
 
@@ -841,6 +842,37 @@ Before deploying to production:
 - [ ] **Frontend environment variables**
   - `NEXT_PUBLIC_API_URL` points to correct API
   - Built with production configuration
+
+---
+
+## Translations (Django & Next.js)
+
+### Django (`gettext`)
+
+- **Catalog location:** `locale/<lang>/LC_MESSAGES/django.po` (see `LOCALE_PATHS` in settings).
+- **Extract / update messages** (always exclude virtualenv and frontend dependencies so `xgettext` does not scan them):
+
+  ```bash
+  python manage.py makemessages -l fr -l sw -l rw -l es \
+    --ignore=venv --ignore=.venv --ignore=frontend/node_modules --ignore=node_modules
+  ```
+
+- **Compile** `.po` → `.mo` (required for runtime translations):
+
+  ```bash
+  python manage.py compilemessages
+  ```
+
+  Project catalogs under `locale/**/LC_MESSAGES/*.mo` are tracked in git (see `.gitignore`).
+
+- **Mark strings:** use `django.utils.translation.gettext_lazy as _` (models/forms) or `gettext` in views; use `{% trans %}` / `{% blocktrans %}` in templates.
+- **Wagtail / Django admin:** pick a language via the user language preference or `Accept-Language` / `LocaleMiddleware` once `LANGUAGES` includes that code and the catalog is compiled.
+
+### Next.js (`next-intl`)
+
+- **Message files:** `frontend/public/locales/<locale>.json` (e.g. `en`, `fr`, `sw`, `rw`, `es`, `ar`), loaded in `frontend/src/i18n/load-messages.ts`.
+- **Add or change UI copy:** edit the JSON for each locale, keeping the **same key structure** across files (nested objects are fine; keys are resolved with dot notation, e.g. `Common.searchPlaceholder`).
+- **Use in components:** `useTranslations('Namespace')` on the client; `getTranslations` / `getMessages` on the server (see `frontend/src/app/[locale]/layout.tsx`).
 
 ---
 

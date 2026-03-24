@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter, usePathname } from "next/navigation";
-import Link from "next/link";
+import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { Package, Box, AlertCircle, Search, Zap } from "lucide-react";
 
 import { useAuth } from "../context/auth-context";

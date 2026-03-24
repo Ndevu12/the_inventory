@@ -13,6 +13,9 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 import os
 from datetime import timedelta
 from pathlib import Path
+
+from django.conf import global_settings
+
 from .env_utils import env_bool, env_int, env_list, env_str
 
 # Load environment variables from .env file
@@ -66,6 +69,7 @@ INSTALLED_APPS = [
     "wagtail.search",
     "wagtail.admin",
     "wagtail",
+    "wagtail_localize",
     "modelcluster",
     "taggit",
     "django_filters",
@@ -82,11 +86,12 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "tenants.middleware.TenantMiddleware",
     "api.middleware.JWTAuthMiddleware",
+    "tenants.middleware.TenantMiddleware",
     "tenants.middleware.ImpersonationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -150,7 +155,30 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
-LANGUAGE_CODE = env_str("LANGUAGE_CODE", "en-us") or "en-us"
+LANGUAGE_CODE = env_str("LANGUAGE_CODE", "en") or "en"
+
+# Django's LocaleMiddleware negotiates from Django's built-in ISO catalog.
+# Content locales and tenant default language choices come from Wagtail
+# Settings → Locales (see ``tenants.wagtail_locales.wagtail_locale_choices``).
+_base_langs = list(global_settings.LANGUAGES)
+if "rw" not in dict(_base_langs):
+    _base_langs.append(("rw", "Kinyarwanda"))
+LANGUAGES = tuple(_base_langs)
+
+# Must be a subset of LANGUAGES. Drives Wagtail locale picker and
+# ``get_supported_content_language_variant`` (used by API / translatable models).
+WAGTAIL_CONTENT_LANGUAGES = [
+    ("en", "English"),
+    ("fr", "French"),
+    ("sw", "Swahili"),
+    ("rw", "Kinyarwanda"),
+    ("es", "Spanish"),
+    ("ar", "Arabic"),
+]
+
+LOCALE_PATHS = [
+    str(BASE_DIR / "locale"),
+]
 
 TIME_ZONE = env_str("TIME_ZONE", "UTC") or "UTC"
 
@@ -207,6 +235,9 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = env_int("DATA_UPLOAD_MAX_NUMBER_FIELDS", 10_000)
 
 
 # Wagtail settings (tunable public strings only; search backends stay in code)
+
+WAGTAIL_I18N_ENABLED = True
+# Active content languages: see WAGTAIL_CONTENT_LANGUAGES under Internationalization.
 
 WAGTAIL_SITE_NAME = env_str("WAGTAIL_SITE_NAME", "the_inventory") or "the_inventory"
 

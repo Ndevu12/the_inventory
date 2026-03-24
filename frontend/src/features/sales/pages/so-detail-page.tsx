@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { use } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter } from "@/i18n/navigation"
 import { toast } from "sonner"
 
 import { PageHeader } from "@/components/layout/page-header"

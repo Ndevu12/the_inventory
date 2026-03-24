@@ -1,0 +1,20 @@
+{
+  "Common": {
+    "searchAria": "بحث",
+    "searchPlaceholder": "بحث…"
+  },
+  "LanguageSwitcher": {
+    "ariaLabel": "اللغة",
+    "languages": {
+      "en": "الإنجليزية",
+      "fr": "الفرنسية",
+      "sw": "السواحيلية",
+      "rw": "الكينيارواندا",
+      "es": "الإسبانية",
+      "ar": "العربية"
+    }
+  },
+  "App": {
+    "description": "نظام إدارة مخزون متعدد المستأجرين"
+  }
+}

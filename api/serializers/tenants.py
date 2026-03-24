@@ -11,13 +11,21 @@ User = get_user_model()
 class TenantSerializer(serializers.ModelSerializer):
     user_count = serializers.SerializerMethodField()
     product_count = serializers.SerializerMethodField()
+    subscription_plan_display = serializers.CharField(
+        source="get_subscription_plan_display", read_only=True,
+    )
+    subscription_status_display = serializers.CharField(
+        source="get_subscription_status_display", read_only=True,
+    )
 
     class Meta:
         model = Tenant
         fields = (
             "id", "name", "slug", "is_active",
+            "preferred_language",
             "branding_site_name", "branding_primary_color",
-            "subscription_plan", "subscription_status",
+            "subscription_plan", "subscription_plan_display",
+            "subscription_status", "subscription_status_display",
             "max_users", "max_products",
             "user_count", "product_count",
             "created_at", "updated_at",
@@ -100,12 +108,15 @@ class TenantMemberSerializer(serializers.ModelSerializer):
     email = serializers.CharField(source="user.email", read_only=True)
     first_name = serializers.CharField(source="user.first_name", read_only=True)
     last_name = serializers.CharField(source="user.last_name", read_only=True)
+    role_display = serializers.CharField(
+        source="get_role_display", read_only=True,
+    )
 
     class Meta:
         model = TenantMembership
         fields = (
             "id", "username", "email", "first_name", "last_name",
-            "role", "is_active", "is_default", "created_at",
+            "role", "role_display", "is_active", "is_default", "created_at",
         )
         read_only_fields = ("id", "username", "email", "first_name", "last_name", "created_at")
 

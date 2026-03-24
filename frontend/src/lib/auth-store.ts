@@ -23,12 +23,14 @@ export interface TenantInfo {
   name: string;
   slug: string;
   role: string | null;
+  preferred_language?: string | null;
 }
 
 export interface Membership {
   tenant__id: number;
   tenant__name: string;
   tenant__slug: string;
+  tenant__preferred_language?: string | null;
   role: string;
   is_default: boolean;
 }

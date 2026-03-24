@@ -1,0 +1,238 @@
+# Kinyarwanda translations for The Inventory (Django / Wagtail project strings).
+# Copyright (C) The Inventory contributors
+# This file is distributed under the same license as the project.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: The Inventory\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-03-24 09:38+0000\n"
+"PO-Revision-Date: 2026-03-24 12:00+0000\n"
+"Last-Translator: The Inventory <>\n"
+"Language-Team: Kinyarwanda\n"
+"Language: rw\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: inventory/templates/inventory/low_stock_alerts.html:102
+#: reports/templates/reports/low_stock_report.html:49
+msgid "No low-stock products found."
+msgstr "Nta bicuruzwa bifite ububiko buke byabonetse."
+
+#: inventory/templates/inventory/panels/expiring_lots.html:12
+msgid "Lot tracking is not in use."
+msgstr "Gukurikirana ibice ntibikoreshwa."
+
+#: inventory/templates/inventory/panels/expiring_lots.html:52
+msgid "No lots expiring within 30 days."
+msgstr "Nta bice bigiye kurangira mu minsi 30."
+
+#: inventory/templates/inventory/panels/low_stock.html:55
+msgid "All products are above their reorder points."
+msgstr "Ibicuruzwa byose biri hejuru y'ingano yo kongera."
+
+#: inventory/templates/inventory/panels/pending_reservations.html:12
+msgid "No reservations have been created yet."
+msgstr "Nta bisubizo byakozwe."
+
+#: inventory/templates/inventory/panels/pending_reservations.html:42
+msgid "No active reservations at this time."
+msgstr "Nta bisubizo bikora ubu."
+
+#: inventory/templates/inventory/panels/recent_movements.html:54
+msgid "No stock movements recorded yet."
+msgstr "Nta guhinduka kw'ububiko kwanditswe."
+
+#: inventory/templates/inventory/search.html:48
+msgid "No matching products."
+msgstr "Nta bicuruzwa bihuye."
+
+#: inventory/templates/inventory/search.html:77
+msgid "No matching categories."
+msgstr "Nta byiciro bihuye."
+
+#: inventory/templates/inventory/search.html:106
+msgid "No matching locations."
+msgstr "Nta hantu hahuye."
+
+#: inventory/templates/inventory/search.html:111
+msgid ""
+"Enter a search term above to find products, categories, and stock locations."
+msgstr ""
+"Andika ijambo ry'ishakiro hejuru kugira ngo ubone ibicuruzwa, ibyiciro "
+"n'ahantu h'ububiko."
+
+#: reports/templates/reports/expiry_report.html:96
+msgid "No expired or expiring lots found."
+msgstr "Nta bice byarangiye cyangwa bigiye kurangira byabonetse."
+
+#: reports/templates/reports/movement_history.html:86
+msgid "No movements found."
+msgstr "Nta guhinduka kwabonetse."
+
+#: reports/templates/reports/overstock_report.html:53
+msgid "No overstocked products found."
+msgstr "Nta bicuruzwa byinshi cyane byabonetse."
+
+#: reports/templates/reports/purchase_summary.html:72
+msgid "No purchase orders found for the selected period."
+msgstr "Nta mategeko yo guhura yabonetse ku gihe cyatoranijwe."
+
+#: reports/templates/reports/sales_summary.html:72
+msgid "No sales orders found for the selected period."
+msgstr "Nta mategeko yo kugurisha yabonetse ku gihe cyatoranijwe."
+
+#: reports/templates/reports/stock_valuation.html:70
+msgid "No stock to value."
+msgstr "Nta bubiko bwo gufata agaciro."
+
+#: tenants/templates/tenants/admin/confirm_deactivate.html:5
+#, python-format
+msgid ""
+"Are you sure you want to deactivate tenant \"%(name)s\"? Inactive tenants "
+"cannot log in or access data."
+msgstr ""
+"Uzi neza ushaka guhagarika umukodeshi \"%(name)s\"? Abakodeshi badakora "
+"ntibashobora kwinjira cyangwa kubona amakuru."
+
+#: tenants/templates/tenants/admin/confirm_deactivate.html:8
+msgid "Yes, deactivate"
+msgstr "Yego, hagarika"
+
+#: tenants/templates/tenants/admin/confirm_deactivate.html:9
+msgid "No, don't deactivate"
+msgstr "Oya, ntuhagarike"
+
+#: tenants/templates/tenants/admin/confirm_reactivate.html:5
+#, python-format
+msgid "Are you sure you want to reactivate tenant \"%(name)s\"?"
+msgstr "Uzi neza ushaka kongera gukora umukodeshi \"%(name)s\"?"
+
+#: tenants/templates/tenants/admin/confirm_reactivate.html:8
+msgid "Yes, reactivate"
+msgstr "Yego, ongera ukore"
+
+#: tenants/templates/tenants/admin/confirm_reactivate.html:9
+msgid "No, cancel"
+msgstr "Oya, reka"
+
+#: tenants/templates/tenants/panels/recent_tenants.html:46
+msgid "No tenants created yet."
+msgstr "Nta bakodeshi bakozwe."
+
+#: tenants/wagtail_forms.py:25
+msgid "Owner"
+msgstr "Nyirubwite"
+
+#: tenants/wagtail_forms.py:27
+msgid "No owner"
+msgstr "Nta nyirubwite"
+
+#: tenants/wagtail_forms.py:28
+msgid "Select existing user"
+msgstr "Hitamo umukoresha usanzwe"
+
+#: tenants/wagtail_forms.py:29
+msgid "Create new user (set password)"
+msgstr "Kora umukoresha mushya (shyiraho ijambo ry'ibanga)"
+
+#: tenants/wagtail_forms.py:30
+msgid "Create new user (send invitation)"
+msgstr "Kora umukoresha mushya (ohereza ubutumire)"
+
+#: tenants/wagtail_forms.py:37
+msgid "User"
+msgstr "Umukoresha"
+
+#: tenants/wagtail_forms.py:39
+msgid "Select a user"
+msgstr "Hitamo umukoresha"
+
+#: tenants/wagtail_forms.py:42
+msgid "Username"
+msgstr "Izina ry'umukoresha"
+
+#: tenants/wagtail_forms.py:45
+msgid "For new users only."
+msgstr "Ku bakoresha bashya gusa."
+
+#: tenants/wagtail_forms.py:48
+msgid "Email"
+msgstr "Imeri"
+
+#: tenants/wagtail_forms.py:50
+msgid "Required when creating a new user."
+msgstr "Bisabwa iyo ukora umukoresha mushya."
+
+#: tenants/wagtail_forms.py:53
+msgid "Password"
+msgstr "Ijambo ry'ibanga"
+
+#: tenants/wagtail_forms.py:56
+msgid "Required when creating new user with password."
+msgstr "Bisabwa iyo ukora umukoresha mushya n'ijambo ry'ibanga."
+
+#: tenants/wagtail_forms.py:59
+msgid "Send invitation email to owner"
+msgstr "Ohereza imeri y'ubutumire ku nyirubwite"
+
+#: tenants/wagtail_forms.py:62
+msgid "Send an email with the invitation link (when using invitation mode)."
+msgstr "Ohereza imeri ifite umurongo w'ubutumire (mu buryo bw'ubutumire)."
+
+#: tenants/wagtail_forms.py:89
+msgid "A tenant with this slug already exists."
+msgstr "Umukodeshwa ufite uyu murongo asanzweho."
+
+#: tenants/wagtail_forms.py:102
+msgid "Please select an existing user as owner."
+msgstr "Nyamuneka hitamo umukoresha usanzwe nk'unyirubwite."
+
+#: tenants/wagtail_forms.py:108 tenants/wagtail_forms.py:124
+msgid "Username is required for new users."
+msgstr "Izina ry'umukoresha rirakenewe ku bakoresha bashya."
+
+#: tenants/wagtail_forms.py:113
+msgid "Email is required for new users."
+msgstr "Imeri irakenewe ku bakoresha bashya."
+
+#: tenants/wagtail_forms.py:118
+msgid "Password is required when creating a new user."
+msgstr "Ijambo ry'ibanga rirakenewe iyo ukora umukoresha mushya."
+
+#: tenants/wagtail_forms.py:129
+msgid "Email is required for invitation."
+msgstr "Imeri irakenewe ku butumire."
+
+#: tenants/wagtail_views.py:60 tenants/wagtail_views.py:61
+msgid "Deactivate tenant"
+msgstr "Hagarika umukodeshi"
+
+#: tenants/wagtail_views.py:85
+#, python-format
+msgid "Tenant '%(name)s' has been deactivated."
+msgstr "Umukodeshi '%(name)s' yahagaritswe."
+
+#: tenants/wagtail_views.py:114 tenants/wagtail_views.py:115
+msgid "Reactivate tenant"
+msgstr "Ongera ukore umukodeshi"
+
+#: tenants/wagtail_views.py:138
+#, python-format
+msgid "Tenant '%(name)s' has been reactivated."
+msgstr "Umukodeshi '%(name)s' yongeye gukorwa."
+
+#: tenants/wagtail_views.py:213
+msgid "You cannot impersonate yourself."
+msgstr "Ntushobora kwiyita undi."
+
+#: tenants/wagtail_views.py:231
+#, python-format
+msgid "Now viewing as %(user)s."
+msgstr "Ubu ureba nk'%(user)s."
+
+#: tenants/wagtail_views.py:262
+msgid "Impersonation ended."
+msgstr "Kwiyita undi byarangiye."

@@ -1,0 +1,21 @@
+---
+description: Next.js frontend in frontend/ — package manager and API config
+globs: "frontend/**/*"
+alwaysApply: false
+---
+
+# Frontend (`frontend/`)
+
+## Package manager
+
+- Use **yarn** (not npm) for install, scripts, and lockfile workflows.
+
+## Configuration
+
+- **Do not hardcode** backend base URLs. Use **environment variables** (and existing project patterns) for dev vs production API URLs.
+- Keep **imports at the top** of files; avoid dynamic imports inside functions unless there is a strong, documented reason (e.g. code splitting entry points).
+- If the file you are working with has the pre-existing import in the codeblock or file or anywhere in the file than at the top of the file, move them at the  top of the file and avoid multiple imports
+
+## API usage
+
+- Tenant app talks to **DRF** at `/api/v1/`; reuse shared API client/helpers if present rather than duplicating fetch logic.

@@ -9,8 +9,24 @@ from procurement.models import (
     Supplier,
 )
 
+from api.serializers.localized_strings import (
+    attribute_in_display_locale,
+    display_locale_from_context,
+)
+from tenants.middleware import get_effective_tenant
 
-class SupplierSerializer(serializers.ModelSerializer):
+from api.serializers.translatable_representation import TranslatableRepresentationMixin
+from api.serializers.translatable_writable import TranslatableWritableMixin
+
+
+class SupplierSerializer(
+    TranslatableWritableMixin,
+    TranslatableRepresentationMixin,
+    serializers.ModelSerializer,
+):
+    """Translatable: ``name``, ``contact_name``, ``address``, ``notes``."""
+
+    translatable_overlay_fields = ("name", "contact_name", "address", "notes")
     payment_terms_display = serializers.CharField(
         source="get_payment_terms_display", read_only=True,
     )
@@ -25,10 +41,30 @@ class SupplierSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["created_at", "updated_at"]
 
+    def validate_code(self, value):
+        request = self.context.get("request")
+        tenant = self.context.get("tenant") or (
+            get_effective_tenant(request) if request else None
+        )
+        loc = self.context.get("wagtail_write_locale")
+        qs = Supplier.objects.filter(code=value)
+        if tenant:
+            qs = qs.filter(tenant=tenant)
+        if loc:
+            qs = qs.filter(locale_id=loc.id)
+        qs = self._same_translation_group_qs(qs, self.instance)
+        if qs.exists():
+            raise serializers.ValidationError(
+                "A supplier with this code already exists for this tenant."
+            )
+        return value
+
 
 class PurchaseOrderLineSerializer(serializers.ModelSerializer):
+    """``product_name`` uses the request display locale for translated catalog products."""
+
     product_sku = serializers.CharField(source="product.sku", read_only=True)
-    product_name = serializers.CharField(source="product.name", read_only=True)
+    product_name = serializers.SerializerMethodField()
     line_total = serializers.DecimalField(
         max_digits=12, decimal_places=2, read_only=True,
     )
@@ -41,11 +77,16 @@ class PurchaseOrderLineSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id"]
 
+    def get_product_name(self, obj):
+        return attribute_in_display_locale(
+            obj.product, "name", display_locale_from_context(self.context),
+        )
+
 
 class PurchaseOrderSerializer(serializers.ModelSerializer):
-    supplier_name = serializers.CharField(
-        source="supplier.name", read_only=True,
-    )
+    """``supplier_name`` uses the request display locale for translated suppliers."""
+
+    supplier_name = serializers.SerializerMethodField()
     status_display = serializers.CharField(
         source="get_status_display", read_only=True,
     )
@@ -63,6 +104,11 @@ class PurchaseOrderSerializer(serializers.ModelSerializer):
             "created_at", "updated_at",
         ]
         read_only_fields = ["status", "created_at", "updated_at"]
+
+    def get_supplier_name(self, obj):
+        return attribute_in_display_locale(
+            obj.supplier, "name", display_locale_from_context(self.context),
+        )
 
 
 class GoodsReceivedNoteSerializer(serializers.ModelSerializer):

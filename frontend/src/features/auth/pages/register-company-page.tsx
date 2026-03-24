@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -223,12 +223,12 @@ export function RegisterCompanyPage() {
 
                 <p className="text-center text-sm text-muted-foreground">
                   Already have an account?{" "}
-                  <a
+                  <Link
                     href="/login"
                     className="text-primary underline hover:no-underline"
                   >
                     Sign in
-                  </a>
+                  </Link>
                 </p>
               </form>
             </CardContent>

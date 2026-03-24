@@ -3,32 +3,40 @@
 from datetime import date
 
 from django.http import HttpResponse
+from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.generics import ListAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from api.mixins import TranslatableAPIReadMixin
 from api.permissions import IsPlatformSuperuser
+from api.schema_i18n import OPENAPI_LANGUAGE_QUERY_PARAMETER
 from api.serializers.tenants import TenantMemberSerializer, TenantSerializer
 from inventory.models import AuditAction
 from inventory.services.audit import AuditService
 from tenants.middleware import get_effective_tenant
 from tenants.models import Tenant, TenantMembership
-from tenants.permissions import IsTenantAdmin, IsTenantMember
+from tenants.permissions import IsTenantAdmin, IsTenantManager, IsTenantMember
 from tenants.services import TenantExportService
 
 
-class CurrentTenantView(APIView):
+@extend_schema(parameters=[OPENAPI_LANGUAGE_QUERY_PARAMETER])
+class CurrentTenantView(TranslatableAPIReadMixin, APIView):
     """GET / PATCH the current tenant.
 
-    All authenticated members can read; only admins/owners can update.
+    All authenticated members can read. PATCH allows owner, admin, or manager
+    (writable fields are name, locale, branding — not billing/subscription).
     """
+
+    def _get_current_tenant(self):
+        return get_effective_tenant(self.request)
 
     def get_permissions(self):
         if self.request.method in ("GET", "HEAD", "OPTIONS"):
             return [IsAuthenticated(), IsTenantMember()]
-        return [IsAuthenticated(), IsTenantAdmin()]
+        return [IsAuthenticated(), IsTenantManager()]
 
     def get(self, request):
         tenant = get_effective_tenant(request)
@@ -36,7 +44,7 @@ class CurrentTenantView(APIView):
             return Response(
                 {"detail": "No active tenant."}, status=status.HTTP_404_NOT_FOUND,
             )
-        serializer = TenantSerializer(tenant)
+        serializer = TenantSerializer(tenant, context=self.get_serializer_context())
         return Response(serializer.data)
 
     def patch(self, request):
@@ -45,17 +53,23 @@ class CurrentTenantView(APIView):
             return Response(
                 {"detail": "No active tenant."}, status=status.HTTP_404_NOT_FOUND,
             )
-        serializer = TenantSerializer(tenant, data=request.data, partial=True)
+        serializer = TenantSerializer(
+            tenant, data=request.data, partial=True, context=self.get_serializer_context(),
+        )
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
 
 
-class TenantMemberListView(ListAPIView):
+@extend_schema(parameters=[OPENAPI_LANGUAGE_QUERY_PARAMETER])
+class TenantMemberListView(TranslatableAPIReadMixin, ListAPIView):
     """List all members of the current tenant."""
 
     serializer_class = TenantMemberSerializer
     permission_classes = (IsAuthenticated, IsTenantMember)
+
+    def _get_current_tenant(self):
+        return get_effective_tenant(self.request)
 
     def get_queryset(self):
         tenant = get_effective_tenant(self.request)
@@ -68,7 +82,8 @@ class TenantMemberListView(ListAPIView):
         )
 
 
-class TenantMemberDetailView(RetrieveUpdateDestroyAPIView):
+@extend_schema(parameters=[OPENAPI_LANGUAGE_QUERY_PARAMETER])
+class TenantMemberDetailView(TranslatableAPIReadMixin, RetrieveUpdateDestroyAPIView):
     """View / update role / remove a tenant member.
 
     Only admins and owners can modify or remove members.
@@ -76,6 +91,9 @@ class TenantMemberDetailView(RetrieveUpdateDestroyAPIView):
 
     serializer_class = TenantMemberSerializer
     permission_classes = (IsAuthenticated, IsTenantAdmin)
+
+    def _get_current_tenant(self):
+        return get_effective_tenant(self.request)
 
     def get_queryset(self):
         tenant = get_effective_tenant(self.request)

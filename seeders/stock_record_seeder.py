@@ -41,8 +41,12 @@ class StockRecordSeeder(BaseSeeder):
             ("PAPER-002", "Shelf C2", 150),
         ]
 
+        loc = self.canonical_locale
+
         for sku, location_name, quantity in stock_distribution:
-            product = Product.objects.get(sku=sku, tenant=self.tenant)
+            product = Product.objects.get(
+                sku=sku, tenant=self.tenant, locale=loc,
+            )
             location = StockLocation.objects.get(name=location_name, tenant=self.tenant)
 
             # Use get_or_create for idempotency

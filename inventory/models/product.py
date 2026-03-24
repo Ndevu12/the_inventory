@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 from django.db.models import F, OuterRef, Subquery, UniqueConstraint
 from django.db.models.functions import Coalesce
 from modelcluster.contrib.taggit import ClusterTaggableManager
@@ -7,24 +8,26 @@ from modelcluster.models import ClusterableModel
 from taggit.models import TaggedItemBase
 from wagtail.admin.panels import FieldPanel, FieldRowPanel, InlinePanel, MultiFieldPanel, TabbedInterface
 from wagtail.fields import RichTextField
-from wagtail.models import Orderable
+from wagtail.models import Orderable, TranslatableMixin
 from wagtail.search import index
+from wagtail_localize.fields import SynchronizedField
+
 from .base import TimeStampedModel
 
 
 class UnitOfMeasure(models.TextChoices):
-    PIECES = "pcs", "Pieces"
-    KILOGRAMS = "kg", "Kilograms"
-    LITERS = "lt", "Liters"
-    METERS = "m", "Meters"
-    BOXES = "box", "Boxes"
-    PACKS = "pack", "Packs"
+    PIECES = "pcs", _("Pieces")
+    KILOGRAMS = "kg", _("Kilograms")
+    LITERS = "lt", _("Liters")
+    METERS = "m", _("Meters")
+    BOXES = "box", _("Boxes")
+    PACKS = "pack", _("Packs")
 
 
 class TrackingMode(models.TextChoices):
-    NONE = "none", "No Tracking"
-    OPTIONAL = "optional", "Optional Lot Tracking"
-    REQUIRED = "required", "Required Lot Tracking"
+    NONE = "none", _("No Tracking")
+    OPTIONAL = "optional", _("Optional Lot Tracking")
+    REQUIRED = "required", _("Required Lot Tracking")
 
 
 class ProductQuerySet(models.QuerySet):
@@ -91,7 +94,7 @@ class ProductQuerySet(models.QuerySet):
         ).filter(stock_records__quantity__gt=0).distinct()
 
 
-class Product(TimeStampedModel, ClusterableModel):
+class Product(TranslatableMixin, TimeStampedModel, ClusterableModel):
     """Central product model for the inventory system."""
 
     sku = models.CharField(
@@ -150,6 +153,10 @@ class Product(TimeStampedModel, ClusterableModel):
 
     objects = ProductQuerySet.as_manager()
 
+    override_translatable_fields = [
+        SynchronizedField("sku"),
+    ]
+
     panels = [
         TabbedInterface([
             MultiFieldPanel(
@@ -206,8 +213,12 @@ class Product(TimeStampedModel, ClusterableModel):
     class Meta:
         constraints = [
             UniqueConstraint(
-                fields=["tenant", "sku"],
-                name="unique_product_sku_per_tenant",
+                fields=["translation_key", "locale"],
+                name="unique_translation_key_locale_inventory_product",
+            ),
+            UniqueConstraint(
+                fields=["tenant", "sku", "locale"],
+                name="unique_product_sku_per_tenant_locale",
             ),
         ]
 

@@ -1,0 +1,303 @@
+# French translations for The Inventory (Django / Wagtail project strings).
+# Copyright (C) The Inventory contributors
+# This file is distributed under the same license as the project.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: The Inventory\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-03-24 09:41+0000\n"
+"PO-Revision-Date: 2026-03-24 12:00+0000\n"
+"Last-Translator: The Inventory <>\n"
+"Language-Team: French\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+msgid "Pieces"
+msgstr "Pièces"
+
+msgid "Kilograms"
+msgstr ""
+
+msgid "Liters"
+msgstr ""
+
+msgid "Meters"
+msgstr ""
+
+msgid "Boxes"
+msgstr ""
+
+msgid "Packs"
+msgstr ""
+
+msgid "No Tracking"
+msgstr "Sans suivi"
+
+msgid "Optional Lot Tracking"
+msgstr ""
+
+msgid "Required Lot Tracking"
+msgstr ""
+
+msgid "FIFO"
+msgstr ""
+
+msgid "LIFO"
+msgstr ""
+
+msgid "Pending"
+msgstr "En attente"
+
+msgid "Confirmed"
+msgstr ""
+
+msgid "Fulfilled"
+msgstr ""
+
+msgid "Cancelled"
+msgstr ""
+
+msgid "Expired"
+msgstr ""
+
+msgid "Receive"
+msgstr ""
+
+msgid "Issue"
+msgstr ""
+
+msgid "Transfer"
+msgstr ""
+
+msgid "Adjustment"
+msgstr ""
+
+msgid "No low-stock products found."
+msgstr "Aucun produit à faible stock trouvé."
+
+msgid "Lot tracking is not in use."
+msgstr "Le suivi des lots n’est pas activé."
+
+msgid "No lots expiring within 30 days."
+msgstr "Aucun lot n’expire dans les 30 prochains jours."
+
+msgid "All products are above their reorder points."
+msgstr "Tous les produits sont au-dessus de leur seuil de réapprovisionnement."
+
+msgid "No reservations have been created yet."
+msgstr "Aucune réservation n’a encore été créée."
+
+msgid "No active reservations at this time."
+msgstr "Aucune réservation active pour le moment."
+
+msgid "No stock movements recorded yet."
+msgstr "Aucun mouvement de stock enregistré pour le moment."
+
+msgid "No matching products."
+msgstr "Aucun produit correspondant."
+
+msgid "No matching categories."
+msgstr "Aucune catégorie correspondante."
+
+msgid "No matching locations."
+msgstr "Aucun emplacement correspondant."
+
+msgid ""
+"Enter a search term above to find products, categories, and stock locations."
+msgstr ""
+"Saisissez un terme de recherche ci-dessus pour trouver des produits, des "
+"catégories et des emplacements de stock."
+
+msgid "Draft"
+msgstr "Brouillon"
+
+msgid "Received"
+msgstr ""
+
+msgid "Net 30"
+msgstr ""
+
+msgid "Net 60"
+msgstr ""
+
+msgid "Net 90"
+msgstr ""
+
+msgid "Cash on Delivery"
+msgstr ""
+
+msgid "Prepaid"
+msgstr ""
+
+msgid "No expired or expiring lots found."
+msgstr "Aucun lot expiré ou proche de l’expiration trouvé."
+
+msgid "No movements found."
+msgstr "Aucun mouvement trouvé."
+
+msgid "No overstocked products found."
+msgstr "Aucun produit en surstock trouvé."
+
+msgid "No purchase orders found for the selected period."
+msgstr "Aucun bon de commande trouvé pour la période sélectionnée."
+
+msgid "No sales orders found for the selected period."
+msgstr "Aucune commande client trouvée pour la période sélectionnée."
+
+msgid "No stock to value."
+msgstr "Aucun stock à valoriser."
+
+msgid "Owner"
+msgstr "Propriétaire"
+
+msgid "Admin"
+msgstr "Administrateur"
+
+msgid "Manager"
+msgstr "Gestionnaire"
+
+msgid "Viewer"
+msgstr ""
+
+msgid "Free"
+msgstr "Gratuit"
+
+msgid "Starter"
+msgstr ""
+
+msgid "Professional"
+msgstr ""
+
+msgid "Enterprise"
+msgstr ""
+
+msgid "Active"
+msgstr "Actif"
+
+msgid "Trial"
+msgstr ""
+
+msgid "Past Due"
+msgstr ""
+
+msgid "Suspended"
+msgstr ""
+
+msgid "Accepted"
+msgstr ""
+
+#, python-format
+msgid ""
+"Are you sure you want to deactivate tenant \"%(name)s\"? Inactive tenants "
+"cannot log in or access data."
+msgstr ""
+"Êtes-vous sûr de vouloir désactiver le locataire « %(name)s » ? Les "
+"locataires inactifs ne peuvent pas se connecter ni accéder aux données."
+
+msgid "Yes, deactivate"
+msgstr "Oui, désactiver"
+
+msgid "No, don't deactivate"
+msgstr "Non, ne pas désactiver"
+
+#, python-format
+msgid "Are you sure you want to reactivate tenant \"%(name)s\"?"
+msgstr "Voulez-vous vraiment réactiver le locataire « %(name)s » ?"
+
+msgid "Yes, reactivate"
+msgstr "Oui, réactiver"
+
+msgid "No, cancel"
+msgstr "Non, annuler"
+
+msgid "No tenants created yet."
+msgstr "Aucun locataire créé pour le moment."
+
+msgid "No owner"
+msgstr "Sans propriétaire"
+
+msgid "Select existing user"
+msgstr "Sélectionner un utilisateur existant"
+
+msgid "Create new user (set password)"
+msgstr "Créer un utilisateur (définir le mot de passe)"
+
+msgid "Create new user (send invitation)"
+msgstr "Créer un utilisateur (envoyer une invitation)"
+
+msgid "User"
+msgstr "Utilisateur"
+
+msgid "Select a user"
+msgstr "Sélectionner un utilisateur"
+
+msgid "Username"
+msgstr "Nom d’utilisateur"
+
+msgid "For new users only."
+msgstr "Uniquement pour les nouveaux utilisateurs."
+
+msgid "Email"
+msgstr "E-mail"
+
+msgid "Required when creating a new user."
+msgstr "Obligatoire lors de la création d’un nouvel utilisateur."
+
+msgid "Password"
+msgstr "Mot de passe"
+
+msgid "Required when creating new user with password."
+msgstr "Obligatoire lors de la création d’un utilisateur avec mot de passe."
+
+msgid "Send invitation email to owner"
+msgstr "Envoyer un e-mail d’invitation au propriétaire"
+
+msgid "Send an email with the invitation link (when using invitation mode)."
+msgstr "Envoyer un e-mail contenant le lien d’invitation (en mode invitation)."
+
+msgid "A tenant with this slug already exists."
+msgstr "Un locataire avec cet identifiant URL existe déjà."
+
+msgid "Please select an existing user as owner."
+msgstr "Veuillez sélectionner un utilisateur existant comme propriétaire."
+
+msgid "Username is required for new users."
+msgstr "Le nom d’utilisateur est obligatoire pour les nouveaux utilisateurs."
+
+msgid "Email is required for new users."
+msgstr "L’e-mail est obligatoire pour les nouveaux utilisateurs."
+
+msgid "Password is required when creating a new user."
+msgstr ""
+"Le mot de passe est obligatoire lors de la création d’un nouvel utilisateur."
+
+msgid "Email is required for invitation."
+msgstr "L’e-mail est obligatoire pour l’invitation."
+
+msgid "Deactivate tenant"
+msgstr "Désactiver le locataire"
+
+#, python-format
+msgid "Tenant '%(name)s' has been deactivated."
+msgstr "Le locataire « %(name)s » a été désactivé."
+
+msgid "Reactivate tenant"
+msgstr "Réactiver le locataire"
+
+#, python-format
+msgid "Tenant '%(name)s' has been reactivated."
+msgstr "Le locataire « %(name)s » a été réactivé."
+
+msgid "You cannot impersonate yourself."
+msgstr "Vous ne pouvez pas vous impersonner vous-même."
+
+#, python-format
+msgid "Now viewing as %(user)s."
+msgstr "Vous consultez maintenant en tant que %(user)s."
+
+msgid "Impersonation ended."
+msgstr "Impersonation terminée."

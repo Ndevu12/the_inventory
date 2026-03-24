@@ -1,0 +1,238 @@
+# Arabic translations for The Inventory (Django / Wagtail project strings).
+# Copyright (C) The Inventory contributors
+# This file is distributed under the same license as the project.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: The Inventory\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-03-24 09:38+0000\n"
+"PO-Revision-Date: 2026-03-24 12:00+0000\n"
+"Last-Translator: The Inventory <>\n"
+"Language-Team: Arabic\n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 "
+"&& n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5;\n"
+
+#: inventory/templates/inventory/low_stock_alerts.html:102
+#: reports/templates/reports/low_stock_report.html:49
+msgid "No low-stock products found."
+msgstr "لم يُعثر على منتجات منخفضة المخزون."
+
+#: inventory/templates/inventory/panels/expiring_lots.html:12
+msgid "Lot tracking is not in use."
+msgstr "تتبّع الدُفعات غير مفعّل."
+
+#: inventory/templates/inventory/panels/expiring_lots.html:52
+msgid "No lots expiring within 30 days."
+msgstr "لا توجد دُفعات تنتهي خلال 30 يومًا."
+
+#: inventory/templates/inventory/panels/low_stock.html:55
+msgid "All products are above their reorder points."
+msgstr "جميع المنتجات فوق حدّ إعادة الطلب."
+
+#: inventory/templates/inventory/panels/pending_reservations.html:12
+msgid "No reservations have been created yet."
+msgstr "لم تُنشأ أي حجوزات بعد."
+
+#: inventory/templates/inventory/panels/pending_reservations.html:42
+msgid "No active reservations at this time."
+msgstr "لا توجد حجوزات نشطة حاليًا."
+
+#: inventory/templates/inventory/panels/recent_movements.html:54
+msgid "No stock movements recorded yet."
+msgstr "لم تُسجَّل أي حركات مخزون بعد."
+
+#: inventory/templates/inventory/search.html:48
+msgid "No matching products."
+msgstr "لا توجد منتجات مطابقة."
+
+#: inventory/templates/inventory/search.html:77
+msgid "No matching categories."
+msgstr "لا توجد فئات مطابقة."
+
+#: inventory/templates/inventory/search.html:106
+msgid "No matching locations."
+msgstr "لا توجد مواقع مطابقة."
+
+#: inventory/templates/inventory/search.html:111
+msgid ""
+"Enter a search term above to find products, categories, and stock locations."
+msgstr ""
+"أدخل مصطلح بحث أعلاه للعثور على المنتجات والفئات ومواقع المخزون."
+
+#: reports/templates/reports/expiry_report.html:96
+msgid "No expired or expiring lots found."
+msgstr "لم يُعثر على دُفعات منتهية أو قاربة على الانتهاء."
+
+#: reports/templates/reports/movement_history.html:86
+msgid "No movements found."
+msgstr "لم تُعثر على حركات."
+
+#: reports/templates/reports/overstock_report.html:53
+msgid "No overstocked products found."
+msgstr "لم يُعثر على منتجات بمخزون زائد."
+
+#: reports/templates/reports/purchase_summary.html:72
+msgid "No purchase orders found for the selected period."
+msgstr "لم تُعثر على أوامر شراء للفترة المحددة."
+
+#: reports/templates/reports/sales_summary.html:72
+msgid "No sales orders found for the selected period."
+msgstr "لم تُعثر على أوامر بيع للفترة المحددة."
+
+#: reports/templates/reports/stock_valuation.html:70
+msgid "No stock to value."
+msgstr "لا يوجد مخزون لتقييمه."
+
+#: tenants/templates/tenants/admin/confirm_deactivate.html:5
+#, python-format
+msgid ""
+"Are you sure you want to deactivate tenant \"%(name)s\"? Inactive tenants "
+"cannot log in or access data."
+msgstr ""
+"هل أنت متأكد من تعطيل المستأجر \"%(name)s\"؟ لا يمكن للمستأجرين المعطلين "
+"تسجيل الدخول أو الوصول إلى البيانات."
+
+#: tenants/templates/tenants/admin/confirm_deactivate.html:8
+msgid "Yes, deactivate"
+msgstr "نعم، تعطيل"
+
+#: tenants/templates/tenants/admin/confirm_deactivate.html:9
+msgid "No, don't deactivate"
+msgstr "لا، لا تعطّل"
+
+#: tenants/templates/tenants/admin/confirm_reactivate.html:5
+#, python-format
+msgid "Are you sure you want to reactivate tenant \"%(name)s\"?"
+msgstr "هل أنت متأكد من إعادة تفعيل المستأجر \"%(name)s\"؟"
+
+#: tenants/templates/tenants/admin/confirm_reactivate.html:8
+msgid "Yes, reactivate"
+msgstr "نعم، إعادة التفعيل"
+
+#: tenants/templates/tenants/admin/confirm_reactivate.html:9
+msgid "No, cancel"
+msgstr "لا، إلغاء"
+
+#: tenants/templates/tenants/panels/recent_tenants.html:46
+msgid "No tenants created yet."
+msgstr "لم يُنشأ أي مستأجر بعد."
+
+#: tenants/wagtail_forms.py:25
+msgid "Owner"
+msgstr "المالك"
+
+#: tenants/wagtail_forms.py:27
+msgid "No owner"
+msgstr "بدون مالك"
+
+#: tenants/wagtail_forms.py:28
+msgid "Select existing user"
+msgstr "اختر مستخدمًا موجودًا"
+
+#: tenants/wagtail_forms.py:29
+msgid "Create new user (set password)"
+msgstr "إنشاء مستخدم جديد (تعيين كلمة مرور)"
+
+#: tenants/wagtail_forms.py:30
+msgid "Create new user (send invitation)"
+msgstr "إنشاء مستخدم جديد (إرسال دعوة)"
+
+#: tenants/wagtail_forms.py:37
+msgid "User"
+msgstr "المستخدم"
+
+#: tenants/wagtail_forms.py:39
+msgid "Select a user"
+msgstr "اختر مستخدمًا"
+
+#: tenants/wagtail_forms.py:42
+msgid "Username"
+msgstr "اسم المستخدم"
+
+#: tenants/wagtail_forms.py:45
+msgid "For new users only."
+msgstr "للمستخدمين الجدد فقط."
+
+#: tenants/wagtail_forms.py:48
+msgid "Email"
+msgstr "البريد الإلكتروني"
+
+#: tenants/wagtail_forms.py:50
+msgid "Required when creating a new user."
+msgstr "مطلوب عند إنشاء مستخدم جديد."
+
+#: tenants/wagtail_forms.py:53
+msgid "Password"
+msgstr "كلمة المرور"
+
+#: tenants/wagtail_forms.py:56
+msgid "Required when creating new user with password."
+msgstr "مطلوب عند إنشاء مستخدم جديد بكلمة مرور."
+
+#: tenants/wagtail_forms.py:59
+msgid "Send invitation email to owner"
+msgstr "إرسال بريد دعوة إلى المالك"
+
+#: tenants/wagtail_forms.py:62
+msgid "Send an email with the invitation link (when using invitation mode)."
+msgstr "إرسال بريد يحتوي على رابط الدعوة (عند استخدام وضع الدعوة)."
+
+#: tenants/wagtail_forms.py:89
+msgid "A tenant with this slug already exists."
+msgstr "يوجد بالفعل مستأجر بهذا المعرّف."
+
+#: tenants/wagtail_forms.py:102
+msgid "Please select an existing user as owner."
+msgstr "يُرجى اختيار مستخدم موجود كمالك."
+
+#: tenants/wagtail_forms.py:108 tenants/wagtail_forms.py:124
+msgid "Username is required for new users."
+msgstr "اسم المستخدم مطلوب للمستخدمين الجدد."
+
+#: tenants/wagtail_forms.py:113
+msgid "Email is required for new users."
+msgstr "البريد الإلكتروني مطلوب للمستخدمين الجدد."
+
+#: tenants/wagtail_forms.py:118
+msgid "Password is required when creating a new user."
+msgstr "كلمة المرور مطلوبة عند إنشاء مستخدم جديد."
+
+#: tenants/wagtail_forms.py:129
+msgid "Email is required for invitation."
+msgstr "البريد الإلكتروني مطلوب للدعوة."
+
+#: tenants/wagtail_views.py:60 tenants/wagtail_views.py:61
+msgid "Deactivate tenant"
+msgstr "تعطيل المستأجر"
+
+#: tenants/wagtail_views.py:85
+#, python-format
+msgid "Tenant '%(name)s' has been deactivated."
+msgstr "تم تعطيل المستأجر '%(name)s'."
+
+#: tenants/wagtail_views.py:114 tenants/wagtail_views.py:115
+msgid "Reactivate tenant"
+msgstr "إعادة تفعيل المستأجر"
+
+#: tenants/wagtail_views.py:138
+#, python-format
+msgid "Tenant '%(name)s' has been reactivated."
+msgstr "تمت إعادة تفعيل المستأجر '%(name)s'."
+
+#: tenants/wagtail_views.py:213
+msgid "You cannot impersonate yourself."
+msgstr "لا يمكنك انتحال شخصيتك."
+
+#: tenants/wagtail_views.py:231
+#, python-format
+msgid "Now viewing as %(user)s."
+msgstr "أنت تعرض الآن كـ %(user)s."
+
+#: tenants/wagtail_views.py:262
+msgid "Impersonation ended."
+msgstr "انتهى وضع انتحال الشخصية."

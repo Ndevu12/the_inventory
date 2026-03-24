@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useMemo } from "react"
-import Link from "next/link"
+import { Link } from "@/i18n/navigation"
 import { PlusIcon } from "lucide-react"
 import type { PaginationState } from "@tanstack/react-table"
 
