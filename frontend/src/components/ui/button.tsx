@@ -49,16 +49,32 @@ interface ButtonProps extends ButtonPrimitive.Props, VariantProps<typeof buttonV
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = "default", size = "default", asChild = false, children, ...props }, ref) => {
+  (
+    {
+      className,
+      variant = "default",
+      size = "default",
+      asChild = false,
+      children,
+      render,
+      nativeButton,
+      ...props
+    },
+    ref
+  ) => {
     const buttonClasses = cn(buttonVariants({ variant, size, className }))
-    
+
     // If asChild is true, clone the child element and apply button styles
     if (asChild && React.isValidElement(children)) {
-      const childProps = children.props as Record<string, unknown>;
+      const childProps = children.props as Record<string, unknown>
       return React.cloneElement(children, {
         className: cn(childProps.className as string, buttonClasses),
       } as React.Attributes)
     }
+
+    // Base UI defaults nativeButton to true; custom `render` (e.g. <Link />) is not a <button>.
+    const effectiveNativeButton =
+      nativeButton !== undefined ? nativeButton : render != null ? false : undefined
 
     return (
       <ButtonPrimitive
@@ -66,6 +82,8 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         data-slot="button"
         className={buttonClasses}
         {...props}
+        {...(render != null ? { render } : {})}
+        {...(effectiveNativeButton !== undefined ? { nativeButton: effectiveNativeButton } : {})}
       >
         {children}
       </ButtonPrimitive>

@@ -116,7 +116,10 @@ export function GRNListPage() {
         title="Goods Received Notes"
         description="Track and process goods received against purchase orders"
         actions={
-          <Button render={<Link href="/procurement/goods-received/new" />}>
+          <Button
+            nativeButton={false}
+            render={<Link href="/procurement/goods-received/new" />}
+          >
             <PlusIcon className="size-4" data-icon="inline-start" />
             New GRN
           </Button>
