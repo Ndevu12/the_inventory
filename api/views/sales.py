@@ -70,9 +70,9 @@ class SalesOrderViewSet(
                 sales_order=so,
                 confirmed_by=request.user,
             )
-        except DjangoValidationError as e:
+        except DjangoValidationError:
             return Response(
-                {"detail": e.message if hasattr(e, "message") else str(e)},
+                {"detail": "Invalid request data."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         return Response(self.get_serializer(so).data)
@@ -84,9 +84,9 @@ class SalesOrderViewSet(
         service = SalesService()
         try:
             service.cancel_order(sales_order=so)
-        except DjangoValidationError as e:
+        except DjangoValidationError:
             return Response(
-                {"detail": e.message if hasattr(e, "message") else str(e)},
+                {"detail": "Invalid request data."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         return Response(self.get_serializer(so).data)
@@ -131,9 +131,9 @@ class DispatchViewSet(TenantScopedInventoryMixin, viewsets.ModelViewSet):
                 dispatched_by=request.user,
                 issue_available_only=issue_available_only,
             )
-        except DjangoValidationError as e:
+        except DjangoValidationError:
             return Response(
-                {"detail": e.message if hasattr(e, "message") else str(e)},
+                {"detail": "Invalid request data."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         dispatch.refresh_from_db()
