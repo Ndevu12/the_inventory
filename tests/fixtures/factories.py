@@ -94,8 +94,12 @@ def create_category(name="Test Category", slug=None, tenant=None, **kwargs):
     return Category.add_root(**defaults)
 
 
-def create_product(sku=None, name="Test Product", category=None, tenant=None, **kwargs):
-    """Create a product."""
+def create_product(sku=None, name="Test Product", category=None, tenant=None, locale=None, **kwargs):
+    """Create a product.
+
+    Pass ``locale`` (a :class:`wagtail.models.Locale`) when the tenant’s
+    canonical catalog locale is not the DB default.
+    """
     if sku is None:
         sku = f"SKU-{str(uuid.uuid4())[:8]}"
     
@@ -114,6 +118,8 @@ def create_product(sku=None, name="Test Product", category=None, tenant=None, **
     }
     if resolved:
         defaults["tenant"] = resolved
+    if locale is not None:
+        defaults["locale"] = locale
     defaults.update(kwargs)
     return Product.objects.create(**defaults)
 

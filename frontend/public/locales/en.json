@@ -1,0 +1,2147 @@
+{
+  "Common": {
+    "searchAria": "Search",
+    "searchPlaceholder": "Search…",
+    "commandSearchPlaceholder": "Search pages…",
+    "noResults": "No results.",
+    "actions": {
+      "save": "Save",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "edit": "Edit",
+      "create": "Create",
+      "new": "New",
+      "back": "Back",
+      "close": "Close",
+      "submit": "Submit",
+      "search": "Search",
+      "filter": "Filter",
+      "export": "Export",
+      "import": "Import"
+    },
+    "states": {
+      "loading": "Loading…",
+      "error": "Error",
+      "retry": "Retry"
+    },
+    "validation": {
+      "requiredField": "This field is required."
+    },
+    "themeToggleAria": "Toggle theme"
+  },
+  "LanguageSwitcher": {
+    "ariaLabel": "Language"
+  },
+  "App": {
+    "description": "Multi-tenant inventory management system"
+  },
+  "Errors": {
+    "loadFailed": "Failed to load data.",
+    "networkError": "Network error. Please try again.",
+    "permissionDenied": "You do not have permission to perform this action."
+  },
+  "Nav": {
+    "groups": {
+      "overview": "Overview",
+      "inventory": "Inventory",
+      "orders": "Orders",
+      "procurement": "Procurement",
+      "sales": "Sales",
+      "analytics": "Analytics",
+      "settings": "Settings"
+    },
+    "items": {
+      "dashboard": "Dashboard",
+      "products": "Products",
+      "categories": "Categories",
+      "stockLocations": "Stock Locations",
+      "stockRecords": "Stock Records",
+      "stockMovements": "Stock Movements",
+      "stockLots": "Stock Lots",
+      "reservations": "Reservations",
+      "cycleCounts": "Cycle Counts",
+      "bulkOperations": "Bulk Operations",
+      "suppliers": "Suppliers",
+      "purchaseOrders": "Purchase Orders",
+      "goodsReceived": "Goods Received",
+      "customers": "Customers",
+      "salesOrders": "Sales Orders",
+      "dispatches": "Dispatches",
+      "reports": "Reports",
+      "auditLog": "Audit Log",
+      "platformAuditLog": "Platform Audit Log",
+      "account": "Account",
+      "tenant": "Tenant",
+      "teamMembers": "Team Members",
+      "platformUsers": "Users",
+      "invitations": "Invitations",
+      "billing": "Billing"
+    }
+  },
+  "Shell": {
+    "tenantLoading": "Loading…",
+    "selectTenant": "Select Tenant",
+    "organizations": "Organizations",
+    "loadingOrganizations": "Loading organizations…",
+    "noOrganizations": "No organizations found",
+    "userFallback": "User",
+    "memberFallback": "Member",
+    "profileAccount": "Profile & account",
+    "exitImpersonation": "Exit impersonation",
+    "logOut": "Log out"
+  },
+  "Breadcrumbs": {
+    "home": "Dashboard",
+    "products": "Products",
+    "categories": "Categories",
+    "stock": "Stock",
+    "locations": "Locations",
+    "records": "Records",
+    "movements": "Movements",
+    "lots": "Lots",
+    "reservations": "Reservations",
+    "cycle-counts": "Cycle Counts",
+    "bulk-operations": "Bulk Operations",
+    "procurement": "Procurement",
+    "suppliers": "Suppliers",
+    "purchase-orders": "Purchase Orders",
+    "goods-received": "Goods Received",
+    "sales": "Sales",
+    "customers": "Customers",
+    "sales-orders": "Sales Orders",
+    "dispatches": "Dispatches",
+    "reports": "Reports",
+    "stock-valuation": "Stock Valuation",
+    "movement-history": "Movement History",
+    "low-stock": "Low Stock",
+    "overstock": "Overstock",
+    "purchase-summary": "Purchase Summary",
+    "sales-summary": "Sales Summary",
+    "availability": "Availability",
+    "product-expiry": "Product Expiry",
+    "variances": "Variances",
+    "traceability": "Traceability",
+    "audit-log": "Audit Log",
+    "settings": "Settings",
+    "members": "Team Members",
+    "new": "New",
+    "edit": "Edit"
+  },
+  "Dashboard": {
+    "page": {
+      "title": "Dashboard",
+      "subtitle": "Overview of your inventory, orders, and operations."
+    },
+    "kpi": {
+      "totalProducts": {
+        "title": "Total products",
+        "description": "Active products in the catalog"
+      },
+      "locations": {
+        "title": "Locations",
+        "description": "Active stock locations"
+      },
+      "lowStock": {
+        "title": "Low stock",
+        "description": "Products below reorder point"
+      },
+      "reserved": {
+        "title": "Reserved",
+        "description": "{available} available"
+      },
+      "purchaseOrders": {
+        "title": "Purchase orders",
+        "description": "Total purchase orders"
+      },
+      "salesOrders": {
+        "title": "Sales orders",
+        "description": "Total sales orders"
+      },
+      "reservedValue": {
+        "title": "Reserved value",
+        "description": "Value of reserved stock"
+      },
+      "stockRecords": {
+        "title": "Stock records",
+        "description": "Product–location lines"
+      }
+    },
+    "stockByLocation": {
+      "title": "Stock by location",
+      "description": "Available and reserved quantities by location",
+      "empty": "No stock data",
+      "legendReserved": "Reserved",
+      "legendAvailable": "Available"
+    },
+    "movementTrends": {
+      "title": "Movement trends",
+      "description": "Daily stock movements over the last 30 days",
+      "seriesLabel": "Movements"
+    },
+    "orderStatus": {
+      "title": "Order status",
+      "description": "Breakdown by current status",
+      "tabPurchase": "Purchase orders",
+      "tabSales": "Sales orders",
+      "empty": "No orders yet",
+      "totalLabel": "Total",
+      "statusLabels": {
+        "Draft": "Draft",
+        "Confirmed": "Confirmed",
+        "Received": "Received",
+        "Fulfilled": "Fulfilled",
+        "Cancelled": "Cancelled"
+      }
+    },
+    "pendingReservations": {
+      "title": "Pending reservations",
+      "description": "Summary of active reservations",
+      "empty": "No active reservations",
+      "pending": "Pending",
+      "confirmed": "Confirmed",
+      "units": "units",
+      "orderCount": "{count, plural, one {# order} other {# orders}}"
+    },
+    "expiringLots": {
+      "title": "Lots expiring soon",
+      "description": "Lots expiring in the next 30 days",
+      "noLotData": "No lot tracking data",
+      "noExpiring": "No lots expire in the next 30 days",
+      "colLot": "Lot #",
+      "colProduct": "Product",
+      "colQty": "Qty",
+      "colExpires": "Expires",
+      "expiryUnknown": "Unknown",
+      "expiryExpired": "Expired",
+      "expiryOneDay": "1 day",
+      "expiryDays": "{count} days"
+    },
+    "error": {
+      "generic": "Something went wrong. Please try again.",
+      "retry": "Retry"
+    }
+  },
+  "Inventory": {
+    "shared": {
+      "emDash": "—",
+      "active": "Active",
+      "inactive": "Inactive",
+      "sku": "SKU",
+      "ok": "OK",
+      "low": "Low",
+      "lowStock": "Low Stock",
+      "capacityUnlimited": "units · unlimited",
+      "expand": "Expand",
+      "collapse": "Collapse",
+      "editNamed": "Edit {name}",
+      "deleteNamed": "Delete {name}",
+      "editLocation": "Edit location",
+      "deleteLocation": "Delete location",
+      "createdOn": "Created {date}",
+      "updatedOn": "Updated {date}",
+      "noDescription": "No description provided.",
+      "confirmDeleteLocation": "Delete \"{name}\"? This cannot be undone.",
+      "nameSeparator": " — ",
+      "expiredSuffix": "(expired)",
+      "daysSuffix": "({days}d)",
+      "deleting": "Deleting…"
+    },
+    "tableActions": {
+      "view": "View",
+      "edit": "Edit",
+      "delete": "Delete",
+      "openMenu": "Open menu"
+    },
+    "filters": {
+      "allCategories": "All Categories",
+      "allStatus": "All Status",
+      "category": "Category",
+      "status": "Status",
+      "type": "Type"
+    },
+    "units": {
+      "pcs": "Pieces",
+      "kg": "Kilograms",
+      "lt": "Litres",
+      "m": "Metres",
+      "box": "Boxes",
+      "pack": "Packs"
+    },
+    "trackingModes": {
+      "none": "No Tracking",
+      "optional": "Optional",
+      "required": "Required"
+    },
+    "movementTypes": {
+      "receive": "Receive",
+      "issue": "Issue",
+      "transfer": "Transfer",
+      "adjustment": "Adjustment"
+    },
+    "allocationStrategies": {
+      "FIFO": "FIFO (First In, First Out)",
+      "LIFO": "LIFO (Last In, First Out)"
+    },
+    "products": {
+      "title": "Products",
+      "description": "Manage your product catalog",
+      "addProduct": "Add Product",
+      "newTitle": "New Product",
+      "newDescription": "Add a new product to your catalog",
+      "editDescription": "Update product details",
+      "notFoundTitle": "Product Not Found",
+      "notFoundBody": "The product you are looking for does not exist.",
+      "editTitle": "Edit {name}",
+      "detailSku": "SKU: {sku}",
+      "detailEdit": "Edit",
+      "searchPlaceholder": "Search products...",
+      "empty": "No products found.",
+      "columns": {
+        "sku": "SKU",
+        "name": "Name",
+        "category": "Category",
+        "unit": "Unit",
+        "unitCost": "Unit Cost",
+        "reorderPt": "Reorder Pt.",
+        "status": "Status",
+        "created": "Created"
+      },
+      "form": {
+        "basicInfo": "Basic Information",
+        "inventorySettings": "Inventory Settings",
+        "noCategory": "No category",
+        "selectCategory": "Select category",
+        "labels": {
+          "sku": "SKU",
+          "name": "Name",
+          "description": "Description",
+          "category": "Category",
+          "unitOfMeasure": "Unit of Measure",
+          "unitCost": "Unit Cost",
+          "reorderPoint": "Reorder Point",
+          "trackingMode": "Tracking Mode",
+          "active": "Active"
+        },
+        "placeholders": {
+          "sku": "e.g. PHONE-001",
+          "name": "e.g. iPhone 15 Pro",
+          "description": "Optional product description",
+          "unitCost": "0.00",
+          "reorderPoint": "0"
+        },
+        "submitCreate": "Create Product",
+        "submitSave": "Save Changes",
+        "validation": {
+          "skuRequired": "SKU is required",
+          "skuMax": "SKU must be 100 characters or less",
+          "nameRequired": "Name is required",
+          "nameMax": "Name must be 255 characters or less",
+          "unitOfMeasureRequired": "Unit of measure is required",
+          "unitCostMin": "Unit cost must be zero or greater",
+          "reorderPointInt": "Reorder point must be a whole number",
+          "reorderPointMin": "Reorder point must be zero or greater"
+        }
+      },
+      "tabs": {
+        "info": "Info",
+        "stock": "Stock Records",
+        "movements": "Movements",
+        "lots": "Lots"
+      },
+      "detail": {
+        "title": "Product Details",
+        "description": "Description",
+        "fields": {
+          "sku": "SKU",
+          "name": "Name",
+          "category": "Category",
+          "unitOfMeasure": "Unit of Measure",
+          "unitCost": "Unit Cost",
+          "reorderPoint": "Reorder Point",
+          "status": "Status",
+          "created": "Created",
+          "updated": "Updated"
+        }
+      },
+      "stockTab": {
+        "title": "Stock by Location",
+        "empty": "No stock records.",
+        "location": "Location",
+        "quantity": "Quantity",
+        "reserved": "Reserved",
+        "available": "Available",
+        "status": "Status"
+      },
+      "movementsTab": {
+        "title": "Recent Movements",
+        "empty": "No movements yet.",
+        "type": "Type",
+        "qty": "Qty",
+        "from": "From",
+        "to": "To",
+        "reference": "Reference",
+        "date": "Date"
+      },
+      "lotsTab": {
+        "title": "Lots / Batches",
+        "empty": "No lots tracked.",
+        "lotNumber": "Lot #",
+        "received": "Received",
+        "remaining": "Remaining",
+        "expiry": "Expiry",
+        "status": "Status"
+      }
+    },
+    "categories": {
+      "title": "Categories",
+      "description": "Organize your products into categories.",
+      "addCategory": "Add Category",
+      "searchPlaceholder": "Search categories…",
+      "emptyTitle": "No categories found",
+      "emptyHint": "Create a category to get started.",
+      "deleteTitle": "Delete Category",
+      "deleteDescription": "Are you sure you want to delete \"{name}\"? This action cannot be undone.",
+      "toastUpdated": "Category \"{name}\" updated",
+      "toastCreated": "Category \"{name}\" created",
+      "toastDeleted": "Category \"{name}\" deleted",
+      "toastSaveFailed": "Failed to save category",
+      "toastDeleteFailed": "Failed to delete category",
+      "form": {
+        "createTitle": "Create Category",
+        "editTitle": "Edit Category",
+        "createDescription": "Fill in the details to create a new category.",
+        "editDescription": "Update the category details below.",
+        "name": "Name",
+        "slug": "Slug",
+        "slugPlaceholder": "auto-generated if empty",
+        "slugHint": "URL-friendly identifier. Leave blank to auto-generate from the name.",
+        "description": "Description",
+        "descriptionPlaceholder": "Optional description...",
+        "active": "Active",
+        "namePlaceholder": "e.g. Electronics",
+        "saving": "Saving…",
+        "updateSubmit": "Update Category",
+        "createSubmit": "Create Category",
+        "validation": {
+          "nameRequired": "Name is required",
+          "nameMax": "Name must be 255 characters or less",
+          "slugMax": "Slug must be 255 characters or less"
+        }
+      }
+    },
+    "locations": {
+      "title": "Stock Locations",
+      "description": "Manage warehouse locations and track capacity utilization.",
+      "addLocation": "Add Location",
+      "searchPlaceholder": "Search locations...",
+      "emptyTitle": "No locations yet",
+      "emptyDescription": "Create your first stock location to start tracking inventory.",
+      "noStock": "No stock at this location.",
+      "subTableProduct": "Product",
+      "subTableQty": "Qty",
+      "subTableReserved": "Reserved",
+      "subTableAvailable": "Available",
+      "toastUpdated": "\"{name}\" updated",
+      "toastCreated": "\"{name}\" created",
+      "toastDeleted": "\"{name}\" deleted",
+      "toastUpdateFailed": "Failed to update location",
+      "toastCreateFailed": "Failed to create location",
+      "toastDeleteFailed": "Failed to delete location",
+      "form": {
+        "createTitle": "New Location",
+        "editTitle": "Edit Location",
+        "createDescription": "Add a new stock location to your warehouse.",
+        "editDescription": "Update the details for this stock location.",
+        "name": "Name",
+        "description": "Description",
+        "maxCapacity": "Max Capacity",
+        "namePlaceholder": "e.g. Warehouse A, Shelf B2",
+        "descriptionPlaceholder": "Describe this location...",
+        "capacityPlaceholder": "Leave empty for unlimited",
+        "capacityHint": "Maximum stock units this location can hold. Leave empty for unlimited capacity.",
+        "active": "Active",
+        "saving": "Saving...",
+        "submitCreate": "Create",
+        "submitUpdate": "Update",
+        "validation": {
+          "nameRequired": "Name is required",
+          "nameMax": "Name is too long"
+        }
+      }
+    },
+    "stockRecords": {
+      "title": "Stock Records",
+      "description": "Current stock levels across all locations",
+      "loadError": "Failed to load stock records",
+      "lowStock": "Low Stock",
+      "lowStockCount": "Low Stock ({count})",
+      "searchPlaceholder": "Search products...",
+      "empty": "No stock records found.",
+      "columns": {
+        "sku": "SKU",
+        "product": "Product",
+        "location": "Location",
+        "quantity": "Quantity",
+        "reserved": "Reserved",
+        "available": "Available",
+        "status": "Status"
+      },
+      "badges": {
+        "lowStock": "Low Stock",
+        "ok": "OK"
+      }
+    },
+    "lots": {
+      "title": "Stock Lots",
+      "description": "View and filter lot/batch records with expiry tracking.",
+      "searchPlaceholder": "Search lots, serials, SKUs...",
+      "empty": "No stock lots found.",
+      "columns": {
+        "lotNumber": "Lot Number",
+        "productSku": "Product SKU",
+        "serialNumber": "Serial Number",
+        "qtyReceived": "Qty Received",
+        "qtyRemaining": "Qty Remaining",
+        "received": "Received",
+        "expiryDate": "Expiry Date",
+        "expiryStatus": "Expiry Status",
+        "status": "Status"
+      },
+      "expiry": {
+        "expired": "Expired",
+        "noExpiry": "No expiry",
+        "daysLeft": "{days}d left"
+      }
+    },
+    "movements": {
+      "listTitle": "Stock Movements",
+      "listDescription": "View all stock movements across your inventory.",
+      "newMovement": "New Movement",
+      "createTitle": "Record Movement",
+      "createDescription": "Create a new stock movement (receive, issue, transfer, or adjustment).",
+      "searchPlaceholder": "Search by product, reference...",
+      "empty": "No movements found.",
+      "columns": {
+        "id": "ID",
+        "type": "Type",
+        "product": "Product",
+        "qty": "Qty",
+        "from": "From",
+        "to": "To",
+        "reference": "Reference",
+        "date": "Date"
+      },
+      "detail": {
+        "invalidTitle": "Invalid movement",
+        "invalidBody": "The movement id in the URL is not valid.",
+        "notFoundTitle": "Movement not found",
+        "notFoundBody": "This stock movement does not exist or you do not have access to it.",
+        "backToList": "Back to movements",
+        "title": "Movement #{id}",
+        "allMovements": "All movements",
+        "viewProduct": "View product",
+        "summary": "Summary",
+        "productSku": "Product (SKU)",
+        "quantity": "Quantity",
+        "fromLocation": "From location",
+        "toLocation": "To location",
+        "unitCost": "Unit cost",
+        "reference": "Reference",
+        "notes": "Notes",
+        "created": "Created",
+        "lotAllocations": "Lot allocations",
+        "lotNumber": "Lot #",
+        "lotQty": "Quantity"
+      },
+      "form": {
+        "cardMovement": "Movement Details",
+        "cardMovementHint": "Select the type, product, quantity, and relevant locations.",
+        "cardLot": "Lot / Batch Information",
+        "cardLotHint": "Optionally assign this received stock to a lot.",
+        "cardAllocation": "Lot Allocation Strategy",
+        "cardAllocationHint": "Choose how lots are allocated when issuing or transferring stock.",
+        "cardNotes": "Additional Notes",
+        "labels": {
+          "movementType": "Movement Type",
+          "product": "Product",
+          "quantity": "Quantity",
+          "unitCost": "Unit Cost",
+          "sourceLocation": "Source Location",
+          "destinationLocation": "Destination Location",
+          "reference": "Reference",
+          "lotNumber": "Lot Number",
+          "serialNumber": "Serial Number",
+          "manufacturingDate": "Manufacturing Date",
+          "expiryDate": "Expiry Date",
+          "strategy": "Strategy",
+          "notes": "Notes"
+        },
+        "placeholders": {
+          "selectType": "Select type",
+          "selectProduct": "Select product",
+          "selectLocation": "Select location",
+          "reference": "PO number, SO number, etc.",
+          "lotNumber": "e.g. BATCH-2026-001",
+          "serial": "Optional serial",
+          "notes": "Optional notes about this movement..."
+        },
+        "addLot": "Add Lot",
+        "removeLot": "Remove Lot",
+        "submit": "Create Movement",
+        "submitting": "Creating...",
+        "toastSuccess": "Movement created successfully",
+        "toastError": "Failed to create movement",
+        "validation": {
+          "productRequired": "Product is required",
+          "quantityMin": "Quantity must be at least 1",
+          "receiveToRequired": "Destination location is required for receive movements",
+          "issueFromRequired": "Source location is required for issue movements",
+          "transferFromRequired": "Source location is required for transfers",
+          "transferToRequired": "Destination location is required for transfers",
+          "transferLocationsDiffer": "Source and destination must differ",
+          "adjustmentLocationRequired": "At least one location is required for adjustments"
+        }
+      }
+    }
+  },
+  "Reservations": {
+    "errors": {
+      "unknown": "Unknown error"
+    },
+    "list": {
+      "title": "Reservations",
+      "description": "Manage stock reservations for sales orders and manual holds.",
+      "newReservation": "New Reservation",
+      "filterStatus": "Status"
+    },
+    "table": {
+      "searchPlaceholder": "Search reservations...",
+      "empty": "No reservations found.",
+      "product": "Product",
+      "location": "Location",
+      "qty": "Qty",
+      "status": "Status",
+      "salesOrder": "Sales Order",
+      "reservedBy": "Reserved By",
+      "expires": "Expires",
+      "created": "Created",
+      "fulfill": "Fulfill",
+      "cancelReservation": "Cancel"
+    },
+    "toast": {
+      "fulfilled": "Reservation #{id} fulfilled",
+      "fulfillFailed": "Failed to fulfill: {message}",
+      "cancelled": "Reservation #{id} cancelled",
+      "cancelFailed": "Failed to cancel: {message}",
+      "createSuccess": "Reservation created successfully",
+      "createFailed": "Failed to create reservation: {message}"
+    },
+    "create": {
+      "title": "Create Reservation",
+      "description": "Reserve stock for a sales order or manual hold."
+    },
+    "form": {
+      "cardTitle": "New Reservation",
+      "product": "Product *",
+      "productPlaceholder": "Select a product...",
+      "location": "Location *",
+      "locationPlaceholder": "Select a location...",
+      "quantity": "Quantity *",
+      "salesOrderOptional": "Sales Order (optional)",
+      "salesOrderNone": "None",
+      "notesOptional": "Notes (optional)",
+      "notesPlaceholder": "Any additional notes...",
+      "submit": "Create Reservation",
+      "submitting": "Creating...",
+      "validation": {
+        "productRequired": "Product is required",
+        "locationRequired": "Location is required",
+        "quantityRequired": "Quantity is required"
+      }
+    },
+    "status": {
+      "pending": "Pending",
+      "confirmed": "Confirmed",
+      "fulfilled": "Fulfilled",
+      "cancelled": "Cancelled",
+      "expired": "Expired"
+    }
+  },
+  "CycleCounts": {
+    "errors": {
+      "unknown": "Unknown error"
+    },
+    "list": {
+      "title": "Cycle Counts",
+      "description": "Schedule and manage physical inventory count cycles.",
+      "newCycle": "New Cycle Count",
+      "filterStatus": "Status",
+      "searchPlaceholder": "Search cycle counts...",
+      "empty": "No cycle counts found."
+    },
+    "create": {
+      "title": "Start Cycle Count",
+      "description": "Create a new physical inventory count cycle.",
+      "toastSuccess": "Cycle count started successfully",
+      "toastFailed": "Failed to start cycle: {message}"
+    },
+    "form": {
+      "cardTitle": "New Cycle Count",
+      "name": "Name *",
+      "namePlaceholder": "e.g., Q1 2026 Full Count",
+      "locationOptional": "Location (optional)",
+      "allLocationsPlaceholder": "All Locations (Full Warehouse)",
+      "allLocationsOption": "All Locations (Full Warehouse)",
+      "scheduledDate": "Scheduled Date *",
+      "notesOptional": "Notes (optional)",
+      "notesPlaceholder": "Any additional notes about this cycle count...",
+      "submit": "Start Cycle Count",
+      "submitting": "Starting...",
+      "validation": {
+        "nameRequired": "Name is required",
+        "scheduledRequired": "Scheduled date is required"
+      }
+    },
+    "notFound": {
+      "title": "Cycle Not Found",
+      "body": "The cycle count you are looking for does not exist."
+    },
+    "detail": {
+      "description": "{location} — {scheduled}: {date}",
+      "allLocations": "All Locations",
+      "scheduled": "Scheduled",
+      "markComplete": "Mark Complete",
+      "completing": "Completing..."
+    },
+    "tabs": {
+      "countLines": "Count Lines ({counted}/{total})",
+      "variances": "Variances"
+    },
+    "status": {
+      "scheduled": "Scheduled",
+      "in_progress": "In Progress",
+      "completed": "Completed",
+      "reconciled": "Reconciled"
+    },
+    "toast": {
+      "recordSuccess": "Count recorded",
+      "recordFailed": "Failed to record count: {message}",
+      "completeSuccess": "Cycle marked as completed",
+      "completeFailed": "Failed to complete cycle: {message}",
+      "reconcileSuccess": "Cycle reconciled successfully",
+      "reconcileFailed": "Failed to reconcile: {message}"
+    },
+    "countLine": {
+      "pendingTitle": "Pending Counts",
+      "pendingRemaining": "{count, plural, one {# item remaining} other {# items remaining}}",
+      "countedTitle": "Counted",
+      "countedSummary": "{count, plural, one {# item counted} other {# items counted}}",
+      "recordCount": "Record Count",
+      "physicalCount": "Physical Count *",
+      "notes": "Notes",
+      "notesPlaceholder": "Optional notes...",
+      "save": "Save",
+      "saving": "Saving...",
+      "recount": "Recount",
+      "systemQty": "System qty: {qty}",
+      "systemLabel": "System:",
+      "countedLabel": "Counted:",
+      "locationSystemLine": "{location} — {systemQty}",
+      "emptyLines": "No count lines found for this cycle.",
+      "validation": {
+        "quantityInt": "Quantity must be a whole number",
+        "quantityNonNegative": "Quantity cannot be negative"
+      }
+    },
+    "variance": {
+      "summaryTotalLines": "Total Lines",
+      "summaryShortages": "Shortages",
+      "summarySurpluses": "Surpluses",
+      "summaryMatches": "Matches",
+      "resolveTitle": "Resolve Variances",
+      "resolveNeedCount": "{count, plural, one {# line with variances needs resolution} other {# lines with variances need resolution}}",
+      "acceptAll": "Accept All",
+      "investigateAll": "Investigate All",
+      "rejectAll": "Reject All",
+      "resolution": "Resolution",
+      "resolutionPlaceholder": "Select resolution...",
+      "inlineSystem": "System: {qty}",
+      "inlineCounted": "Counted: {qty}",
+      "rootCause": "Root Cause",
+      "rootCausePlaceholder": "Optional explanation...",
+      "reconcile": "Reconcile Cycle",
+      "reconciling": "Reconciling...",
+      "matchingTitle": "Matching Lines",
+      "matchingNoVariance": "{count, plural, one {# line with no variance (auto-accepted)} other {# lines with no variance (auto-accepted)}}",
+      "qtyMatch": "Qty: {qty} (match)",
+      "completeToReview": "Complete all counts and mark the cycle as completed to review variances.",
+      "emptyVariances": "No variances recorded.",
+      "type": {
+        "shortage": "Shortage",
+        "surplus": "Surplus",
+        "match": "Match"
+      },
+      "resolutionOption": {
+        "accepted": "Accept (Create Adjustment)",
+        "investigating": "Investigate",
+        "rejected": "Reject (No Change)"
+      }
+    },
+    "table": {
+      "name": "Name",
+      "location": "Location",
+      "allLocations": "All Locations",
+      "status": "Status",
+      "scheduled": "Scheduled",
+      "progress": "Progress",
+      "startedBy": "Started By",
+      "created": "Created"
+    },
+    "varianceTable": {
+      "product": "Product",
+      "location": "Location",
+      "systemQty": "System Qty",
+      "physicalQty": "Physical Qty",
+      "variance": "Variance",
+      "type": "Type",
+      "resolution": "Resolution",
+      "resolvedBy": "Resolved By"
+    }
+  },
+  "BulkOperations": {
+    "errors": {
+      "unknown": "Unknown error"
+    },
+    "page": {
+      "title": "Bulk Operations",
+      "description": "Perform stock transfers, adjustments, and revaluations in bulk."
+    },
+    "tabs": {
+      "transfer": "Bulk Transfer",
+      "adjustment": "Bulk Adjustment",
+      "revalue": "Bulk Revalue"
+    },
+    "shared": {
+      "loading": "Loading...",
+      "selectProduct": "Select product",
+      "selectSource": "Select source",
+      "selectDestination": "Select destination",
+      "selectLocation": "Select location",
+      "addProduct": "Add Product",
+      "product": "Product",
+      "quantity": "Quantity",
+      "newQuantity": "New Quantity",
+      "newUnitCost": "New Unit Cost",
+      "processing": "Processing...",
+      "notes": "Notes",
+      "reference": "Reference",
+      "referencePlaceholder": "Optional reference number"
+    },
+    "transfer": {
+      "cardTitle": "Transfer Details",
+      "cardDescription": "Move stock from one location to another in bulk.",
+      "sourceLocation": "Source Location",
+      "destinationLocation": "Destination Location",
+      "productsTitle": "Products",
+      "productsDescription": "Add products and quantities to transfer.",
+      "notesPlaceholder": "Optional notes about this transfer...",
+      "execute": "Execute Transfer",
+      "toastNoItems": "Add at least one product to transfer",
+      "toastAllSuccess": "All {count} items transferred successfully",
+      "toastPartial": "{success} of {total} items transferred",
+      "toastError": "Bulk transfer failed"
+    },
+    "adjustment": {
+      "cardTitle": "Adjustment Details",
+      "cardDescription": "Set new stock quantities for products at a specific location.",
+      "location": "Location",
+      "productsTitle": "Products",
+      "productsDescription": "Specify the new quantity for each product.",
+      "notesPlaceholder": "Optional notes about this adjustment...",
+      "execute": "Execute Adjustment",
+      "toastNoItems": "Add at least one product to adjust",
+      "toastAllSuccess": "All {count} items adjusted successfully",
+      "toastPartial": "{success} of {total} items adjusted",
+      "toastError": "Bulk adjustment failed"
+    },
+    "revalue": {
+      "cardTitle": "Products to Revalue",
+      "cardDescription": "Set new unit costs for each product. This updates the product record directly without creating stock movements.",
+      "unitCostPlaceholder": "0.00",
+      "execute": "Execute Revalue",
+      "toastNoItems": "Add at least one product with a valid unit cost",
+      "toastAllSuccess": "All {count} products revalued successfully",
+      "toastPartial": "{success} of {total} products revalued",
+      "toastError": "Bulk revalue failed"
+    },
+    "result": {
+      "titleSuccess": "Operation Completed Successfully",
+      "titleFailed": "Operation Failed",
+      "titlePartial": "Operation Partially Completed",
+      "description": "{success} of {total} items processed successfully",
+      "total": "Total",
+      "succeeded": "Succeeded",
+      "failed": "Failed",
+      "errorsTitle": "Errors",
+      "errorsDescription": "The following items could not be processed",
+      "errorLine": "Item {index} (Product {productId})",
+      "startNew": "Start New Operation"
+    },
+    "validation": {
+      "sourceLocationRequired": "Source location is required",
+      "destinationLocationRequired": "Destination location is required",
+      "locationRequired": "Location is required"
+    }
+  },
+  "Procurement": {
+    "shared": {
+      "emDash": "—",
+      "unknownError": "Unknown error",
+      "nameSeparator": " — "
+    },
+    "paymentTerms": {
+      "net_30": "Net 30",
+      "net_60": "Net 60",
+      "net_90": "Net 90",
+      "cod": "Cash on delivery",
+      "prepaid": "Prepaid"
+    },
+    "poStatus": {
+      "draft": "Draft",
+      "confirmed": "Confirmed",
+      "received": "Received",
+      "cancelled": "Cancelled"
+    },
+    "grnProcessStatus": {
+      "pending": "Pending",
+      "processed": "Processed"
+    },
+    "suppliers": {
+      "list": {
+        "title": "Suppliers",
+        "description": "Manage your supplier directory",
+        "newButton": "New supplier",
+        "searchPlaceholder": "Search suppliers...",
+        "empty": "No suppliers found.",
+        "deleteConfirm": "Delete supplier “{name}”?",
+        "toastDeleted": "Supplier “{name}” deleted",
+        "toastDeleteFailed": "Failed to delete supplier"
+      },
+      "create": {
+        "title": "New supplier",
+        "description": "Add a supplier to your directory",
+        "toastCreated": "Supplier “{name}” created",
+        "toastCreateFailed": "Failed to create supplier",
+        "creating": "Creating...",
+        "submit": "Create supplier"
+      },
+      "edit": {
+        "title": "Edit {name}",
+        "description": "Update supplier information",
+        "notFound": "Supplier not found",
+        "backToList": "Back to suppliers",
+        "toastUpdated": "Supplier “{name}” updated",
+        "toastUpdateFailed": "Failed to update supplier",
+        "saving": "Saving...",
+        "submit": "Save changes"
+      },
+      "columns": {
+        "code": "Code",
+        "name": "Name",
+        "contact": "Contact",
+        "email": "Email",
+        "phone": "Phone",
+        "paymentTerms": "Payment terms",
+        "leadTime": "Lead time",
+        "status": "Status",
+        "leadTimeDays": "{count, plural, one {# day} other {# days}}"
+      },
+      "form": {
+        "code": "Code",
+        "name": "Name",
+        "contactName": "Contact name",
+        "email": "Email",
+        "phone": "Phone",
+        "leadTimeDays": "Lead time (days)",
+        "paymentTerms": "Payment terms",
+        "address": "Address",
+        "notes": "Notes",
+        "active": "Active",
+        "selectTerms": "Select terms",
+        "placeholders": {
+          "code": "e.g. SUP-001",
+          "companyName": "Company name",
+          "contactPerson": "Contact person",
+          "email": "email@example.com",
+          "phone": "+1 555 000 0000",
+          "address": "Street, city, postal code",
+          "notes": "Internal notes about this supplier"
+        }
+      },
+      "validation": {
+        "codeRequired": "Code is required",
+        "nameRequired": "Name is required",
+        "emailInvalid": "Invalid email address",
+        "leadTimeMin": "Must be greater than or equal to 0"
+      }
+    },
+    "purchaseOrders": {
+      "list": {
+        "title": "Purchase orders",
+        "description": "Manage orders placed with suppliers.",
+        "newButton": "New purchase order",
+        "searchPlaceholder": "Search purchase orders...",
+        "empty": "No purchase orders found.",
+        "statusFilter": "Status",
+        "toastConfirmed": "Purchase order {orderNumber} confirmed",
+        "toastCancelled": "Purchase order {orderNumber} cancelled",
+        "confirmFailed": "Failed to confirm: {message}",
+        "cancelFailed": "Failed to cancel: {message}",
+        "cancelConfirm": "Cancel purchase order “{orderNumber}”?"
+      },
+      "create": {
+        "title": "Create purchase order",
+        "description": "Place a new order with a supplier.",
+        "toastSuccess": "Purchase order created successfully",
+        "toastError": "Failed to create purchase order: {message}"
+      },
+      "detail": {
+        "title": "PO: {orderNumber}",
+        "titleLoading": "Purchase order",
+        "backToList": "Back to list",
+        "toastConfirmed": "Purchase order confirmed",
+        "toastCancelled": "Purchase order cancelled",
+        "cancelConfirm": "Cancel this purchase order?",
+        "confirmFailed": "Failed to confirm: {message}",
+        "cancelFailed": "Failed to cancel: {message}"
+      },
+      "columns": {
+        "orderNumber": "Order #",
+        "supplier": "Supplier",
+        "status": "Status",
+        "orderDate": "Order date",
+        "expectedDelivery": "Expected delivery",
+        "total": "Total",
+        "created": "Created"
+      },
+      "actions": {
+        "view": "View",
+        "confirm": "Confirm",
+        "cancel": "Cancel"
+      },
+      "form": {
+        "orderDetailsTitle": "Order details",
+        "orderDetailsDescription": "Basic purchase order information",
+        "supplier": "Supplier",
+        "selectSupplier": "Select a supplier...",
+        "orderDate": "Order date",
+        "expectedDeliveryDate": "Expected delivery date",
+        "notes": "Notes",
+        "notesPlaceholder": "Internal notes about this order...",
+        "lineItemsTitle": "Lines",
+        "lineItemsDescription": "Products to order from this supplier",
+        "addLine": "Add line",
+        "colProduct": "Product",
+        "colQuantity": "Quantity",
+        "colUnitCost": "Unit cost",
+        "colLineTotal": "Line total",
+        "grandTotal": "Grand total",
+        "selectProduct": "Select a product...",
+        "unitCostPlaceholder": "0.00",
+        "creating": "Creating...",
+        "submit": "Create purchase order"
+      },
+      "detailView": {
+        "confirming": "Confirming...",
+        "confirm": "Confirm",
+        "cancelling": "Cancelling...",
+        "cancelOrder": "Cancel order",
+        "orderDate": "Order date",
+        "expectedDelivery": "Expected delivery",
+        "totalCost": "Total cost",
+        "created": "Created",
+        "notes": "Notes",
+        "lineItemsTitle": "Lines",
+        "lineItemsCount": "{count, plural, one {# line item} other {# line items}} on this order",
+        "colProduct": "Product",
+        "colSku": "SKU",
+        "colQuantity": "Quantity",
+        "colUnitCost": "Unit cost",
+        "colLineTotal": "Line total",
+        "grandTotal": "Grand total"
+      },
+      "validation": {
+        "productRequired": "Product is required",
+        "quantityMin": "Quantity must be at least 1",
+        "unitCostRequired": "Unit cost is required",
+        "unitCostPositive": "Must be a positive number",
+        "supplierRequired": "Supplier is required",
+        "orderDateRequired": "Order date is required",
+        "atLeastOneLine": "At least one line is required"
+      }
+    },
+    "grn": {
+      "list": {
+        "title": "Goods received",
+        "description": "Track and process goods received against purchase orders",
+        "newButton": "New GRN",
+        "empty": "No goods received notes found.",
+        "statusFilter": "Status",
+        "processConfirm": "Process GRN “{grnNumber}”? Stock movements will be created; this cannot be undone.",
+        "toastProcessed": "GRN “{grnNumber}” processed — stock movements created",
+        "toastProcessFailed": "Failed to process GRN",
+        "deleteConfirm": "Delete GRN “{grnNumber}”?",
+        "toastDeleted": "GRN “{grnNumber}” deleted",
+        "toastDeleteFailed": "Failed to delete GRN"
+      },
+      "create": {
+        "title": "New goods received note",
+        "description": "Record goods received against a purchase order",
+        "toastCreated": "GRN “{grnNumber}” created",
+        "toastError": "Failed to create GRN",
+        "creating": "Creating...",
+        "submit": "Create GRN"
+      },
+      "columns": {
+        "grnNumber": "GRN #",
+        "purchaseOrder": "Purchase order",
+        "receivedDate": "Received date",
+        "location": "Location",
+        "status": "Status",
+        "created": "Created"
+      },
+      "actions": {
+        "view": "View",
+        "receiveGoods": "Receive goods"
+      },
+      "form": {
+        "detailsTitle": "GRN details",
+        "detailsDescription": "Record goods received against a purchase order.",
+        "grnNumber": "GRN number",
+        "purchaseOrder": "Purchase order",
+        "receivedDate": "Received date",
+        "location": "Location",
+        "notesSectionTitle": "Additional notes",
+        "notes": "Notes",
+        "placeholders": {
+          "grnNumber": "e.g. GRN-2026-001",
+          "notes": "Condition of goods, discrepancies, etc."
+        },
+        "loading": "Loading...",
+        "selectPO": "Select a purchase order",
+        "selectLocation": "Select a location"
+      },
+      "validation": {
+        "grnNumberRequired": "GRN number is required",
+        "purchaseOrderRequired": "Purchase order is required",
+        "receivedDateRequired": "Received date is required",
+        "locationRequired": "Location is required"
+      }
+    }
+  },
+  "SettingsTenant": {
+    "tenant": {
+      "page": {
+        "title": "Tenant Settings",
+        "description": "Manage your organisation profile and branding"
+      },
+      "loadError": "Unable to load tenant information",
+      "toast": {
+        "updated": "Tenant settings updated",
+        "updateFailed": "Failed to update tenant settings"
+      },
+      "profile": {
+        "title": "Profile",
+        "description": "Update your tenant name and branding"
+      },
+      "reset": "Reset",
+      "save": "Save Changes",
+      "saving": "Saving…",
+      "form": {
+        "tenantName": "Tenant Name",
+        "siteName": "Site Name",
+        "primaryColor": "Primary Color",
+        "colorPickerAria": "Pick primary color",
+        "placeholderOrg": "My Organisation",
+        "placeholderSite": "Inventory Portal",
+        "placeholderColor": "#3B82F6",
+        "requiredMarker": "required"
+      },
+      "validation": {
+        "nameRequired": "Tenant name is required",
+        "hexColor": "Must be a valid hex color (e.g. #3B82F6)"
+      }
+    },
+    "subscription": {
+      "title": "Subscription",
+      "description": "Your current plan and usage",
+      "planLabel": "Plan",
+      "usageUsers": "Users",
+      "usageProducts": "Products"
+    },
+    "roles": {
+      "owner": "Owner",
+      "admin": "Admin",
+      "manager": "Manager",
+      "viewer": "Viewer"
+    },
+    "plans": {
+      "free": "Free",
+      "starter": "Starter",
+      "professional": "Professional",
+      "enterprise": "Enterprise"
+    },
+    "subscriptionStatus": {
+      "active": "Active",
+      "trial": "Trial",
+      "past_due": "Past Due",
+      "cancelled": "Cancelled",
+      "suspended": "Suspended"
+    },
+    "members": {
+      "page": {
+        "title": "Team Members",
+        "description": "Manage team members and their roles"
+      },
+      "searchPlaceholder": "Search members…",
+      "emptyMessage": "No team members found.",
+      "toast": {
+        "roleUpdated": "Updated {username}'s role to {role}",
+        "roleFailed": "Failed to update role",
+        "removed": "Removed {username} from team",
+        "removeFailed": "Failed to remove member"
+      },
+      "removeDialog": {
+        "title": "Remove team member",
+        "descriptionLead": "Are you sure you want to remove",
+        "descriptionTrail": " from the team? They will lose access to this tenant immediately."
+      },
+      "remove": "Remove",
+      "removing": "Removing…",
+      "columns": {
+        "user": "User",
+        "email": "Email",
+        "role": "Role",
+        "status": "Status",
+        "joined": "Joined"
+      },
+      "memberStatus": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "srRemoveMember": "Remove member"
+    },
+    "invite": {
+      "trigger": "Invite Member",
+      "title": "Invite a team member",
+      "description": "Send an invitation by email. They will receive a link to join your organization.",
+      "email": "Email address",
+      "role": "Role",
+      "placeholderEmail": "colleague@company.com",
+      "sendInvitation": "Send Invitation",
+      "sending": "Sending…",
+      "toastSent": "Invitation sent to {email}",
+      "toastFailed": "Failed to send invitation"
+    },
+    "pendingInvitations": {
+      "heading": "Pending Invitations",
+      "headingCount": "({count})",
+      "columns": {
+        "email": "Email",
+        "role": "Role",
+        "status": "Status",
+        "expires": "Expires"
+      },
+      "srCancelInvitation": "Cancel invitation",
+      "cancelDialog": {
+        "title": "Cancel invitation",
+        "descriptionLead": "Are you sure you want to cancel the invitation to",
+        "descriptionTrail": "? The invitation link will no longer work."
+      },
+      "keep": "Keep",
+      "cancelInvitation": "Cancel Invitation",
+      "cancelling": "Cancelling…",
+      "toastCancelled": "Invitation to {email} cancelled",
+      "toastCancelFailed": "Failed to cancel invitation",
+      "invitationStatus": {
+        "pending": "Pending",
+        "accepted": "Accepted",
+        "cancelled": "Cancelled",
+        "expired": "Expired"
+      }
+    },
+    "acceptInvitation": {
+      "invalidTitle": "Invalid Invitation",
+      "invalidDescription": "This invitation link is invalid, expired, or has already been used.",
+      "goToLogin": "Go to Login",
+      "alreadyTitle": "Invitation {status}",
+      "alreadyDescription": "This invitation has already been {status}.",
+      "joinTitle": "Join {tenant}",
+      "invitedPrefix": "You've been invited to join as",
+      "invitationFor": "Invitation for",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "username": "Username",
+      "password": "Password",
+      "placeholderFirst": "Jane",
+      "placeholderLast": "Doe",
+      "placeholderUsername": "janedoe",
+      "placeholderPasswordNew": "Min. 8 characters",
+      "existingAccountHint": "An account with this email already exists. Enter your password to confirm your identity and join the organization.",
+      "existingPassword": "Password",
+      "placeholderExistingPassword": "Your password",
+      "joining": "Joining…",
+      "joinAction": "Join {tenant}",
+      "expires": "Expires {date}",
+      "acceptFailed": "Failed to accept invitation"
+    }
+  },
+  "SettingsPlatform": {
+    "billing": {
+      "page": {
+        "title": "Billing & Subscriptions",
+        "description": "Manage tenant plans, usage, and billing (superuser only)"
+      },
+      "columns": {
+        "tenant": "Tenant",
+        "plan": "Plan",
+        "status": "Status",
+        "active": "Active",
+        "usage": "Usage"
+      },
+      "yes": "Yes",
+      "no": "No",
+      "usageUsers": "{current}/{max} users",
+      "usageProducts": "{current}/{max} products",
+      "searchPlaceholder": "Search tenants…",
+      "emptyMessage": "No tenants found.",
+      "ariaExport": "Export tenant data",
+      "ariaChangePlan": "Change plan",
+      "ariaSuspend": "Suspend",
+      "ariaReactivate": "Reactivate",
+      "toast": {
+        "suspended": "{name} has been suspended",
+        "suspendFailed": "Failed to suspend tenant",
+        "reactivated": "{name} has been reactivated",
+        "reactivateFailed": "Failed to reactivate tenant",
+        "exportSuccess": "Export for {name} downloaded",
+        "exportFailed": "Failed to export tenant data",
+        "subscriptionUpdated": "Subscription updated",
+        "subscriptionUpdateFailed": "Failed to update subscription"
+      },
+      "suspendDialog": {
+        "title": "Suspend tenant",
+        "descriptionLead": "Are you sure you want to suspend",
+        "descriptionTrail": "? The tenant will not be able to log in or access data until reactivated."
+      },
+      "reactivateDialog": {
+        "title": "Reactivate tenant",
+        "descriptionLead": "Are you sure you want to reactivate",
+        "descriptionTrail": "? The tenant will be able to log in and access data again."
+      },
+      "suspend": "Suspend",
+      "suspending": "Suspending…",
+      "reactivate": "Reactivate",
+      "reactivating": "Reactivating…",
+      "changePlan": {
+        "title": "Change plan — {name}",
+        "description": "Update subscription plan, status, or billing notes.",
+        "plan": "Plan",
+        "status": "Status",
+        "billingNotes": "Billing notes (optional)",
+        "billingNotesPlaceholder": "Payment issues, custom arrangements, etc.",
+        "saving": "Saving…"
+      }
+    },
+    "users": {
+      "page": {
+        "title": "Platform Users",
+        "description": "Manage all users across tenants (superuser only)"
+      },
+      "createUser": "Create User",
+      "searchPlaceholder": "Search by email or username…",
+      "emptyMessage": "No users found.",
+      "columns": {
+        "user": "User",
+        "email": "Email",
+        "status": "Status",
+        "tenants": "Tenants",
+        "joined": "Joined"
+      },
+      "userStatus": {
+        "active": "Active",
+        "suspended": "Suspended"
+      },
+      "moreTenants": "+{count}",
+      "ariaImpersonate": "Impersonate",
+      "ariaResetPassword": "Reset password",
+      "ariaSuspendUser": "Suspend user",
+      "suspend": "Suspend",
+      "suspending": "Suspending…",
+      "toast": {
+        "userSuspended": "{username} has been suspended",
+        "suspendFailed": "Failed to suspend user",
+        "passwordReset": "Password has been reset",
+        "passwordResetFailed": "Failed to reset password",
+        "impersonating": "Impersonating {username}",
+        "impersonateFailed": "Failed to impersonate",
+        "userCreated": "User {username} created",
+        "createFailed": "Failed to create user"
+      },
+      "suspendDialog": {
+        "title": "Suspend user",
+        "descriptionLead": "Are you sure you want to suspend",
+        "descriptionTrail": "? They will lose access to all tenants. This can be reversed by editing the user."
+      },
+      "resetPassword": {
+        "title": "Reset password",
+        "description": "Enter a new password for this user. Minimum 8 characters.",
+        "newPassword": "New password",
+        "placeholder": "Min 8 characters",
+        "resetting": "Resetting…",
+        "reset": "Reset"
+      },
+      "createDialog": {
+        "title": "Create user",
+        "description": "Create a new user and optionally assign them to tenants.",
+        "username": "Username",
+        "email": "Email",
+        "password": "Password",
+        "defaultRole": "Default role (for assigned tenants)",
+        "assignTenants": "Assign to tenants",
+        "placeholderUsername": "jdoe",
+        "placeholderEmail": "jane@example.com",
+        "placeholderPassword": "Min 8 characters",
+        "creating": "Creating…",
+        "create": "Create"
+      }
+    },
+    "invitations": {
+      "page": {
+        "title": "Invitations",
+        "description": "All tenant invitations across the platform. Superuser only."
+      },
+      "emptyMessage": "No invitations found.",
+      "filterAllStatuses": "All statuses",
+      "filterStatusPlaceholder": "Status",
+      "filterAllTenants": "All tenants",
+      "filterTenantPlaceholder": "Tenant",
+      "filterFrom": "From",
+      "filterTo": "To",
+      "toast": {
+        "cancelled": "Invitation cancelled",
+        "cancelFailed": "Failed to cancel invitation",
+        "resent": "Invitation resent successfully",
+        "resendFailed": "Failed to resend invitation"
+      },
+      "columns": {
+        "email": "Email",
+        "tenant": "Tenant",
+        "role": "Role",
+        "status": "Status",
+        "created": "Created",
+        "expires": "Expires",
+        "invitedBy": "Invited by"
+      },
+      "rowCancel": "Cancel",
+      "rowResend": "Resend",
+      "status": {
+        "pending": "Pending",
+        "accepted": "Accepted",
+        "cancelled": "Cancelled",
+        "expired": "Expired"
+      }
+    }
+  },
+  "Sales": {
+    "shared": {
+      "emDash": "—",
+      "unknownError": "Unknown error",
+      "nameSeparator": " — "
+    },
+    "soStatus": {
+      "draft": "Draft",
+      "confirmed": "Confirmed",
+      "fulfilled": "Fulfilled",
+      "cancelled": "Cancelled"
+    },
+    "dispatchProcessed": {
+      "pending": "Pending",
+      "processed": "Processed"
+    },
+    "customerStatus": {
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "customers": {
+      "list": {
+        "title": "Customers",
+        "description": "Manage your customer directory",
+        "newButton": "New Customer",
+        "deleteConfirm": "Delete customer \"{name}\"?",
+        "toastDeleted": "Customer \"{name}\" deleted",
+        "toastDeleteFailed": "Failed to delete customer"
+      },
+      "create": {
+        "title": "New Customer",
+        "description": "Add a new customer to your directory",
+        "toastCreated": "Customer \"{name}\" created",
+        "toastCreateFailed": "Failed to create customer",
+        "creating": "Creating...",
+        "submit": "Create Customer"
+      },
+      "edit": {
+        "title": "Edit {name}",
+        "description": "Update customer details",
+        "notFound": "Customer not found",
+        "backToList": "Back to Customers",
+        "toastUpdated": "Customer \"{name}\" updated",
+        "toastUpdateFailed": "Failed to update customer",
+        "saving": "Saving...",
+        "submit": "Save Changes"
+      },
+      "columns": {
+        "code": "Code",
+        "name": "Name",
+        "contact": "Contact",
+        "email": "Email",
+        "phone": "Phone",
+        "status": "Status"
+      },
+      "form": {
+        "codeOptional": "Code (optional)",
+        "name": "Name *",
+        "contactPerson": "Contact Person",
+        "email": "Email",
+        "phone": "Phone",
+        "active": "Active",
+        "address": "Address",
+        "notes": "Notes",
+        "placeholders": {
+          "code": "Leave blank to auto-generate",
+          "name": "Customer name",
+          "contact": "Primary contact",
+          "email": "contact@example.com",
+          "phone": "+1 555-0100",
+          "address": "Full mailing or physical address",
+          "notes": "Internal notes about this customer"
+        }
+      },
+      "validation": {
+        "nameRequired": "Name is required",
+        "emailInvalid": "Invalid email address"
+      },
+      "table": {
+        "searchPlaceholder": "Search customers...",
+        "empty": "No customers found."
+      }
+    },
+    "salesOrders": {
+      "list": {
+        "title": "Sales Orders",
+        "description": "Manage sales orders and track fulfillment",
+        "newButton": "New Order",
+        "statusFilter": "Status",
+        "confirmPrompt": "Confirm sales order \"{orderNumber}\"?",
+        "cancelPrompt": "Cancel sales order \"{orderNumber}\"?",
+        "deletePrompt": "Delete sales order \"{orderNumber}\"?",
+        "toastConfirmed": "Order \"{orderNumber}\" confirmed",
+        "toastCancelled": "Order \"{orderNumber}\" cancelled",
+        "toastDeleted": "Order \"{orderNumber}\" deleted",
+        "confirmFailed": "Failed to confirm order",
+        "cancelFailed": "Failed to cancel order",
+        "deleteFailed": "Failed to delete order"
+      },
+      "create": {
+        "title": "New Sales Order",
+        "description": "Create a new sales order with line items",
+        "toastCreated": "Sales order \"{orderNumber}\" created",
+        "toastCreateFailed": "Failed to create sales order"
+      },
+      "detail": {
+        "title": "Sales Order Details",
+        "description": "View order information, line items, and manage order status",
+        "confirmPrompt": "Confirm sales order \"{orderNumber}\"?",
+        "cancelPrompt": "Cancel sales order \"{orderNumber}\"? This cannot be undone.",
+        "toastConfirmed": "Order \"{orderNumber}\" confirmed",
+        "toastCancelled": "Order \"{orderNumber}\" cancelled",
+        "confirmFailed": "Failed to confirm order",
+        "cancelFailed": "Failed to cancel order"
+      },
+      "detailView": {
+        "notFound": "Sales order not found.",
+        "orderNumber": "Order Number",
+        "customer": "Customer",
+        "orderDate": "Order Date",
+        "status": "Status",
+        "totalPrice": "Total Price",
+        "created": "Created",
+        "notesLabel": "Notes",
+        "lineItemsTitle": "Line Items",
+        "noLineItems": "No line items.",
+        "colProduct": "Product",
+        "colSku": "SKU",
+        "colQty": "Qty",
+        "colUnitPrice": "Unit Price",
+        "colLineTotal": "Line Total",
+        "orderTotal": "Order Total",
+        "confirming": "Confirming...",
+        "confirmOrder": "Confirm Order",
+        "cancelling": "Cancelling...",
+        "cancelOrder": "Cancel Order",
+        "backToOrders": "Back to Orders"
+      },
+      "columns": {
+        "orderNumber": "Order #",
+        "customer": "Customer",
+        "orderDate": "Order Date",
+        "status": "Status",
+        "total": "Total",
+        "fulfillment": "Fulfillment",
+        "created": "Created"
+      },
+      "actions": {
+        "view": "View",
+        "confirm": "Confirm",
+        "cancel": "Cancel",
+        "delete": "Delete"
+      },
+      "form": {
+        "toastAtLeastOneLine": "Add at least one line item",
+        "toastFixLines": "Fix line item errors before submitting",
+        "orderDetailsTitle": "Order Details",
+        "orderDetailsDescription": "Basic information for the sales order.",
+        "orderNumberOptional": "Order number (optional)",
+        "customer": "Customer",
+        "orderDate": "Order Date",
+        "lineItemsTitle": "Line Items",
+        "lineItemsDescription": "Add products to this order.",
+        "addLine": "Add Line",
+        "colProduct": "Product",
+        "colQuantity": "Quantity",
+        "colUnitPrice": "Unit Price",
+        "colLineTotal": "Line Total",
+        "orderTotal": "Order Total",
+        "notesSectionTitle": "Additional Notes",
+        "notes": "Notes",
+        "notesPlaceholder": "Internal notes, special instructions, etc.",
+        "placeholders": {
+          "orderNumber": "Leave blank to auto-generate",
+          "selectCustomer": "Select customer",
+          "selectProduct": "Select product"
+        },
+        "loading": "Loading...",
+        "creating": "Creating...",
+        "submit": "Create Sales Order"
+      },
+      "validation": {
+        "productRequired": "Product is required",
+        "quantityMin": "Min 1",
+        "unitPriceNonNeg": "Must be >= 0",
+        "customerRequired": "Customer is required",
+        "orderDateRequired": "Order date is required"
+      },
+      "fulfillment": {
+        "canFulfill": "Can Fulfill",
+        "insufficientStock": "Insufficient Stock"
+      },
+      "table": {
+        "searchPlaceholder": "Search orders...",
+        "empty": "No sales orders found."
+      }
+    },
+    "dispatches": {
+      "list": {
+        "title": "Dispatches",
+        "description": "Manage and process dispatches for sales orders",
+        "newButton": "New Dispatch",
+        "statusFilter": "Status",
+        "processPrompt": "Process dispatch \"{dispatchNumber}\"? This will create stock movements and cannot be undone.",
+        "deletePrompt": "Delete dispatch \"{dispatchNumber}\"?",
+        "toastProcessed": "Dispatch \"{dispatchNumber}\" processed — stock movements created",
+        "toastProcessedPartial": "Dispatch \"{dispatchNumber}\" processed — issued available quantities.",
+        "toastDeleted": "Dispatch \"{dispatchNumber}\" deleted",
+        "processFailed": "Failed to process dispatch",
+        "deleteFailed": "Failed to delete dispatch"
+      },
+      "create": {
+        "title": "New Dispatch",
+        "description": "Create a dispatch to ship goods against a sales order",
+        "toastCreated": "Dispatch \"{dispatchNumber}\" created",
+        "toastCreateFailed": "Failed to create dispatch"
+      },
+      "columns": {
+        "dispatchNumber": "Dispatch #",
+        "salesOrder": "Sales Order",
+        "dispatchDate": "Dispatch Date",
+        "fromLocation": "From Location",
+        "status": "Status",
+        "created": "Created",
+        "processed": "Processed",
+        "pending": "Pending"
+      },
+      "actions": {
+        "view": "View",
+        "reviewStock": "Review stock / partial ship",
+        "processDispatch": "Process Dispatch",
+        "delete": "Delete"
+      },
+      "form": {
+        "detailsTitle": "Dispatch Details",
+        "detailsDescription": "Pick a confirmed sales order. After you create the dispatch, use 'Process' on the list to issue stock (the order must stay confirmed until then).",
+        "dispatchNumberOptional": "Dispatch number (optional)",
+        "salesOrder": "Sales Order",
+        "dispatchDate": "Dispatch Date",
+        "fromLocation": "From Location",
+        "notesSectionTitle": "Additional Notes",
+        "notes": "Notes",
+        "placeholders": {
+          "dispatchNumber": "Leave blank to auto-generate",
+          "selectSalesOrder": "Select sales order",
+          "selectLocation": "Select location",
+          "notes": "Shipping instructions, special handling, etc."
+        },
+        "emptySalesOrdersHint": "No confirmed sales orders. Confirm a draft order first, then create a dispatch.",
+        "loading": "Loading...",
+        "creating": "Creating...",
+        "submit": "Create Dispatch"
+      },
+      "validation": {
+        "salesOrderRequired": "Sales order is required",
+        "dispatchDateRequired": "Dispatch date is required",
+        "fromLocationRequired": "From location is required"
+      },
+      "table": {
+        "empty": "No dispatches found."
+      },
+      "fulfillmentDialog": {
+        "title": "Stock at dispatch source",
+        "description": "Per line: ordered quantity vs unreserved stock at the dispatch source. You can issue only what is available now, open the sales order to reduce line quantities or cancel the dispatch, or receive/transfer stock into this location first.",
+        "loading": "Loading preview…",
+        "fromLabel": "From:",
+        "colProduct": "Product",
+        "colOrdered": "Ordered",
+        "colAvailable": "Available",
+        "colShipNow": "Ship now",
+        "openSalesOrder": "Open sales order",
+        "issueAvailable": "Issue available quantities",
+        "genericError": "Something went wrong."
+      }
+    }
+  },
+  "Auth": {
+    "loading": "Loading…",
+    "invalidCredentials": "Invalid username or password",
+    "registrationFailed": "Registration failed",
+    "acceptInvitationFailed": "Could not accept invitation",
+    "login": {
+      "title": "Welcome back",
+      "subtitle": "Sign in to The Inventory",
+      "noOrgPrompt": "Don't have an organization?",
+      "createOrgLink": "Create one",
+      "username": "Username",
+      "password": "Password",
+      "usernamePlaceholder": "Enter your username",
+      "passwordPlaceholder": "Enter your password",
+      "signIn": "Sign in",
+      "signingIn": "Signing in…"
+    },
+    "marketing": {
+      "title": "Powerful inventory management",
+      "subtitle": "Everything you need to run your inventory efficiently",
+      "catalogTitle": "Catalog management",
+      "catalogDescription": "Organize products with SKUs, descriptions, images, and hierarchical categories",
+      "trackingTitle": "Real-time tracking",
+      "trackingDescription": "Follow stock movements across warehouses with instant updates",
+      "alertsTitle": "Smart alerts",
+      "alertsDescription": "Set reorder points and get notified when stock runs low",
+      "searchTitle": "Advanced search",
+      "searchDescription": "Find products, categories, and locations with full-text search"
+    },
+    "register": {
+      "title": "Create your organization",
+      "description": "Register a new organization and set up your account as the owner.",
+      "organizationName": "Organization name",
+      "organizationPlaceholder": "Acme Corp",
+      "slugLabel": "URL slug (optional)",
+      "slugHint": "— URL-friendly identifier, e.g. acme-corp",
+      "slugPlaceholder": "acme-corp",
+      "username": "Username",
+      "usernamePlaceholder": "jdoe",
+      "email": "Email",
+      "emailPlaceholder": "jane@acme.com",
+      "firstName": "First name",
+      "firstNamePlaceholder": "Jane",
+      "lastName": "Last name",
+      "lastNamePlaceholder": "Doe",
+      "password": "Password",
+      "passwordPlaceholder": "Min. 8 characters",
+      "submit": "Create organization",
+      "submitting": "Creating…",
+      "hasAccountPrompt": "Already have an account?",
+      "signInLink": "Sign in"
+    },
+    "account": {
+      "loadError": "Unable to load your account. Try signing in again.",
+      "pageTitle": "Account",
+      "pageDescription": "Your profile and password apply to every tenant you belong to.",
+      "profileTitle": "Profile",
+      "profileDescription": "Your name and email apply to each organization you are part of.",
+      "username": "Username",
+      "usernameReadOnlyHint": "Username cannot be changed here.",
+      "email": "Email",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "reset": "Reset",
+      "saveProfile": "Save profile",
+      "savingProfile": "Saving…",
+      "passwordTitle": "Password",
+      "passwordDescription": "Use a strong password you don't reuse on other sites.",
+      "currentPassword": "Current password",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm new password",
+      "updatePassword": "Update password",
+      "updatingPassword": "Updating…",
+      "workspaceTitle": "Current workspace",
+      "workspaceNoTenantDescription": "Select an organization from the header switcher to work on inventory.",
+      "workspaceDescription": "Inventory data and actions are scoped to this organization.",
+      "organisation": "Organization",
+      "slug": "Slug",
+      "yourRole": "Your role"
+    },
+    "guard": {
+      "loading": "Loading…"
+    },
+    "invitation": {
+      "invalidTitle": "Invalid invitation",
+      "invalidDescription": "This invitation link is invalid, expired, or has already been used.",
+      "goToLogin": "Go to sign in",
+      "processed": {
+        "accepted": {
+          "title": "Invitation accepted",
+          "description": "This invitation has already been accepted."
+        },
+        "cancelled": {
+          "title": "Invitation cancelled",
+          "description": "This invitation was cancelled."
+        },
+        "expired": {
+          "title": "Invitation expired",
+          "description": "This invitation has expired."
+        }
+      },
+      "processedUnknownTitle": "Invitation ({status})",
+      "processedUnknownDescription": "This invitation is no longer pending.",
+      "joinTitle": "Join {tenant}",
+      "invitedAs": "You are invited to join as",
+      "invitationFor": "Invitation for {email}",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "username": "Username",
+      "password": "Password",
+      "firstNamePlaceholder": "Jane",
+      "lastNamePlaceholder": "Doe",
+      "usernamePlaceholder": "jdoe",
+      "passwordPlaceholderNew": "Min. 8 characters",
+      "existingAccountHint": "An account already exists with this email. Enter your password to confirm your identity and join the organization.",
+      "existingPassword": "Password",
+      "existingPasswordPlaceholder": "Your password",
+      "joining": "Joining…",
+      "joinTenant": "Join {tenant}",
+      "expires": "Expires on {date}"
+    },
+    "validation": {
+      "usernameRequired": "Username is required",
+      "passwordRequired": "Password is required",
+      "emailRequired": "Email is required",
+      "validEmail": "A valid email address is required",
+      "currentPasswordRequired": "Current password is required",
+      "newPasswordMin": "New password must be at least 8 characters",
+      "confirmPasswordRequired": "Please confirm your new password",
+      "passwordsMismatch": "Passwords do not match",
+      "organizationNameRequired": "Organization name is required",
+      "slugFormat": "Slug must be lowercase letters, numbers, and hyphens only",
+      "registerPasswordMin": "Password must be at least 8 characters"
+    }
+  },
+  "Audit": {
+    "system": "System",
+    "emDash": "—",
+    "tenantPage": {
+      "title": "Audit log",
+      "description": "Audit trail for compliance and operational tracking.",
+      "exportCsv": "Export CSV",
+      "exportFailed": "CSV export failed",
+      "empty": "No audit log entries."
+    },
+    "platformPage": {
+      "title": "Platform audit log",
+      "description": "Unified audit trail across all tenants. Superuser only.",
+      "exportCsv": "Export CSV",
+      "exportExcel": "Export Excel",
+      "exportCsvSuccess": "CSV exported successfully",
+      "exportExcelSuccess": "Excel exported successfully",
+      "exportCsvFailed": "CSV export failed",
+      "exportExcelFailed": "Excel export failed",
+      "empty": "No platform audit log entries.",
+      "allTenants": "All tenants",
+      "tenantPlaceholder": "All tenants"
+    },
+    "columns": {
+      "timestamp": "Timestamp",
+      "action": "Action",
+      "product": "Product",
+      "user": "User",
+      "ipAddress": "IP address",
+      "tenant": "Tenant",
+      "view": "View"
+    },
+    "filters": {
+      "actionType": "Action type",
+      "fromDate": "From date",
+      "toDate": "To date"
+    },
+    "detail": {
+      "title": "Audit log entry #{id}",
+      "recordedOn": "Recorded on {datetime}",
+      "action": "Action",
+      "product": "Product",
+      "user": "User",
+      "ipAddress": "IP address",
+      "detailsJson": "Details (JSON)"
+    },
+    "actionLabels": {
+      "stock_received": "Stock received",
+      "stock_issued": "Stock issued",
+      "stock_transferred": "Stock transferred",
+      "stock_adjusted": "Stock adjusted",
+      "reservation_created": "Reservation created",
+      "reservation_fulfilled": "Reservation fulfilled",
+      "reservation_cancelled": "Reservation cancelled",
+      "cycle_count_started": "Cycle count started",
+      "cycle_count_reconciled": "Cycle count reconciled",
+      "bulk_operation": "Bulk operation",
+      "tenant_accessed": "Tenant accessed",
+      "tenant_export": "Tenant data exported"
+    }
+  },
+  "Reports": {
+    "index": {
+      "title": "Reports",
+      "description": "Generate and export inventory, procurement, and sales reports"
+    },
+    "shared": {
+      "dateFrom": "From",
+      "dateTo": "To",
+      "pickDate": "Pick a date",
+      "all": "All",
+      "selectMethod": "Select method",
+      "selectPeriod": "Select period"
+    },
+    "filters": {
+      "valuationMethod": "Valuation Method",
+      "period": "Period",
+      "movementType": "Movement type",
+      "varianceType": "Variance type",
+      "lookAheadDays": "Look-ahead (days)",
+      "thresholdMultiplier": "Threshold multiplier",
+      "productSku": "Product SKU",
+      "lotNumber": "Lot number"
+    },
+    "options": {
+      "period": {
+        "daily": "Daily",
+        "weekly": "Weekly",
+        "monthly": "Monthly"
+      },
+      "valuation": {
+        "weighted_average": "Weighted Average",
+        "latest_cost": "Latest Cost"
+      },
+      "movement": {
+        "receipt": "Receipt",
+        "issue": "Issue",
+        "transfer": "Transfer",
+        "adjustment": "Adjustment",
+        "return": "Return"
+      },
+      "variance": {
+        "shortage": "Shortage",
+        "surplus": "Surplus",
+        "match": "Match"
+      }
+    },
+    "expiryBadge": {
+      "expired": "Expired",
+      "expiring": "Expiring"
+    },
+    "columns": {
+      "cellEmpty": "—",
+      "sku": "SKU",
+      "product": "Product",
+      "category": "Category",
+      "quantity": "Quantity",
+      "unitCost": "Unit Cost",
+      "totalValue": "Total Value",
+      "type": "Type",
+      "qty": "Qty",
+      "from": "From",
+      "to": "To",
+      "reference": "Reference",
+      "date": "Date",
+      "reorderPoint": "Reorder Point",
+      "currentStock": "Current Stock",
+      "deficit": "Deficit",
+      "threshold": "Threshold",
+      "excess": "Excess",
+      "period": "Period",
+      "orders": "Orders",
+      "totalCost": "Total Cost",
+      "totalRevenue": "Total Revenue",
+      "totalQty": "Total Qty",
+      "reserved": "Reserved",
+      "available": "Available",
+      "reservedValue": "Reserved Value",
+      "status": "Status",
+      "lotNumber": "Lot Number",
+      "expiryDate": "Expiry Date",
+      "daysLeft": "Days Left",
+      "qtyRemaining": "Qty Remaining",
+      "supplier": "Supplier",
+      "cycle": "Cycle",
+      "location": "Location",
+      "systemQty": "System Qty",
+      "physicalQty": "Physical Qty",
+      "variance": "Variance",
+      "resolution": "Resolution",
+      "action": "Action",
+      "fromToLocation": "From / Location",
+      "salesOrder": "Sales Order",
+      "name": "Name",
+      "scheduled": "Scheduled",
+      "lines": "Lines",
+      "variances": "Variances",
+      "shortages": "Shortages",
+      "surpluses": "Surpluses",
+      "netVariance": "Net Variance",
+      "allLocations": "All"
+    },
+    "cards": {
+      "stockValuation": {
+        "title": "Stock Valuation",
+        "description": "View total inventory value using weighted average or latest cost methods"
+      },
+      "movementHistory": {
+        "title": "Movement History",
+        "description": "Browse all stock movements with date range and type filters"
+      },
+      "lowStock": {
+        "title": "Low Stock",
+        "description": "Products at or below their reorder point"
+      },
+      "overstock": {
+        "title": "Overstock",
+        "description": "Products exceeding their reorder point threshold"
+      },
+      "purchaseSummary": {
+        "title": "Purchase Summary",
+        "description": "Purchase order totals grouped by period"
+      },
+      "salesSummary": {
+        "title": "Sales Summary",
+        "description": "Sales order totals grouped by period"
+      },
+      "availability": {
+        "title": "Availability",
+        "description": "Per-product stock, reserved, and available quantities"
+      },
+      "productExpiry": {
+        "title": "Product Expiry",
+        "description": "Lots expiring soon or already expired"
+      },
+      "variances": {
+        "title": "Variances",
+        "description": "Inventory variance report from cycle counts"
+      },
+      "traceability": {
+        "title": "Traceability",
+        "description": "Full movement chain for a specific product and lot"
+      }
+    },
+    "pages": {
+      "stockValuation": {
+        "title": "Stock Valuation",
+        "description": "Inventory value by product using selected costing method",
+        "summaryTotalProducts": "Total Products",
+        "summaryTotalQuantity": "Total Quantity",
+        "summaryTotalValue": "Total Value",
+        "empty": "No stock valuation data."
+      },
+      "movementHistory": {
+        "title": "Movement History",
+        "description": "All stock movements with filters",
+        "empty": "No movements found for the selected filters."
+      },
+      "lowStock": {
+        "title": "Low Stock Report",
+        "description": "Products at or below their reorder point",
+        "empty": "No low-stock items found."
+      },
+      "overstock": {
+        "title": "Overstock Report",
+        "description": "Products exceeding their reorder point by the threshold multiplier",
+        "empty": "No overstock items found."
+      },
+      "purchaseSummary": {
+        "title": "Purchase Summary",
+        "description": "Purchase order totals grouped by period",
+        "totalOrders": "Total Orders",
+        "totalCost": "Total Cost",
+        "empty": "No purchase summary data for the selected period."
+      },
+      "salesSummary": {
+        "title": "Sales Summary",
+        "description": "Sales order totals grouped by period",
+        "totalOrders": "Total Orders",
+        "totalRevenue": "Total Revenue",
+        "empty": "No sales summary data for the selected period."
+      },
+      "availability": {
+        "title": "Availability Report",
+        "description": "Per-product stock, reserved, and available quantities",
+        "products": "Products",
+        "totalReservedValue": "Total Reserved Value",
+        "empty": "No availability data."
+      },
+      "productExpiry": {
+        "title": "Product Expiry Report",
+        "description": "Lots expiring soon or already expired",
+        "expired": "Expired lots",
+        "expiringSoon": "Expiring soon",
+        "totalLots": "Total lots (in window)",
+        "empty": "No expiry data for the selected window."
+      },
+      "variances": {
+        "title": "Variance Report",
+        "description": "Inventory variances from cycle counts",
+        "totalVariances": "Total variances",
+        "shortages": "Shortages",
+        "surpluses": "Surpluses",
+        "netVariance": "Net variance",
+        "empty": "No variances found for the selected filters."
+      },
+      "traceability": {
+        "title": "Product Traceability",
+        "description": "Full movement chain for a specific product and lot",
+        "placeholderSku": "Enter SKU",
+        "placeholderLot": "Enter lot number",
+        "promptEnterSkuAndLot": "Enter a product SKU and lot number to load the traceability chain.",
+        "productLabel": "Product",
+        "lotLabel": "Lot",
+        "expiresWithDate": "Expires {date}",
+        "supplierWithName": "Supplier: {name}",
+        "empty": "No traceability events found."
+      }
+    }
+  }
+}

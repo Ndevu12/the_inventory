@@ -5,9 +5,11 @@ import { Badge } from "@/components/ui/badge"
 import { DataTableColumnHeader } from "@/components/data-table"
 import type { PlatformAuditEntry } from "../types/audit.types"
 import { AUDIT_ACTION_COLOR_MAP } from "../helpers/audit-constants"
+import type { AuditColumnLabels } from "./audit-columns"
 
 interface PlatformAuditColumnActions {
   onViewDetails: (entry: PlatformAuditEntry) => void
+  labels: AuditColumnLabels & { tenant: string }
 }
 
 const DEFAULT_COLORS = {
@@ -26,11 +28,12 @@ function getActionColors(action: string) {
 export function getPlatformAuditColumns(
   actions: PlatformAuditColumnActions,
 ): ColumnDef<PlatformAuditEntry>[] {
+  const { labels: L } = actions
   return [
     {
       accessorKey: "timestamp",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Timestamp" />
+        <DataTableColumnHeader column={column} title={L.timestamp} />
       ),
       cell: ({ row }) => {
         const ts = row.original.timestamp
@@ -40,7 +43,7 @@ export function getPlatformAuditColumns(
     {
       accessorKey: "tenant_name",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Tenant" />
+        <DataTableColumnHeader column={column} title={L.tenant} />
       ),
       cell: ({ row }) => (
         <span className="font-medium">{row.original.tenant_name}</span>
@@ -50,7 +53,7 @@ export function getPlatformAuditColumns(
     {
       accessorKey: "action",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Action" />
+        <DataTableColumnHeader column={column} title={L.action} />
       ),
       cell: ({ row }) => {
         const action = row.original.action
@@ -72,12 +75,12 @@ export function getPlatformAuditColumns(
     {
       accessorKey: "product_name",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Product" />
+        <DataTableColumnHeader column={column} title={L.product} />
       ),
       cell: ({ row }) => {
         const { product_name, product_sku } = row.original
         if (!product_name)
-          return <span className="text-muted-foreground">—</span>
+          return <span className="text-muted-foreground">{L.emDash}</span>
         return (
           <div>
             <span className="font-medium">{product_name}</span>
@@ -94,20 +97,20 @@ export function getPlatformAuditColumns(
     {
       accessorKey: "username",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="User" />
+        <DataTableColumnHeader column={column} title={L.user} />
       ),
       cell: ({ row }) =>
         row.original.username ?? (
-          <span className="text-muted-foreground">System</span>
+          <span className="text-muted-foreground">{L.system}</span>
         ),
       enableSorting: false,
     },
     {
       accessorKey: "ip_address",
-      header: "IP Address",
+      header: L.ipAddress,
       cell: ({ row }) =>
         row.original.ip_address ?? (
-          <span className="text-muted-foreground">—</span>
+          <span className="text-muted-foreground">{L.emDash}</span>
         ),
       enableSorting: false,
     },
@@ -120,7 +123,7 @@ export function getPlatformAuditColumns(
           onClick={() => actions.onViewDetails(row.original)}
           className="text-sm font-medium text-primary underline-offset-4 hover:underline"
         >
-          View
+          {L.view}
         </button>
       ),
       enableSorting: false,

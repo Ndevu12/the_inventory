@@ -1,7 +1,9 @@
 "use client"
 
-import { useForm, useFieldArray } from "react-hook-form"
+import * as React from "react"
+import { useForm, useFieldArray, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useLocale, useTranslations } from "next-intl"
 import { PlusIcon, TrashIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -34,7 +36,7 @@ import {
 } from "@/components/ui/table"
 
 import {
-  createPurchaseOrderSchema,
+  buildCreatePurchaseOrderSchema,
   type CreatePurchaseOrderFormValues,
 } from "../../helpers/po-schemas"
 
@@ -65,15 +67,34 @@ export function POForm({
   onCancel,
   isSubmitting = false,
 }: POFormProps) {
+  const locale = useLocale()
+  const t = useTranslations("Procurement.purchaseOrders.form")
+  const tVal = useTranslations("Procurement.purchaseOrders.validation")
+  const tShared = useTranslations("Procurement.shared")
+  const tCommon = useTranslations("Common.actions")
+
+  const poSchema = React.useMemo(
+    () =>
+      buildCreatePurchaseOrderSchema({
+        productRequired: tVal("productRequired"),
+        quantityMin: tVal("quantityMin"),
+        unitCostRequired: tVal("unitCostRequired"),
+        unitCostPositive: tVal("unitCostPositive"),
+        supplierRequired: tVal("supplierRequired"),
+        orderDateRequired: tVal("orderDateRequired"),
+        atLeastOneLine: tVal("atLeastOneLine"),
+      }),
+    [tVal],
+  )
+
   const {
     register,
     handleSubmit,
     control,
-    watch,
     setValue,
     formState: { errors },
   } = useForm<CreatePurchaseOrderFormValues>({
-    resolver: zodResolver(createPurchaseOrderSchema),
+    resolver: zodResolver(poSchema),
     defaultValues: {
       supplier: 0,
       order_date: new Date().toISOString().split("T")[0],
@@ -88,7 +109,8 @@ export function POForm({
     name: "lines",
   })
 
-  const watchedLines = watch("lines")
+  const watchedLines = useWatch({ control, name: "lines" })
+  const supplierId = useWatch({ control, name: "supplier" })
 
   const lineTotal = (index: number): number => {
     const line = watchedLines?.[index]
@@ -101,32 +123,36 @@ export function POForm({
   const grandTotal = watchedLines?.reduce((sum, _, i) => sum + lineTotal(i), 0) ?? 0
 
   const formatCurrency = (value: number) =>
-    new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value)
+    new Intl.NumberFormat(locale, { style: "currency", currency: "USD" }).format(value)
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Order Details</CardTitle>
-          <CardDescription>Basic purchase order information</CardDescription>
+          <CardTitle>{t("orderDetailsTitle")}</CardTitle>
+          <CardDescription>{t("orderDetailsDescription")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label>Supplier *</Label>
+              <Label>
+                {t("supplier")} <span className="text-destructive">*</span>
+              </Label>
               <Select
-                value={watch("supplier") ? watch("supplier").toString() : ""}
+                value={supplierId ? supplierId.toString() : ""}
                 onValueChange={(val) =>
                   setValue("supplier", Number(val), { shouldValidate: true })
                 }
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select a supplier..." />
+                  <SelectValue placeholder={t("selectSupplier")} />
                 </SelectTrigger>
                 <SelectContent>
                   {suppliers.map((s) => (
                     <SelectItem key={s.id} value={s.id.toString()}>
-                      {s.code} — {s.name}
+                      {s.code}
+                      {tShared("nameSeparator")}
+                      {s.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -139,7 +165,9 @@ export function POForm({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="order_date">Order Date *</Label>
+              <Label htmlFor="order_date">
+                {t("orderDate")} <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="order_date"
                 type="date"
@@ -156,7 +184,7 @@ export function POForm({
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="expected_delivery_date">
-                Expected Delivery Date
+                {t("expectedDeliveryDate")}
               </Label>
               <Input
                 id="expected_delivery_date"
@@ -172,11 +200,11 @@ export function POForm({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="notes">Notes</Label>
+            <Label htmlFor="notes">{t("notes")}</Label>
             <Textarea
               id="notes"
               rows={3}
-              placeholder="Internal notes about this order..."
+              placeholder={t("notesPlaceholder")}
               {...register("notes")}
             />
           </div>
@@ -187,10 +215,8 @@ export function POForm({
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Line Items</CardTitle>
-              <CardDescription>
-                Products to order from this supplier
-              </CardDescription>
+              <CardTitle>{t("lineItemsTitle")}</CardTitle>
+              <CardDescription>{t("lineItemsDescription")}</CardDescription>
             </div>
             <Button
               type="button"
@@ -199,7 +225,7 @@ export function POForm({
               onClick={() => append({ product: 0, quantity: 1, unit_cost: "" })}
             >
               <PlusIcon className="mr-1 size-4" />
-              Add Line
+              {t("addLine")}
             </Button>
           </div>
         </CardHeader>
@@ -219,11 +245,11 @@ export function POForm({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[40%]">Product</TableHead>
-                  <TableHead className="w-[15%]">Quantity</TableHead>
-                  <TableHead className="w-[20%]">Unit Cost</TableHead>
+                  <TableHead className="w-[40%]">{t("colProduct")}</TableHead>
+                  <TableHead className="w-[15%]">{t("colQuantity")}</TableHead>
+                  <TableHead className="w-[20%]">{t("colUnitCost")}</TableHead>
                   <TableHead className="w-[15%] text-right">
-                    Line Total
+                    {t("colLineTotal")}
                   </TableHead>
                   <TableHead className="w-[10%]" />
                 </TableRow>
@@ -234,8 +260,8 @@ export function POForm({
                     <TableCell>
                       <Select
                         value={
-                          watch(`lines.${index}.product`)
-                            ? watch(`lines.${index}.product`).toString()
+                          watchedLines?.[index]?.product
+                            ? String(watchedLines[index].product)
                             : ""
                         }
                         onValueChange={(val) =>
@@ -245,12 +271,14 @@ export function POForm({
                         }
                       >
                         <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select product..." />
+                          <SelectValue placeholder={t("selectProduct")} />
                         </SelectTrigger>
                         <SelectContent>
                           {products.map((p) => (
                             <SelectItem key={p.id} value={p.id.toString()}>
-                              {p.sku} — {p.name}
+                              {p.sku}
+                              {tShared("nameSeparator")}
+                              {p.name}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -280,7 +308,7 @@ export function POForm({
                       <Input
                         type="text"
                         inputMode="decimal"
-                        placeholder="0.00"
+                        placeholder={t("unitCostPlaceholder")}
                         className="w-full"
                         {...register(`lines.${index}.unit_cost`)}
                       />
@@ -311,7 +339,7 @@ export function POForm({
               <TableFooter>
                 <TableRow>
                   <TableCell colSpan={3} className="text-right font-semibold">
-                    Grand Total
+                    {t("grandTotal")}
                   </TableCell>
                   <TableCell className="text-right font-semibold">
                     {formatCurrency(grandTotal)}
@@ -324,10 +352,10 @@ export function POForm({
         </CardContent>
         <CardFooter className="flex justify-end gap-2">
           <Button type="button" variant="outline" onClick={onCancel}>
-            Cancel
+            {tCommon("cancel")}
           </Button>
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Creating..." : "Create Purchase Order"}
+            {isSubmitting ? t("creating") : t("submit")}
           </Button>
         </CardFooter>
       </Card>

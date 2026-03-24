@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslations } from "next-intl"
 import type {
   ColumnDef,
   PaginationState,
@@ -35,6 +36,8 @@ export function POTable({
   filterContent,
   isLoading,
 }: POTableProps) {
+  const t = useTranslations("Procurement.purchaseOrders.list")
+
   return (
     <DataTable
       columns={columns}
@@ -46,10 +49,10 @@ export function POTable({
       onSortingChange={onSortingChange}
       searchValue={searchValue}
       onSearchChange={onSearchChange}
-      searchPlaceholder="Search purchase orders..."
+      searchPlaceholder={t("searchPlaceholder")}
       filterContent={filterContent}
       isLoading={isLoading}
-      emptyMessage="No purchase orders found."
+      emptyMessage={t("empty")}
     />
   )
 }

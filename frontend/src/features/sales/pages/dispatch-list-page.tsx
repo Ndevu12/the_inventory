@@ -1,16 +1,17 @@
 "use client"
 
 import * as React from "react"
-import Link from "next/link"
+import { Link, useRouter } from "@/i18n/navigation"
 import type { PaginationState, SortingState } from "@tanstack/react-table"
+import { useLocale, useTranslations } from "next-intl"
 import { PlusIcon } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/layout/page-header"
-import {
-  DataTableFacetedFilter,
-} from "@/components/data-table/data-table-faceted-filter"
+import type { ApiError } from "@/types/api-common"
+import { DataTableFacetedFilter } from "@/components/data-table/data-table-faceted-filter"
+import { DispatchFulfillmentDialog } from "../components/dispatches/dispatch-fulfillment-dialog"
 import { DispatchTable } from "../components/dispatches/dispatch-table"
 import { getDispatchColumns } from "../components/dispatch-columns"
 import {
@@ -18,10 +19,18 @@ import {
   useProcessDispatch,
   useDeleteDispatch,
 } from "../hooks/use-dispatches"
-import { DISPATCH_PROCESSED_OPTIONS } from "../helpers/dispatch-constants"
+import { DISPATCH_PROCESSED_FILTER_VALUES } from "../helpers/dispatch-constants"
 import type { Dispatch, DispatchListParams } from "../types/dispatch.types"
 
 export function DispatchListPage() {
+  const router = useRouter()
+  const locale = useLocale()
+  const t = useTranslations("Sales.dispatches.list")
+  const tCol = useTranslations("Sales.dispatches.columns")
+  const tAct = useTranslations("Sales.dispatches.actions")
+  const tProc = useTranslations("Sales.dispatchProcessed")
+  const tShared = useTranslations("Sales.shared")
+
   const processMutation = useProcessDispatch()
   const deleteMutation = useDeleteDispatch()
 
@@ -33,6 +42,10 @@ export function DispatchListPage() {
     { id: "dispatch_date", desc: true },
   ])
   const [processedFilter, setProcessedFilter] = React.useState<string[]>([])
+  const [fulfillmentDialog, setFulfillmentDialog] = React.useState<{
+    dispatch: Dispatch
+    intro?: string
+  } | null>(null)
 
   const params = React.useMemo<DispatchListParams>(() => {
     const p: DispatchListParams = {
@@ -54,52 +67,107 @@ export function DispatchListPage() {
 
   const { data, isLoading } = useDispatches(params)
 
-  const handleView = React.useCallback((_dispatch: Dispatch) => {
-    // detail view can be added later
-  }, [])
+  const handleView = React.useCallback(
+    (dispatch: Dispatch) => {
+      router.push(`/sales/sales-orders/${dispatch.sales_order}`)
+    },
+    [router],
+  )
 
   const handleProcess = React.useCallback(
     (dispatch: Dispatch) => {
       if (
         !confirm(
-          `Process dispatch "${dispatch.dispatch_number}"? This will create stock movements and cannot be undone.`,
+          t("processPrompt", { dispatchNumber: dispatch.dispatch_number }),
         )
       )
         return
-      processMutation.mutate(dispatch.id, {
-        onSuccess: () =>
-          toast.success(
-            `Dispatch "${dispatch.dispatch_number}" processed — stock movements created`,
-          ),
-        onError: (error) => {
-          const message =
-            (error as { message?: string }).message ??
-            "Failed to process dispatch"
-          toast.error(message)
+      processMutation.mutate(
+        { id: dispatch.id },
+        {
+          onSuccess: () =>
+            toast.success(
+              t("toastProcessed", {
+                dispatchNumber: dispatch.dispatch_number,
+              }),
+            ),
+          onError: (error: unknown) => {
+            const e = error as unknown as ApiError
+            toast.error(e.message || t("processFailed"))
+            if (e.status === 400) {
+              setFulfillmentDialog({
+                dispatch,
+                intro: e.message,
+              })
+            }
+          },
         },
-      })
+      )
     },
-    [processMutation],
+    [processMutation, t],
   )
+
+  const handleReviewStock = React.useCallback((dispatch: Dispatch) => {
+    setFulfillmentDialog({ dispatch })
+  }, [])
 
   const handleDelete = React.useCallback(
     (dispatch: Dispatch) => {
-      if (!confirm(`Delete dispatch "${dispatch.dispatch_number}"?`)) return
+      if (!confirm(t("deletePrompt", { dispatchNumber: dispatch.dispatch_number })))
+        return
       deleteMutation.mutate(dispatch.id, {
         onSuccess: () =>
-          toast.success(`Dispatch "${dispatch.dispatch_number}" deleted`),
-        onError: () => toast.error("Failed to delete dispatch"),
+          toast.success(
+            t("toastDeleted", { dispatchNumber: dispatch.dispatch_number }),
+          ),
+        onError: (error: unknown) => {
+          const e = error as unknown as ApiError
+          toast.error(e.message || t("deleteFailed"))
+        },
       })
     },
-    [deleteMutation],
+    [deleteMutation, t],
+  )
+
+  const columnLabels = React.useMemo(
+    () => ({
+      tColumns: (key: string) => tCol(key),
+      emDash: tShared("emDash"),
+      processedLabel: tCol("processed"),
+      pendingLabel: tCol("pending"),
+      viewLabel: tAct("view"),
+      reviewStockLabel: tAct("reviewStock"),
+      processDispatchLabel: tAct("processDispatch"),
+      deleteLabel: tAct("delete"),
+      locale,
+    }),
+    [tCol, tShared, tAct, locale],
   )
 
   const columns = React.useMemo(
-    () => getDispatchColumns({ onView: handleView, onProcess: handleProcess, onDelete: handleDelete }),
-    [handleView, handleProcess, handleDelete],
+    () =>
+      getDispatchColumns(
+        {
+          onView: handleView,
+          onReviewStock: handleReviewStock,
+          onProcess: handleProcess,
+          onDelete: handleDelete,
+        },
+        columnLabels,
+      ),
+    [handleView, handleReviewStock, handleProcess, handleDelete, columnLabels],
   )
 
   const pageCount = data ? Math.ceil(data.count / pagination.pageSize) : 0
+
+  const processedOptions = React.useMemo(
+    () =>
+      DISPATCH_PROCESSED_FILTER_VALUES.map((value) => ({
+        value,
+        label: value === "true" ? tProc("processed") : tProc("pending"),
+      })),
+    [tProc],
+  )
 
   const fakeColumn = React.useMemo(
     () =>
@@ -117,12 +185,12 @@ export function DispatchListPage() {
   return (
     <div className="flex flex-1 flex-col gap-6 p-6">
       <PageHeader
-        title="Dispatches"
-        description="Manage and process dispatches for sales orders"
+        title={t("title")}
+        description={t("description")}
         actions={
           <Button render={<Link href="/sales/dispatches/new" />}>
             <PlusIcon className="size-4" data-icon="inline-start" />
-            New Dispatch
+            {t("newButton")}
           </Button>
         }
       />
@@ -137,10 +205,19 @@ export function DispatchListPage() {
         filterContent={
           <DataTableFacetedFilter
             column={fakeColumn}
-            title="Status"
-            options={DISPATCH_PROCESSED_OPTIONS}
+            title={t("statusFilter")}
+            options={processedOptions}
           />
         }
+      />
+
+      <DispatchFulfillmentDialog
+        open={fulfillmentDialog != null}
+        onOpenChange={(open) => {
+          if (!open) setFulfillmentDialog(null)
+        }}
+        dispatch={fulfillmentDialog?.dispatch ?? null}
+        introText={fulfillmentDialog?.intro}
       />
     </div>
   )

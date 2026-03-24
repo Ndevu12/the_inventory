@@ -1,9 +1,8 @@
 """JWT authentication middleware.
 
-DRF's authentication runs at the view layer, after all middleware.
-This middleware pre-authenticates JWT requests so that ``request.user``
-is available to ``TenantMiddleware`` for automatic tenant resolution
-from user memberships.
+DRF also authenticates at the view layer; this runs earlier so
+``request.user`` is set before :class:`tenants.middleware.TenantMiddleware`
+resolves ``request.tenant`` from memberships (Bearer token flows).
 """
 
 from rest_framework_simplejwt.authentication import JWTAuthentication

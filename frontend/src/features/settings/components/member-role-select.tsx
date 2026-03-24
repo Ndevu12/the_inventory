@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslations } from "next-intl"
 import {
   Select,
   SelectContent,
@@ -7,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { ROLE_OPTIONS } from "../helpers/settings-constants"
+import { TENANT_ROLE_VALUES } from "../helpers/settings-constants"
 import type { TenantRole } from "../types/settings.types"
 
 interface MemberRoleSelectProps {
@@ -21,6 +22,8 @@ export function MemberRoleSelect({
   onValueChange,
   disabled,
 }: MemberRoleSelectProps) {
+  const t = useTranslations("SettingsTenant.roles")
+
   return (
     <Select
       value={value}
@@ -31,9 +34,9 @@ export function MemberRoleSelect({
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
-        {ROLE_OPTIONS.map((opt) => (
-          <SelectItem key={opt.value} value={opt.value}>
-            {opt.label}
+        {TENANT_ROLE_VALUES.map((role) => (
+          <SelectItem key={role} value={role}>
+            {t(role)}
           </SelectItem>
         ))}
       </SelectContent>

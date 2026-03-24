@@ -34,6 +34,13 @@ export interface MeResponse {
   memberships: Membership[];
 }
 
+/** Body for PATCH /auth/me/ (partial updates allowed). */
+export interface UpdateProfileRequest {
+  email?: string;
+  first_name?: string;
+  last_name?: string;
+}
+
 export interface ChangePasswordRequest {
   old_password: string;
   new_password: string;

@@ -1,5 +1,7 @@
 "use client"
 
+import type { ReactNode } from "react"
+import { useTranslations } from "next-intl"
 import { DataTable } from "@/components/data-table"
 import type { ColumnDef, PaginationState } from "@tanstack/react-table"
 import type { TenantMember } from "../types/settings.types"
@@ -27,6 +29,8 @@ export function MemberTable({
   isLoading,
   filterContent,
 }: MemberTableProps) {
+  const t = useTranslations("SettingsTenant.members")
+
   return (
     <DataTable
       columns={columns}
@@ -36,10 +40,10 @@ export function MemberTable({
       onPaginationChange={onPaginationChange}
       searchValue={searchValue}
       onSearchChange={onSearchChange}
-      searchPlaceholder="Search members..."
+      searchPlaceholder={t("searchPlaceholder")}
       filterContent={filterContent}
       isLoading={isLoading}
-      emptyMessage="No team members found."
+      emptyMessage={t("emptyMessage")}
     />
   )
 }

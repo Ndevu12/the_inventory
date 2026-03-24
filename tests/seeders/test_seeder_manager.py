@@ -159,10 +159,13 @@ class SeederManagerTestCase(TransactionTestCase):
             is_active=True,
         )
 
+        from seeders.locale_support import canonical_wagtail_locale_for_tenant
+
         Category.objects.create(
             tenant=tenant,
             name="Old Category",
             slug="old-category",
+            locale=canonical_wagtail_locale_for_tenant(tenant),
         )
 
         initial_all_categories = Category.objects.count()

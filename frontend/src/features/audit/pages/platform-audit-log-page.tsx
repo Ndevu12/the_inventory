@@ -4,6 +4,7 @@ import * as React from "react"
 import type { PaginationState } from "@tanstack/react-table"
 import { DownloadIcon, FileSpreadsheetIcon } from "lucide-react"
 import { toast } from "sonner"
+import { useTranslations } from "next-intl"
 
 import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/layout/page-header"
@@ -19,9 +20,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { useAuth } from "@/features/auth/context/auth-context"
 import { usePlatformAuditLog } from "../hooks/use-audit"
 import {
   triggerPlatformAuditExport,
@@ -29,13 +27,19 @@ import {
 import { usePlatformTenants } from "@/features/settings/hooks/use-platform-users"
 import { AuditDetailDialog } from "../components/audit-detail-dialog"
 import { getPlatformAuditColumns } from "../components/platform-audit-columns"
-import { AUDIT_ACTION_OPTIONS } from "../helpers/audit-constants"
+import { getAuditActionFilterOptions } from "../helpers/audit-constants"
 import type {
   PlatformAuditEntry,
   PlatformAuditListParams,
 } from "../types/audit.types"
+import type { AuditColumnLabels } from "../components/audit-columns"
 
 export function PlatformAuditLogPage() {
+  const tPage = useTranslations("Audit.platformPage")
+  const tCols = useTranslations("Audit.columns")
+  const tAudit = useTranslations("Audit")
+  const tFilters = useTranslations("Audit.filters")
+  const tActions = useTranslations("Audit.actionLabels")
   const { data: tenants = [] } = usePlatformTenants()
 
   const [pagination, setPagination] = React.useState<PaginationState>({
@@ -89,29 +93,55 @@ export function PlatformAuditLogPage() {
     setExporting("csv")
     try {
       await triggerPlatformAuditExport("csv", params)
-      toast.success("CSV exported successfully")
+      toast.success(tPage("exportCsvSuccess"))
     } catch {
-      toast.error("Failed to export CSV")
+      toast.error(tPage("exportCsvFailed"))
     } finally {
       setExporting(null)
     }
-  }, [params])
+  }, [params, tPage])
 
   const handleExportExcel = React.useCallback(async () => {
     setExporting("xlsx")
     try {
       await triggerPlatformAuditExport("xlsx", params)
-      toast.success("Excel exported successfully")
+      toast.success(tPage("exportExcelSuccess"))
     } catch {
-      toast.error("Failed to export Excel")
+      toast.error(tPage("exportExcelFailed"))
     } finally {
       setExporting(null)
     }
-  }, [params])
+  }, [params, tPage])
+
+  const columnLabels = React.useMemo<
+    AuditColumnLabels & { tenant: string }
+  >(
+    () => ({
+      timestamp: tCols("timestamp"),
+      action: tCols("action"),
+      product: tCols("product"),
+      user: tCols("user"),
+      ipAddress: tCols("ipAddress"),
+      tenant: tCols("tenant"),
+      view: tCols("view"),
+      system: tAudit("system"),
+      emDash: tAudit("emDash"),
+    }),
+    [tCols, tAudit],
+  )
 
   const columns = React.useMemo(
-    () => getPlatformAuditColumns({ onViewDetails: handleViewDetails }),
-    [handleViewDetails],
+    () =>
+      getPlatformAuditColumns({
+        onViewDetails: handleViewDetails,
+        labels: columnLabels,
+      }),
+    [handleViewDetails, columnLabels],
+  )
+
+  const actionOptions = React.useMemo(
+    () => getAuditActionFilterOptions((action) => tActions(action)),
+    [tActions],
   )
 
   const fakeActionColumn = React.useMemo(
@@ -130,8 +160,8 @@ export function PlatformAuditLogPage() {
   return (
     <div className="flex flex-1 flex-col gap-6 p-6">
       <PageHeader
-        title="Platform Audit Log"
-        description="Unified audit trail across all tenants. Superuser only."
+        title={tPage("title")}
+        description={tPage("description")}
         actions={
           <div className="flex gap-2">
             <Button
@@ -140,7 +170,7 @@ export function PlatformAuditLogPage() {
               disabled={!!exporting}
             >
               <DownloadIcon className="mr-2 size-4" />
-              Export CSV
+              {tPage("exportCsv")}
             </Button>
             <Button
               variant="outline"
@@ -148,7 +178,7 @@ export function PlatformAuditLogPage() {
               disabled={!!exporting}
             >
               <FileSpreadsheetIcon className="mr-2 size-4" />
-              Export Excel
+              {tPage("exportExcel")}
             </Button>
           </div>
         }
@@ -161,26 +191,26 @@ export function PlatformAuditLogPage() {
         pagination={pagination}
         onPaginationChange={setPagination}
         isLoading={isLoading}
-        emptyMessage="No platform audit log entries found."
+        emptyMessage={tPage("empty")}
         filterContent={
           <div className="flex flex-wrap items-center gap-2">
             <DataTableFacetedFilter
               column={fakeActionColumn}
-              title="Action Type"
-              options={AUDIT_ACTION_OPTIONS}
+              title={tFilters("actionType")}
+              options={actionOptions}
             />
             <Select
               value={tenantFilter || "all"}
               onValueChange={(value) => setTenantFilter(value as string)}
             >
               <SelectTrigger className="h-8 w-[180px]">
-                <SelectValue placeholder="All tenants" />
+                <SelectValue placeholder={tPage("tenantPlaceholder")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All tenants</SelectItem>
-                {tenants.map((t) => (
-                  <SelectItem key={t.id} value={String(t.id)}>
-                    {t.name}
+                <SelectItem value="all">{tPage("allTenants")}</SelectItem>
+                {tenants.map((tenant) => (
+                  <SelectItem key={tenant.id} value={String(tenant.id)}>
+                    {tenant.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -190,14 +220,14 @@ export function PlatformAuditLogPage() {
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
               className="h-8 w-[150px]"
-              placeholder="From date"
+              placeholder={tFilters("fromDate")}
             />
             <Input
               type="date"
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
               className="h-8 w-[150px]"
-              placeholder="To date"
+              placeholder={tFilters("toDate")}
             />
           </div>
         }

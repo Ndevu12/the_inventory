@@ -1,0 +1,316 @@
+{
+  "SettingsTenant": {
+    "tenant": {
+      "page": {
+        "title": "Tenant Settings",
+        "description": "Manage your organisation profile and branding"
+      },
+      "loadError": "Unable to load tenant information",
+      "toast": {
+        "updated": "Tenant settings updated",
+        "updateFailed": "Failed to update tenant settings"
+      },
+      "profile": {
+        "title": "Profile",
+        "description": "Update your tenant name and branding"
+      },
+      "reset": "Reset",
+      "save": "Save Changes",
+      "saving": "Saving…",
+      "form": {
+        "tenantName": "Tenant Name",
+        "siteName": "Site Name",
+        "primaryColor": "Primary Color",
+        "colorPickerAria": "Pick primary color",
+        "placeholderOrg": "My Organisation",
+        "placeholderSite": "Inventory Portal",
+        "placeholderColor": "#3B82F6",
+        "requiredMarker": "required"
+      },
+      "validation": {
+        "nameRequired": "Tenant name is required",
+        "hexColor": "Must be a valid hex color (e.g. #3B82F6)"
+      }
+    },
+    "subscription": {
+      "title": "Subscription",
+      "description": "Your current plan and usage",
+      "planLabel": "Plan",
+      "usageUsers": "Users",
+      "usageProducts": "Products"
+    },
+    "roles": {
+      "owner": "Owner",
+      "admin": "Admin",
+      "manager": "Manager",
+      "viewer": "Viewer"
+    },
+    "plans": {
+      "free": "Free",
+      "starter": "Starter",
+      "professional": "Professional",
+      "enterprise": "Enterprise"
+    },
+    "subscriptionStatus": {
+      "active": "Active",
+      "trial": "Trial",
+      "past_due": "Past Due",
+      "cancelled": "Cancelled",
+      "suspended": "Suspended"
+    },
+    "members": {
+      "page": {
+        "title": "Team Members",
+        "description": "Manage team members and their roles"
+      },
+      "searchPlaceholder": "Search members…",
+      "emptyMessage": "No team members found.",
+      "toast": {
+        "roleUpdated": "Updated {username}'s role to {role}",
+        "roleFailed": "Failed to update role",
+        "removed": "Removed {username} from team",
+        "removeFailed": "Failed to remove member"
+      },
+      "removeDialog": {
+        "title": "Remove team member",
+        "descriptionLead": "Are you sure you want to remove",
+        "descriptionTrail": " from the team? They will lose access to this tenant immediately."
+      },
+      "remove": "Remove",
+      "removing": "Removing…",
+      "columns": {
+        "user": "User",
+        "email": "Email",
+        "role": "Role",
+        "status": "Status",
+        "joined": "Joined"
+      },
+      "memberStatus": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "srRemoveMember": "Remove member"
+    },
+    "invite": {
+      "trigger": "Invite Member",
+      "title": "Invite a team member",
+      "description": "Send an invitation by email. They will receive a link to join your organization.",
+      "email": "Email address",
+      "role": "Role",
+      "placeholderEmail": "colleague@company.com",
+      "sendInvitation": "Send Invitation",
+      "sending": "Sending…",
+      "toastSent": "Invitation sent to {email}",
+      "toastFailed": "Failed to send invitation"
+    },
+    "pendingInvitations": {
+      "heading": "Pending Invitations",
+      "headingCount": "({count})",
+      "columns": {
+        "email": "Email",
+        "role": "Role",
+        "status": "Status",
+        "expires": "Expires"
+      },
+      "srCancelInvitation": "Cancel invitation",
+      "cancelDialog": {
+        "title": "Cancel invitation",
+        "descriptionLead": "Are you sure you want to cancel the invitation to",
+        "descriptionTrail": "? The invitation link will no longer work."
+      },
+      "keep": "Keep",
+      "cancelInvitation": "Cancel Invitation",
+      "cancelling": "Cancelling…",
+      "toastCancelled": "Invitation to {email} cancelled",
+      "toastCancelFailed": "Failed to cancel invitation",
+      "invitationStatus": {
+        "pending": "Pending",
+        "accepted": "Accepted",
+        "cancelled": "Cancelled",
+        "expired": "Expired"
+      }
+    },
+    "acceptInvitation": {
+      "invalidTitle": "Invalid Invitation",
+      "invalidDescription": "This invitation link is invalid, expired, or has already been used.",
+      "goToLogin": "Go to Login",
+      "alreadyTitle": "Invitation {status}",
+      "alreadyDescription": "This invitation has already been {status}.",
+      "joinTitle": "Join {tenant}",
+      "invitedPrefix": "You've been invited to join as",
+      "invitationFor": "Invitation for",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "username": "Username",
+      "password": "Password",
+      "placeholderFirst": "Jane",
+      "placeholderLast": "Doe",
+      "placeholderUsername": "janedoe",
+      "placeholderPasswordNew": "Min. 8 characters",
+      "existingAccountHint": "An account with this email already exists. Enter your password to confirm your identity and join the organization.",
+      "existingPassword": "Password",
+      "placeholderExistingPassword": "Your password",
+      "joining": "Joining…",
+      "joinAction": "Join {tenant}",
+      "expires": "Expires {date}",
+      "acceptFailed": "Failed to accept invitation"
+    }
+  },
+  "SettingsPlatform": {
+    "billing": {
+      "page": {
+        "title": "Billing & Subscriptions",
+        "description": "Manage tenant plans, usage, and billing (superuser only)"
+      },
+      "columns": {
+        "tenant": "Tenant",
+        "plan": "Plan",
+        "status": "Status",
+        "active": "Active",
+        "usage": "Usage"
+      },
+      "yes": "Yes",
+      "no": "No",
+      "usageUsers": "{current}/{max} users",
+      "usageProducts": "{current}/{max} products",
+      "searchPlaceholder": "Search tenants…",
+      "emptyMessage": "No tenants found.",
+      "ariaExport": "Export tenant data",
+      "ariaChangePlan": "Change plan",
+      "ariaSuspend": "Suspend",
+      "ariaReactivate": "Reactivate",
+      "toast": {
+        "suspended": "{name} has been suspended",
+        "suspendFailed": "Failed to suspend tenant",
+        "reactivated": "{name} has been reactivated",
+        "reactivateFailed": "Failed to reactivate tenant",
+        "exportSuccess": "Export for {name} downloaded",
+        "exportFailed": "Failed to export tenant data",
+        "subscriptionUpdated": "Subscription updated",
+        "subscriptionUpdateFailed": "Failed to update subscription"
+      },
+      "suspendDialog": {
+        "title": "Suspend tenant",
+        "descriptionLead": "Are you sure you want to suspend",
+        "descriptionTrail": "? The tenant will not be able to log in or access data until reactivated."
+      },
+      "reactivateDialog": {
+        "title": "Reactivate tenant",
+        "descriptionLead": "Are you sure you want to reactivate",
+        "descriptionTrail": "? The tenant will be able to log in and access data again."
+      },
+      "suspend": "Suspend",
+      "suspending": "Suspending…",
+      "reactivate": "Reactivate",
+      "reactivating": "Reactivating…",
+      "changePlan": {
+        "title": "Change plan — {name}",
+        "description": "Update subscription plan, status, or billing notes.",
+        "plan": "Plan",
+        "status": "Status",
+        "billingNotes": "Billing notes (optional)",
+        "billingNotesPlaceholder": "Payment issues, custom arrangements, etc.",
+        "saving": "Saving…"
+      }
+    },
+    "users": {
+      "page": {
+        "title": "Platform Users",
+        "description": "Manage all users across tenants (superuser only)"
+      },
+      "createUser": "Create User",
+      "searchPlaceholder": "Search by email or username…",
+      "emptyMessage": "No users found.",
+      "columns": {
+        "user": "User",
+        "email": "Email",
+        "status": "Status",
+        "tenants": "Tenants",
+        "joined": "Joined"
+      },
+      "userStatus": {
+        "active": "Active",
+        "suspended": "Suspended"
+      },
+      "moreTenants": "+{count}",
+      "ariaImpersonate": "Impersonate",
+      "ariaResetPassword": "Reset password",
+      "ariaSuspendUser": "Suspend user",
+      "suspend": "Suspend",
+      "suspending": "Suspending…",
+      "toast": {
+        "userSuspended": "{username} has been suspended",
+        "suspendFailed": "Failed to suspend user",
+        "passwordReset": "Password has been reset",
+        "passwordResetFailed": "Failed to reset password",
+        "impersonating": "Impersonating {username}",
+        "impersonateFailed": "Failed to impersonate",
+        "userCreated": "User {username} created",
+        "createFailed": "Failed to create user"
+      },
+      "suspendDialog": {
+        "title": "Suspend user",
+        "descriptionLead": "Are you sure you want to suspend",
+        "descriptionTrail": "? They will lose access to all tenants. This can be reversed by editing the user."
+      },
+      "resetPassword": {
+        "title": "Reset password",
+        "description": "Enter a new password for this user. Minimum 8 characters.",
+        "newPassword": "New password",
+        "placeholder": "Min 8 characters",
+        "resetting": "Resetting…",
+        "reset": "Reset"
+      },
+      "createDialog": {
+        "title": "Create user",
+        "description": "Create a new user and optionally assign them to tenants.",
+        "username": "Username",
+        "email": "Email",
+        "password": "Password",
+        "defaultRole": "Default role (for assigned tenants)",
+        "assignTenants": "Assign to tenants",
+        "placeholderUsername": "jdoe",
+        "placeholderEmail": "jane@example.com",
+        "placeholderPassword": "Min 8 characters",
+        "creating": "Creating…",
+        "create": "Create"
+      }
+    },
+    "invitations": {
+      "page": {
+        "title": "Invitations",
+        "description": "All tenant invitations across the platform. Superuser only."
+      },
+      "emptyMessage": "No invitations found.",
+      "filterAllStatuses": "All statuses",
+      "filterStatusPlaceholder": "Status",
+      "filterAllTenants": "All tenants",
+      "filterTenantPlaceholder": "Tenant",
+      "filterFrom": "From",
+      "filterTo": "To",
+      "toast": {
+        "cancelled": "Invitation cancelled",
+        "cancelFailed": "Failed to cancel invitation",
+        "resent": "Invitation resent successfully",
+        "resendFailed": "Failed to resend invitation"
+      },
+      "columns": {
+        "email": "Email",
+        "tenant": "Tenant",
+        "role": "Role",
+        "status": "Status",
+        "created": "Created",
+        "expires": "Expires",
+        "invitedBy": "Invited by"
+      },
+      "rowCancel": "Cancel",
+      "rowResend": "Resend",
+      "status": {
+        "pending": "Pending",
+        "accepted": "Accepted",
+        "cancelled": "Cancelled",
+        "expired": "Expired"
+      }
+    }
+  }
+}

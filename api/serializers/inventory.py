@@ -12,10 +12,26 @@ from inventory.models import (
     StockMovementLot,
     StockRecord,
 )
+from inventory.models.reservation import AllocationStrategy
 from tenants.middleware import get_effective_tenant
 
+from api.serializers.localized_strings import (
+    attribute_in_display_locale,
+    display_locale_from_context,
+)
+from api.serializers.translatable_representation import TranslatableRepresentationMixin
+from api.serializers.translatable_writable import TranslatableWritableMixin
 
-class CategorySerializer(serializers.ModelSerializer):
+
+class CategorySerializer(
+    TranslatableWritableMixin,
+    TranslatableRepresentationMixin,
+    serializers.ModelSerializer,
+):
+    """Translatable (per Wagtail locale): ``name``, ``slug``, ``description``."""
+
+    translatable_overlay_fields = ("name", "slug", "description")
+
     class Meta:
         model = Category
         fields = [
@@ -24,16 +40,29 @@ class CategorySerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["created_at", "updated_at"]
 
+    def _create_canonical_row(self, validated_data):
+        tenant = validated_data.pop("tenant")
+        created_by = validated_data.pop("created_by", None)
+        loc = validated_data.pop("locale")
+        return Category.add_root(
+            tenant=tenant,
+            created_by=created_by,
+            locale=loc,
+            **validated_data,
+        )
+
     def validate_slug(self, value):
         request = self.context.get("request")
         tenant = self.context.get("tenant") or (
             get_effective_tenant(request) if request else None
         )
+        loc = self.context.get("wagtail_write_locale")
         qs = Category.objects.filter(slug=value)
         if tenant:
             qs = qs.filter(tenant=tenant)
-        if self.instance:
-            qs = qs.exclude(pk=self.instance.pk)
+        if loc:
+            qs = qs.filter(locale_id=loc.id)
+        qs = self._same_translation_group_qs(qs, self.instance)
         if qs.exists():
             raise serializers.ValidationError(
                 "A category with this slug already exists for this tenant."
@@ -41,12 +70,21 @@ class CategorySerializer(serializers.ModelSerializer):
         return value
 
 
-class ProductSerializer(serializers.ModelSerializer):
-    category_name = serializers.CharField(
-        source="category.name", read_only=True, default=None,
-    )
+class ProductSerializer(
+    TranslatableWritableMixin,
+    TranslatableRepresentationMixin,
+    serializers.ModelSerializer,
+):
+    """Translatable: ``name``, ``description``. ``category_name`` follows the same display locale."""
+
+    translatable_overlay_fields = ("name", "description")
+
+    category_name = serializers.SerializerMethodField()
     unit_of_measure_display = serializers.CharField(
         source="get_unit_of_measure_display", read_only=True,
+    )
+    tracking_mode_display = serializers.CharField(
+        source="get_tracking_mode_display", read_only=True,
     )
 
     class Meta:
@@ -54,21 +92,32 @@ class ProductSerializer(serializers.ModelSerializer):
         fields = [
             "id", "sku", "name", "description", "category", "category_name",
             "unit_of_measure", "unit_of_measure_display",
+            "tracking_mode", "tracking_mode_display",
             "unit_cost", "reorder_point", "is_active",
             "created_at", "updated_at",
         ]
         read_only_fields = ["created_at", "updated_at"]
+
+    def get_category_name(self, obj):
+        category = obj.category
+        if category is None:
+            return None
+        return attribute_in_display_locale(
+            category, "name", display_locale_from_context(self.context),
+        )
 
     def validate_sku(self, value):
         request = self.context.get("request")
         tenant = self.context.get("tenant") or (
             get_effective_tenant(request) if request else None
         )
+        loc = self.context.get("wagtail_write_locale")
         qs = Product.objects.filter(sku=value)
         if tenant:
             qs = qs.filter(tenant=tenant)
-        if self.instance:
-            qs = qs.exclude(pk=self.instance.pk)
+        if loc:
+            qs = qs.filter(locale_id=loc.id)
+        qs = self._same_translation_group_qs(qs, self.instance)
         if qs.exists():
             raise serializers.ValidationError(
                 "A product with this SKU already exists for this tenant."
@@ -91,8 +140,10 @@ class StockLocationSerializer(serializers.ModelSerializer):
 
 
 class StockRecordSerializer(serializers.ModelSerializer):
+    """``product_name`` uses the request display locale when ``product`` is translatable."""
+
     product_sku = serializers.CharField(source="product.sku", read_only=True)
-    product_name = serializers.CharField(source="product.name", read_only=True)
+    product_name = serializers.SerializerMethodField()
     location_name = serializers.CharField(source="location.name", read_only=True)
     reserved_quantity = serializers.IntegerField(read_only=True)
     available_quantity = serializers.IntegerField(read_only=True)
@@ -110,6 +161,11 @@ class StockRecordSerializer(serializers.ModelSerializer):
             "id", "product", "location", "quantity",
             "created_at", "updated_at",
         ]
+
+    def get_product_name(self, obj):
+        return attribute_in_display_locale(
+            obj.product, "name", display_locale_from_context(self.context),
+        )
 
 
 class StockLotSerializer(serializers.ModelSerializer):
@@ -227,9 +283,9 @@ class StockMovementCreateSerializer(serializers.Serializer):
         required=False, allow_null=True, default=None,
     )
     allocation_strategy = serializers.ChoiceField(
-        choices=[("FIFO", "FIFO"), ("LIFO", "LIFO")],
+        choices=AllocationStrategy.choices,
         required=False,
-        default="FIFO",
+        default=AllocationStrategy.FIFO,
     )
 
     @property

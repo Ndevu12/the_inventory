@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { toast } from "sonner";
 
 import { useAuthStore } from "@/lib/auth-store";
@@ -10,13 +10,32 @@ import { isTokenExpired } from "../helpers/auth-utils";
 import type {
   LoginRequest,
   ChangePasswordRequest,
+  MeResponse,
   RegisterRequest,
+  UpdateProfileRequest,
 } from "../types/auth.types";
+import type { ApiError } from "@/types/api-common";
 
 export const authKeys = {
   me: ["auth", "me"] as const,
   config: ["auth", "config"] as const,
 };
+
+/** Keep Zustand in sync with GET /auth/me/ (shared by all observers on `authKeys.me`). */
+function syncMeResponseToStore(data: MeResponse): void {
+  const { setUser, setTenant, setMemberships } = useAuthStore.getState();
+  setUser(data.user);
+  if (data.tenant) {
+    setTenant(data.tenant.slug);
+  }
+  setMemberships(data.memberships ?? []);
+}
+
+async function fetchMeAndSyncStore(): Promise<MeResponse> {
+  const data = await authApi.fetchMe();
+  syncMeResponseToStore(data);
+  return data;
+}
 
 export function useLogin() {
   const { setTokens, setUser, setTenant, setMemberships } = useAuthStore();
@@ -49,7 +68,7 @@ export function useMe(enabled = true) {
 
   return useQuery({
     queryKey: authKeys.me,
-    queryFn: authApi.fetchMe,
+    queryFn: fetchMeAndSyncStore,
     enabled: enabled && !!accessToken && !isTokenExpired(accessToken),
     staleTime: 5 * 60 * 1000,
     retry: false,
@@ -57,24 +76,15 @@ export function useMe(enabled = true) {
 }
 
 export function useBootstrapAuth() {
-  const { accessToken, refreshToken, setUser, setTenant, setMemberships } =
-    useAuthStore();
-  // Run whenever we have tokens - fetches user/tenant/memberships. After login we have user/tenant
-  // but need memberships; on reload we need all. Never triggers redirect on failure - api-client
-  // only logs out on explicit 401 from refresh, not network errors.
+  const { accessToken, refreshToken } = useAuthStore();
+  // Run whenever we have tokens - refreshes user/tenant/memberships (e.g. after reload).
+  // Must use the same queryFn as useMe() so TenantLocaleSync (mounted earlier) does not
+  // steal the fetch and leave memberships unset in Zustand.
   const hasToken = !!accessToken || !!refreshToken;
 
   return useQuery({
     queryKey: authKeys.me,
-    queryFn: async () => {
-      const data = await authApi.fetchMe();
-      setUser(data.user);
-      if (data.tenant) {
-        setTenant(data.tenant.slug);
-      }
-      setMemberships(data.memberships ?? []);
-      return data;
-    },
+    queryFn: fetchMeAndSyncStore,
     enabled: hasToken,
     staleTime: 5 * 60 * 1000,
     retry: 2, // Retry transient failures (network, 5xx) before giving up
@@ -101,6 +111,30 @@ export function useChangePassword() {
     },
     onError: () => {
       toast.error("Failed to change password. Please check your current password.");
+    },
+  });
+}
+
+export function useUpdateProfile() {
+  const { setUser } = useAuthStore();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: UpdateProfileRequest) => authApi.updateProfile(data),
+    onSuccess: (user) => {
+      setUser(user);
+      void queryClient.invalidateQueries({ queryKey: authKeys.me });
+      toast.success("Profile updated");
+    },
+    onError: (error: unknown) => {
+      const message =
+        error &&
+        typeof error === "object" &&
+        "message" in error &&
+        typeof (error as ApiError).message === "string"
+          ? (error as ApiError).message
+          : "Failed to update profile";
+      toast.error(message);
     },
   });
 }

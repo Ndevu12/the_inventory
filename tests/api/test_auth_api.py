@@ -33,6 +33,8 @@ class AuthLoginTests(TestCase):
         self.assertIn("refresh", response.data)
         self.assertIn("user", response.data)
         self.assertIsInstance(response.data["user"], dict)
+        self.assertIn("memberships", response.data)
+        self.assertEqual(response.data["memberships"], [])
 
     def test_login_includes_tenant_info(self):
         tenant = create_tenant(name="Acme Corp", slug="acme-corp")
@@ -56,6 +58,16 @@ class AuthLoginTests(TestCase):
         self.assertEqual(tenant_data["name"], "Acme Corp")
         self.assertEqual(tenant_data["slug"], "acme-corp")
         self.assertEqual(tenant_data["role"], TenantRole.ADMIN)
+        self.assertEqual(tenant_data["preferred_language"], "en")
+        self.assertIn("memberships", response.data)
+        self.assertEqual(len(response.data["memberships"]), 1)
+        m0 = response.data["memberships"][0]
+        self.assertEqual(m0["tenant__id"], tenant.pk)
+        self.assertEqual(m0["tenant__name"], "Acme Corp")
+        self.assertEqual(m0["tenant__slug"], "acme-corp")
+        self.assertEqual(m0["tenant__preferred_language"], "en")
+        self.assertEqual(m0["role"], TenantRole.ADMIN)
+        self.assertTrue(m0["is_default"])
 
     def test_login_invalid_credentials(self):
         response = self.client.post(
@@ -74,6 +86,7 @@ class AuthLoginTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("tenant", response.data)
         self.assertIsNone(response.data["tenant"])
+        self.assertEqual(response.data["memberships"], [])
 
 
 class AuthRefreshTests(TestCase):

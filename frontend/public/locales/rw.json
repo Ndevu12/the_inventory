@@ -1,0 +1,2147 @@
+{
+  "Common": {
+    "searchAria": "Shakisha",
+    "searchPlaceholder": "Shakisha…",
+    "commandSearchPlaceholder": "Shakisha amapaji…",
+    "noResults": "Nta bisubizo byabonetse.",
+    "actions": {
+      "save": "Bika",
+      "cancel": "Hagarika",
+      "delete": "Siba",
+      "edit": "Hindura",
+      "create": "Kora",
+      "new": "Gishya",
+      "back": "Subira inyuma",
+      "close": "Funga",
+      "submit": "Ohereza",
+      "search": "Shakisha",
+      "filter": "Sya",
+      "export": "Kuramo",
+      "import": "Kura mu"
+    },
+    "states": {
+      "loading": "Buri gukurura…",
+      "error": "Ikosa",
+      "retry": "Ongera ugerageze"
+    },
+    "validation": {
+      "requiredField": "Uyu murima ukeneye."
+    },
+    "themeToggleAria": "Hindura insanganyamatsiko"
+  },
+  "LanguageSwitcher": {
+    "ariaLabel": "Ururimi"
+  },
+  "App": {
+    "description": "Sisitemu yo gucunga ibicuruzwa ku bafatabuguzi benshi"
+  },
+  "Errors": {
+    "loadFailed": "Ntibyashobotse gukurura amakuru.",
+    "networkError": "Ikosa ry'urusobe. Ongera ugerageze.",
+    "permissionDenied": "Ntabwo ufite uburenganzira bwo gukora ibi."
+  },
+  "Nav": {
+    "groups": {
+      "overview": "Incamake",
+      "inventory": "Ibicuruzwa",
+      "orders": "Amabwiriza",
+      "procurement": "Agura",
+      "sales": "Kugurisha",
+      "analytics": "Isesengura",
+      "settings": "Igenamiterere"
+    },
+    "items": {
+      "dashboard": "Dashboard",
+      "products": "Ibicuruzwa",
+      "categories": "Ibyiciro",
+      "stockLocations": "Ahantu ho kubika",
+      "stockRecords": "Inyandiko z'ububiko",
+      "stockMovements": "Kwimura ububiko",
+      "stockLots": "Ibibanza by'ububiko",
+      "reservations": "Guhagarika",
+      "cycleCounts": "Gusanya ingendo",
+      "bulkOperations": "Ibikorwa byinshi",
+      "suppliers": "Abatanga",
+      "purchaseOrders": "Amabwiriza yo gukura",
+      "goodsReceived": "Ibicuruzwa byakiriwe",
+      "customers": "Abakiriya",
+      "salesOrders": "Amabwiriza yo kugurisha",
+      "dispatches": "Kohereza",
+      "reports": "Raporo",
+      "auditLog": "Inyandiko zo gusuzuma",
+      "platformAuditLog": "Gusuzuma urubuga",
+      "account": "Konti",
+      "tenant": "Umukoresha w'urubuga",
+      "teamMembers": "Abanyamuryango b'itsinda",
+      "platformUsers": "Abakoresha",
+      "invitations": "Ubutumire",
+      "billing": "Kwishyuza"
+    }
+  },
+  "Shell": {
+    "tenantLoading": "Buri gukurura…",
+    "selectTenant": "Hitamo umukoresha w'urubuga",
+    "organizations": "Imiryango",
+    "loadingOrganizations": "Buri gukurura imiryango…",
+    "noOrganizations": "Nta miryango yabonetse",
+    "userFallback": "Ukoresha",
+    "memberFallback": "Umunyamuryango",
+    "profileAccount": "Umwirondoro na konti",
+    "exitImpersonation": "Gusohoka mu kwihagarika indangamuntu",
+    "logOut": "Sohoka"
+  },
+  "Breadcrumbs": {
+    "home": "Dashboard",
+    "products": "Ibicuruzwa",
+    "categories": "Ibyiciro",
+    "stock": "Ububiko",
+    "locations": "Ahantu",
+    "records": "Inyandiko",
+    "movements": "Kwimura",
+    "lots": "Ibibanza",
+    "reservations": "Guhagarika",
+    "cycle-counts": "Gusanya ingendo",
+    "bulk-operations": "Ibikorwa byinshi",
+    "procurement": "Agura",
+    "suppliers": "Abatanga",
+    "purchase-orders": "Amabwiriza yo gukura",
+    "goods-received": "Ibicuruzwa byakiriwe",
+    "sales": "Kugurisha",
+    "customers": "Abakiriya",
+    "sales-orders": "Amabwiriza yo kugurisha",
+    "dispatches": "Kohereza",
+    "reports": "Raporo",
+    "stock-valuation": "Agaciro k'ububiko",
+    "movement-history": "Amateka y'kwimura",
+    "low-stock": "Ububiko buke",
+    "overstock": "Ububiko bunini",
+    "purchase-summary": "Incamake y'agura",
+    "sales-summary": "Incamake y'kugurisha",
+    "availability": "Kuboneka",
+    "product-expiry": "Ibicuruzwa bigeze",
+    "variances": "Itandukaniro",
+    "traceability": "Gukurikirana",
+    "audit-log": "Inyandiko zo gusuzuma",
+    "settings": "Igenamiterere",
+    "members": "Abanyamuryango b'itsinda",
+    "new": "Gishya",
+    "edit": "Guhindura"
+  },
+  "Dashboard": {
+    "page": {
+      "title": "Dashboard",
+      "subtitle": "Incamake y’ibicuruzwa byawe, amabwiriza n’ibikorwa."
+    },
+    "kpi": {
+      "totalProducts": {
+        "title": "Umubare w’ibicuruzwa",
+        "description": "Ibicuruzwa bikora mu katalogi"
+      },
+      "locations": {
+        "title": "Ahantu",
+        "description": "Ahantu ho kubika hakora"
+      },
+      "lowStock": {
+        "title": "Ububiko buke",
+        "description": "Ibicuruzwa biri munsi y’ingero yo kongera"
+      },
+      "reserved": {
+        "title": "Byahagaritswe",
+        "description": "{available} biraboneka"
+      },
+      "purchaseOrders": {
+        "title": "Amabwiriza yo gukura",
+        "description": "Umubare w’amabwiriza yo gukura"
+      },
+      "salesOrders": {
+        "title": "Amabwiriza yo kugurisha",
+        "description": "Umubare w’amabwiriza yo kugurisha"
+      },
+      "reservedValue": {
+        "title": "Agaciro cy’ibyahagaritswe",
+        "description": "Agaciro k’ububiko bwahagaritswe"
+      },
+      "stockRecords": {
+        "title": "Inyandiko z’ububiko",
+        "description": "Inyandiko z’igicuruzwa n’ahantu"
+      }
+    },
+    "stockByLocation": {
+      "title": "Ububiko ku ahantu",
+      "description": "Umubare uriho n’uwahagaritswe ku buri ahantu",
+      "empty": "Nta makuru y’ububiko",
+      "legendReserved": "Byahagaritswe",
+      "legendAvailable": "Biraboneka"
+    },
+    "movementTrends": {
+      "title": "Imiterere y’kwimura",
+      "description": "Kwimura buri munsi mu minsi 30 ishize",
+      "seriesLabel": "Kwimura"
+    },
+    "orderStatus": {
+      "title": "Imiterere y’amabwiriza",
+      "description": "Igabanywa nk’uko ari ubu",
+      "tabPurchase": "Amabwiriza yo gukura",
+      "tabSales": "Amabwiriza yo kugurisha",
+      "empty": "Nta mabwiriza arimo",
+      "totalLabel": "Umubare wose",
+      "statusLabels": {
+        "Draft": "Inyandiko",
+        "Confirmed": "Byemejwe",
+        "Received": "Byakiriwe",
+        "Fulfilled": "Byarangiye",
+        "Cancelled": "Byafutwe"
+      }
+    },
+    "pendingReservations": {
+      "title": "Guhagarika gutegereje",
+      "description": "Incamake y’guhagarika gukora",
+      "empty": "Nta guhagarika gukora",
+      "pending": "Kitegereje",
+      "confirmed": "Byemejwe",
+      "units": "ibice",
+      "orderCount": "{count, plural, one {itegeko #} other {amategeko #}}"
+    },
+    "expiringLots": {
+      "title": "Ibibanza bigeze",
+      "description": "Ibibanza bizarangira mu minsi 30 izaza",
+      "noLotData": "Nta makuru yo gukurikirana ibibanza",
+      "noExpiring": "Nta bibanza bizarangira mu minsi 30 izaza",
+      "colLot": "Nimero y’ikibanza",
+      "colProduct": "Igicuruzwa",
+      "colQty": "Umubare",
+      "colExpires": "Iherezo",
+      "expiryUnknown": "Kitazwi",
+      "expiryExpired": "Byarangiye",
+      "expiryOneDay": "Umunsi 1",
+      "expiryDays": "Iminsi {count}"
+    },
+    "error": {
+      "generic": "Hari ikintu kitari kino. Ongera ugerageze.",
+      "retry": "Ongera ugerageze"
+    }
+  },
+  "Inventory": {
+    "shared": {
+      "emDash": "—",
+      "active": "Active",
+      "inactive": "Inactive",
+      "sku": "SKU",
+      "ok": "OK",
+      "low": "Low",
+      "lowStock": "Low Stock",
+      "capacityUnlimited": "units · unlimited",
+      "expand": "Expand",
+      "collapse": "Collapse",
+      "editNamed": "Edit {name}",
+      "deleteNamed": "Delete {name}",
+      "editLocation": "Edit location",
+      "deleteLocation": "Delete location",
+      "createdOn": "Created {date}",
+      "updatedOn": "Updated {date}",
+      "noDescription": "No description provided.",
+      "confirmDeleteLocation": "Delete \"{name}\"? This cannot be undone.",
+      "nameSeparator": " — ",
+      "expiredSuffix": "(expired)",
+      "daysSuffix": "({days}d)",
+      "deleting": "Deleting…"
+    },
+    "tableActions": {
+      "view": "View",
+      "edit": "Edit",
+      "delete": "Delete",
+      "openMenu": "Open menu"
+    },
+    "filters": {
+      "allCategories": "All Categories",
+      "allStatus": "All Status",
+      "category": "Category",
+      "status": "Status",
+      "type": "Type"
+    },
+    "units": {
+      "pcs": "Pieces",
+      "kg": "Kilograms",
+      "lt": "Litres",
+      "m": "Metres",
+      "box": "Boxes",
+      "pack": "Packs"
+    },
+    "trackingModes": {
+      "none": "No Tracking",
+      "optional": "Optional",
+      "required": "Required"
+    },
+    "movementTypes": {
+      "receive": "Receive",
+      "issue": "Issue",
+      "transfer": "Transfer",
+      "adjustment": "Adjustment"
+    },
+    "allocationStrategies": {
+      "FIFO": "FIFO (First In, First Out)",
+      "LIFO": "LIFO (Last In, First Out)"
+    },
+    "products": {
+      "title": "Products",
+      "description": "Manage your product catalog",
+      "addProduct": "Add Product",
+      "newTitle": "New Product",
+      "newDescription": "Add a new product to your catalog",
+      "editDescription": "Update product details",
+      "notFoundTitle": "Product Not Found",
+      "notFoundBody": "The product you are looking for does not exist.",
+      "editTitle": "Edit {name}",
+      "detailSku": "SKU: {sku}",
+      "detailEdit": "Edit",
+      "searchPlaceholder": "Search products...",
+      "empty": "No products found.",
+      "columns": {
+        "sku": "SKU",
+        "name": "Name",
+        "category": "Category",
+        "unit": "Unit",
+        "unitCost": "Unit Cost",
+        "reorderPt": "Reorder Pt.",
+        "status": "Status",
+        "created": "Created"
+      },
+      "form": {
+        "basicInfo": "Basic Information",
+        "inventorySettings": "Inventory Settings",
+        "noCategory": "No category",
+        "selectCategory": "Select category",
+        "labels": {
+          "sku": "SKU",
+          "name": "Name",
+          "description": "Description",
+          "category": "Category",
+          "unitOfMeasure": "Unit of Measure",
+          "unitCost": "Unit Cost",
+          "reorderPoint": "Reorder Point",
+          "trackingMode": "Tracking Mode",
+          "active": "Active"
+        },
+        "placeholders": {
+          "sku": "e.g. PHONE-001",
+          "name": "e.g. iPhone 15 Pro",
+          "description": "Optional product description",
+          "unitCost": "0.00",
+          "reorderPoint": "0"
+        },
+        "submitCreate": "Create Product",
+        "submitSave": "Save Changes",
+        "validation": {
+          "skuRequired": "SKU is required",
+          "skuMax": "SKU must be 100 characters or less",
+          "nameRequired": "Name is required",
+          "nameMax": "Name must be 255 characters or less",
+          "unitOfMeasureRequired": "Unit of measure is required",
+          "unitCostMin": "Unit cost must be zero or greater",
+          "reorderPointInt": "Reorder point must be a whole number",
+          "reorderPointMin": "Reorder point must be zero or greater"
+        }
+      },
+      "tabs": {
+        "info": "Info",
+        "stock": "Stock Records",
+        "movements": "Movements",
+        "lots": "Lots"
+      },
+      "detail": {
+        "title": "Product Details",
+        "description": "Description",
+        "fields": {
+          "sku": "SKU",
+          "name": "Name",
+          "category": "Category",
+          "unitOfMeasure": "Unit of Measure",
+          "unitCost": "Unit Cost",
+          "reorderPoint": "Reorder Point",
+          "status": "Status",
+          "created": "Created",
+          "updated": "Updated"
+        }
+      },
+      "stockTab": {
+        "title": "Stock by Location",
+        "empty": "No stock records.",
+        "location": "Location",
+        "quantity": "Quantity",
+        "reserved": "Reserved",
+        "available": "Available",
+        "status": "Status"
+      },
+      "movementsTab": {
+        "title": "Recent Movements",
+        "empty": "No movements yet.",
+        "type": "Type",
+        "qty": "Qty",
+        "from": "From",
+        "to": "To",
+        "reference": "Reference",
+        "date": "Date"
+      },
+      "lotsTab": {
+        "title": "Lots / Batches",
+        "empty": "No lots tracked.",
+        "lotNumber": "Lot #",
+        "received": "Received",
+        "remaining": "Remaining",
+        "expiry": "Expiry",
+        "status": "Status"
+      }
+    },
+    "categories": {
+      "title": "Categories",
+      "description": "Organize your products into categories.",
+      "addCategory": "Add Category",
+      "searchPlaceholder": "Search categories…",
+      "emptyTitle": "No categories found",
+      "emptyHint": "Create a category to get started.",
+      "deleteTitle": "Delete Category",
+      "deleteDescription": "Are you sure you want to delete \"{name}\"? This action cannot be undone.",
+      "toastUpdated": "Category \"{name}\" updated",
+      "toastCreated": "Category \"{name}\" created",
+      "toastDeleted": "Category \"{name}\" deleted",
+      "toastSaveFailed": "Failed to save category",
+      "toastDeleteFailed": "Failed to delete category",
+      "form": {
+        "createTitle": "Create Category",
+        "editTitle": "Edit Category",
+        "createDescription": "Fill in the details to create a new category.",
+        "editDescription": "Update the category details below.",
+        "name": "Name",
+        "slug": "Slug",
+        "slugPlaceholder": "auto-generated if empty",
+        "slugHint": "URL-friendly identifier. Leave blank to auto-generate from the name.",
+        "description": "Description",
+        "descriptionPlaceholder": "Optional description...",
+        "active": "Active",
+        "namePlaceholder": "e.g. Electronics",
+        "saving": "Saving…",
+        "updateSubmit": "Update Category",
+        "createSubmit": "Create Category",
+        "validation": {
+          "nameRequired": "Name is required",
+          "nameMax": "Name must be 255 characters or less",
+          "slugMax": "Slug must be 255 characters or less"
+        }
+      }
+    },
+    "locations": {
+      "title": "Stock Locations",
+      "description": "Manage warehouse locations and track capacity utilization.",
+      "addLocation": "Add Location",
+      "searchPlaceholder": "Search locations...",
+      "emptyTitle": "No locations yet",
+      "emptyDescription": "Create your first stock location to start tracking inventory.",
+      "noStock": "No stock at this location.",
+      "subTableProduct": "Product",
+      "subTableQty": "Qty",
+      "subTableReserved": "Reserved",
+      "subTableAvailable": "Available",
+      "toastUpdated": "\"{name}\" updated",
+      "toastCreated": "\"{name}\" created",
+      "toastDeleted": "\"{name}\" deleted",
+      "toastUpdateFailed": "Failed to update location",
+      "toastCreateFailed": "Failed to create location",
+      "toastDeleteFailed": "Failed to delete location",
+      "form": {
+        "createTitle": "New Location",
+        "editTitle": "Edit Location",
+        "createDescription": "Add a new stock location to your warehouse.",
+        "editDescription": "Update the details for this stock location.",
+        "name": "Name",
+        "description": "Description",
+        "maxCapacity": "Max Capacity",
+        "namePlaceholder": "e.g. Warehouse A, Shelf B2",
+        "descriptionPlaceholder": "Describe this location...",
+        "capacityPlaceholder": "Leave empty for unlimited",
+        "capacityHint": "Maximum stock units this location can hold. Leave empty for unlimited capacity.",
+        "active": "Active",
+        "saving": "Saving...",
+        "submitCreate": "Create",
+        "submitUpdate": "Update",
+        "validation": {
+          "nameRequired": "Name is required",
+          "nameMax": "Name is too long"
+        }
+      }
+    },
+    "stockRecords": {
+      "title": "Stock Records",
+      "description": "Current stock levels across all locations",
+      "loadError": "Failed to load stock records",
+      "lowStock": "Low Stock",
+      "lowStockCount": "Low Stock ({count})",
+      "searchPlaceholder": "Search products...",
+      "empty": "No stock records found.",
+      "columns": {
+        "sku": "SKU",
+        "product": "Product",
+        "location": "Location",
+        "quantity": "Quantity",
+        "reserved": "Reserved",
+        "available": "Available",
+        "status": "Status"
+      },
+      "badges": {
+        "lowStock": "Low Stock",
+        "ok": "OK"
+      }
+    },
+    "lots": {
+      "title": "Stock Lots",
+      "description": "View and filter lot/batch records with expiry tracking.",
+      "searchPlaceholder": "Search lots, serials, SKUs...",
+      "empty": "No stock lots found.",
+      "columns": {
+        "lotNumber": "Lot Number",
+        "productSku": "Product SKU",
+        "serialNumber": "Serial Number",
+        "qtyReceived": "Qty Received",
+        "qtyRemaining": "Qty Remaining",
+        "received": "Received",
+        "expiryDate": "Expiry Date",
+        "expiryStatus": "Expiry Status",
+        "status": "Status"
+      },
+      "expiry": {
+        "expired": "Expired",
+        "noExpiry": "No expiry",
+        "daysLeft": "{days}d left"
+      }
+    },
+    "movements": {
+      "listTitle": "Stock Movements",
+      "listDescription": "View all stock movements across your inventory.",
+      "newMovement": "New Movement",
+      "createTitle": "Record Movement",
+      "createDescription": "Create a new stock movement (receive, issue, transfer, or adjustment).",
+      "searchPlaceholder": "Search by product, reference...",
+      "empty": "No movements found.",
+      "columns": {
+        "id": "ID",
+        "type": "Type",
+        "product": "Product",
+        "qty": "Qty",
+        "from": "From",
+        "to": "To",
+        "reference": "Reference",
+        "date": "Date"
+      },
+      "detail": {
+        "invalidTitle": "Invalid movement",
+        "invalidBody": "The movement id in the URL is not valid.",
+        "notFoundTitle": "Movement not found",
+        "notFoundBody": "This stock movement does not exist or you do not have access to it.",
+        "backToList": "Back to movements",
+        "title": "Movement #{id}",
+        "allMovements": "All movements",
+        "viewProduct": "View product",
+        "summary": "Summary",
+        "productSku": "Product (SKU)",
+        "quantity": "Quantity",
+        "fromLocation": "From location",
+        "toLocation": "To location",
+        "unitCost": "Unit cost",
+        "reference": "Reference",
+        "notes": "Notes",
+        "created": "Created",
+        "lotAllocations": "Lot allocations",
+        "lotNumber": "Lot #",
+        "lotQty": "Quantity"
+      },
+      "form": {
+        "cardMovement": "Movement Details",
+        "cardMovementHint": "Select the type, product, quantity, and relevant locations.",
+        "cardLot": "Lot / Batch Information",
+        "cardLotHint": "Optionally assign this received stock to a lot.",
+        "cardAllocation": "Lot Allocation Strategy",
+        "cardAllocationHint": "Choose how lots are allocated when issuing or transferring stock.",
+        "cardNotes": "Additional Notes",
+        "labels": {
+          "movementType": "Movement Type",
+          "product": "Product",
+          "quantity": "Quantity",
+          "unitCost": "Unit Cost",
+          "sourceLocation": "Source Location",
+          "destinationLocation": "Destination Location",
+          "reference": "Reference",
+          "lotNumber": "Lot Number",
+          "serialNumber": "Serial Number",
+          "manufacturingDate": "Manufacturing Date",
+          "expiryDate": "Expiry Date",
+          "strategy": "Strategy",
+          "notes": "Notes"
+        },
+        "placeholders": {
+          "selectType": "Select type",
+          "selectProduct": "Select product",
+          "selectLocation": "Select location",
+          "reference": "PO number, SO number, etc.",
+          "lotNumber": "e.g. BATCH-2026-001",
+          "serial": "Optional serial",
+          "notes": "Optional notes about this movement..."
+        },
+        "addLot": "Add Lot",
+        "removeLot": "Remove Lot",
+        "submit": "Create Movement",
+        "submitting": "Creating...",
+        "toastSuccess": "Movement created successfully",
+        "toastError": "Failed to create movement",
+        "validation": {
+          "productRequired": "Product is required",
+          "quantityMin": "Quantity must be at least 1",
+          "receiveToRequired": "Destination location is required for receive movements",
+          "issueFromRequired": "Source location is required for issue movements",
+          "transferFromRequired": "Source location is required for transfers",
+          "transferToRequired": "Destination location is required for transfers",
+          "transferLocationsDiffer": "Source and destination must differ",
+          "adjustmentLocationRequired": "At least one location is required for adjustments"
+        }
+      }
+    }
+  },
+  "Reservations": {
+    "errors": {
+      "unknown": "Unknown error"
+    },
+    "list": {
+      "title": "Reservations",
+      "description": "Manage stock reservations for sales orders and manual holds.",
+      "newReservation": "New Reservation",
+      "filterStatus": "Status"
+    },
+    "table": {
+      "searchPlaceholder": "Search reservations...",
+      "empty": "No reservations found.",
+      "product": "Product",
+      "location": "Location",
+      "qty": "Qty",
+      "status": "Status",
+      "salesOrder": "Sales Order",
+      "reservedBy": "Reserved By",
+      "expires": "Expires",
+      "created": "Created",
+      "fulfill": "Fulfill",
+      "cancelReservation": "Cancel"
+    },
+    "toast": {
+      "fulfilled": "Reservation #{id} fulfilled",
+      "fulfillFailed": "Failed to fulfill: {message}",
+      "cancelled": "Reservation #{id} cancelled",
+      "cancelFailed": "Failed to cancel: {message}",
+      "createSuccess": "Reservation created successfully",
+      "createFailed": "Failed to create reservation: {message}"
+    },
+    "create": {
+      "title": "Create Reservation",
+      "description": "Reserve stock for a sales order or manual hold."
+    },
+    "form": {
+      "cardTitle": "New Reservation",
+      "product": "Product *",
+      "productPlaceholder": "Select a product...",
+      "location": "Location *",
+      "locationPlaceholder": "Select a location...",
+      "quantity": "Quantity *",
+      "salesOrderOptional": "Sales Order (optional)",
+      "salesOrderNone": "None",
+      "notesOptional": "Notes (optional)",
+      "notesPlaceholder": "Any additional notes...",
+      "submit": "Create Reservation",
+      "submitting": "Creating...",
+      "validation": {
+        "productRequired": "Product is required",
+        "locationRequired": "Location is required",
+        "quantityRequired": "Quantity is required"
+      }
+    },
+    "status": {
+      "pending": "Pending",
+      "confirmed": "Confirmed",
+      "fulfilled": "Fulfilled",
+      "cancelled": "Cancelled",
+      "expired": "Expired"
+    }
+  },
+  "CycleCounts": {
+    "errors": {
+      "unknown": "Unknown error"
+    },
+    "list": {
+      "title": "Cycle Counts",
+      "description": "Schedule and manage physical inventory count cycles.",
+      "newCycle": "New Cycle Count",
+      "filterStatus": "Status",
+      "searchPlaceholder": "Search cycle counts...",
+      "empty": "No cycle counts found."
+    },
+    "create": {
+      "title": "Start Cycle Count",
+      "description": "Create a new physical inventory count cycle.",
+      "toastSuccess": "Cycle count started successfully",
+      "toastFailed": "Failed to start cycle: {message}"
+    },
+    "form": {
+      "cardTitle": "New Cycle Count",
+      "name": "Name *",
+      "namePlaceholder": "e.g., Q1 2026 Full Count",
+      "locationOptional": "Location (optional)",
+      "allLocationsPlaceholder": "All Locations (Full Warehouse)",
+      "allLocationsOption": "All Locations (Full Warehouse)",
+      "scheduledDate": "Scheduled Date *",
+      "notesOptional": "Notes (optional)",
+      "notesPlaceholder": "Any additional notes about this cycle count...",
+      "submit": "Start Cycle Count",
+      "submitting": "Starting...",
+      "validation": {
+        "nameRequired": "Name is required",
+        "scheduledRequired": "Scheduled date is required"
+      }
+    },
+    "notFound": {
+      "title": "Cycle Not Found",
+      "body": "The cycle count you are looking for does not exist."
+    },
+    "detail": {
+      "description": "{location} — {scheduled}: {date}",
+      "allLocations": "All Locations",
+      "scheduled": "Scheduled",
+      "markComplete": "Mark Complete",
+      "completing": "Completing..."
+    },
+    "tabs": {
+      "countLines": "Count Lines ({counted}/{total})",
+      "variances": "Variances"
+    },
+    "status": {
+      "scheduled": "Scheduled",
+      "in_progress": "In Progress",
+      "completed": "Completed",
+      "reconciled": "Reconciled"
+    },
+    "toast": {
+      "recordSuccess": "Count recorded",
+      "recordFailed": "Failed to record count: {message}",
+      "completeSuccess": "Cycle marked as completed",
+      "completeFailed": "Failed to complete cycle: {message}",
+      "reconcileSuccess": "Cycle reconciled successfully",
+      "reconcileFailed": "Failed to reconcile: {message}"
+    },
+    "countLine": {
+      "pendingTitle": "Pending Counts",
+      "pendingRemaining": "{count, plural, one {# item remaining} other {# items remaining}}",
+      "countedTitle": "Counted",
+      "countedSummary": "{count, plural, one {# item counted} other {# items counted}}",
+      "recordCount": "Record Count",
+      "physicalCount": "Physical Count *",
+      "notes": "Notes",
+      "notesPlaceholder": "Optional notes...",
+      "save": "Save",
+      "saving": "Saving...",
+      "recount": "Recount",
+      "systemQty": "System qty: {qty}",
+      "systemLabel": "System:",
+      "countedLabel": "Counted:",
+      "locationSystemLine": "{location} — {systemQty}",
+      "emptyLines": "No count lines found for this cycle.",
+      "validation": {
+        "quantityInt": "Quantity must be a whole number",
+        "quantityNonNegative": "Quantity cannot be negative"
+      }
+    },
+    "variance": {
+      "summaryTotalLines": "Total Lines",
+      "summaryShortages": "Shortages",
+      "summarySurpluses": "Surpluses",
+      "summaryMatches": "Matches",
+      "resolveTitle": "Resolve Variances",
+      "resolveNeedCount": "{count, plural, one {# line with variances needs resolution} other {# lines with variances need resolution}}",
+      "acceptAll": "Accept All",
+      "investigateAll": "Investigate All",
+      "rejectAll": "Reject All",
+      "resolution": "Resolution",
+      "resolutionPlaceholder": "Select resolution...",
+      "inlineSystem": "System: {qty}",
+      "inlineCounted": "Counted: {qty}",
+      "rootCause": "Root Cause",
+      "rootCausePlaceholder": "Optional explanation...",
+      "reconcile": "Reconcile Cycle",
+      "reconciling": "Reconciling...",
+      "matchingTitle": "Matching Lines",
+      "matchingNoVariance": "{count, plural, one {# line with no variance (auto-accepted)} other {# lines with no variance (auto-accepted)}}",
+      "qtyMatch": "Qty: {qty} (match)",
+      "completeToReview": "Complete all counts and mark the cycle as completed to review variances.",
+      "emptyVariances": "No variances recorded.",
+      "type": {
+        "shortage": "Shortage",
+        "surplus": "Surplus",
+        "match": "Match"
+      },
+      "resolutionOption": {
+        "accepted": "Accept (Create Adjustment)",
+        "investigating": "Investigate",
+        "rejected": "Reject (No Change)"
+      }
+    },
+    "table": {
+      "name": "Name",
+      "location": "Location",
+      "allLocations": "All Locations",
+      "status": "Status",
+      "scheduled": "Scheduled",
+      "progress": "Progress",
+      "startedBy": "Started By",
+      "created": "Created"
+    },
+    "varianceTable": {
+      "product": "Product",
+      "location": "Location",
+      "systemQty": "System Qty",
+      "physicalQty": "Physical Qty",
+      "variance": "Variance",
+      "type": "Type",
+      "resolution": "Resolution",
+      "resolvedBy": "Resolved By"
+    }
+  },
+  "BulkOperations": {
+    "errors": {
+      "unknown": "Unknown error"
+    },
+    "page": {
+      "title": "Bulk Operations",
+      "description": "Perform stock transfers, adjustments, and revaluations in bulk."
+    },
+    "tabs": {
+      "transfer": "Bulk Transfer",
+      "adjustment": "Bulk Adjustment",
+      "revalue": "Bulk Revalue"
+    },
+    "shared": {
+      "loading": "Loading...",
+      "selectProduct": "Select product",
+      "selectSource": "Select source",
+      "selectDestination": "Select destination",
+      "selectLocation": "Select location",
+      "addProduct": "Add Product",
+      "product": "Product",
+      "quantity": "Quantity",
+      "newQuantity": "New Quantity",
+      "newUnitCost": "New Unit Cost",
+      "processing": "Processing...",
+      "notes": "Notes",
+      "reference": "Reference",
+      "referencePlaceholder": "Optional reference number"
+    },
+    "transfer": {
+      "cardTitle": "Transfer Details",
+      "cardDescription": "Move stock from one location to another in bulk.",
+      "sourceLocation": "Source Location",
+      "destinationLocation": "Destination Location",
+      "productsTitle": "Products",
+      "productsDescription": "Add products and quantities to transfer.",
+      "notesPlaceholder": "Optional notes about this transfer...",
+      "execute": "Execute Transfer",
+      "toastNoItems": "Add at least one product to transfer",
+      "toastAllSuccess": "All {count} items transferred successfully",
+      "toastPartial": "{success} of {total} items transferred",
+      "toastError": "Bulk transfer failed"
+    },
+    "adjustment": {
+      "cardTitle": "Adjustment Details",
+      "cardDescription": "Set new stock quantities for products at a specific location.",
+      "location": "Location",
+      "productsTitle": "Products",
+      "productsDescription": "Specify the new quantity for each product.",
+      "notesPlaceholder": "Optional notes about this adjustment...",
+      "execute": "Execute Adjustment",
+      "toastNoItems": "Add at least one product to adjust",
+      "toastAllSuccess": "All {count} items adjusted successfully",
+      "toastPartial": "{success} of {total} items adjusted",
+      "toastError": "Bulk adjustment failed"
+    },
+    "revalue": {
+      "cardTitle": "Products to Revalue",
+      "cardDescription": "Set new unit costs for each product. This updates the product record directly without creating stock movements.",
+      "unitCostPlaceholder": "0.00",
+      "execute": "Execute Revalue",
+      "toastNoItems": "Add at least one product with a valid unit cost",
+      "toastAllSuccess": "All {count} products revalued successfully",
+      "toastPartial": "{success} of {total} products revalued",
+      "toastError": "Bulk revalue failed"
+    },
+    "result": {
+      "titleSuccess": "Operation Completed Successfully",
+      "titleFailed": "Operation Failed",
+      "titlePartial": "Operation Partially Completed",
+      "description": "{success} of {total} items processed successfully",
+      "total": "Total",
+      "succeeded": "Succeeded",
+      "failed": "Failed",
+      "errorsTitle": "Errors",
+      "errorsDescription": "The following items could not be processed",
+      "errorLine": "Item {index} (Product {productId})",
+      "startNew": "Start New Operation"
+    },
+    "validation": {
+      "sourceLocationRequired": "Source location is required",
+      "destinationLocationRequired": "Destination location is required",
+      "locationRequired": "Location is required"
+    }
+  },
+  "Procurement": {
+    "shared": {
+      "emDash": "—",
+      "unknownError": "Ikosa ritazwi",
+      "nameSeparator": " — "
+    },
+    "paymentTerms": {
+      "net_30": "Net 30",
+      "net_60": "Net 60",
+      "net_90": "Net 90",
+      "cod": "Kwishyura igihe cyo gutanga",
+      "prepaid": "Byishyuwe mbere"
+    },
+    "poStatus": {
+      "draft": "Inyandiko",
+      "confirmed": "Byemejwe",
+      "received": "Byakiriwe",
+      "cancelled": "Byahagaritswe"
+    },
+    "grnProcessStatus": {
+      "pending": "Bitegereje",
+      "processed": "Byakozwe"
+    },
+    "suppliers": {
+      "list": {
+        "title": "Abatanga",
+        "description": "Tunganya urutonde rw’abatanga",
+        "newButton": "Utanga mushya",
+        "searchPlaceholder": "Shakisha abatanga...",
+        "empty": "Nta batanga babonetse.",
+        "deleteConfirm": "Gusiba utanga \"{name}\"?",
+        "toastDeleted": "Utanga \"{name}\" yasibwe",
+        "toastDeleteFailed": "Ntibyashobotse gusiba utanga"
+      },
+      "create": {
+        "title": "Utanga mushya",
+        "description": "Ongeraho utanga mushya mu rutonde rwawe",
+        "toastCreated": "Utanga \"{name}\" yakorewe",
+        "toastCreateFailed": "Ntibyashobotse gukora utanga",
+        "creating": "Biri gukorwa...",
+        "submit": "Kora utanga"
+      },
+      "edit": {
+        "title": "Guhindura {name}",
+        "description": "Kuvugurura amakuru y’utanga",
+        "notFound": "Utanga ntibabonetse",
+        "backToList": "Subira ku batanga",
+        "toastUpdated": "Utanga \"{name}\" yavuguruwe",
+        "toastUpdateFailed": "Ntibyashobotse kuvugurura utanga",
+        "saving": "Biri kubika...",
+        "submit": "Bika impinduka"
+      },
+      "columns": {
+        "code": "Kode",
+        "name": "Izina",
+        "contact": "Umuntu w’itumanaho",
+        "email": "Imeri",
+        "phone": "Telefoni",
+        "paymentTerms": "Amabwiriza yo kwishyura",
+        "leadTime": "Igihe cyo gutanga",
+        "status": "Imiterere",
+        "leadTimeDays": "{count, plural, one {umunsi #} other {iminsi #}}"
+      },
+      "form": {
+        "code": "Kode",
+        "name": "Izina",
+        "contactName": "Izina ry’umuntu w’itumanaho",
+        "email": "Imeri",
+        "phone": "Telefoni",
+        "leadTimeDays": "Igihe cyo gutanga (iminsi)",
+        "paymentTerms": "Amabwiriza yo kwishyura",
+        "address": "Aderesi",
+        "notes": "Ibisobanuro",
+        "active": "Bikora",
+        "selectTerms": "Hitamo amabwiriza",
+        "placeholders": {
+          "code": "urugero SUP-001",
+          "companyName": "Izina ry’ikigo",
+          "contactPerson": "Umuntu w’itumanaho",
+          "email": "imeri@urugero.com",
+          "phone": "+250 7 00 00 00 00",
+          "address": "Umuhanda, umujyi, kode ya posita",
+          "notes": "Ibisobanuro by’imbere kuri uyu mutanga"
+        }
+      },
+      "validation": {
+        "codeRequired": "Kode irakenewe",
+        "nameRequired": "Izina rirakenewe",
+        "emailInvalid": "Imeri itariyo",
+        "leadTimeMin": "Bigomba kuba 0 cyangwa kuruta"
+      }
+    },
+    "purchaseOrders": {
+      "list": {
+        "title": "Amabwiriza yo kugura",
+        "description": "Tunganya amabwiriza yatanzwe ku batanga.",
+        "newButton": "Itegeko rishya ryo kugura",
+        "searchPlaceholder": "Shakisha amabwiriza yo kugura...",
+        "empty": "Nta mabwiriza yo kugura abonetse.",
+        "statusFilter": "Imiterere",
+        "toastConfirmed": "Itegeko ryo kugura {orderNumber} ryemejwe",
+        "toastCancelled": "Itegeko ryo kugura {orderNumber} ryahagaritswe",
+        "confirmFailed": "Ntibyashobotse kwemeza: {message}",
+        "cancelFailed": "Ntibyashobotse guhagarika: {message}",
+        "cancelConfirm": "Guhagarika itegeko ryo kugura \"{orderNumber}\"?"
+      },
+      "create": {
+        "title": "Kora itegeko ryo kugura",
+        "description": "Tanga itegeko rishya ku mutanga.",
+        "toastSuccess": "Itegeko ryo kugura ryakozwe neza",
+        "toastError": "Ntibyashobotse gukora itegeko ryo kugura: {message}"
+      },
+      "detail": {
+        "title": "Itegeko: {orderNumber}",
+        "titleLoading": "Itegeko ryo kugura",
+        "backToList": "Subira ku rutonde",
+        "toastConfirmed": "Itegeko ryo kugura ryemejwe",
+        "toastCancelled": "Itegeko ryo kugura ryahagaritswe",
+        "cancelConfirm": "Guhagarika iri tegeko ryo kugura?",
+        "confirmFailed": "Ntibyashobotse kwemeza: {message}",
+        "cancelFailed": "Ntibyashobotse guhagarika: {message}"
+      },
+      "columns": {
+        "orderNumber": "Nimero y’itegeko",
+        "supplier": "Utanga",
+        "status": "Imiterere",
+        "orderDate": "Itariki y’itegeko",
+        "expectedDelivery": "Itumanaho ryateganyijwe",
+        "total": "Igiteranyo",
+        "created": "Ryakorewe"
+      },
+      "actions": {
+        "view": "Reba",
+        "confirm": "Emeza",
+        "cancel": "Hagarika"
+      },
+      "form": {
+        "orderDetailsTitle": "Ibisobanuro by’itegeko",
+        "orderDetailsDescription": "Amakuru y’ibanze y’itegeko ryo kugura",
+        "supplier": "Utanga",
+        "selectSupplier": "Hitamo utanga...",
+        "orderDate": "Itariki y’itegeko",
+        "expectedDeliveryDate": "Itariki y’itumanaho ryateganyijwe",
+        "notes": "Ibisobanuro",
+        "notesPlaceholder": "Ibisobanuro by’imbere kuri iri tegeko...",
+        "lineItemsTitle": "Imirongo y’ibicuruzwa",
+        "lineItemsDescription": "Ibicuruzwa wateganyije kuri uyu mutanga",
+        "addLine": "Ongeraho umurongo",
+        "colProduct": "Igicuruzwa",
+        "colQuantity": "Umubare",
+        "colUnitCost": "Igiciro cy’ikintu kimwe",
+        "colLineTotal": "Igiteranyo cy’umurongo",
+        "grandTotal": "Igiteranyo rusange",
+        "selectProduct": "Hitamo igicuruzwa...",
+        "unitCostPlaceholder": "0.00",
+        "creating": "Biri gukorwa...",
+        "submit": "Kora itegeko ryo kugura"
+      },
+      "detailView": {
+        "confirming": "Biri kwemeza...",
+        "confirm": "Emeza",
+        "cancelling": "Biri guhagarika...",
+        "cancelOrder": "Hagarika itegeko",
+        "orderDate": "Itariki y’itegeko",
+        "expectedDelivery": "Itumanaho ryateganyijwe",
+        "totalCost": "Igiteranyo cy’igiciro",
+        "created": "Ryakorewe",
+        "notes": "Ibisobanuro",
+        "lineItemsTitle": "Imirongo y’ibicuruzwa",
+        "lineItemsCount": "{count, plural, one {ikintu #} other {ibintu #}} kuri iri tegeko",
+        "colProduct": "Igicuruzwa",
+        "colSku": "SKU",
+        "colQuantity": "Umubare",
+        "colUnitCost": "Igiciro cy’ikintu kimwe",
+        "colLineTotal": "Igiteranyo cy’umurongo",
+        "grandTotal": "Igiteranyo rusange"
+      },
+      "validation": {
+        "productRequired": "Igicuruzwa kirakenewe",
+        "quantityMin": "Umubare ugomba kuba nibura 1",
+        "unitCostRequired": "Igiciro cy’ikintu kimwe kirakenewe",
+        "unitCostPositive": "Bigomba kuba umubare wuzuye",
+        "supplierRequired": "Utanga arakenewe",
+        "orderDateRequired": "Itariki y’itegeko irakenewe",
+        "atLeastOneLine": "Nibura umurongo umwe urakenewe"
+      }
+    },
+    "grn": {
+      "list": {
+        "title": "Inyandiko z’ibicuruzwa byakiriwe",
+        "description": "Kurikirana no gukora ibicuruzwa byakiriwe ku mabwiriza yo kugura",
+        "newButton": "Inyandiko nshya ya GRN",
+        "empty": "Nta nyandiko za GRN zibonetse.",
+        "statusFilter": "Imiterere",
+        "processConfirm": "Gukora GRN \"{grnNumber}\"? Bizakora imigendekere y’ububiko kandi ntibishobora gusubirwaho.",
+        "toastProcessed": "GRN \"{grnNumber}\" yakozwe — imigendekere y’ububiko yakorewe",
+        "toastProcessFailed": "Ntibyashobotse gukora GRN",
+        "deleteConfirm": "Gusiba GRN \"{grnNumber}\"?",
+        "toastDeleted": "GRN \"{grnNumber}\" yasibwe",
+        "toastDeleteFailed": "Ntibyashobotse gusiba GRN"
+      },
+      "create": {
+        "title": "Inyandiko nshya y’ibicuruzwa byakiriwe",
+        "description": "Andika ibicuruzwa byakiriwe ku itegeko ryo kugura",
+        "toastCreated": "GRN \"{grnNumber}\" yakorewe",
+        "toastError": "Ntibyashobotse gukora GRN",
+        "creating": "Biri gukorwa...",
+        "submit": "Kora GRN"
+      },
+      "columns": {
+        "grnNumber": "Nimero ya GRN",
+        "purchaseOrder": "Itegeko ryo kugura",
+        "receivedDate": "Itariki yo kwakira",
+        "location": "Ahantu",
+        "status": "Imiterere",
+        "created": "Ryakorewe"
+      },
+      "actions": {
+        "view": "Reba",
+        "receiveGoods": "Kwakira ibicuruzwa"
+      },
+      "form": {
+        "detailsTitle": "Ibisobanuro bya GRN",
+        "detailsDescription": "Andika ibicuruzwa byakiriwe ku itegeko ryo kugura.",
+        "grnNumber": "Nimero ya GRN",
+        "purchaseOrder": "Itegeko ryo kugura",
+        "receivedDate": "Itariki yo kwakira",
+        "location": "Ahantu",
+        "notesSectionTitle": "Ibisobanuro byongeweho",
+        "notes": "Ibisobanuro",
+        "placeholders": {
+          "grnNumber": "urugero GRN-2026-001",
+          "notes": "Imiterere y’ibicuruzwa, itandukaniro, n’ibindi."
+        },
+        "loading": "Biri gupakira...",
+        "selectPO": "Hitamo itegeko ryo kugura",
+        "selectLocation": "Hitamo ahantu"
+      },
+      "validation": {
+        "grnNumberRequired": "Nimero ya GRN irakenewe",
+        "purchaseOrderRequired": "Itegeko ryo kugura rirakenewe",
+        "receivedDateRequired": "Itariki yo kwakira irakenewe",
+        "locationRequired": "Ahantu harakenewe"
+      }
+    }
+  },
+  "SettingsTenant": {
+    "tenant": {
+      "page": {
+        "title": "Tenant Settings",
+        "description": "Manage your organisation profile and branding"
+      },
+      "loadError": "Unable to load tenant information",
+      "toast": {
+        "updated": "Tenant settings updated",
+        "updateFailed": "Failed to update tenant settings"
+      },
+      "profile": {
+        "title": "Profile",
+        "description": "Update your tenant name and branding"
+      },
+      "reset": "Reset",
+      "save": "Save Changes",
+      "saving": "Saving…",
+      "form": {
+        "tenantName": "Tenant Name",
+        "siteName": "Site Name",
+        "primaryColor": "Primary Color",
+        "colorPickerAria": "Pick primary color",
+        "placeholderOrg": "My Organisation",
+        "placeholderSite": "Inventory Portal",
+        "placeholderColor": "#3B82F6",
+        "requiredMarker": "required"
+      },
+      "validation": {
+        "nameRequired": "Tenant name is required",
+        "hexColor": "Must be a valid hex color (e.g. #3B82F6)"
+      }
+    },
+    "subscription": {
+      "title": "Subscription",
+      "description": "Your current plan and usage",
+      "planLabel": "Plan",
+      "usageUsers": "Users",
+      "usageProducts": "Products"
+    },
+    "roles": {
+      "owner": "Owner",
+      "admin": "Admin",
+      "manager": "Manager",
+      "viewer": "Viewer"
+    },
+    "plans": {
+      "free": "Free",
+      "starter": "Starter",
+      "professional": "Professional",
+      "enterprise": "Enterprise"
+    },
+    "subscriptionStatus": {
+      "active": "Active",
+      "trial": "Trial",
+      "past_due": "Past Due",
+      "cancelled": "Cancelled",
+      "suspended": "Suspended"
+    },
+    "members": {
+      "page": {
+        "title": "Team Members",
+        "description": "Manage team members and their roles"
+      },
+      "searchPlaceholder": "Search members…",
+      "emptyMessage": "No team members found.",
+      "toast": {
+        "roleUpdated": "Updated {username}'s role to {role}",
+        "roleFailed": "Failed to update role",
+        "removed": "Removed {username} from team",
+        "removeFailed": "Failed to remove member"
+      },
+      "removeDialog": {
+        "title": "Remove team member",
+        "descriptionLead": "Are you sure you want to remove",
+        "descriptionTrail": "from the team? They will lose access to this tenant immediately."
+      },
+      "remove": "Remove",
+      "removing": "Removing…",
+      "columns": {
+        "user": "User",
+        "email": "Email",
+        "role": "Role",
+        "status": "Status",
+        "joined": "Joined"
+      },
+      "memberStatus": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "srRemoveMember": "Remove member"
+    },
+    "invite": {
+      "trigger": "Invite Member",
+      "title": "Invite a team member",
+      "description": "Send an invitation by email. They will receive a link to join your organization.",
+      "email": "Email address",
+      "role": "Role",
+      "placeholderEmail": "colleague@company.com",
+      "sendInvitation": "Send Invitation",
+      "sending": "Sending…",
+      "toastSent": "Invitation sent to {email}",
+      "toastFailed": "Failed to send invitation"
+    },
+    "pendingInvitations": {
+      "heading": "Pending Invitations",
+      "headingCount": "({count})",
+      "columns": {
+        "email": "Email",
+        "role": "Role",
+        "status": "Status",
+        "expires": "Expires"
+      },
+      "srCancelInvitation": "Cancel invitation",
+      "cancelDialog": {
+        "title": "Cancel invitation",
+        "descriptionLead": "Are you sure you want to cancel the invitation to",
+        "descriptionTrail": "? The invitation link will no longer work."
+      },
+      "keep": "Keep",
+      "cancelInvitation": "Cancel Invitation",
+      "cancelling": "Cancelling…",
+      "toastCancelled": "Invitation to {email} cancelled",
+      "toastCancelFailed": "Failed to cancel invitation",
+      "invitationStatus": {
+        "pending": "Pending",
+        "accepted": "Accepted",
+        "cancelled": "Cancelled",
+        "expired": "Expired"
+      }
+    },
+    "acceptInvitation": {
+      "invalidTitle": "Invalid Invitation",
+      "invalidDescription": "This invitation link is invalid, expired, or has already been used.",
+      "goToLogin": "Go to Login",
+      "alreadyTitle": "Invitation {status}",
+      "alreadyDescription": "This invitation has already been {status}.",
+      "joinTitle": "Join {tenant}",
+      "invitedPrefix": "You've been invited to join as",
+      "invitationFor": "Invitation for",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "username": "Username",
+      "password": "Password",
+      "placeholderFirst": "Jane",
+      "placeholderLast": "Doe",
+      "placeholderUsername": "janedoe",
+      "placeholderPasswordNew": "Min. 8 characters",
+      "existingAccountHint": "An account with this email already exists. Enter your password to confirm your identity and join the organization.",
+      "existingPassword": "Password",
+      "placeholderExistingPassword": "Your password",
+      "joining": "Joining…",
+      "joinAction": "Join {tenant}",
+      "expires": "Expires {date}",
+      "acceptFailed": "Failed to accept invitation"
+    }
+  },
+  "SettingsPlatform": {
+    "billing": {
+      "page": {
+        "title": "Billing & Subscriptions",
+        "description": "Manage tenant plans, usage, and billing (superuser only)"
+      },
+      "columns": {
+        "tenant": "Tenant",
+        "plan": "Plan",
+        "status": "Status",
+        "active": "Active",
+        "usage": "Usage"
+      },
+      "yes": "Yes",
+      "no": "No",
+      "usageUsers": "{current}/{max} users",
+      "usageProducts": "{current}/{max} products",
+      "searchPlaceholder": "Search tenants…",
+      "emptyMessage": "No tenants found.",
+      "ariaExport": "Export tenant data",
+      "ariaChangePlan": "Change plan",
+      "ariaSuspend": "Suspend",
+      "ariaReactivate": "Reactivate",
+      "toast": {
+        "suspended": "{name} has been suspended",
+        "suspendFailed": "Failed to suspend tenant",
+        "reactivated": "{name} has been reactivated",
+        "reactivateFailed": "Failed to reactivate tenant",
+        "exportSuccess": "Export for {name} downloaded",
+        "exportFailed": "Failed to export tenant data",
+        "subscriptionUpdated": "Subscription updated",
+        "subscriptionUpdateFailed": "Failed to update subscription"
+      },
+      "suspendDialog": {
+        "title": "Suspend tenant",
+        "descriptionLead": "Are you sure you want to suspend",
+        "descriptionTrail": "? The tenant will not be able to log in or access data until reactivated."
+      },
+      "reactivateDialog": {
+        "title": "Reactivate tenant",
+        "descriptionLead": "Are you sure you want to reactivate",
+        "descriptionTrail": "? The tenant will be able to log in and access data again."
+      },
+      "suspend": "Suspend",
+      "suspending": "Suspending…",
+      "reactivate": "Reactivate",
+      "reactivating": "Reactivating…",
+      "changePlan": {
+        "title": "Change plan — {name}",
+        "description": "Update subscription plan, status, or billing notes.",
+        "plan": "Plan",
+        "status": "Status",
+        "billingNotes": "Billing notes (optional)",
+        "billingNotesPlaceholder": "Payment issues, custom arrangements, etc.",
+        "saving": "Biri guhagarika…"
+      }
+    },
+    "users": {
+      "page": {
+        "title": "Platform Users",
+        "description": "Manage all users across tenants (superuser only)"
+      },
+      "createUser": "Create User",
+      "searchPlaceholder": "Search by email or username…",
+      "emptyMessage": "No users found.",
+      "columns": {
+        "user": "User",
+        "email": "Email",
+        "status": "Status",
+        "tenants": "Tenants",
+        "joined": "Joined"
+      },
+      "userStatus": {
+        "active": "Active",
+        "suspended": "Suspended"
+      },
+      "moreTenants": "+{count}",
+      "ariaImpersonate": "Impersonate",
+      "ariaResetPassword": "Reset password",
+      "ariaSuspendUser": "Suspend user",
+      "suspend": "Suspend",
+      "suspending": "Suspending…",
+      "toast": {
+        "userSuspended": "{username} has been suspended",
+        "suspendFailed": "Failed to suspend user",
+        "passwordReset": "Password has been reset",
+        "passwordResetFailed": "Failed to reset password",
+        "impersonating": "Impersonating {username}",
+        "impersonateFailed": "Failed to impersonate",
+        "userCreated": "User {username} created",
+        "createFailed": "Failed to create user"
+      },
+      "suspendDialog": {
+        "title": "Suspend user",
+        "descriptionLead": "Are you sure you want to suspend",
+        "descriptionTrail": "? They will lose access to all tenants. This can be reversed by editing the user."
+      },
+      "resetPassword": {
+        "title": "Reset password",
+        "description": "Enter a new password for this user. Minimum 8 characters.",
+        "newPassword": "New password",
+        "placeholder": "Min 8 characters",
+        "resetting": "Resetting…",
+        "reset": "Reset"
+      },
+      "createDialog": {
+        "title": "Create user",
+        "description": "Create a new user and optionally assign them to tenants.",
+        "username": "Username",
+        "email": "Email",
+        "password": "Password",
+        "defaultRole": "Default role (for assigned tenants)",
+        "assignTenants": "Assign to tenants",
+        "placeholderUsername": "jdoe",
+        "placeholderEmail": "jane@example.com",
+        "placeholderPassword": "Min 8 characters",
+        "creating": "Creating…",
+        "create": "Create"
+      }
+    },
+    "invitations": {
+      "page": {
+        "title": "Invitations",
+        "description": "All tenant invitations across the platform. Superuser only."
+      },
+      "emptyMessage": "No invitations found.",
+      "filterAllStatuses": "All statuses",
+      "filterStatusPlaceholder": "Status",
+      "filterAllTenants": "All tenants",
+      "filterTenantPlaceholder": "Tenant",
+      "filterFrom": "From",
+      "filterTo": "To",
+      "toast": {
+        "cancelled": "Invitation cancelled",
+        "cancelFailed": "Failed to cancel invitation",
+        "resent": "Invitation resent successfully",
+        "resendFailed": "Failed to resend invitation"
+      },
+      "columns": {
+        "email": "Email",
+        "tenant": "Tenant",
+        "role": "Role",
+        "status": "Status",
+        "created": "Created",
+        "expires": "Expires",
+        "invitedBy": "Invited by"
+      },
+      "rowCancel": "Cancel",
+      "rowResend": "Resend",
+      "status": {
+        "pending": "Pending",
+        "accepted": "Accepted",
+        "cancelled": "Cancelled",
+        "expired": "Expired"
+      }
+    }
+  },
+  "Sales": {
+    "shared": {
+      "emDash": "—",
+      "unknownError": "Ikosa ritazwi",
+      "nameSeparator": " — "
+    },
+    "soStatus": {
+      "draft": "Inyandiko",
+      "confirmed": "Yemejwe",
+      "fulfilled": "Yarangiye",
+      "cancelled": "Yahagaritswe"
+    },
+    "dispatchProcessed": {
+      "pending": "Bitegereje",
+      "processed": "Byakozwe"
+    },
+    "customerStatus": {
+      "active": "Bikora",
+      "inactive": "Ntibikora"
+    },
+    "customers": {
+      "list": {
+        "title": "Abakiriya",
+        "description": "Tunganya urutonde rw’abakiriya",
+        "newButton": "Umukiriya mushya",
+        "deleteConfirm": "Gusiba umukiriya «{name}»?",
+        "toastDeleted": "Umukiriya «{name}» yasibwe",
+        "toastDeleteFailed": "Ntibyashobotse gusiba umukiriya"
+      },
+      "create": {
+        "title": "Umukiriya mushya",
+        "description": "Ongeraho umukiriya mu rutonde",
+        "toastCreated": "Umukiriya «{name}» waremewe",
+        "toastCreateFailed": "Ntibyashobotse kurema umukiriya",
+        "creating": "Biri gukorwa...",
+        "submit": "Kora umukiriya"
+      },
+      "edit": {
+        "title": "Guhindura {name}",
+        "description": "Kuvugurura amakuru y’umukiriya",
+        "notFound": "Umukiriya ntibabonetse",
+        "backToList": "Subira ku bakiriya",
+        "toastUpdated": "Umukiriya «{name}» yavuguruwe",
+        "toastUpdateFailed": "Ntibyashobotse kuvugurura umukiriya",
+        "saving": "Biri kubika...",
+        "submit": "Bika impinduka"
+      },
+      "columns": {
+        "code": "Kode",
+        "name": "Izina",
+        "contact": "Umuntu w’ihuza",
+        "email": "Imeri",
+        "phone": "Telefoni",
+        "status": "Imiterere"
+      },
+      "form": {
+        "codeOptional": "Kode (si ngombwa)",
+        "name": "Izina *",
+        "contactPerson": "Umuntu w’ihuza",
+        "email": "Imeri",
+        "phone": "Telefoni",
+        "active": "Bikora",
+        "address": "Aderesi",
+        "notes": "Ibisobanuro",
+        "placeholders": {
+          "code": "Siga ubusa kugira ngo bikore neza",
+          "name": "Izina ry’umukiriya",
+          "contact": "Umuntu w’ihuza nyamukuru",
+          "email": "contact@example.com",
+          "phone": "+250 7XX XXX XXX",
+          "address": "Aderesi yuzuye",
+          "notes": "Ibisobanuro by’imbere kuri uyu mukiriya"
+        }
+      },
+      "validation": {
+        "nameRequired": "Izina rirakenewe",
+        "emailInvalid": "Imeri si yo"
+      },
+      "table": {
+        "searchPlaceholder": "Shakisha abakiriya...",
+        "empty": "Nta bakiriya babonetse."
+      }
+    },
+    "salesOrders": {
+      "list": {
+        "title": "Amategeko yo kugurisha",
+        "description": "Tunganya amategeko yo kugurisha n’uko akorwa",
+        "newButton": "Itegeko rishya",
+        "statusFilter": "Imiterere",
+        "confirmPrompt": "Kwemeza itegeko «{orderNumber}»?",
+        "cancelPrompt": "Guhagarika itegeko «{orderNumber}»?",
+        "deletePrompt": "Gusiba itegeko «{orderNumber}»?",
+        "toastConfirmed": "Itegeko «{orderNumber}» ryemejwe",
+        "toastCancelled": "Itegeko «{orderNumber}» ryahagaritswe",
+        "toastDeleted": "Itegeko «{orderNumber}» ryasibwe",
+        "confirmFailed": "Ntibyashobotse kwemeza",
+        "cancelFailed": "Ntibyashobotse guhagarika",
+        "deleteFailed": "Ntibyashobotse gusiba"
+      },
+      "create": {
+        "title": "Itegeko rishya ryo kugurisha",
+        "description": "Kora itegeko rifite imirongo",
+        "toastCreated": "Itegeko «{orderNumber}» ryaremewe",
+        "toastCreateFailed": "Ntibyashobotse kurema itegeko"
+      },
+      "detail": {
+        "title": "Ibisobanuro by’itegeko",
+        "description": "Reba itegeko, imirongo, utunganye imiterere",
+        "confirmPrompt": "Kwemeza itegeko «{orderNumber}»?",
+        "cancelPrompt": "Guhagarika itegeko «{orderNumber}»? Ntibishobora gusubirwaho.",
+        "toastConfirmed": "Itegeko «{orderNumber}» ryemejwe",
+        "toastCancelled": "Itegeko «{orderNumber}» ryahagaritswe",
+        "confirmFailed": "Ntibyashobotse kwemeza",
+        "cancelFailed": "Ntibyashobotse guhagarika"
+      },
+      "detailView": {
+        "notFound": "Itegeko ntiryabonetse.",
+        "orderNumber": "Nimero y’itegeko",
+        "customer": "Umukiriya",
+        "orderDate": "Itariki y’itegeko",
+        "status": "Imiterere",
+        "totalPrice": "Igiciro cyose",
+        "created": "Cyaremewe",
+        "notesLabel": "Ibisobanuro",
+        "lineItemsTitle": "Imirongo",
+        "noLineItems": "Nta mirongo.",
+        "colProduct": "Icicuruzwa",
+        "colSku": "SKU",
+        "colQty": "Umubare",
+        "colUnitPrice": "Igiciro ku gice",
+        "colLineTotal": "Igiteranyo cy’umurongo",
+        "orderTotal": "Igiteranyo cy’itegeko",
+        "confirming": "Biri kwemeza...",
+        "confirmOrder": "Emeza itegeko",
+        "cancelling": "Biri guhagarika...",
+        "cancelOrder": "Hagarika itegeko",
+        "backToOrders": "Subira ku mategeko"
+      },
+      "columns": {
+        "orderNumber": "Nimero",
+        "customer": "Umukiriya",
+        "orderDate": "Itariki",
+        "status": "Imiterere",
+        "total": "Igiteranyo",
+        "fulfillment": "Gukora",
+        "created": "Cyaremewe"
+      },
+      "actions": {
+        "view": "Reba",
+        "confirm": "Emeza",
+        "cancel": "Hagarika",
+        "delete": "Siba"
+      },
+      "form": {
+        "toastAtLeastOneLine": "Ongeraho umurongo umwe nibura",
+        "toastFixLines": "Hindura amakosa mu mirongo mbere yo kohereza",
+        "orderDetailsTitle": "Ibisobanuro by’itegeko",
+        "orderDetailsDescription": "Amakuru y’ibanze y’itegeko ryo kugurisha",
+        "orderNumberOptional": "Nimero y’itegeko (si ngombwa)",
+        "customer": "Umukiriya",
+        "orderDate": "Itariki y’itegeko",
+        "lineItemsTitle": "Imirongo",
+        "lineItemsDescription": "Ongeraho ibicuruzwa kuri iki tegeko",
+        "addLine": "Ongeraho umurongo",
+        "colProduct": "Icicuruzwa",
+        "colQuantity": "Umubare",
+        "colUnitPrice": "Igiciro ku gice",
+        "colLineTotal": "Igiteranyo cy’umurongo",
+        "orderTotal": "Igiteranyo cy’itegeko",
+        "notesSectionTitle": "Ibisobanuro byongeweho",
+        "notes": "Ibisobanuro",
+        "notesPlaceholder": "Ibisobanuro by’imbere, amabwiriza, n’ibindi.",
+        "placeholders": {
+          "orderNumber": "Siga ubusa kugira ngo bikore neza",
+          "selectCustomer": "Hitamo umukiriya",
+          "selectProduct": "Hitamo icicuruzwa"
+        },
+        "loading": "Biri gupakira...",
+        "creating": "Biri gukorwa...",
+        "submit": "Kora itegeko"
+      },
+      "validation": {
+        "productRequired": "Icicuruzwa kirakenewe",
+        "quantityMin": "Ntarenganzira 1",
+        "unitPriceNonNeg": "Bigomba kuba ≥ 0",
+        "customerRequired": "Umukiriya arakenewe",
+        "orderDateRequired": "Itariki y’itegeko irakenewe"
+      },
+      "fulfillment": {
+        "canFulfill": "Bishoboka",
+        "insufficientStock": "Ibicuruzwa bitagira bihagije"
+      },
+      "table": {
+        "searchPlaceholder": "Shakisha amategeko...",
+        "empty": "Nta mategeko yabonetse."
+      }
+    },
+    "dispatches": {
+      "list": {
+        "title": "Kohereza",
+        "description": "Tunganya ukohereza kw’amategeko yo kugurisha",
+        "newButton": "Kohereza gushya",
+        "statusFilter": "Imiterere",
+        "processPrompt": "Gukora kohereza «{dispatchNumber}»? Bizakora imigendo y’ibicuruzwa kandi ntibishobora gusubirwaho.",
+        "deletePrompt": "Gusiba kohereza «{dispatchNumber}»?",
+        "toastProcessed": "Kohereza «{dispatchNumber}» cyakozwe — imigendo y’ibicuruzwa yakozwe",
+        "toastProcessedPartial": "Kohereza «{dispatchNumber}» cyakozwe — ibihari byoherejwe",
+        "toastDeleted": "Kohereza «{dispatchNumber}» cyasibwe",
+        "processFailed": "Ntibyashobotse gukora kohereza",
+        "deleteFailed": "Ntibyashobotse gusiba kohereza"
+      },
+      "create": {
+        "title": "Kohereza gushya",
+        "description": "Kora kohereza ku itegeko ryo kugurisha",
+        "toastCreated": "Kohereza «{dispatchNumber}» cyaremewe",
+        "toastCreateFailed": "Ntibyashobotse kurema kohereza"
+      },
+      "columns": {
+        "dispatchNumber": "Nimero y’kohereza",
+        "salesOrder": "Itegeko",
+        "dispatchDate": "Itariki yo kohereza",
+        "fromLocation": "Ahantu haturutse",
+        "status": "Imiterere",
+        "created": "Cyaremewe",
+        "processed": "Cyakozwe",
+        "pending": "Bitegereje"
+      },
+      "actions": {
+        "view": "Reba",
+        "reviewStock": "Reba ibicuruzwa / kohereza igice",
+        "processDispatch": "Kora kohereza",
+        "delete": "Siba"
+      },
+      "form": {
+        "detailsTitle": "Ibisobanuro by’kohereza",
+        "detailsDescription": "Hitamo itegeko ryemejwe. Nyuma yo gukora, koresha «Kora» ku rutonde kugira ngo wohereze ibicuruzwa (itegeko rigomba komeza ryemejwe).",
+        "dispatchNumberOptional": "Nimero y’kohereza (si ngombwa)",
+        "salesOrder": "Itegeko ryo kugurisha",
+        "dispatchDate": "Itariki yo kohereza",
+        "fromLocation": "Ahantu haturutse",
+        "notesSectionTitle": "Ibisobanuro byongeweho",
+        "notes": "Ibisobanuro",
+        "placeholders": {
+          "dispatchNumber": "Siga ubusa kugira ngo bikore neza",
+          "selectSalesOrder": "Hitamo itegeko",
+          "selectLocation": "Hitamo ahantu",
+          "notes": "Amabwiriza yo kohereza, gutunganya, n’ibindi."
+        },
+        "emptySalesOrdersHint": "Nta mategeko yemejwe. Emeza inyandiko mbere, hanyuma ukore kohereza.",
+        "loading": "Biri gupakira...",
+        "creating": "Biri gukorwa...",
+        "submit": "Kora kohereza"
+      },
+      "validation": {
+        "salesOrderRequired": "Itegeko rirakenewe",
+        "dispatchDateRequired": "Itariki yo kohereza irakenewe",
+        "fromLocationRequired": "Ahantu haturutse harakenewe"
+      },
+      "table": {
+        "empty": "Nta kohereza kubonetse."
+      },
+      "fulfillmentDialog": {
+        "title": "Ibicuruzwa ku muntu wo kohereza",
+        "description": "Ku murongo wose: umubare wateganyijwe kuruta ibicuruzwa bitari byihariye ku muntu. Urashobora kohereza ibihari gusa; fungura itegeko guhindura imirongo, siba kohereza, cyangwa wongere ibicuruzwa.",
+        "loading": "Biri gupakira incamake…",
+        "fromLabel": "Haturutse:",
+        "colProduct": "Icicuruzwa",
+        "colOrdered": "Wateganyije",
+        "colAvailable": "Bihari",
+        "colShipNow": "Ohereza ubu",
+        "openSalesOrder": "Fungura itegeko",
+        "issueAvailable": "Ohereza ibihari",
+        "genericError": "Habaye ikosa."
+      }
+    }
+  },
+  "Auth": {
+    "loading": "Buri gukurura…",
+    "invalidCredentials": "Izina ry'ukoresha cyangwa ijambo ry'ibanga si byo",
+    "registrationFailed": "Registration failed",
+    "acceptInvitationFailed": "Failed to accept invitation",
+    "login": {
+      "title": "Murakaza neza",
+      "subtitle": "Injira muri The Inventory",
+      "noOrgPrompt": "Nta sosiyete ufite?",
+      "createOrgLink": "Kora imwe",
+      "username": "Izina ry'ukoresha",
+      "password": "Ijambo ry'ibanga",
+      "usernamePlaceholder": "Andika izina ry'ukoresha",
+      "passwordPlaceholder": "Andika ijambo ry'ibanga",
+      "signIn": "Injira",
+      "signingIn": "Buri kwinjira…"
+    },
+    "marketing": {
+      "title": "Powerful Inventory Management",
+      "subtitle": "Everything you need to manage inventory efficiently",
+      "catalogTitle": "Catalog Management",
+      "catalogDescription": "Organize products with SKUs, descriptions, images, and hierarchical categories",
+      "trackingTitle": "Real-time Tracking",
+      "trackingDescription": "Track stock movements across multiple warehouses with instant updates",
+      "alertsTitle": "Smart Alerts",
+      "alertsDescription": "Set reorder points and receive instant notifications when stock runs low",
+      "searchTitle": "Advanced Search",
+      "searchDescription": "Find products, categories, and locations with powerful full-text search"
+    },
+    "register": {
+      "title": "Kora sosiyete yawe",
+      "description": "Iyandikishe n'ushyiraho konti yawe nk'nyir'ayo.",
+      "organizationName": "Izina ry'sosiyete",
+      "organizationPlaceholder": "Acme Corp",
+      "slugLabel": "Slug (si ngombwa)",
+      "slugHint": "— ID y'URL, nko acme-corp",
+      "slugPlaceholder": "acme-corp",
+      "username": "Izina ry'ukoresha",
+      "usernamePlaceholder": "jdoe",
+      "email": "Imeri",
+      "emailPlaceholder": "john@acme.com",
+      "firstName": "Izina rya mbere",
+      "firstNamePlaceholder": "Jean",
+      "lastName": "Izina ry'umuryango",
+      "lastNamePlaceholder": "Dupont",
+      "password": "Ijambo ry'ibanga",
+      "passwordPlaceholder": "Byibuze inyuguti 8",
+      "submit": "Kora sosiyete",
+      "submitting": "Buri gukora…",
+      "hasAccountPrompt": "Usanzwe ufite konti?",
+      "signInLink": "Injira"
+    },
+    "account": {
+      "loadError": "Ntibishobora gukurura konti yawe. Ongera ugerageze kwinjira.",
+      "pageTitle": "Konti",
+      "pageDescription": "Umwirondoro wawe n'ijambo ry'ibanga bikoresha ku mukoresha wawe muri za sosiyete zose.",
+      "profileTitle": "Umwirondoro",
+      "profileDescription": "Amazina na imeri bikoresha kuri buri sosiyete uriho.",
+      "username": "Username",
+      "usernameReadOnlyHint": "Username cannot be changed here.",
+      "email": "Email",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "reset": "Reset",
+      "saveProfile": "Bika umwirondoro",
+      "savingProfile": "Buri kubika…",
+      "passwordTitle": "Ijambo ry'ibanga",
+      "passwordDescription": "Use a strong password you do not reuse on other sites.",
+      "currentPassword": "Current password",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm new password",
+      "updatePassword": "Hindura ijambo ry'ibanga",
+      "updatingPassword": "Buri guhindura…",
+      "workspaceTitle": "Ahantu ho gukora ubu",
+      "workspaceNoTenantDescription": "Hitamo sosiyete mu mabwiriza yo hejuru kugira ngo ukore ku bubiko.",
+      "workspaceDescription": "Amakuru y'ububiko n'ibikorwa bigenzwe kuri iyi sosiyete.",
+      "organisation": "Sosiyete",
+      "slug": "Slug",
+      "yourRole": "Urwego rwawe"
+    },
+    "guard": {
+      "loading": "Buri gukurura…"
+    },
+    "invitation": {
+      "invalidTitle": "Invalid Invitation",
+      "invalidDescription": "This invitation link is invalid, expired, or has already been used.",
+      "goToLogin": "Go to Login",
+      "processed": {
+        "accepted": {
+          "title": "Invitation accepted",
+          "description": "This invitation has already been accepted."
+        },
+        "cancelled": {
+          "title": "Invitation cancelled",
+          "description": "This invitation has been cancelled."
+        },
+        "expired": {
+          "title": "Invitation expired",
+          "description": "This invitation has expired."
+        }
+      },
+      "processedUnknownTitle": "Invitation ({status})",
+      "processedUnknownDescription": "This invitation is no longer pending.",
+      "joinTitle": "Join {tenant}",
+      "invitedAs": "You've been invited to join as",
+      "invitationFor": "Invitation for {email}",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "username": "Username",
+      "password": "Password",
+      "firstNamePlaceholder": "Jane",
+      "lastNamePlaceholder": "Doe",
+      "usernamePlaceholder": "janedoe",
+      "passwordPlaceholderNew": "Min. 8 characters",
+      "existingAccountHint": "An account with this email already exists. Enter your password to confirm your identity and join the organization.",
+      "existingPassword": "Password",
+      "existingPasswordPlaceholder": "Your password",
+      "joining": "Joining…",
+      "joinTenant": "Join {tenant}",
+      "expires": "Expires {date}"
+    },
+    "validation": {
+      "usernameRequired": "Username is required",
+      "passwordRequired": "Password is required",
+      "emailRequired": "Email is required",
+      "validEmail": "Valid email is required",
+      "currentPasswordRequired": "Current password is required",
+      "newPasswordMin": "New password must be at least 8 characters",
+      "confirmPasswordRequired": "Please confirm your new password",
+      "passwordsMismatch": "Passwords do not match",
+      "organizationNameRequired": "Organization name is required",
+      "slugFormat": "Slug must be lowercase letters, numbers, and hyphens only",
+      "registerPasswordMin": "Password must be at least 8 characters"
+    }
+  },
+  "Audit": {
+    "system": "System",
+    "emDash": "—",
+    "tenantPage": {
+      "title": "Igitabo cy'igenzura",
+      "description": "Inzira y'igenzura ku mategeko no gukurikirana imirimo.",
+      "exportCsv": "Kohereza CSV",
+      "exportFailed": "Byanze kohereza CSV",
+      "empty": "Nta makuru y'igenzura abonetse."
+    },
+    "platformPage": {
+      "title": "Igitabo cy'igenzura cya sisitemu",
+      "description": "Inzira imwe ku bakodesha bose. Ni ukuri gusa ku mukoresha mukuru.",
+      "exportCsv": "Export CSV",
+      "exportExcel": "Export Excel",
+      "exportCsvSuccess": "CSV exported successfully",
+      "exportExcelSuccess": "Excel exported successfully",
+      "exportCsvFailed": "Failed to export CSV",
+      "exportExcelFailed": "Failed to export Excel",
+      "empty": "Nta makuru y'igenzura ya sisitemu abonetse.",
+      "allTenants": "Abakodesha bose",
+      "tenantPlaceholder": "Abakodesha bose"
+    },
+    "columns": {
+      "timestamp": "Igihe",
+      "action": "Igikorwa",
+      "product": "Ibicuruzwa",
+      "user": "Ukoresha",
+      "ipAddress": "Adiresi IP",
+      "tenant": "Umukodesha",
+      "view": "Reba"
+    },
+    "filters": {
+      "actionType": "Ubwoko bw'igikorwa",
+      "fromDate": "Kuva ku itariki",
+      "toDate": "Kugeza ku itariki"
+    },
+    "detail": {
+      "title": "Inyandiko y'igenzura #{id}",
+      "recordedOn": "Yanditswe ku {datetime}",
+      "action": "Action",
+      "product": "Product",
+      "user": "User",
+      "ipAddress": "IP Address",
+      "detailsJson": "Ibisobanuro (JSON)"
+    },
+    "actionLabels": {
+      "stock_received": "Ububiko bwakiriwe",
+      "stock_issued": "Ububiko bwoherejwe",
+      "stock_transferred": "Ububiko bwasubitswe",
+      "stock_adjusted": "Ububiko bwarenganuriwe",
+      "reservation_created": "Guhagarika byaremewe",
+      "reservation_fulfilled": "Guhagarika byashyizwe mu bikorwa",
+      "reservation_cancelled": "Guhagarika byahagaritswe",
+      "cycle_count_started": "Gupima ububiko byatangiye",
+      "cycle_count_reconciled": "Gupima ububiko byahuje",
+      "bulk_operation": "Igikorwa kinini",
+      "tenant_accessed": "Umukodesha yageretseho",
+      "tenant_export": "Amakuru y'umukodesha yoherejwe"
+    }
+  },
+  "Reports": {
+    "index": {
+      "title": "Reports",
+      "description": "Generate and export inventory, procurement, and sales reports"
+    },
+    "shared": {
+      "dateFrom": "From",
+      "dateTo": "To",
+      "pickDate": "Pick a date",
+      "all": "All",
+      "selectMethod": "Select method",
+      "selectPeriod": "Select period"
+    },
+    "filters": {
+      "valuationMethod": "Valuation Method",
+      "period": "Period",
+      "movementType": "Movement type",
+      "varianceType": "Variance type",
+      "lookAheadDays": "Look-ahead (days)",
+      "thresholdMultiplier": "Threshold multiplier",
+      "productSku": "Product SKU",
+      "lotNumber": "Lot number"
+    },
+    "options": {
+      "period": {
+        "daily": "Daily",
+        "weekly": "Weekly",
+        "monthly": "Monthly"
+      },
+      "valuation": {
+        "weighted_average": "Weighted Average",
+        "latest_cost": "Latest Cost"
+      },
+      "movement": {
+        "receipt": "Receipt",
+        "issue": "Issue",
+        "transfer": "Transfer",
+        "adjustment": "Adjustment",
+        "return": "Return"
+      },
+      "variance": {
+        "shortage": "Shortage",
+        "surplus": "Surplus",
+        "match": "Match"
+      }
+    },
+    "expiryBadge": {
+      "expired": "Expired",
+      "expiring": "Expiring"
+    },
+    "columns": {
+      "cellEmpty": "—",
+      "sku": "SKU",
+      "product": "Product",
+      "category": "Category",
+      "quantity": "Quantity",
+      "unitCost": "Unit Cost",
+      "totalValue": "Total Value",
+      "type": "Type",
+      "qty": "Qty",
+      "from": "From",
+      "to": "To",
+      "reference": "Reference",
+      "date": "Date",
+      "reorderPoint": "Reorder Point",
+      "currentStock": "Current Stock",
+      "deficit": "Deficit",
+      "threshold": "Threshold",
+      "excess": "Excess",
+      "period": "Period",
+      "orders": "Orders",
+      "totalCost": "Total Cost",
+      "totalRevenue": "Total Revenue",
+      "totalQty": "Total Qty",
+      "reserved": "Reserved",
+      "available": "Available",
+      "reservedValue": "Reserved Value",
+      "status": "Status",
+      "lotNumber": "Lot Number",
+      "expiryDate": "Expiry Date",
+      "daysLeft": "Days Left",
+      "qtyRemaining": "Qty Remaining",
+      "supplier": "Supplier",
+      "cycle": "Cycle",
+      "location": "Location",
+      "systemQty": "System Qty",
+      "physicalQty": "Physical Qty",
+      "variance": "Variance",
+      "resolution": "Resolution",
+      "action": "Action",
+      "fromToLocation": "From / Location",
+      "salesOrder": "Sales Order",
+      "name": "Name",
+      "scheduled": "Scheduled",
+      "lines": "Lines",
+      "variances": "Variances",
+      "shortages": "Shortages",
+      "surpluses": "Surpluses",
+      "netVariance": "Net Variance",
+      "allLocations": "All"
+    },
+    "cards": {
+      "stockValuation": {
+        "title": "Stock Valuation",
+        "description": "View total inventory value using weighted average or latest cost methods"
+      },
+      "movementHistory": {
+        "title": "Movement History",
+        "description": "Browse all stock movements with date range and type filters"
+      },
+      "lowStock": {
+        "title": "Low Stock",
+        "description": "Products at or below their reorder point"
+      },
+      "overstock": {
+        "title": "Overstock",
+        "description": "Products exceeding their reorder point threshold"
+      },
+      "purchaseSummary": {
+        "title": "Purchase Summary",
+        "description": "Purchase order totals grouped by period"
+      },
+      "salesSummary": {
+        "title": "Sales Summary",
+        "description": "Sales order totals grouped by period"
+      },
+      "availability": {
+        "title": "Availability",
+        "description": "Per-product stock, reserved, and available quantities"
+      },
+      "productExpiry": {
+        "title": "Product Expiry",
+        "description": "Lots expiring soon or already expired"
+      },
+      "variances": {
+        "title": "Variances",
+        "description": "Inventory variance report from cycle counts"
+      },
+      "traceability": {
+        "title": "Traceability",
+        "description": "Full movement chain for a specific product and lot"
+      }
+    },
+    "pages": {
+      "stockValuation": {
+        "title": "Stock Valuation",
+        "description": "Inventory value by product using selected costing method",
+        "summaryTotalProducts": "Total Products",
+        "summaryTotalQuantity": "Total Quantity",
+        "summaryTotalValue": "Total Value",
+        "empty": "No stock valuation data."
+      },
+      "movementHistory": {
+        "title": "Movement History",
+        "description": "All stock movements with filters",
+        "empty": "No movements found for the selected filters."
+      },
+      "lowStock": {
+        "title": "Low Stock Report",
+        "description": "Products at or below their reorder point",
+        "empty": "No low-stock items found."
+      },
+      "overstock": {
+        "title": "Overstock Report",
+        "description": "Products exceeding their reorder point by the threshold multiplier",
+        "empty": "No overstock items found."
+      },
+      "purchaseSummary": {
+        "title": "Purchase Summary",
+        "description": "Purchase order totals grouped by period",
+        "totalOrders": "Total Orders",
+        "totalCost": "Total Cost",
+        "empty": "No purchase summary data for the selected period."
+      },
+      "salesSummary": {
+        "title": "Sales Summary",
+        "description": "Sales order totals grouped by period",
+        "totalOrders": "Total Orders",
+        "totalRevenue": "Total Revenue",
+        "empty": "No sales summary data for the selected period."
+      },
+      "availability": {
+        "title": "Availability Report",
+        "description": "Per-product stock, reserved, and available quantities",
+        "products": "Products",
+        "totalReservedValue": "Total Reserved Value",
+        "empty": "No availability data."
+      },
+      "productExpiry": {
+        "title": "Product Expiry Report",
+        "description": "Lots expiring soon or already expired",
+        "expired": "Expired lots",
+        "expiringSoon": "Expiring soon",
+        "totalLots": "Total lots (in window)",
+        "empty": "No expiry data for the selected window."
+      },
+      "variances": {
+        "title": "Variance Report",
+        "description": "Inventory variances from cycle counts",
+        "totalVariances": "Total variances",
+        "shortages": "Shortages",
+        "surpluses": "Surpluses",
+        "netVariance": "Net variance",
+        "empty": "No variances found for the selected filters."
+      },
+      "traceability": {
+        "title": "Product Traceability",
+        "description": "Full movement chain for a specific product and lot",
+        "placeholderSku": "Enter SKU",
+        "placeholderLot": "Enter lot number",
+        "promptEnterSkuAndLot": "Enter a product SKU and lot number to load the traceability chain.",
+        "productLabel": "Product",
+        "lotLabel": "Lot",
+        "expiresWithDate": "Expires {date}",
+        "supplierWithName": "Supplier: {name}",
+        "empty": "No traceability events found."
+      }
+    }
+  }
+}

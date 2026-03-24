@@ -5,7 +5,7 @@ import {
 } from "@tanstack/react-query"
 import {
   dispatchesApi,
-  fetchSalesOrders,
+  fetchSalesOrdersForDispatch,
   fetchLocations,
 } from "../api/dispatches-api"
 import type {
@@ -75,18 +75,40 @@ export function useProcessDispatch() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (id: number) => dispatchesApi.process(id),
+    mutationFn: ({
+      id,
+      issueAvailableOnly,
+    }: {
+      id: number
+      issueAvailableOnly?: boolean
+    }) =>
+      dispatchesApi.process(
+        id,
+        issueAvailableOnly ? { issue_available_only: true } : undefined,
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: DISPATCHES_KEY })
+      queryClient.invalidateQueries({ queryKey: ["sales-orders"] })
     },
+  })
+}
+
+export function useDispatchFulfillmentPreview(
+  dispatchId: number | null,
+  enabled: boolean,
+) {
+  return useQuery({
+    queryKey: [...DISPATCHES_KEY, dispatchId, "fulfillment-preview"],
+    queryFn: () => dispatchesApi.fulfillmentPreview(dispatchId!),
+    enabled: enabled && dispatchId != null && dispatchId > 0,
   })
 }
 
 export function useDispatchSalesOrders() {
   return useQuery({
-    queryKey: ["sales-orders", "list-all"],
-    queryFn: fetchSalesOrders,
-    staleTime: 5 * 60 * 1000,
+    queryKey: ["sales-orders", "for-dispatch", "confirmed"],
+    queryFn: fetchSalesOrdersForDispatch,
+    staleTime: 60 * 1000,
   })
 }
 

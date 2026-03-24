@@ -10,19 +10,22 @@ from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from drf_spectacular.utils import extend_schema
 
 from inventory.exceptions import InventoryError, InsufficientStockError, MovementImmutableError
 from inventory.models import Category, Product, StockLocation, StockLot, StockMovement, StockRecord
 from inventory.services.cache import (
     cache_get,
     cache_set,
-    stock_record_key,
+    stock_record_serialized_cache_key,
 )
 from inventory.services.stock import StockService
 from tenants.context import get_current_tenant
 from tenants.middleware import resolve_tenant_for_request
 from tenants.permissions import TenantReadOnlyOrManager, get_membership
 
+from api.mixins import TranslatableAPIReadMixin
+from api.schema_i18n import OPENAPI_LANGUAGE_QUERY_PARAMETER
 from api.serializers.inventory import (
     CategorySerializer,
     ProductSerializer,
@@ -90,7 +93,8 @@ class TenantScopedInventoryMixin:
         instance.delete()
 
 
-class CategoryViewSet(TenantScopedInventoryMixin, viewsets.ModelViewSet):
+@extend_schema(parameters=[OPENAPI_LANGUAGE_QUERY_PARAMETER])
+class CategoryViewSet(TranslatableAPIReadMixin, TenantScopedInventoryMixin, viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     filter_backends = [SearchFilter, OrderingFilter]
@@ -103,7 +107,8 @@ class CategoryViewSet(TenantScopedInventoryMixin, viewsets.ModelViewSet):
         return super().get_queryset().filter(tenant=tenant)
 
 
-class ProductViewSet(TenantScopedInventoryMixin, viewsets.ModelViewSet):
+@extend_schema(parameters=[OPENAPI_LANGUAGE_QUERY_PARAMETER])
+class ProductViewSet(TranslatableAPIReadMixin, TenantScopedInventoryMixin, viewsets.ModelViewSet):
     queryset = Product.objects.select_related("category").all()
     serializer_class = ProductSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -116,24 +121,55 @@ class ProductViewSet(TenantScopedInventoryMixin, viewsets.ModelViewSet):
         tenant = self._get_current_tenant()
         return super().get_queryset().filter(tenant=tenant)
 
+    def get_object(self):
+        """Detail writes/retrieve use tenant-scoped queryset (404 if wrong tenant).
+
+        Custom stock-related actions resolve PK globally then enforce membership so
+        cross-tenant PKs return 403, matching :mod:`tests.api.test_inventory_tenant_security`.
+        """
+        lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
+        filter_kwargs = {self.lookup_field: self.kwargs[lookup_url_kwarg]}
+        if getattr(self, "action", None) in (
+            "stock", "movements", "availability", "lots",
+        ):
+            obj = get_object_or_404(Product.objects.all(), **filter_kwargs)
+            self.check_object_permissions(self.request, obj)
+            self._verify_tenant_ownership(obj)
+            return obj
+        obj = get_object_or_404(self.get_queryset(), **filter_kwargs)
+        self.check_object_permissions(self.request, obj)
+        return obj
+
+    def _product_for_stock_operations(self, product: Product) -> Product:
+        """Stock/movements are keyed to the tenant canonical locale row."""
+        loc = getattr(self, "_api_canonical_locale", None)
+        if loc is None or product.locale_id == loc.id:
+            return product
+        canonical = product.get_translation_or_none(loc)
+        return canonical if canonical is not None else product
+
     @action(detail=True, methods=["get"])
     def stock(self, request, pk=None):
         """Return stock records for this product across all locations."""
         tenant = self._get_current_tenant()
-        product = get_object_or_404(Product.objects.all(), pk=pk)
+        product = self._product_for_stock_operations(self.get_object())
         self._verify_tenant_ownership(product)
         records = StockRecord.objects.filter(
             product=product,
             tenant=tenant,
         ).select_related("location")
+        ctx = self.get_serializer_context()
+        lang = ctx.get("language")
         data = []
         for record in records:
-            key = stock_record_key(product.pk, record.location_id)
+            key = stock_record_serialized_cache_key(
+                product.pk, record.location_id, lang,
+            )
             cached = cache_get(key)
             if cached is not None:
                 data.append(cached)
             else:
-                serialized = StockRecordSerializer(record).data
+                serialized = StockRecordSerializer(record, context=ctx).data
                 cache_set(key, serialized)
                 data.append(serialized)
         return Response(data)
@@ -142,19 +178,21 @@ class ProductViewSet(TenantScopedInventoryMixin, viewsets.ModelViewSet):
     def movements(self, request, pk=None):
         """Return recent stock movements for this product."""
         tenant = self._get_current_tenant()
-        product = get_object_or_404(Product.objects.all(), pk=pk)
+        product = self._product_for_stock_operations(self.get_object())
         self._verify_tenant_ownership(product)
         movements = StockMovement.objects.filter(
             product=product,
             tenant=tenant,
         ).select_related("from_location", "to_location")[:50]
-        serializer = StockMovementSerializer(movements, many=True)
+        serializer = StockMovementSerializer(
+            movements, many=True, context=self.get_serializer_context(),
+        )
         return Response(serializer.data)
 
     @action(detail=True, methods=["get"])
     def availability(self, request, pk=None):
         """Return per-location availability: quantity, reserved, available."""
-        product = get_object_or_404(Product.objects.all(), pk=pk)
+        product = self._product_for_stock_operations(self.get_object())
         self._verify_tenant_ownership(product)
         return product_availability_action(self, request, product=product)
 
@@ -162,7 +200,7 @@ class ProductViewSet(TenantScopedInventoryMixin, viewsets.ModelViewSet):
     def lots(self, request, pk=None):
         """Return lots for this product, with optional filtering."""
         tenant = self._get_current_tenant()
-        product = get_object_or_404(Product.objects.all(), pk=pk)
+        product = self._product_for_stock_operations(self.get_object())
         self._verify_tenant_ownership(product)
         qs = StockLot.objects.filter(product=product, tenant=tenant).select_related("product")
 
@@ -184,7 +222,12 @@ class ProductViewSet(TenantScopedInventoryMixin, viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-class StockLocationViewSet(TenantScopedInventoryMixin, viewsets.ModelViewSet):
+@extend_schema(parameters=[OPENAPI_LANGUAGE_QUERY_PARAMETER])
+class StockLocationViewSet(
+    TranslatableAPIReadMixin,
+    TenantScopedInventoryMixin,
+    viewsets.ModelViewSet,
+):
     queryset = StockLocation.objects.all()
     serializer_class = StockLocationSerializer
     filter_backends = [SearchFilter, OrderingFilter]
@@ -206,20 +249,24 @@ class StockLocationViewSet(TenantScopedInventoryMixin, viewsets.ModelViewSet):
             location=location,
             tenant=tenant,
         ).select_related("product")
+        ctx = self.get_serializer_context()
+        lang = ctx.get("language")
         data = []
         for record in records:
-            key = stock_record_key(record.product_id, location.pk)
+            key = stock_record_serialized_cache_key(
+                record.product_id, location.pk, lang,
+            )
             cached = cache_get(key)
             if cached is not None:
                 data.append(cached)
             else:
-                serialized = StockRecordSerializer(record).data
+                serialized = StockRecordSerializer(record, context=ctx).data
                 cache_set(key, serialized)
                 data.append(serialized)
         return Response(data)
 
 
-class StockRecordViewSet(TenantScopedInventoryMixin, viewsets.ReadOnlyModelViewSet):
+class StockRecordViewSet(TranslatableAPIReadMixin, TenantScopedInventoryMixin, viewsets.ReadOnlyModelViewSet):
     """Read-only — stock is managed through movements, not direct edits."""
 
     queryset = StockRecord.objects.select_related("product", "location").all()
@@ -242,7 +289,9 @@ class StockRecordViewSet(TenantScopedInventoryMixin, viewsets.ReadOnlyModelViewS
         return Response(serializer.data)
 
 
-class StockMovementViewSet(TenantScopedInventoryMixin,
+@extend_schema(parameters=[OPENAPI_LANGUAGE_QUERY_PARAMETER])
+class StockMovementViewSet(TranslatableAPIReadMixin,
+                           TenantScopedInventoryMixin,
                            viewsets.GenericViewSet,
                            viewsets.mixins.ListModelMixin,
                            viewsets.mixins.RetrieveModelMixin,
@@ -332,7 +381,9 @@ class StockMovementViewSet(TenantScopedInventoryMixin,
                 status=status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
 
-        output = StockMovementSerializer(movement)
+        output = StockMovementSerializer(
+            movement, context=self.get_serializer_context(),
+        )
         return Response(output.data, status=status.HTTP_201_CREATED)
 
 

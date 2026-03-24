@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import {
   useSummary,
   useStockByLocation,
@@ -16,6 +17,7 @@ import { PendingReservationsCard } from "../components/pending-reservations-card
 import { ExpiringLotsCard } from "../components/expiring-lots-card";
 
 export function DashboardPage() {
+  const t = useTranslations("Dashboard.page");
   const summary = useSummary();
   const stockByLocation = useStockByLocation();
   const movementTrends = useMovementTrends();
@@ -26,10 +28,8 @@ export function DashboardPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">
-          Overview of your inventory, orders, and operations.
-        </p>
+        <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
+        <p className="text-muted-foreground">{t("subtitle")}</p>
       </div>
 
       <KpiCards

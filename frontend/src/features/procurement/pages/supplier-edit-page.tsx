@@ -2,11 +2,12 @@
 
 import * as React from "react"
 import { use } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter } from "@/i18n/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useTranslations } from "next-intl"
 import { toast } from "sonner"
-import Link from "next/link"
+import { Link } from "@/i18n/navigation"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
@@ -14,7 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { PageHeader } from "@/components/layout/page-header"
 import { useSupplier, useUpdateSupplier } from "../hooks/use-suppliers"
 import {
-  editSupplierSchema,
+  buildCreateSupplierSchema,
   type EditSupplierFormValues,
 } from "../helpers/supplier-schemas"
 import { SupplierForm } from "../components/suppliers/supplier-form"
@@ -27,11 +28,25 @@ export function SupplierEditPage({ params }: SupplierEditPageProps) {
   const { id } = use(params)
   const supplierId = Number(id)
   const router = useRouter()
+  const t = useTranslations("Procurement.suppliers.edit")
+  const tVal = useTranslations("Procurement.suppliers.validation")
+  const tCommon = useTranslations("Common.actions")
   const { data: supplier, isLoading } = useSupplier(supplierId)
   const updateMutation = useUpdateSupplier()
 
+  const supplierSchema = React.useMemo(
+    () =>
+      buildCreateSupplierSchema({
+        codeRequired: tVal("codeRequired"),
+        nameRequired: tVal("nameRequired"),
+        emailInvalid: tVal("emailInvalid"),
+        leadTimeMin: tVal("leadTimeMin"),
+      }),
+    [tVal],
+  )
+
   const form = useForm<EditSupplierFormValues>({
-    resolver: zodResolver(editSupplierSchema),
+    resolver: zodResolver(supplierSchema),
     defaultValues: {
       code: "",
       name: "",
@@ -68,13 +83,13 @@ export function SupplierEditPage({ params }: SupplierEditPageProps) {
       { id: supplierId, payload: values },
       {
         onSuccess: () => {
-          toast.success(`Supplier "${values.name}" updated`)
-          router.push("/suppliers")
+          toast.success(t("toastUpdated", { name: values.name }))
+          router.push("/procurement/suppliers")
         },
         onError: () => {
-          toast.error("Failed to update supplier")
+          toast.error(t("toastUpdateFailed"))
         },
-      }
+      },
     )
   }
 
@@ -93,9 +108,9 @@ export function SupplierEditPage({ params }: SupplierEditPageProps) {
   if (!supplier) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-4 p-6">
-        <p className="text-muted-foreground">Supplier not found</p>
-        <Button variant="outline" render={<Link href="/suppliers" />}>
-          Back to Suppliers
+        <p className="text-muted-foreground">{t("notFound")}</p>
+        <Button variant="outline" render={<Link href="/procurement/suppliers" />}>
+          {t("backToList")}
         </Button>
       </div>
     )
@@ -104,8 +119,8 @@ export function SupplierEditPage({ params }: SupplierEditPageProps) {
   return (
     <div className="flex flex-1 flex-col gap-6 p-6">
       <PageHeader
-        title={`Edit ${supplier.name}`}
-        description="Update supplier details"
+        title={t("title", { name: supplier.name })}
+        description={t("description")}
       />
 
       <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -114,11 +129,11 @@ export function SupplierEditPage({ params }: SupplierEditPageProps) {
             <SupplierForm form={form} />
           </CardContent>
           <CardFooter className="flex justify-end gap-2">
-            <Button variant="outline" render={<Link href="/suppliers" />}>
-              Cancel
+            <Button variant="outline" render={<Link href="/procurement/suppliers" />}>
+              {tCommon("cancel")}
             </Button>
             <Button type="submit" disabled={updateMutation.isPending}>
-              {updateMutation.isPending ? "Saving..." : "Save Changes"}
+              {updateMutation.isPending ? t("saving") : t("submit")}
             </Button>
           </CardFooter>
         </Card>

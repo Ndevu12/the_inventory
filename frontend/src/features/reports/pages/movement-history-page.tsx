@@ -1,19 +1,43 @@
 "use client"
 
 import * as React from "react"
+import { useTranslations } from "next-intl"
 import { PageHeader } from "@/components/layout/page-header"
 import { useMovementHistory } from "../hooks/use-reports"
 import { useExportReport } from "../hooks/use-export-report"
 import { useReportFiltersStore } from "../stores/report-filters-store"
 import { getMovementHistoryColumns } from "../helpers/report-columns"
-import { MOVEMENT_TYPE_OPTIONS } from "../helpers/report-constants"
+import { MOVEMENT_TYPE_VALUES } from "../helpers/report-constants"
 import { ReportTable } from "../components/report-table"
 import { ExportButtons } from "../components/export-buttons"
 import { DateRangeFilter, SelectFilter } from "../components/report-filters"
 
 export function MovementHistoryPage() {
+  const tPage = useTranslations("Reports.pages.movementHistory")
+  const tFilters = useTranslations("Reports.filters")
+  const tCol = useTranslations("Reports.columns")
+  const tMov = useTranslations("Reports.options.movement")
+
   const { dateFrom, dateTo, movementType, setDateFrom, setDateTo, setMovementType } =
     useReportFiltersStore()
+
+  const movementOptions = React.useMemo(
+    () =>
+      MOVEMENT_TYPE_VALUES.map((value) => ({
+        value,
+        label: tMov(value),
+      })),
+    [tMov],
+  )
+
+  const columns = React.useMemo(
+    () =>
+      getMovementHistoryColumns(
+        (k) => tCol(k),
+        (type) => tMov(type),
+      ),
+    [tCol, tMov],
+  )
 
   const params = React.useMemo(
     () => ({
@@ -25,7 +49,6 @@ export function MovementHistoryPage() {
   )
 
   const { data, isLoading } = useMovementHistory(params)
-  const columns = React.useMemo(() => getMovementHistoryColumns(), [])
 
   const exportParams = React.useMemo(
     () => ({
@@ -40,8 +63,8 @@ export function MovementHistoryPage() {
   return (
     <div className="flex flex-1 flex-col gap-6 p-6">
       <PageHeader
-        title="Movement History"
-        description="All stock movements with date and type filters"
+        title={tPage("title")}
+        description={tPage("description")}
         actions={<ExportButtons onExport={handleExport} exporting={exporting} />}
       />
 
@@ -53,10 +76,10 @@ export function MovementHistoryPage() {
           onDateToChange={setDateTo}
         />
         <SelectFilter
-          label="Movement Type"
+          label={tFilters("movementType")}
           value={movementType}
           onChange={setMovementType}
-          options={MOVEMENT_TYPE_OPTIONS}
+          options={movementOptions}
         />
       </div>
 
@@ -64,7 +87,7 @@ export function MovementHistoryPage() {
         columns={columns}
         data={data?.results ?? []}
         isLoading={isLoading}
-        emptyMessage="No movements found."
+        emptyMessage={tPage("empty")}
       />
     </div>
   )

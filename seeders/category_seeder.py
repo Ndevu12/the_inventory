@@ -11,8 +11,12 @@ class CategorySeeder(BaseSeeder):
         """Create root and nested category nodes."""
         self.log("Creating categories...")
 
-        # Root categories - check if exists first
-        if not Category.objects.filter(slug="electronics", tenant=self.tenant).exists():
+        loc = self.canonical_locale
+
+        # Root categories - check if exists first (scoped to tenant canonical locale)
+        if not Category.objects.filter(
+            slug="electronics", tenant=self.tenant, locale=loc,
+        ).exists():
             electronics = self.add_root_with_tenant(
                 Category,
                 name="Electronics",
@@ -22,9 +26,13 @@ class CategorySeeder(BaseSeeder):
             )
             self.log(f"  Created: {electronics.name}")
         else:
-            electronics = Category.objects.get(slug="electronics", tenant=self.tenant)
+            electronics = Category.objects.get(
+                slug="electronics", tenant=self.tenant, locale=loc,
+            )
 
-        if not Category.objects.filter(slug="furniture", tenant=self.tenant).exists():
+        if not Category.objects.filter(
+            slug="furniture", tenant=self.tenant, locale=loc,
+        ).exists():
             furniture = self.add_root_with_tenant(
                 Category,
                 name="Furniture",
@@ -34,9 +42,13 @@ class CategorySeeder(BaseSeeder):
             )
             self.log(f"  Created: {furniture.name}")
         else:
-            furniture = Category.objects.get(slug="furniture", tenant=self.tenant)
+            furniture = Category.objects.get(
+                slug="furniture", tenant=self.tenant, locale=loc,
+            )
 
-        if not Category.objects.filter(slug="office-supplies", tenant=self.tenant).exists():
+        if not Category.objects.filter(
+            slug="office-supplies", tenant=self.tenant, locale=loc,
+        ).exists():
             office_supplies = self.add_root_with_tenant(
                 Category,
                 name="Office Supplies",
@@ -46,79 +58,105 @@ class CategorySeeder(BaseSeeder):
             )
             self.log(f"  Created: {office_supplies.name}")
         else:
-            office_supplies = Category.objects.get(slug="office-supplies", tenant=self.tenant)
+            office_supplies = Category.objects.get(
+                slug="office-supplies", tenant=self.tenant, locale=loc,
+            )
 
         # Nested categories under Electronics
-        if not Category.objects.filter(slug="phones", tenant=self.tenant).exists():
+        if not Category.objects.filter(
+            slug="phones", tenant=self.tenant, locale=loc,
+        ).exists():
             phones = electronics.add_child(
                 name="Phones",
                 slug="phones",
                 description="Mobile and smartphones",
                 is_active=True,
                 tenant=self.tenant,
+                locale=loc,
             )
             self.log(f"  Created: {electronics.name} → {phones.name}")
 
-        if not Category.objects.filter(slug="laptops", tenant=self.tenant).exists():
+        if not Category.objects.filter(
+            slug="laptops", tenant=self.tenant, locale=loc,
+        ).exists():
             laptops = electronics.add_child(
                 name="Laptops",
                 slug="laptops",
                 description="Laptops and notebooks",
                 is_active=True,
                 tenant=self.tenant,
+                locale=loc,
             )
             self.log(f"  Created: {electronics.name} → {laptops.name}")
 
-        if not Category.objects.filter(slug="accessories", tenant=self.tenant).exists():
+        if not Category.objects.filter(
+            slug="accessories", tenant=self.tenant, locale=loc,
+        ).exists():
             accessories = electronics.add_child(
                 name="Accessories",
                 slug="accessories",
                 description="Cables, chargers, adapters",
                 is_active=True,
                 tenant=self.tenant,
+                locale=loc,
             )
             self.log(f"  Created: {electronics.name} → {accessories.name}")
 
         # Nested categories under Furniture
-        if not Category.objects.filter(slug="desks", tenant=self.tenant).exists():
+        if not Category.objects.filter(
+            slug="desks", tenant=self.tenant, locale=loc,
+        ).exists():
             desks = furniture.add_child(
                 name="Desks",
                 slug="desks",
                 description="Office and computer desks",
                 is_active=True,
                 tenant=self.tenant,
+                locale=loc,
             )
             self.log(f"  Created: {furniture.name} → {desks.name}")
 
-        if not Category.objects.filter(slug="chairs", tenant=self.tenant).exists():
+        if not Category.objects.filter(
+            slug="chairs", tenant=self.tenant, locale=loc,
+        ).exists():
             chairs = furniture.add_child(
                 name="Chairs",
                 slug="chairs",
                 description="Office and ergonomic chairs",
                 is_active=True,
                 tenant=self.tenant,
+                locale=loc,
             )
             self.log(f"  Created: {furniture.name} → {chairs.name}")
 
         # Nested categories under Office Supplies
-        if not Category.objects.filter(slug="pens-pencils", tenant=self.tenant).exists():
+        if not Category.objects.filter(
+            slug="pens-pencils", tenant=self.tenant, locale=loc,
+        ).exists():
             pens = office_supplies.add_child(
                 name="Pens & Pencils",
                 slug="pens-pencils",
                 description="Writing instruments",
                 is_active=True,
                 tenant=self.tenant,
+                locale=loc,
             )
             self.log(f"  Created: {office_supplies.name} → {pens.name}")
 
-        if not Category.objects.filter(slug="paper-notepads", tenant=self.tenant).exists():
+        if not Category.objects.filter(
+            slug="paper-notepads", tenant=self.tenant, locale=loc,
+        ).exists():
             paper = office_supplies.add_child(
                 name="Paper & Notepads",
                 slug="paper-notepads",
                 description="Paper, notebooks, and notepads",
                 is_active=True,
                 tenant=self.tenant,
+                locale=loc,
             )
             self.log(f"  Created: {office_supplies.name} → {paper.name}")
 
-        self.log(f"Total categories created: {Category.objects.filter(tenant=self.tenant).count()}")
+        self.log(
+            "Total categories created: "
+            f"{Category.objects.filter(tenant=self.tenant, locale=loc).count()}"
+        )

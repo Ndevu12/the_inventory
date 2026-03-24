@@ -42,9 +42,9 @@ export { getMovementColumns } from "./components/movement-columns"
 export { useMovements, useMovement, useCreateMovement } from "./hooks/use-movements"
 export { useMovementFormStore } from "./stores/movement-form-store"
 export {
-  movementFormSchema,
-  MOVEMENT_TYPES,
-  ALLOCATION_STRATEGIES,
+  createMovementFormSchema,
+  MOVEMENT_TYPE_VALUES,
+  ALLOCATION_STRATEGY_VALUES,
 } from "./helpers/movement-schemas"
 export type {
   StockMovementCreatePayload,

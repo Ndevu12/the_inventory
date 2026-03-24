@@ -1,0 +1,246 @@
+{
+  "shared": {
+    "emDash": "—",
+    "unknownError": "Ikosa ritazwi",
+    "nameSeparator": " — "
+  },
+  "paymentTerms": {
+    "net_30": "Net 30",
+    "net_60": "Net 60",
+    "net_90": "Net 90",
+    "cod": "Kwishyura igihe cyo gutanga",
+    "prepaid": "Byishyuwe mbere"
+  },
+  "poStatus": {
+    "draft": "Inyandiko",
+    "confirmed": "Byemejwe",
+    "received": "Byakiriwe",
+    "cancelled": "Byahagaritswe"
+  },
+  "grnProcessStatus": {
+    "pending": "Bitegereje",
+    "processed": "Byakozwe"
+  },
+  "suppliers": {
+    "list": {
+      "title": "Abatanga",
+      "description": "Tunganya urutonde rw’abatanga",
+      "newButton": "Utanga mushya",
+      "searchPlaceholder": "Shakisha abatanga...",
+      "empty": "Nta batanga babonetse.",
+      "deleteConfirm": "Gusiba utanga \"{name}\"?",
+      "toastDeleted": "Utanga \"{name}\" yasibwe",
+      "toastDeleteFailed": "Ntibyashobotse gusiba utanga"
+    },
+    "create": {
+      "title": "Utanga mushya",
+      "description": "Ongeraho utanga mushya mu rutonde rwawe",
+      "toastCreated": "Utanga \"{name}\" yakorewe",
+      "toastCreateFailed": "Ntibyashobotse gukora utanga",
+      "creating": "Biri gukorwa...",
+      "submit": "Kora utanga"
+    },
+    "edit": {
+      "title": "Guhindura {name}",
+      "description": "Kuvugurura amakuru y’utanga",
+      "notFound": "Utanga ntibabonetse",
+      "backToList": "Subira ku batanga",
+      "toastUpdated": "Utanga \"{name}\" yavuguruwe",
+      "toastUpdateFailed": "Ntibyashobotse kuvugurura utanga",
+      "saving": "Biri kubika...",
+      "submit": "Bika impinduka"
+    },
+    "columns": {
+      "code": "Kode",
+      "name": "Izina",
+      "contact": "Umuntu w’itumanaho",
+      "email": "Imeri",
+      "phone": "Telefoni",
+      "paymentTerms": "Amabwiriza yo kwishyura",
+      "leadTime": "Igihe cyo gutanga",
+      "status": "Imiterere",
+      "leadTimeDays": "{count, plural, one {umunsi #} other {iminsi #}}"
+    },
+    "form": {
+      "code": "Kode",
+      "name": "Izina",
+      "contactName": "Izina ry’umuntu w’itumanaho",
+      "email": "Imeri",
+      "phone": "Telefoni",
+      "leadTimeDays": "Igihe cyo gutanga (iminsi)",
+      "paymentTerms": "Amabwiriza yo kwishyura",
+      "address": "Aderesi",
+      "notes": "Ibisobanuro",
+      "active": "Bikora",
+      "selectTerms": "Hitamo amabwiriza",
+      "placeholders": {
+        "code": "urugero SUP-001",
+        "companyName": "Izina ry’ikigo",
+        "contactPerson": "Umuntu w’itumanaho",
+        "email": "imeri@urugero.com",
+        "phone": "+250 7 00 00 00 00",
+        "address": "Umuhanda, umujyi, kode ya posita",
+        "notes": "Ibisobanuro by’imbere kuri uyu mutanga"
+      }
+    },
+    "validation": {
+      "codeRequired": "Kode irakenewe",
+      "nameRequired": "Izina rirakenewe",
+      "emailInvalid": "Imeri itariyo",
+      "leadTimeMin": "Bigomba kuba 0 cyangwa kuruta"
+    }
+  },
+  "purchaseOrders": {
+    "list": {
+      "title": "Amabwiriza yo kugura",
+      "description": "Tunganya amabwiriza yatanzwe ku batanga.",
+      "newButton": "Itegeko rishya ryo kugura",
+      "searchPlaceholder": "Shakisha amabwiriza yo kugura...",
+      "empty": "Nta mabwiriza yo kugura abonetse.",
+      "statusFilter": "Imiterere",
+      "toastConfirmed": "Itegeko ryo kugura {orderNumber} ryemejwe",
+      "toastCancelled": "Itegeko ryo kugura {orderNumber} ryahagaritswe",
+      "confirmFailed": "Ntibyashobotse kwemeza: {message}",
+      "cancelFailed": "Ntibyashobotse guhagarika: {message}",
+      "cancelConfirm": "Guhagarika itegeko ryo kugura \"{orderNumber}\"?"
+    },
+    "create": {
+      "title": "Kora itegeko ryo kugura",
+      "description": "Tanga itegeko rishya ku mutanga.",
+      "toastSuccess": "Itegeko ryo kugura ryakozwe neza",
+      "toastError": "Ntibyashobotse gukora itegeko ryo kugura: {message}"
+    },
+    "detail": {
+      "title": "Itegeko: {orderNumber}",
+      "titleLoading": "Itegeko ryo kugura",
+      "backToList": "Subira ku rutonde",
+      "toastConfirmed": "Itegeko ryo kugura ryemejwe",
+      "toastCancelled": "Itegeko ryo kugura ryahagaritswe",
+      "cancelConfirm": "Guhagarika iri tegeko ryo kugura?",
+      "confirmFailed": "Ntibyashobotse kwemeza: {message}",
+      "cancelFailed": "Ntibyashobotse guhagarika: {message}"
+    },
+    "columns": {
+      "orderNumber": "Nimero y’itegeko",
+      "supplier": "Utanga",
+      "status": "Imiterere",
+      "orderDate": "Itariki y’itegeko",
+      "expectedDelivery": "Itumanaho ryateganyijwe",
+      "total": "Igiteranyo",
+      "created": "Ryakorewe"
+    },
+    "actions": {
+      "view": "Reba",
+      "confirm": "Emeza",
+      "cancel": "Hagarika"
+    },
+    "form": {
+      "orderDetailsTitle": "Ibisobanuro by’itegeko",
+      "orderDetailsDescription": "Amakuru y’ibanze y’itegeko ryo kugura",
+      "supplier": "Utanga",
+      "selectSupplier": "Hitamo utanga...",
+      "orderDate": "Itariki y’itegeko",
+      "expectedDeliveryDate": "Itariki y’itumanaho ryateganyijwe",
+      "notes": "Ibisobanuro",
+      "notesPlaceholder": "Ibisobanuro by’imbere kuri iri tegeko...",
+      "lineItemsTitle": "Imirongo y’ibicuruzwa",
+      "lineItemsDescription": "Ibicuruzwa wateganyije kuri uyu mutanga",
+      "addLine": "Ongeraho umurongo",
+      "colProduct": "Igicuruzwa",
+      "colQuantity": "Umubare",
+      "colUnitCost": "Igiciro cy’ikintu kimwe",
+      "colLineTotal": "Igiteranyo cy’umurongo",
+      "grandTotal": "Igiteranyo rusange",
+      "selectProduct": "Hitamo igicuruzwa...",
+      "unitCostPlaceholder": "0.00",
+      "creating": "Biri gukorwa...",
+      "submit": "Kora itegeko ryo kugura"
+    },
+    "detailView": {
+      "confirming": "Biri kwemeza...",
+      "confirm": "Emeza",
+      "cancelling": "Biri guhagarika...",
+      "cancelOrder": "Hagarika itegeko",
+      "orderDate": "Itariki y’itegeko",
+      "expectedDelivery": "Itumanaho ryateganyijwe",
+      "totalCost": "Igiteranyo cy’igiciro",
+      "created": "Ryakorewe",
+      "notes": "Ibisobanuro",
+      "lineItemsTitle": "Imirongo y’ibicuruzwa",
+      "lineItemsCount": "{count, plural, one {ikintu #} other {ibintu #}} kuri iri tegeko",
+      "colProduct": "Igicuruzwa",
+      "colSku": "SKU",
+      "colQuantity": "Umubare",
+      "colUnitCost": "Igiciro cy’ikintu kimwe",
+      "colLineTotal": "Igiteranyo cy’umurongo",
+      "grandTotal": "Igiteranyo rusange"
+    },
+    "validation": {
+      "productRequired": "Igicuruzwa kirakenewe",
+      "quantityMin": "Umubare ugomba kuba nibura 1",
+      "unitCostRequired": "Igiciro cy’ikintu kimwe kirakenewe",
+      "unitCostPositive": "Bigomba kuba umubare wuzuye",
+      "supplierRequired": "Utanga arakenewe",
+      "orderDateRequired": "Itariki y’itegeko irakenewe",
+      "atLeastOneLine": "Nibura umurongo umwe urakenewe"
+    }
+  },
+  "grn": {
+    "list": {
+      "title": "Inyandiko z’ibicuruzwa byakiriwe",
+      "description": "Kurikirana no gukora ibicuruzwa byakiriwe ku mabwiriza yo kugura",
+      "newButton": "Inyandiko nshya ya GRN",
+      "empty": "Nta nyandiko za GRN zibonetse.",
+      "statusFilter": "Imiterere",
+      "processConfirm": "Gukora GRN \"{grnNumber}\"? Bizakora imigendekere y’ububiko kandi ntibishobora gusubirwaho.",
+      "toastProcessed": "GRN \"{grnNumber}\" yakozwe — imigendekere y’ububiko yakorewe",
+      "toastProcessFailed": "Ntibyashobotse gukora GRN",
+      "deleteConfirm": "Gusiba GRN \"{grnNumber}\"?",
+      "toastDeleted": "GRN \"{grnNumber}\" yasibwe",
+      "toastDeleteFailed": "Ntibyashobotse gusiba GRN"
+    },
+    "create": {
+      "title": "Inyandiko nshya y’ibicuruzwa byakiriwe",
+      "description": "Andika ibicuruzwa byakiriwe ku itegeko ryo kugura",
+      "toastCreated": "GRN \"{grnNumber}\" yakorewe",
+      "toastError": "Ntibyashobotse gukora GRN",
+      "creating": "Biri gukorwa...",
+      "submit": "Kora GRN"
+    },
+    "columns": {
+      "grnNumber": "Nimero ya GRN",
+      "purchaseOrder": "Itegeko ryo kugura",
+      "receivedDate": "Itariki yo kwakira",
+      "location": "Ahantu",
+      "status": "Imiterere",
+      "created": "Ryakorewe"
+    },
+    "actions": {
+      "view": "Reba",
+      "receiveGoods": "Kwakira ibicuruzwa"
+    },
+    "form": {
+      "detailsTitle": "Ibisobanuro bya GRN",
+      "detailsDescription": "Andika ibicuruzwa byakiriwe ku itegeko ryo kugura.",
+      "grnNumber": "Nimero ya GRN",
+      "purchaseOrder": "Itegeko ryo kugura",
+      "receivedDate": "Itariki yo kwakira",
+      "location": "Ahantu",
+      "notesSectionTitle": "Ibisobanuro byongeweho",
+      "notes": "Ibisobanuro",
+      "placeholders": {
+        "grnNumber": "urugero GRN-2026-001",
+        "notes": "Imiterere y’ibicuruzwa, itandukaniro, n’ibindi."
+      },
+      "loading": "Biri gupakira...",
+      "selectPO": "Hitamo itegeko ryo kugura",
+      "selectLocation": "Hitamo ahantu"
+    },
+    "validation": {
+      "grnNumberRequired": "Nimero ya GRN irakenewe",
+      "purchaseOrderRequired": "Itegeko ryo kugura rirakenewe",
+      "receivedDateRequired": "Itariki yo kwakira irakenewe",
+      "locationRequired": "Ahantu harakenewe"
+    }
+  }
+}

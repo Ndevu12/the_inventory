@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter, usePathname } from "next/navigation";
-import Link from "next/link";
+import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { Package, Box, AlertCircle, Search, Zap } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { useAuth } from "../context/auth-context";
 import {
@@ -21,16 +21,17 @@ import { useLoginFormStore } from "../stores/login-form-store";
 import type { LoginFormValues } from "../helpers/auth-schemas";
 
 function LoginPageRegisterLink() {
+  const t = useTranslations("Auth.login");
   const { data: config } = useAuthConfig();
   if (!config?.allow_registration) return null;
   return (
     <p className="text-center text-sm text-muted-foreground">
-      Don&apos;t have an organization?{" "}
+      {t("noOrgPrompt")}{" "}
       <Link
         href="/register"
         className="text-primary underline hover:no-underline"
       >
-        Create one
+        {t("createOrgLink")}
       </Link>
     </p>
   );
@@ -39,6 +40,8 @@ function LoginPageRegisterLink() {
 export function LoginPage() {
   const router = useRouter();
   const pathname = usePathname();
+  const t = useTranslations("Auth");
+  const tMarketing = useTranslations("Auth.marketing");
   const { isReady, isAuthenticated } = useAuth();
   const loginMutation = useLogin();
   const { serverError, setServerError, reset } = useLoginFormStore();
@@ -61,7 +64,7 @@ export function LoginPage() {
       onError: (error) => {
         const message =
           (error as { message?: string }).message ??
-          "Invalid username or password";
+          t("invalidCredentials");
         setServerError(message);
       },
     });
@@ -70,17 +73,14 @@ export function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center px-4 py-8">
       <div className="w-full max-w-6xl grid grid-cols-1 gap-8 md:grid-cols-2 items-center">
-        {/* Left side: Login Form */}
         <div>
           <Card>
             <CardHeader className="text-center">
               <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
                 <Package className="h-6 w-6 text-primary" />
               </div>
-              <CardTitle className="text-xl">Welcome back</CardTitle>
-              <CardDescription>
-                Sign in to The Inventory
-              </CardDescription>
+              <CardTitle className="text-xl">{t("login.title")}</CardTitle>
+              <CardDescription>{t("login.subtitle")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <LoginForm
@@ -93,31 +93,30 @@ export function LoginPage() {
           </Card>
         </div>
 
-        {/* Right side: Features */}
         <div className="hidden md:block">
           <FeaturesList
-            title="Powerful Inventory Management"
-            subtitle="Everything you need to manage inventory efficiently"
+            title={tMarketing("title")}
+            subtitle={tMarketing("subtitle")}
           >
             <FeatureCard
               icon={Box}
-              title="Catalog Management"
-              description="Organize products with SKUs, descriptions, images, and hierarchical categories"
+              title={tMarketing("catalogTitle")}
+              description={tMarketing("catalogDescription")}
             />
             <FeatureCard
               icon={Zap}
-              title="Real-time Tracking"
-              description="Track stock movements across multiple warehouses with instant updates"
+              title={tMarketing("trackingTitle")}
+              description={tMarketing("trackingDescription")}
             />
             <FeatureCard
               icon={AlertCircle}
-              title="Smart Alerts"
-              description="Set reorder points and receive instant notifications when stock runs low"
+              title={tMarketing("alertsTitle")}
+              description={tMarketing("alertsDescription")}
             />
             <FeatureCard
               icon={Search}
-              title="Advanced Search"
-              description="Find products, categories, and locations with powerful full-text search"
+              title={tMarketing("searchTitle")}
+              description={tMarketing("searchDescription")}
             />
           </FeaturesList>
         </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { LogOutIcon, UserIcon, ChevronsUpDownIcon, UserXIcon } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -20,8 +20,10 @@ import {
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/features/auth/context/auth-context";
 import { useLogout, useExitImpersonation } from "@/features/auth/hooks/use-auth";
+import { useTranslations } from "next-intl";
 
 export function UserMenu() {
+  const t = useTranslations("Shell");
   const router = useRouter();
   const { isMobile } = useSidebar();
   const { user, memberships, tenantSlug, isImpersonating } = useAuth();
@@ -33,7 +35,7 @@ export function UserMenu() {
   );
   const displayName = user
     ? `${user.first_name} ${user.last_name}`.trim() || user.username
-    : "User";
+    : t("userFallback");
   const initials = user
     ? (user.first_name?.[0] ?? "") + (user.last_name?.[0] ?? "") ||
       user.username[0]?.toUpperCase()
@@ -59,7 +61,7 @@ export function UserMenu() {
             <div className="grid flex-1 text-left text-sm leading-tight">
               <span className="truncate font-medium">{displayName}</span>
               <span className="truncate text-xs text-muted-foreground">
-                {currentMembership?.role ?? "Member"}
+                {currentMembership?.role ?? t("memberFallback")}
               </span>
             </div>
             <ChevronsUpDownIcon className="ml-auto size-4" />
@@ -80,9 +82,9 @@ export function UserMenu() {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => router.push("/settings")}>
+              <DropdownMenuItem onClick={() => router.push("/settings/profile")}>
                 <UserIcon />
-                Profile & Settings
+                {t("profileAccount")}
               </DropdownMenuItem>
               {isImpersonating && (
                 <>
@@ -92,14 +94,14 @@ export function UserMenu() {
                     disabled={exitImpersonation.isPending}
                   >
                     <UserXIcon />
-                    Exit impersonation
+                    {t("exitImpersonation")}
                   </DropdownMenuItem>
                 </>
               )}
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => handleLogout()}>
                 <LogOutIcon />
-                Log out
+                {t("logOut")}
               </DropdownMenuItem>
             </DropdownMenuGroup>
           </DropdownMenuContent>

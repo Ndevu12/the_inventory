@@ -1,0 +1,2147 @@
+{
+  "Common": {
+    "searchAria": "Tafuta",
+    "searchPlaceholder": "Tafuta…",
+    "commandSearchPlaceholder": "Tafuta kurasa…",
+    "noResults": "Hakuna matokeo.",
+    "actions": {
+      "save": "Hifadhi",
+      "cancel": "Ghairi",
+      "delete": "Futa",
+      "edit": "Hariri",
+      "create": "Unda",
+      "new": "Mpya",
+      "back": "Rudi",
+      "close": "Funga",
+      "submit": "Wasilisha",
+      "search": "Tafuta",
+      "filter": "Chuja",
+      "export": "Hamisha",
+      "import": "Ingiza"
+    },
+    "states": {
+      "loading": "Inapakia…",
+      "error": "Hitilafu",
+      "retry": "Jaribu tena"
+    },
+    "validation": {
+      "requiredField": "Sehemu hii inahitajika."
+    },
+    "themeToggleAria": "Badilisha mandhari"
+  },
+  "LanguageSwitcher": {
+    "ariaLabel": "Lugha"
+  },
+  "App": {
+    "description": "Mfumo wa usimamizi wa hesabu nyingi wa wateja"
+  },
+  "Errors": {
+    "loadFailed": "Imeshindwa kupakia data.",
+    "networkError": "Hitilafu ya mtandao. Tafadhali jaribu tena.",
+    "permissionDenied": "Huna ruhusa kufanya hilo."
+  },
+  "Nav": {
+    "groups": {
+      "overview": "Muhtasari",
+      "inventory": "Hesabu",
+      "orders": "Maagizo",
+      "procurement": "Ununuzi",
+      "sales": "Mauzo",
+      "analytics": "Uchanganuzi",
+      "settings": "Mipangilio"
+    },
+    "items": {
+      "dashboard": "Dashibodi",
+      "products": "Bidhaa",
+      "categories": "Jamii",
+      "stockLocations": "Maeneo ya hifadhi",
+      "stockRecords": "Rekodi za hifadhi",
+      "stockMovements": "Mienendo ya hifadhi",
+      "stockLots": "Vifungu vya hifadhi",
+      "reservations": "Uhifadhi",
+      "cycleCounts": "Hesabu za mzunguko",
+      "bulkOperations": "Shughuli za wingi",
+      "suppliers": "Wasambazaji",
+      "purchaseOrders": "Maagizo ya ununuzi",
+      "goodsReceived": "Bidhaa zilizopokelewa",
+      "customers": "Wateja",
+      "salesOrders": "Maagizo ya mauzo",
+      "dispatches": "Usafirishaji",
+      "reports": "Ripoti",
+      "auditLog": "Kumbukumbu ya ukaguzi",
+      "platformAuditLog": "Ukaguzi wa jukwaa",
+      "account": "Akaunti",
+      "tenant": "Mpangishaji",
+      "teamMembers": "Wanachama wa timu",
+      "platformUsers": "Watumiaji",
+      "invitations": "Mialiko",
+      "billing": "Malipo"
+    }
+  },
+  "Shell": {
+    "tenantLoading": "Inapakia…",
+    "selectTenant": "Chagua mpangishaji",
+    "organizations": "Taasisi",
+    "loadingOrganizations": "Inapakia taasisi…",
+    "noOrganizations": "Hakuna taasisi zilizopatikana",
+    "userFallback": "Mtumiaji",
+    "memberFallback": "Mwanachama",
+    "profileAccount": "Wasifu na akaunti",
+    "exitImpersonation": "Toka kwa kutumia utambulisho wa mtu mwingine",
+    "logOut": "Toka"
+  },
+  "Breadcrumbs": {
+    "home": "Dashibodi",
+    "products": "Bidhaa",
+    "categories": "Jamii",
+    "stock": "Hifadhi",
+    "locations": "Maeneo",
+    "records": "Rekodi",
+    "movements": "Mienendo",
+    "lots": "Vifungu",
+    "reservations": "Uhifadhi",
+    "cycle-counts": "Hesabu za mzunguko",
+    "bulk-operations": "Shughuli za wingi",
+    "procurement": "Ununuzi",
+    "suppliers": "Wasambazaji",
+    "purchase-orders": "Maagizo ya ununuzi",
+    "goods-received": "Bidhaa zilizopokelewa",
+    "sales": "Mauzo",
+    "customers": "Wateja",
+    "sales-orders": "Maagizo ya mauzo",
+    "dispatches": "Usafirishaji",
+    "reports": "Ripoti",
+    "stock-valuation": "Thamani ya hifadhi",
+    "movement-history": "Historia ya mienendo",
+    "low-stock": "Hifadhi chini",
+    "overstock": "Hifadhi zaidi",
+    "purchase-summary": "Muhtasari wa ununuzi",
+    "sales-summary": "Muhtasari wa mauzo",
+    "availability": "Upatikanaji",
+    "product-expiry": "Mwisho wa bidhaa",
+    "variances": "Tofauti",
+    "traceability": "Ufuatiliaji",
+    "audit-log": "Kumbukumbu ya ukaguzi",
+    "settings": "Mipangilio",
+    "members": "Wanachama wa timu",
+    "new": "Mpya",
+    "edit": "Hariri"
+  },
+  "Dashboard": {
+    "page": {
+      "title": "Dashibodi",
+      "subtitle": "Muhtasari wa hifadhi yako, maagizo na shughuli."
+    },
+    "kpi": {
+      "totalProducts": {
+        "title": "Jumla ya bidhaa",
+        "description": "Bidhaa hai katika katalogi"
+      },
+      "locations": {
+        "title": "Maeneo",
+        "description": "Maeneo hai ya hifadhi"
+      },
+      "lowStock": {
+        "title": "Hifadhi chini",
+        "description": "Bidhaa chini ya kiwango cha kuagiza tena"
+      },
+      "reserved": {
+        "title": "Yamehifadhiwa",
+        "description": "{available} yanapatikana"
+      },
+      "purchaseOrders": {
+        "title": "Maagizo ya ununuzi",
+        "description": "Jumla ya maagizo ya ununuzi"
+      },
+      "salesOrders": {
+        "title": "Maagizo ya mauzo",
+        "description": "Jumla ya maagizo ya mauzo"
+      },
+      "reservedValue": {
+        "title": "Thamani iliyohifadhiwa",
+        "description": "Thamani ya hifadhi iliyohifadhiwa"
+      },
+      "stockRecords": {
+        "title": "Rekodi za hifadhi",
+        "description": "Rekodi za bidhaa–eneo"
+      }
+    },
+    "stockByLocation": {
+      "title": "Hifadhi kwa eneo",
+      "description": "Kiasi kinachopatikana na kilichohifadhiwa kwa kila eneo",
+      "empty": "Hakuna data ya hifadhi",
+      "legendReserved": "Kimehifadhiwa",
+      "legendAvailable": "Kinapatikana"
+    },
+    "movementTrends": {
+      "title": "Mwelekeo wa mienendo",
+      "description": "Mienendo ya kila siku ya hifadhi kwa siku 30 zilizopita",
+      "seriesLabel": "Mienendo"
+    },
+    "orderStatus": {
+      "title": "Hali ya maagizo",
+      "description": "Mgawanyo kwa hali ya sasa",
+      "tabPurchase": "Maagizo ya ununuzi",
+      "tabSales": "Maagizo ya mauzo",
+      "empty": "Bado hakuna maagizo",
+      "totalLabel": "Jumla",
+      "statusLabels": {
+        "Draft": "Rasimu",
+        "Confirmed": "Imethibitishwa",
+        "Received": "Imepokelewa",
+        "Fulfilled": "Imetimizwa",
+        "Cancelled": "Imefutwa"
+      }
+    },
+    "pendingReservations": {
+      "title": "Uhifadji unaosubiri",
+      "description": "Muhtasari wa uhifadji hai",
+      "empty": "Hakuna uhifadji hai",
+      "pending": "Inasubiri",
+      "confirmed": "Imethibitishwa",
+      "units": "vipimo",
+      "orderCount": "{count, plural, one {agizo #} other {maagizo #}}"
+    },
+    "expiringLots": {
+      "title": "Vifungu vinavyokwisha muda",
+      "description": "Vifungu vinavyokwisha muda ndani ya siku 30 zijazo",
+      "noLotData": "Hakuna data ya ufuatiliaji wa vifungu",
+      "noExpiring": "Hakuna vifungu vinavyokwisha muda ndani ya siku 30 zijazo",
+      "colLot": "Nambari ya kifungu",
+      "colProduct": "Bidhaa",
+      "colQty": "Kiasi",
+      "colExpires": "Mwisho",
+      "expiryUnknown": "Haijulikani",
+      "expiryExpired": "Imekwisha muda",
+      "expiryOneDay": "siku 1",
+      "expiryDays": "siku {count}"
+    },
+    "error": {
+      "generic": "Kitu kimekwenda vibaya. Jaribu tena.",
+      "retry": "Jaribu tena"
+    }
+  },
+  "Inventory": {
+    "shared": {
+      "emDash": "—",
+      "active": "Active",
+      "inactive": "Inactive",
+      "sku": "SKU",
+      "ok": "OK",
+      "low": "Low",
+      "lowStock": "Low Stock",
+      "capacityUnlimited": "units · unlimited",
+      "expand": "Expand",
+      "collapse": "Collapse",
+      "editNamed": "Edit {name}",
+      "deleteNamed": "Delete {name}",
+      "editLocation": "Edit location",
+      "deleteLocation": "Delete location",
+      "createdOn": "Created {date}",
+      "updatedOn": "Updated {date}",
+      "noDescription": "No description provided.",
+      "confirmDeleteLocation": "Delete \"{name}\"? This cannot be undone.",
+      "nameSeparator": " — ",
+      "expiredSuffix": "(expired)",
+      "daysSuffix": "({days}d)",
+      "deleting": "Deleting…"
+    },
+    "tableActions": {
+      "view": "View",
+      "edit": "Edit",
+      "delete": "Delete",
+      "openMenu": "Open menu"
+    },
+    "filters": {
+      "allCategories": "All Categories",
+      "allStatus": "All Status",
+      "category": "Category",
+      "status": "Status",
+      "type": "Type"
+    },
+    "units": {
+      "pcs": "Pieces",
+      "kg": "Kilograms",
+      "lt": "Litres",
+      "m": "Metres",
+      "box": "Boxes",
+      "pack": "Packs"
+    },
+    "trackingModes": {
+      "none": "No Tracking",
+      "optional": "Optional",
+      "required": "Required"
+    },
+    "movementTypes": {
+      "receive": "Receive",
+      "issue": "Issue",
+      "transfer": "Transfer",
+      "adjustment": "Adjustment"
+    },
+    "allocationStrategies": {
+      "FIFO": "FIFO (First In, First Out)",
+      "LIFO": "LIFO (Last In, First Out)"
+    },
+    "products": {
+      "title": "Products",
+      "description": "Manage your product catalog",
+      "addProduct": "Add Product",
+      "newTitle": "New Product",
+      "newDescription": "Add a new product to your catalog",
+      "editDescription": "Update product details",
+      "notFoundTitle": "Product Not Found",
+      "notFoundBody": "The product you are looking for does not exist.",
+      "editTitle": "Edit {name}",
+      "detailSku": "SKU: {sku}",
+      "detailEdit": "Edit",
+      "searchPlaceholder": "Search products...",
+      "empty": "No products found.",
+      "columns": {
+        "sku": "SKU",
+        "name": "Name",
+        "category": "Category",
+        "unit": "Unit",
+        "unitCost": "Unit Cost",
+        "reorderPt": "Reorder Pt.",
+        "status": "Status",
+        "created": "Created"
+      },
+      "form": {
+        "basicInfo": "Basic Information",
+        "inventorySettings": "Inventory Settings",
+        "noCategory": "No category",
+        "selectCategory": "Select category",
+        "labels": {
+          "sku": "SKU",
+          "name": "Name",
+          "description": "Description",
+          "category": "Category",
+          "unitOfMeasure": "Unit of Measure",
+          "unitCost": "Unit Cost",
+          "reorderPoint": "Reorder Point",
+          "trackingMode": "Tracking Mode",
+          "active": "Active"
+        },
+        "placeholders": {
+          "sku": "e.g. PHONE-001",
+          "name": "e.g. iPhone 15 Pro",
+          "description": "Optional product description",
+          "unitCost": "0.00",
+          "reorderPoint": "0"
+        },
+        "submitCreate": "Create Product",
+        "submitSave": "Save Changes",
+        "validation": {
+          "skuRequired": "SKU is required",
+          "skuMax": "SKU must be 100 characters or less",
+          "nameRequired": "Name is required",
+          "nameMax": "Name must be 255 characters or less",
+          "unitOfMeasureRequired": "Unit of measure is required",
+          "unitCostMin": "Unit cost must be zero or greater",
+          "reorderPointInt": "Reorder point must be a whole number",
+          "reorderPointMin": "Reorder point must be zero or greater"
+        }
+      },
+      "tabs": {
+        "info": "Info",
+        "stock": "Stock Records",
+        "movements": "Movements",
+        "lots": "Lots"
+      },
+      "detail": {
+        "title": "Product Details",
+        "description": "Description",
+        "fields": {
+          "sku": "SKU",
+          "name": "Name",
+          "category": "Category",
+          "unitOfMeasure": "Unit of Measure",
+          "unitCost": "Unit Cost",
+          "reorderPoint": "Reorder Point",
+          "status": "Status",
+          "created": "Created",
+          "updated": "Updated"
+        }
+      },
+      "stockTab": {
+        "title": "Stock by Location",
+        "empty": "No stock records.",
+        "location": "Location",
+        "quantity": "Quantity",
+        "reserved": "Reserved",
+        "available": "Available",
+        "status": "Status"
+      },
+      "movementsTab": {
+        "title": "Recent Movements",
+        "empty": "No movements yet.",
+        "type": "Type",
+        "qty": "Qty",
+        "from": "From",
+        "to": "To",
+        "reference": "Reference",
+        "date": "Date"
+      },
+      "lotsTab": {
+        "title": "Lots / Batches",
+        "empty": "No lots tracked.",
+        "lotNumber": "Lot #",
+        "received": "Received",
+        "remaining": "Remaining",
+        "expiry": "Expiry",
+        "status": "Status"
+      }
+    },
+    "categories": {
+      "title": "Categories",
+      "description": "Organize your products into categories.",
+      "addCategory": "Add Category",
+      "searchPlaceholder": "Search categories…",
+      "emptyTitle": "No categories found",
+      "emptyHint": "Create a category to get started.",
+      "deleteTitle": "Delete Category",
+      "deleteDescription": "Are you sure you want to delete \"{name}\"? This action cannot be undone.",
+      "toastUpdated": "Category \"{name}\" updated",
+      "toastCreated": "Category \"{name}\" created",
+      "toastDeleted": "Category \"{name}\" deleted",
+      "toastSaveFailed": "Failed to save category",
+      "toastDeleteFailed": "Failed to delete category",
+      "form": {
+        "createTitle": "Create Category",
+        "editTitle": "Edit Category",
+        "createDescription": "Fill in the details to create a new category.",
+        "editDescription": "Update the category details below.",
+        "name": "Name",
+        "slug": "Slug",
+        "slugPlaceholder": "auto-generated if empty",
+        "slugHint": "URL-friendly identifier. Leave blank to auto-generate from the name.",
+        "description": "Description",
+        "descriptionPlaceholder": "Optional description...",
+        "active": "Active",
+        "namePlaceholder": "e.g. Electronics",
+        "saving": "Saving…",
+        "updateSubmit": "Update Category",
+        "createSubmit": "Create Category",
+        "validation": {
+          "nameRequired": "Name is required",
+          "nameMax": "Name must be 255 characters or less",
+          "slugMax": "Slug must be 255 characters or less"
+        }
+      }
+    },
+    "locations": {
+      "title": "Stock Locations",
+      "description": "Manage warehouse locations and track capacity utilization.",
+      "addLocation": "Add Location",
+      "searchPlaceholder": "Search locations...",
+      "emptyTitle": "No locations yet",
+      "emptyDescription": "Create your first stock location to start tracking inventory.",
+      "noStock": "No stock at this location.",
+      "subTableProduct": "Product",
+      "subTableQty": "Qty",
+      "subTableReserved": "Reserved",
+      "subTableAvailable": "Available",
+      "toastUpdated": "\"{name}\" updated",
+      "toastCreated": "\"{name}\" created",
+      "toastDeleted": "\"{name}\" deleted",
+      "toastUpdateFailed": "Failed to update location",
+      "toastCreateFailed": "Failed to create location",
+      "toastDeleteFailed": "Failed to delete location",
+      "form": {
+        "createTitle": "New Location",
+        "editTitle": "Edit Location",
+        "createDescription": "Add a new stock location to your warehouse.",
+        "editDescription": "Update the details for this stock location.",
+        "name": "Name",
+        "description": "Description",
+        "maxCapacity": "Max Capacity",
+        "namePlaceholder": "e.g. Warehouse A, Shelf B2",
+        "descriptionPlaceholder": "Describe this location...",
+        "capacityPlaceholder": "Leave empty for unlimited",
+        "capacityHint": "Maximum stock units this location can hold. Leave empty for unlimited capacity.",
+        "active": "Active",
+        "saving": "Saving...",
+        "submitCreate": "Create",
+        "submitUpdate": "Update",
+        "validation": {
+          "nameRequired": "Name is required",
+          "nameMax": "Name is too long"
+        }
+      }
+    },
+    "stockRecords": {
+      "title": "Stock Records",
+      "description": "Current stock levels across all locations",
+      "loadError": "Failed to load stock records",
+      "lowStock": "Low Stock",
+      "lowStockCount": "Low Stock ({count})",
+      "searchPlaceholder": "Search products...",
+      "empty": "No stock records found.",
+      "columns": {
+        "sku": "SKU",
+        "product": "Product",
+        "location": "Location",
+        "quantity": "Quantity",
+        "reserved": "Reserved",
+        "available": "Available",
+        "status": "Status"
+      },
+      "badges": {
+        "lowStock": "Low Stock",
+        "ok": "OK"
+      }
+    },
+    "lots": {
+      "title": "Stock Lots",
+      "description": "View and filter lot/batch records with expiry tracking.",
+      "searchPlaceholder": "Search lots, serials, SKUs...",
+      "empty": "No stock lots found.",
+      "columns": {
+        "lotNumber": "Lot Number",
+        "productSku": "Product SKU",
+        "serialNumber": "Serial Number",
+        "qtyReceived": "Qty Received",
+        "qtyRemaining": "Qty Remaining",
+        "received": "Received",
+        "expiryDate": "Expiry Date",
+        "expiryStatus": "Expiry Status",
+        "status": "Status"
+      },
+      "expiry": {
+        "expired": "Expired",
+        "noExpiry": "No expiry",
+        "daysLeft": "{days}d left"
+      }
+    },
+    "movements": {
+      "listTitle": "Stock Movements",
+      "listDescription": "View all stock movements across your inventory.",
+      "newMovement": "New Movement",
+      "createTitle": "Record Movement",
+      "createDescription": "Create a new stock movement (receive, issue, transfer, or adjustment).",
+      "searchPlaceholder": "Search by product, reference...",
+      "empty": "No movements found.",
+      "columns": {
+        "id": "ID",
+        "type": "Type",
+        "product": "Product",
+        "qty": "Qty",
+        "from": "From",
+        "to": "To",
+        "reference": "Reference",
+        "date": "Date"
+      },
+      "detail": {
+        "invalidTitle": "Invalid movement",
+        "invalidBody": "The movement id in the URL is not valid.",
+        "notFoundTitle": "Movement not found",
+        "notFoundBody": "This stock movement does not exist or you do not have access to it.",
+        "backToList": "Back to movements",
+        "title": "Movement #{id}",
+        "allMovements": "All movements",
+        "viewProduct": "View product",
+        "summary": "Summary",
+        "productSku": "Product (SKU)",
+        "quantity": "Quantity",
+        "fromLocation": "From location",
+        "toLocation": "To location",
+        "unitCost": "Unit cost",
+        "reference": "Reference",
+        "notes": "Notes",
+        "created": "Created",
+        "lotAllocations": "Lot allocations",
+        "lotNumber": "Lot #",
+        "lotQty": "Quantity"
+      },
+      "form": {
+        "cardMovement": "Movement Details",
+        "cardMovementHint": "Select the type, product, quantity, and relevant locations.",
+        "cardLot": "Lot / Batch Information",
+        "cardLotHint": "Optionally assign this received stock to a lot.",
+        "cardAllocation": "Lot Allocation Strategy",
+        "cardAllocationHint": "Choose how lots are allocated when issuing or transferring stock.",
+        "cardNotes": "Additional Notes",
+        "labels": {
+          "movementType": "Movement Type",
+          "product": "Product",
+          "quantity": "Quantity",
+          "unitCost": "Unit Cost",
+          "sourceLocation": "Source Location",
+          "destinationLocation": "Destination Location",
+          "reference": "Reference",
+          "lotNumber": "Lot Number",
+          "serialNumber": "Serial Number",
+          "manufacturingDate": "Manufacturing Date",
+          "expiryDate": "Expiry Date",
+          "strategy": "Strategy",
+          "notes": "Notes"
+        },
+        "placeholders": {
+          "selectType": "Select type",
+          "selectProduct": "Select product",
+          "selectLocation": "Select location",
+          "reference": "PO number, SO number, etc.",
+          "lotNumber": "e.g. BATCH-2026-001",
+          "serial": "Optional serial",
+          "notes": "Optional notes about this movement..."
+        },
+        "addLot": "Add Lot",
+        "removeLot": "Remove Lot",
+        "submit": "Create Movement",
+        "submitting": "Creating...",
+        "toastSuccess": "Movement created successfully",
+        "toastError": "Failed to create movement",
+        "validation": {
+          "productRequired": "Product is required",
+          "quantityMin": "Quantity must be at least 1",
+          "receiveToRequired": "Destination location is required for receive movements",
+          "issueFromRequired": "Source location is required for issue movements",
+          "transferFromRequired": "Source location is required for transfers",
+          "transferToRequired": "Destination location is required for transfers",
+          "transferLocationsDiffer": "Source and destination must differ",
+          "adjustmentLocationRequired": "At least one location is required for adjustments"
+        }
+      }
+    }
+  },
+  "Reservations": {
+    "errors": {
+      "unknown": "Unknown error"
+    },
+    "list": {
+      "title": "Reservations",
+      "description": "Manage stock reservations for sales orders and manual holds.",
+      "newReservation": "New Reservation",
+      "filterStatus": "Status"
+    },
+    "table": {
+      "searchPlaceholder": "Search reservations...",
+      "empty": "No reservations found.",
+      "product": "Product",
+      "location": "Location",
+      "qty": "Qty",
+      "status": "Status",
+      "salesOrder": "Sales Order",
+      "reservedBy": "Reserved By",
+      "expires": "Expires",
+      "created": "Created",
+      "fulfill": "Fulfill",
+      "cancelReservation": "Cancel"
+    },
+    "toast": {
+      "fulfilled": "Reservation #{id} fulfilled",
+      "fulfillFailed": "Failed to fulfill: {message}",
+      "cancelled": "Reservation #{id} cancelled",
+      "cancelFailed": "Failed to cancel: {message}",
+      "createSuccess": "Reservation created successfully",
+      "createFailed": "Failed to create reservation: {message}"
+    },
+    "create": {
+      "title": "Create Reservation",
+      "description": "Reserve stock for a sales order or manual hold."
+    },
+    "form": {
+      "cardTitle": "New Reservation",
+      "product": "Product *",
+      "productPlaceholder": "Select a product...",
+      "location": "Location *",
+      "locationPlaceholder": "Select a location...",
+      "quantity": "Quantity *",
+      "salesOrderOptional": "Sales Order (optional)",
+      "salesOrderNone": "None",
+      "notesOptional": "Notes (optional)",
+      "notesPlaceholder": "Any additional notes...",
+      "submit": "Create Reservation",
+      "submitting": "Creating...",
+      "validation": {
+        "productRequired": "Product is required",
+        "locationRequired": "Location is required",
+        "quantityRequired": "Quantity is required"
+      }
+    },
+    "status": {
+      "pending": "Pending",
+      "confirmed": "Confirmed",
+      "fulfilled": "Fulfilled",
+      "cancelled": "Cancelled",
+      "expired": "Expired"
+    }
+  },
+  "CycleCounts": {
+    "errors": {
+      "unknown": "Unknown error"
+    },
+    "list": {
+      "title": "Cycle Counts",
+      "description": "Schedule and manage physical inventory count cycles.",
+      "newCycle": "New Cycle Count",
+      "filterStatus": "Status",
+      "searchPlaceholder": "Search cycle counts...",
+      "empty": "No cycle counts found."
+    },
+    "create": {
+      "title": "Start Cycle Count",
+      "description": "Create a new physical inventory count cycle.",
+      "toastSuccess": "Cycle count started successfully",
+      "toastFailed": "Failed to start cycle: {message}"
+    },
+    "form": {
+      "cardTitle": "New Cycle Count",
+      "name": "Name *",
+      "namePlaceholder": "e.g., Q1 2026 Full Count",
+      "locationOptional": "Location (optional)",
+      "allLocationsPlaceholder": "All Locations (Full Warehouse)",
+      "allLocationsOption": "All Locations (Full Warehouse)",
+      "scheduledDate": "Scheduled Date *",
+      "notesOptional": "Notes (optional)",
+      "notesPlaceholder": "Any additional notes about this cycle count...",
+      "submit": "Start Cycle Count",
+      "submitting": "Starting...",
+      "validation": {
+        "nameRequired": "Name is required",
+        "scheduledRequired": "Scheduled date is required"
+      }
+    },
+    "notFound": {
+      "title": "Cycle Not Found",
+      "body": "The cycle count you are looking for does not exist."
+    },
+    "detail": {
+      "description": "{location} — {scheduled}: {date}",
+      "allLocations": "All Locations",
+      "scheduled": "Scheduled",
+      "markComplete": "Mark Complete",
+      "completing": "Completing..."
+    },
+    "tabs": {
+      "countLines": "Count Lines ({counted}/{total})",
+      "variances": "Variances"
+    },
+    "status": {
+      "scheduled": "Scheduled",
+      "in_progress": "In Progress",
+      "completed": "Completed",
+      "reconciled": "Reconciled"
+    },
+    "toast": {
+      "recordSuccess": "Count recorded",
+      "recordFailed": "Failed to record count: {message}",
+      "completeSuccess": "Cycle marked as completed",
+      "completeFailed": "Failed to complete cycle: {message}",
+      "reconcileSuccess": "Cycle reconciled successfully",
+      "reconcileFailed": "Failed to reconcile: {message}"
+    },
+    "countLine": {
+      "pendingTitle": "Pending Counts",
+      "pendingRemaining": "{count, plural, one {# item remaining} other {# items remaining}}",
+      "countedTitle": "Counted",
+      "countedSummary": "{count, plural, one {# item counted} other {# items counted}}",
+      "recordCount": "Record Count",
+      "physicalCount": "Physical Count *",
+      "notes": "Notes",
+      "notesPlaceholder": "Optional notes...",
+      "save": "Save",
+      "saving": "Saving...",
+      "recount": "Recount",
+      "systemQty": "System qty: {qty}",
+      "systemLabel": "System:",
+      "countedLabel": "Counted:",
+      "locationSystemLine": "{location} — {systemQty}",
+      "emptyLines": "No count lines found for this cycle.",
+      "validation": {
+        "quantityInt": "Quantity must be a whole number",
+        "quantityNonNegative": "Quantity cannot be negative"
+      }
+    },
+    "variance": {
+      "summaryTotalLines": "Total Lines",
+      "summaryShortages": "Shortages",
+      "summarySurpluses": "Surpluses",
+      "summaryMatches": "Matches",
+      "resolveTitle": "Resolve Variances",
+      "resolveNeedCount": "{count, plural, one {# line with variances needs resolution} other {# lines with variances need resolution}}",
+      "acceptAll": "Accept All",
+      "investigateAll": "Investigate All",
+      "rejectAll": "Reject All",
+      "resolution": "Resolution",
+      "resolutionPlaceholder": "Select resolution...",
+      "inlineSystem": "System: {qty}",
+      "inlineCounted": "Counted: {qty}",
+      "rootCause": "Root Cause",
+      "rootCausePlaceholder": "Optional explanation...",
+      "reconcile": "Reconcile Cycle",
+      "reconciling": "Reconciling...",
+      "matchingTitle": "Matching Lines",
+      "matchingNoVariance": "{count, plural, one {# line with no variance (auto-accepted)} other {# lines with no variance (auto-accepted)}}",
+      "qtyMatch": "Qty: {qty} (match)",
+      "completeToReview": "Complete all counts and mark the cycle as completed to review variances.",
+      "emptyVariances": "No variances recorded.",
+      "type": {
+        "shortage": "Shortage",
+        "surplus": "Surplus",
+        "match": "Match"
+      },
+      "resolutionOption": {
+        "accepted": "Accept (Create Adjustment)",
+        "investigating": "Investigate",
+        "rejected": "Reject (No Change)"
+      }
+    },
+    "table": {
+      "name": "Name",
+      "location": "Location",
+      "allLocations": "All Locations",
+      "status": "Status",
+      "scheduled": "Scheduled",
+      "progress": "Progress",
+      "startedBy": "Started By",
+      "created": "Created"
+    },
+    "varianceTable": {
+      "product": "Product",
+      "location": "Location",
+      "systemQty": "System Qty",
+      "physicalQty": "Physical Qty",
+      "variance": "Variance",
+      "type": "Type",
+      "resolution": "Resolution",
+      "resolvedBy": "Resolved By"
+    }
+  },
+  "BulkOperations": {
+    "errors": {
+      "unknown": "Unknown error"
+    },
+    "page": {
+      "title": "Bulk Operations",
+      "description": "Perform stock transfers, adjustments, and revaluations in bulk."
+    },
+    "tabs": {
+      "transfer": "Bulk Transfer",
+      "adjustment": "Bulk Adjustment",
+      "revalue": "Bulk Revalue"
+    },
+    "shared": {
+      "loading": "Loading...",
+      "selectProduct": "Select product",
+      "selectSource": "Select source",
+      "selectDestination": "Select destination",
+      "selectLocation": "Select location",
+      "addProduct": "Add Product",
+      "product": "Product",
+      "quantity": "Quantity",
+      "newQuantity": "New Quantity",
+      "newUnitCost": "New Unit Cost",
+      "processing": "Processing...",
+      "notes": "Notes",
+      "reference": "Reference",
+      "referencePlaceholder": "Optional reference number"
+    },
+    "transfer": {
+      "cardTitle": "Transfer Details",
+      "cardDescription": "Move stock from one location to another in bulk.",
+      "sourceLocation": "Source Location",
+      "destinationLocation": "Destination Location",
+      "productsTitle": "Products",
+      "productsDescription": "Add products and quantities to transfer.",
+      "notesPlaceholder": "Optional notes about this transfer...",
+      "execute": "Execute Transfer",
+      "toastNoItems": "Add at least one product to transfer",
+      "toastAllSuccess": "All {count} items transferred successfully",
+      "toastPartial": "{success} of {total} items transferred",
+      "toastError": "Bulk transfer failed"
+    },
+    "adjustment": {
+      "cardTitle": "Adjustment Details",
+      "cardDescription": "Set new stock quantities for products at a specific location.",
+      "location": "Location",
+      "productsTitle": "Products",
+      "productsDescription": "Specify the new quantity for each product.",
+      "notesPlaceholder": "Optional notes about this adjustment...",
+      "execute": "Execute Adjustment",
+      "toastNoItems": "Add at least one product to adjust",
+      "toastAllSuccess": "All {count} items adjusted successfully",
+      "toastPartial": "{success} of {total} items adjusted",
+      "toastError": "Bulk adjustment failed"
+    },
+    "revalue": {
+      "cardTitle": "Products to Revalue",
+      "cardDescription": "Set new unit costs for each product. This updates the product record directly without creating stock movements.",
+      "unitCostPlaceholder": "0.00",
+      "execute": "Execute Revalue",
+      "toastNoItems": "Add at least one product with a valid unit cost",
+      "toastAllSuccess": "All {count} products revalued successfully",
+      "toastPartial": "{success} of {total} products revalued",
+      "toastError": "Bulk revalue failed"
+    },
+    "result": {
+      "titleSuccess": "Operation Completed Successfully",
+      "titleFailed": "Operation Failed",
+      "titlePartial": "Operation Partially Completed",
+      "description": "{success} of {total} items processed successfully",
+      "total": "Total",
+      "succeeded": "Succeeded",
+      "failed": "Failed",
+      "errorsTitle": "Errors",
+      "errorsDescription": "The following items could not be processed",
+      "errorLine": "Item {index} (Product {productId})",
+      "startNew": "Start New Operation"
+    },
+    "validation": {
+      "sourceLocationRequired": "Source location is required",
+      "destinationLocationRequired": "Destination location is required",
+      "locationRequired": "Location is required"
+    }
+  },
+  "Procurement": {
+    "shared": {
+      "emDash": "—",
+      "unknownError": "Hitilafu isiyojulikana",
+      "nameSeparator": " — "
+    },
+    "paymentTerms": {
+      "net_30": "Net 30",
+      "net_60": "Net 60",
+      "net_90": "Net 90",
+      "cod": "Malipo wakati wa utoaji",
+      "prepaid": "Malipo ya mapema"
+    },
+    "poStatus": {
+      "draft": "Rasimu",
+      "confirmed": "Imethibitishwa",
+      "received": "Imepokelewa",
+      "cancelled": "Imefutwa"
+    },
+    "grnProcessStatus": {
+      "pending": "Inasubiri",
+      "processed": "Imesindikwa"
+    },
+    "suppliers": {
+      "list": {
+        "title": "Wasambazaji",
+        "description": "Simamia orodha yako ya wasambazaji",
+        "newButton": "Msambazaji mpya",
+        "searchPlaceholder": "Tafuta wasambazaji...",
+        "empty": "Hakuna wasambazaji waliopatikana.",
+        "deleteConfirm": "Futa msambazaji \"{name}\"?",
+        "toastDeleted": "Msambazaji \"{name}\" amefutwa",
+        "toastDeleteFailed": "Imeshindwa kufuta msambazaji"
+      },
+      "create": {
+        "title": "Msambazaji mpya",
+        "description": "Ongeza msambazaji mpya kwenye orodha yako",
+        "toastCreated": "Msambazaji \"{name}\" ameundwa",
+        "toastCreateFailed": "Imeshindwa kuunda msambazaji",
+        "creating": "Inaunda...",
+        "submit": "Unda msambazaji"
+      },
+      "edit": {
+        "title": "Hariri {name}",
+        "description": "Sasisha maelezo ya msambazaji",
+        "notFound": "Msambazaji hapatikani",
+        "backToList": "Rudi kwa wasambazaji",
+        "toastUpdated": "Msambazaji \"{name}\" amesasishwa",
+        "toastUpdateFailed": "Imeshindwa kusasisha msambazaji",
+        "saving": "Inahifadhi...",
+        "submit": "Hifadhi mabadiliko"
+      },
+      "columns": {
+        "code": "Msimbo",
+        "name": "Jina",
+        "contact": "Mawasiliano",
+        "email": "Barua pepe",
+        "phone": "Simu",
+        "paymentTerms": "Masharti ya malipo",
+        "leadTime": "Muda wa utoaji",
+        "status": "Hali",
+        "leadTimeDays": "{count, plural, one {siku #} other {siku #}}"
+      },
+      "form": {
+        "code": "Msimbo",
+        "name": "Jina",
+        "contactName": "Jina la mhusika",
+        "email": "Barua pepe",
+        "phone": "Simu",
+        "leadTimeDays": "Muda wa utoaji (siku)",
+        "paymentTerms": "Masharti ya malipo",
+        "address": "Anwani",
+        "notes": "Maelezo",
+        "active": "Hai",
+        "selectTerms": "Chagua masharti",
+        "placeholders": {
+          "code": "mf. SUP-001",
+          "companyName": "Jina la kampuni",
+          "contactPerson": "Mhusika",
+          "email": "barua@mfano.com",
+          "phone": "+255 700 000 000",
+          "address": "Mtaa, jiji, nambari ya posta",
+          "notes": "Maelezo ya ndani kuhusu msambazaji huyu"
+        }
+      },
+      "validation": {
+        "codeRequired": "Msimbo unahitajika",
+        "nameRequired": "Jina linahitajika",
+        "emailInvalid": "Barua pepe si halali",
+        "leadTimeMin": "Lazima iwe 0 au zaidi"
+      }
+    },
+    "purchaseOrders": {
+      "list": {
+        "title": "Maagizo ya ununuzi",
+        "description": "Simamia maagizo yaliyowekwa kwa wasambazaji.",
+        "newButton": "Agizo jipya la ununuzi",
+        "searchPlaceholder": "Tafuta maagizo ya ununuzi...",
+        "empty": "Hakuna maagizo ya ununuzi yaliyopatikana.",
+        "statusFilter": "Hali",
+        "toastConfirmed": "Agizo la ununuzi {orderNumber} limethibitishwa",
+        "toastCancelled": "Agizo la ununuzi {orderNumber} limefutwa",
+        "confirmFailed": "Imeshindwa kuthibitisha: {message}",
+        "cancelFailed": "Imeshindwa kufuta: {message}",
+        "cancelConfirm": "Futa agizo la ununuzi \"{orderNumber}\"?"
+      },
+      "create": {
+        "title": "Unda agizo la ununuzi",
+        "description": "Weka agizo jipya kwa msambazaji.",
+        "toastSuccess": "Agizo la ununuzi limeundwa kwa mafanikio",
+        "toastError": "Imeshindwa kuunda agizo la ununuzi: {message}"
+      },
+      "detail": {
+        "title": "Agizo: {orderNumber}",
+        "titleLoading": "Agizo la ununuzi",
+        "backToList": "Rudi kwenye orodha",
+        "toastConfirmed": "Agizo la ununuzi limethibitishwa",
+        "toastCancelled": "Agizo la ununuzi limefutwa",
+        "cancelConfirm": "Futa agizo hili la ununuzi?",
+        "confirmFailed": "Imeshindwa kuthibitisha: {message}",
+        "cancelFailed": "Imeshindwa kufuta: {message}"
+      },
+      "columns": {
+        "orderNumber": "Nambari ya agizo",
+        "supplier": "Msambazaji",
+        "status": "Hali",
+        "orderDate": "Tarehe ya agizo",
+        "expectedDelivery": "Uwasilishaji unaotarajiwa",
+        "total": "Jumla",
+        "created": "Imeundwa"
+      },
+      "actions": {
+        "view": "Tazama",
+        "confirm": "Thibitisha",
+        "cancel": "Futa"
+      },
+      "form": {
+        "orderDetailsTitle": "Maelezo ya agizo",
+        "orderDetailsDescription": "Taarifa za msingi za agizo la ununuzi",
+        "supplier": "Msambazaji",
+        "selectSupplier": "Chagua msambazaji...",
+        "orderDate": "Tarehe ya agizo",
+        "expectedDeliveryDate": "Tarehe ya uwasilishaji unaotarajiwa",
+        "notes": "Maelezo",
+        "notesPlaceholder": "Maelezo ya ndani kuhusu agizo hili...",
+        "lineItemsTitle": "Vipengele vya mstari",
+        "lineItemsDescription": "Bidhaa za kuagiza kwa msambazaji huyu",
+        "addLine": "Ongeza mstari",
+        "colProduct": "Bidhaa",
+        "colQuantity": "Idadi",
+        "colUnitCost": "Gharama ya kitengo",
+        "colLineTotal": "Jumla ya mstari",
+        "grandTotal": "Jumla kuu",
+        "selectProduct": "Chagua bidhaa...",
+        "unitCostPlaceholder": "0.00",
+        "creating": "Inaunda...",
+        "submit": "Unda agizo la ununuzi"
+      },
+      "detailView": {
+        "confirming": "Inathibitisha...",
+        "confirm": "Thibitisha",
+        "cancelling": "Inafuta...",
+        "cancelOrder": "Futa agizo",
+        "orderDate": "Tarehe ya agizo",
+        "expectedDelivery": "Uwasilishaji unaotarajiwa",
+        "totalCost": "Jumla ya gharama",
+        "created": "Imeundwa",
+        "notes": "Maelezo",
+        "lineItemsTitle": "Vipengele vya mstari",
+        "lineItemsCount": "{count, plural, one {kipengee #} other {vipengee #}} kwenye agizo hili",
+        "colProduct": "Bidhaa",
+        "colSku": "SKU",
+        "colQuantity": "Idadi",
+        "colUnitCost": "Gharama ya kitengo",
+        "colLineTotal": "Jumla ya mstari",
+        "grandTotal": "Jumla kuu"
+      },
+      "validation": {
+        "productRequired": "Bidhaa inahitajika",
+        "quantityMin": "Idadi lazima iwe angalau 1",
+        "unitCostRequired": "Gharama ya kitengo inahitajika",
+        "unitCostPositive": "Lazima iwe nambari chanya",
+        "supplierRequired": "Msambazaji anahitajika",
+        "orderDateRequired": "Tarehe ya agizo inahitajika",
+        "atLeastOneLine": "Angalau kipengele kimoja cha mstari kinahitajika"
+      }
+    },
+    "grn": {
+      "list": {
+        "title": "Hati za bidhaa zilizopokelewa",
+        "description": "Fuatilia na usindike bidhaa zilizopokelewa dhidi ya maagizo ya ununuzi",
+        "newButton": "Hati mpya ya GRN",
+        "empty": "Hakuna hati za GRN zilizopatikana.",
+        "statusFilter": "Hali",
+        "processConfirm": "Sindika GRN \"{grnNumber}\"? Itaunda harakati za hesabu na haiwezi kutenduliwa.",
+        "toastProcessed": "GRN \"{grnNumber}\" imesindikwa — harakati za hesabu zimeundwa",
+        "toastProcessFailed": "Imeshindwa kusindika GRN",
+        "deleteConfirm": "Futa GRN \"{grnNumber}\"?",
+        "toastDeleted": "GRN \"{grnNumber}\" imefutwa",
+        "toastDeleteFailed": "Imeshindwa kufuta GRN"
+      },
+      "create": {
+        "title": "Hati mpya ya bidhaa zilizopokelewa",
+        "description": "Rekodi bidhaa zilizopokelewa kutoka agizo la ununuzi",
+        "toastCreated": "GRN \"{grnNumber}\" imeundwa",
+        "toastError": "Imeshindwa kuunda GRN",
+        "creating": "Inaunda...",
+        "submit": "Unda GRN"
+      },
+      "columns": {
+        "grnNumber": "Nambari ya GRN",
+        "purchaseOrder": "Agizo la ununuzi",
+        "receivedDate": "Tarehe ya kupokea",
+        "location": "Mahali",
+        "status": "Hali",
+        "created": "Imeundwa"
+      },
+      "actions": {
+        "view": "Tazama",
+        "receiveGoods": "Pokea bidhaa"
+      },
+      "form": {
+        "detailsTitle": "Maelezo ya GRN",
+        "detailsDescription": "Rekodi bidhaa zilizopokelewa dhidi ya agizo la ununuzi.",
+        "grnNumber": "Nambari ya GRN",
+        "purchaseOrder": "Agizo la ununuzi",
+        "receivedDate": "Tarehe ya kupokea",
+        "location": "Mahali",
+        "notesSectionTitle": "Maelezo ya ziada",
+        "notes": "Maelezo",
+        "placeholders": {
+          "grnNumber": "mf. GRN-2026-001",
+          "notes": "Hali ya bidhaa, tofauti, nk."
+        },
+        "loading": "Inapakia...",
+        "selectPO": "Chagua agizo la ununuzi",
+        "selectLocation": "Chagua mahali"
+      },
+      "validation": {
+        "grnNumberRequired": "Nambari ya GRN inahitajika",
+        "purchaseOrderRequired": "Agizo la ununuzi linahitajika",
+        "receivedDateRequired": "Tarehe ya kupokea inahitajika",
+        "locationRequired": "Mahali panahitajika"
+      }
+    }
+  },
+  "SettingsTenant": {
+    "tenant": {
+      "page": {
+        "title": "Tenant Settings",
+        "description": "Manage your organisation profile and branding"
+      },
+      "loadError": "Unable to load tenant information",
+      "toast": {
+        "updated": "Tenant settings updated",
+        "updateFailed": "Failed to update tenant settings"
+      },
+      "profile": {
+        "title": "Profile",
+        "description": "Update your tenant name and branding"
+      },
+      "reset": "Reset",
+      "save": "Save Changes",
+      "saving": "Saving…",
+      "form": {
+        "tenantName": "Tenant Name",
+        "siteName": "Site Name",
+        "primaryColor": "Primary Color",
+        "colorPickerAria": "Pick primary color",
+        "placeholderOrg": "My Organisation",
+        "placeholderSite": "Inventory Portal",
+        "placeholderColor": "#3B82F6",
+        "requiredMarker": "required"
+      },
+      "validation": {
+        "nameRequired": "Tenant name is required",
+        "hexColor": "Must be a valid hex color (e.g. #3B82F6)"
+      }
+    },
+    "subscription": {
+      "title": "Subscription",
+      "description": "Your current plan and usage",
+      "planLabel": "Plan",
+      "usageUsers": "Users",
+      "usageProducts": "Products"
+    },
+    "roles": {
+      "owner": "Owner",
+      "admin": "Admin",
+      "manager": "Manager",
+      "viewer": "Viewer"
+    },
+    "plans": {
+      "free": "Free",
+      "starter": "Starter",
+      "professional": "Professional",
+      "enterprise": "Enterprise"
+    },
+    "subscriptionStatus": {
+      "active": "Active",
+      "trial": "Trial",
+      "past_due": "Past Due",
+      "cancelled": "Cancelled",
+      "suspended": "Suspended"
+    },
+    "members": {
+      "page": {
+        "title": "Team Members",
+        "description": "Manage team members and their roles"
+      },
+      "searchPlaceholder": "Search members…",
+      "emptyMessage": "No team members found.",
+      "toast": {
+        "roleUpdated": "Updated {username}'s role to {role}",
+        "roleFailed": "Failed to update role",
+        "removed": "Removed {username} from team",
+        "removeFailed": "Failed to remove member"
+      },
+      "removeDialog": {
+        "title": "Remove team member",
+        "descriptionLead": "Are you sure you want to remove",
+        "descriptionTrail": "from the team? They will lose access to this tenant immediately."
+      },
+      "remove": "Remove",
+      "removing": "Removing…",
+      "columns": {
+        "user": "User",
+        "email": "Email",
+        "role": "Role",
+        "status": "Status",
+        "joined": "Joined"
+      },
+      "memberStatus": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "srRemoveMember": "Remove member"
+    },
+    "invite": {
+      "trigger": "Invite Member",
+      "title": "Invite a team member",
+      "description": "Send an invitation by email. They will receive a link to join your organization.",
+      "email": "Email address",
+      "role": "Role",
+      "placeholderEmail": "colleague@company.com",
+      "sendInvitation": "Send Invitation",
+      "sending": "Sending…",
+      "toastSent": "Invitation sent to {email}",
+      "toastFailed": "Failed to send invitation"
+    },
+    "pendingInvitations": {
+      "heading": "Pending Invitations",
+      "headingCount": "({count})",
+      "columns": {
+        "email": "Email",
+        "role": "Role",
+        "status": "Status",
+        "expires": "Expires"
+      },
+      "srCancelInvitation": "Cancel invitation",
+      "cancelDialog": {
+        "title": "Cancel invitation",
+        "descriptionLead": "Are you sure you want to cancel the invitation to",
+        "descriptionTrail": "? The invitation link will no longer work."
+      },
+      "keep": "Keep",
+      "cancelInvitation": "Cancel Invitation",
+      "cancelling": "Cancelling…",
+      "toastCancelled": "Invitation to {email} cancelled",
+      "toastCancelFailed": "Failed to cancel invitation",
+      "invitationStatus": {
+        "pending": "Pending",
+        "accepted": "Accepted",
+        "cancelled": "Cancelled",
+        "expired": "Expired"
+      }
+    },
+    "acceptInvitation": {
+      "invalidTitle": "Invalid Invitation",
+      "invalidDescription": "This invitation link is invalid, expired, or has already been used.",
+      "goToLogin": "Go to Login",
+      "alreadyTitle": "Invitation {status}",
+      "alreadyDescription": "This invitation has already been {status}.",
+      "joinTitle": "Join {tenant}",
+      "invitedPrefix": "You've been invited to join as",
+      "invitationFor": "Invitation for",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "username": "Username",
+      "password": "Password",
+      "placeholderFirst": "Jane",
+      "placeholderLast": "Doe",
+      "placeholderUsername": "janedoe",
+      "placeholderPasswordNew": "Min. 8 characters",
+      "existingAccountHint": "An account with this email already exists. Enter your password to confirm your identity and join the organization.",
+      "existingPassword": "Password",
+      "placeholderExistingPassword": "Your password",
+      "joining": "Joining…",
+      "joinAction": "Join {tenant}",
+      "expires": "Expires {date}",
+      "acceptFailed": "Failed to accept invitation"
+    }
+  },
+  "SettingsPlatform": {
+    "billing": {
+      "page": {
+        "title": "Billing & Subscriptions",
+        "description": "Manage tenant plans, usage, and billing (superuser only)"
+      },
+      "columns": {
+        "tenant": "Tenant",
+        "plan": "Plan",
+        "status": "Status",
+        "active": "Active",
+        "usage": "Usage"
+      },
+      "yes": "Yes",
+      "no": "No",
+      "usageUsers": "{current}/{max} users",
+      "usageProducts": "{current}/{max} products",
+      "searchPlaceholder": "Search tenants…",
+      "emptyMessage": "No tenants found.",
+      "ariaExport": "Export tenant data",
+      "ariaChangePlan": "Change plan",
+      "ariaSuspend": "Suspend",
+      "ariaReactivate": "Reactivate",
+      "toast": {
+        "suspended": "{name} has been suspended",
+        "suspendFailed": "Failed to suspend tenant",
+        "reactivated": "{name} has been reactivated",
+        "reactivateFailed": "Failed to reactivate tenant",
+        "exportSuccess": "Export for {name} downloaded",
+        "exportFailed": "Failed to export tenant data",
+        "subscriptionUpdated": "Subscription updated",
+        "subscriptionUpdateFailed": "Failed to update subscription"
+      },
+      "suspendDialog": {
+        "title": "Suspend tenant",
+        "descriptionLead": "Are you sure you want to suspend",
+        "descriptionTrail": "? The tenant will not be able to log in or access data until reactivated."
+      },
+      "reactivateDialog": {
+        "title": "Reactivate tenant",
+        "descriptionLead": "Are you sure you want to reactivate",
+        "descriptionTrail": "? The tenant will be able to log in and access data again."
+      },
+      "suspend": "Suspend",
+      "suspending": "Suspending…",
+      "reactivate": "Reactivate",
+      "reactivating": "Reactivating…",
+      "changePlan": {
+        "title": "Change plan — {name}",
+        "description": "Update subscription plan, status, or billing notes.",
+        "plan": "Plan",
+        "status": "Status",
+        "billingNotes": "Billing notes (optional)",
+        "billingNotesPlaceholder": "Payment issues, custom arrangements, etc.",
+        "saving": "Inahifadhi…"
+      }
+    },
+    "users": {
+      "page": {
+        "title": "Platform Users",
+        "description": "Manage all users across tenants (superuser only)"
+      },
+      "createUser": "Create User",
+      "searchPlaceholder": "Search by email or username…",
+      "emptyMessage": "No users found.",
+      "columns": {
+        "user": "User",
+        "email": "Email",
+        "status": "Status",
+        "tenants": "Tenants",
+        "joined": "Joined"
+      },
+      "userStatus": {
+        "active": "Active",
+        "suspended": "Suspended"
+      },
+      "moreTenants": "+{count}",
+      "ariaImpersonate": "Impersonate",
+      "ariaResetPassword": "Reset password",
+      "ariaSuspendUser": "Suspend user",
+      "suspend": "Suspend",
+      "suspending": "Suspending…",
+      "toast": {
+        "userSuspended": "{username} has been suspended",
+        "suspendFailed": "Failed to suspend user",
+        "passwordReset": "Password has been reset",
+        "passwordResetFailed": "Failed to reset password",
+        "impersonating": "Impersonating {username}",
+        "impersonateFailed": "Failed to impersonate",
+        "userCreated": "User {username} created",
+        "createFailed": "Failed to create user"
+      },
+      "suspendDialog": {
+        "title": "Suspend user",
+        "descriptionLead": "Are you sure you want to suspend",
+        "descriptionTrail": "? They will lose access to all tenants. This can be reversed by editing the user."
+      },
+      "resetPassword": {
+        "title": "Reset password",
+        "description": "Enter a new password for this user. Minimum 8 characters.",
+        "newPassword": "New password",
+        "placeholder": "Min 8 characters",
+        "resetting": "Resetting…",
+        "reset": "Reset"
+      },
+      "createDialog": {
+        "title": "Create user",
+        "description": "Create a new user and optionally assign them to tenants.",
+        "username": "Username",
+        "email": "Email",
+        "password": "Password",
+        "defaultRole": "Default role (for assigned tenants)",
+        "assignTenants": "Assign to tenants",
+        "placeholderUsername": "jdoe",
+        "placeholderEmail": "jane@example.com",
+        "placeholderPassword": "Min 8 characters",
+        "creating": "Creating…",
+        "create": "Create"
+      }
+    },
+    "invitations": {
+      "page": {
+        "title": "Invitations",
+        "description": "All tenant invitations across the platform. Superuser only."
+      },
+      "emptyMessage": "No invitations found.",
+      "filterAllStatuses": "All statuses",
+      "filterStatusPlaceholder": "Status",
+      "filterAllTenants": "All tenants",
+      "filterTenantPlaceholder": "Tenant",
+      "filterFrom": "From",
+      "filterTo": "To",
+      "toast": {
+        "cancelled": "Invitation cancelled",
+        "cancelFailed": "Failed to cancel invitation",
+        "resent": "Invitation resent successfully",
+        "resendFailed": "Failed to resend invitation"
+      },
+      "columns": {
+        "email": "Email",
+        "tenant": "Tenant",
+        "role": "Role",
+        "status": "Status",
+        "created": "Created",
+        "expires": "Expires",
+        "invitedBy": "Invited by"
+      },
+      "rowCancel": "Cancel",
+      "rowResend": "Resend",
+      "status": {
+        "pending": "Pending",
+        "accepted": "Accepted",
+        "cancelled": "Cancelled",
+        "expired": "Expired"
+      }
+    }
+  },
+  "Sales": {
+    "shared": {
+      "emDash": "—",
+      "unknownError": "Hitilafu isiyojulikana",
+      "nameSeparator": " — "
+    },
+    "soStatus": {
+      "draft": "Rasimu",
+      "confirmed": "Imethibitishwa",
+      "fulfilled": "Imetimizwa",
+      "cancelled": "Imefutwa"
+    },
+    "dispatchProcessed": {
+      "pending": "Inasubiri",
+      "processed": "Imesindikwa"
+    },
+    "customerStatus": {
+      "active": "Hai",
+      "inactive": "Si hai"
+    },
+    "customers": {
+      "list": {
+        "title": "Wateja",
+        "description": "Simamia orodha ya wateja",
+        "newButton": "Mteja mpya",
+        "deleteConfirm": "Futa mteja «{name}»?",
+        "toastDeleted": "Mteja «{name}» amefutwa",
+        "toastDeleteFailed": "Imeshindwa kufuta mteja"
+      },
+      "create": {
+        "title": "Mteja mpya",
+        "description": "Ongeza mteja kwenye orodha",
+        "toastCreated": "Mteja «{name}» ameundwa",
+        "toastCreateFailed": "Imeshindwa kuunda mteja",
+        "creating": "Inaundwa...",
+        "submit": "Unda mteja"
+      },
+      "edit": {
+        "title": "Hariri {name}",
+        "description": "Sasisha maelezo ya mteja",
+        "notFound": "Mteja hajapatikana",
+        "backToList": "Rudi kwa wateja",
+        "toastUpdated": "Mteja «{name}» amesasishwa",
+        "toastUpdateFailed": "Imeshindwa kusasisha mteja",
+        "saving": "Inahifadhiwa...",
+        "submit": "Hifadhi mabadiliko"
+      },
+      "columns": {
+        "code": "Nambari",
+        "name": "Jina",
+        "contact": "Mwasiliani",
+        "email": "Barua pepe",
+        "phone": "Simu",
+        "status": "Hali"
+      },
+      "form": {
+        "codeOptional": "Nambari (si lazima)",
+        "name": "Jina *",
+        "contactPerson": "Mwasiliani",
+        "email": "Barua pepe",
+        "phone": "Simu",
+        "active": "Hai",
+        "address": "Anwani",
+        "notes": "Maelezo",
+        "placeholders": {
+          "code": "Acha tupu kutengeneza kiotomatiki",
+          "name": "Jina la mteja",
+          "contact": "Mwasiliani mkuu",
+          "email": "contact@example.com",
+          "phone": "+255 7XX XXX XXX",
+          "address": "Anwani kamili",
+          "notes": "Maelezo ya ndani kuhusu mteja huyu"
+        }
+      },
+      "validation": {
+        "nameRequired": "Jina linahitajika",
+        "emailInvalid": "Barua pepe si sahihi"
+      },
+      "table": {
+        "searchPlaceholder": "Tafuta wateja...",
+        "empty": "Hakuna wateja waliopatikana."
+      }
+    },
+    "salesOrders": {
+      "list": {
+        "title": "Maagizo ya mauzo",
+        "description": "Simamia maagizo na utimilifu",
+        "newButton": "Agizo jipya",
+        "statusFilter": "Hali",
+        "confirmPrompt": "Thibitisha agizo «{orderNumber}»?",
+        "cancelPrompt": "Futa agizo «{orderNumber}»?",
+        "deletePrompt": "Futa agizo «{orderNumber}»?",
+        "toastConfirmed": "Agizo «{orderNumber}» limethibitishwa",
+        "toastCancelled": "Agizo «{orderNumber}» limefutwa",
+        "toastDeleted": "Agizo «{orderNumber}» limefutwa",
+        "confirmFailed": "Imeshindwa kuthibitisha",
+        "cancelFailed": "Imeshindwa kufuta",
+        "deleteFailed": "Imeshindwa kufuta"
+      },
+      "create": {
+        "title": "Agizo jipya la mauzo",
+        "description": "Unda agizo lenye mistari",
+        "toastCreated": "Agizo «{orderNumber}» limeundwa",
+        "toastCreateFailed": "Imeshindwa kuunda agizo"
+      },
+      "detail": {
+        "title": "Maelezo ya agizo",
+        "description": "Tazama agizo, mistari, na simamia hali",
+        "confirmPrompt": "Thibitisha agizo «{orderNumber}»?",
+        "cancelPrompt": "Futa agizo «{orderNumber}»? Haiwezi kutenduliwa.",
+        "toastConfirmed": "Agizo «{orderNumber}» limethibitishwa",
+        "toastCancelled": "Agizo «{orderNumber}» limefutwa",
+        "confirmFailed": "Imeshindwa kuthibitisha",
+        "cancelFailed": "Imeshindwa kufuta"
+      },
+      "detailView": {
+        "notFound": "Agizo halijapatikana.",
+        "orderNumber": "Nambari ya agizo",
+        "customer": "Mteja",
+        "orderDate": "Tarehe ya agizo",
+        "status": "Hali",
+        "totalPrice": "Jumla ya bei",
+        "created": "Imeundwa",
+        "notesLabel": "Maelezo",
+        "lineItemsTitle": "Mistari",
+        "noLineItems": "Hakuna mistari.",
+        "colProduct": "Bidhaa",
+        "colSku": "SKU",
+        "colQty": "Idadi",
+        "colUnitPrice": "Bei kwa kipimo",
+        "colLineTotal": "Jumla ya mstari",
+        "orderTotal": "Jumla ya agizo",
+        "confirming": "Inathibitisha...",
+        "confirmOrder": "Thibitisha agizo",
+        "cancelling": "Inafuta...",
+        "cancelOrder": "Futa agizo",
+        "backToOrders": "Rudi kwa maagizo"
+      },
+      "columns": {
+        "orderNumber": "Nambari",
+        "customer": "Mteja",
+        "orderDate": "Tarehe",
+        "status": "Hali",
+        "total": "Jumla",
+        "fulfillment": "Utimilifu",
+        "created": "Imeundwa"
+      },
+      "actions": {
+        "view": "Tazama",
+        "confirm": "Thibitisha",
+        "cancel": "Futa",
+        "delete": "Futa"
+      },
+      "form": {
+        "toastAtLeastOneLine": "Ongeza angalau mstari mmoja",
+        "toastFixLines": "Rekebisha makosa ya mistari kabla ya kutuma",
+        "orderDetailsTitle": "Maelezo ya agizo",
+        "orderDetailsDescription": "Taarifa za msingi za agizo la mauzo",
+        "orderNumberOptional": "Nambari ya agizo (si lazima)",
+        "customer": "Mteja",
+        "orderDate": "Tarehe ya agizo",
+        "lineItemsTitle": "Mistari",
+        "lineItemsDescription": "Ongeza bidhaa kwenye agizo hili",
+        "addLine": "Ongeza mstari",
+        "colProduct": "Bidhaa",
+        "colQuantity": "Idadi",
+        "colUnitPrice": "Bei kwa kipimo",
+        "colLineTotal": "Jumla ya mstari",
+        "orderTotal": "Jumla ya agizo",
+        "notesSectionTitle": "Maelezo ya ziada",
+        "notes": "Maelezo",
+        "notesPlaceholder": "Maelezo ya ndani, maagizo maalum, nk.",
+        "placeholders": {
+          "orderNumber": "Acha tupu kutengeneza kiotomatiki",
+          "selectCustomer": "Chagua mteja",
+          "selectProduct": "Chagua bidhaa"
+        },
+        "loading": "Inapakia...",
+        "creating": "Inaundwa...",
+        "submit": "Unda agizo"
+      },
+      "validation": {
+        "productRequired": "Bidhaa inahitajika",
+        "quantityMin": "Chini ya 1",
+        "unitPriceNonNeg": "Lazima iwe ≥ 0",
+        "customerRequired": "Mteja anahitajika",
+        "orderDateRequired": "Tarehe ya agizo inahitajika"
+      },
+      "fulfillment": {
+        "canFulfill": "Inawezekana",
+        "insufficientStock": "Hifadhi haitoshi"
+      },
+      "table": {
+        "searchPlaceholder": "Tafuta maagizo...",
+        "empty": "Hakuna maagizo yaliyopatikana."
+      }
+    },
+    "dispatches": {
+      "list": {
+        "title": "Usafirishaji",
+        "description": "Simamia na usindike usafirishaji wa maagizo",
+        "newButton": "Usafirishaji mpya",
+        "statusFilter": "Hali",
+        "processPrompt": "Usindike usafirishaji «{dispatchNumber}»? Itaunda harakati za hifadhi na haiwezi kutenduliwa.",
+        "deletePrompt": "Futa usafirishaji «{dispatchNumber}»?",
+        "toastProcessed": "Usafirishaji «{dispatchNumber}» umesindikwa — harakati za hifadhi zimeundwa",
+        "toastProcessedPartial": "Usafirishaji «{dispatchNumber}» umesindikwa — idadi zilizopo zimetolewa",
+        "toastDeleted": "Usafirishaji «{dispatchNumber}» umefutwa",
+        "processFailed": "Imeshindwa kusindika usafirishaji",
+        "deleteFailed": "Imeshindwa kufuta usafirishaji"
+      },
+      "create": {
+        "title": "Usafirishaji mpya",
+        "description": "Unda usafirishaji dhidi ya agizo la mauzo",
+        "toastCreated": "Usafirishaji «{dispatchNumber}» umeundwa",
+        "toastCreateFailed": "Imeshindwa kuunda usafirishaji"
+      },
+      "columns": {
+        "dispatchNumber": "Nambari ya usafirishaji",
+        "salesOrder": "Agizo",
+        "dispatchDate": "Tarehe ya usafirishaji",
+        "fromLocation": "Mahali pa chanzo",
+        "status": "Hali",
+        "created": "Imeundwa",
+        "processed": "Imesindikwa",
+        "pending": "Inasubiri"
+      },
+      "actions": {
+        "view": "Tazama",
+        "reviewStock": "Kagua hifadhi / usafirishaji wa sehemu",
+        "processDispatch": "Sindika usafirishaji",
+        "delete": "Futa"
+      },
+      "form": {
+        "detailsTitle": "Maelezo ya usafirishaji",
+        "detailsDescription": "Chagua agizo lililothibitishwa. Baada ya kuunda, tumia «Sindika» kwenye orodha kutoa hifadhi (agizo lazima liendelee lilithibitishwa).",
+        "dispatchNumberOptional": "Nambari ya usafirishaji (si lazima)",
+        "salesOrder": "Agizo la mauzo",
+        "dispatchDate": "Tarehe ya usafirishaji",
+        "fromLocation": "Mahali pa chanzo",
+        "notesSectionTitle": "Maelezo ya ziada",
+        "notes": "Maelezo",
+        "placeholders": {
+          "dispatchNumber": "Acha tupu kutengeneza kiotomatiki",
+          "selectSalesOrder": "Chagua agizo",
+          "selectLocation": "Chagua mahali",
+          "notes": "Maagizo ya usafirishaji, utunzaji, nk."
+        },
+        "emptySalesOrdersHint": "Hakuna maagizo yaliyothibitishwa. Thibitisha rasimu kwanza, kisha unda usafirishaji.",
+        "loading": "Inapakia...",
+        "creating": "Inaundwa...",
+        "submit": "Unda usafirishaji"
+      },
+      "validation": {
+        "salesOrderRequired": "Agizo linahitajika",
+        "dispatchDateRequired": "Tarehe ya usafirishaji inahitajika",
+        "fromLocationRequired": "Mahali pa chanzo panahitajika"
+      },
+      "table": {
+        "empty": "Hakuna usafirishaji uliopatikana."
+      },
+      "fulfillmentDialog": {
+        "title": "Hifadhi kwenye chanzo cha usafirishaji",
+        "description": "Kwa kila mstari: idadi iliyoagizwa dhidi ya hifadhi isiyohifadhiwa kwenye chanzo. Unaweza kutoa tu kilichopo; fungua agizo kupunguza mistari, futa usafirishaji, au ongeza hifadhi kwenye mahali hapo.",
+        "loading": "Inapakia onyesho…",
+        "fromLabel": "Kutoka:",
+        "colProduct": "Bidhaa",
+        "colOrdered": "Iliyoagizwa",
+        "colAvailable": "Inapatikana",
+        "colShipNow": "Safirisha sasa",
+        "openSalesOrder": "Fungua agizo",
+        "issueAvailable": "Toa idadi zinazopatikana",
+        "genericError": "Kuna hitilafu fulani."
+      }
+    }
+  },
+  "Auth": {
+    "loading": "Inapakia…",
+    "invalidCredentials": "Jina la mtumiaji au nenosiri si sahihi",
+    "registrationFailed": "Registration failed",
+    "acceptInvitationFailed": "Failed to accept invitation",
+    "login": {
+      "title": "Karibu tena",
+      "subtitle": "Ingia kwenye The Inventory",
+      "noOrgPrompt": "Huna shirika?",
+      "createOrgLink": "Unda moja",
+      "username": "Jina la mtumiaji",
+      "password": "Nenosiri",
+      "usernamePlaceholder": "Weka jina la mtumiaji",
+      "passwordPlaceholder": "Weka nenosiri",
+      "signIn": "Ingia",
+      "signingIn": "Inaingia…"
+    },
+    "marketing": {
+      "title": "Powerful Inventory Management",
+      "subtitle": "Everything you need to manage inventory efficiently",
+      "catalogTitle": "Catalog Management",
+      "catalogDescription": "Organize products with SKUs, descriptions, images, and hierarchical categories",
+      "trackingTitle": "Real-time Tracking",
+      "trackingDescription": "Track stock movements across multiple warehouses with instant updates",
+      "alertsTitle": "Smart Alerts",
+      "alertsDescription": "Set reorder points and receive instant notifications when stock runs low",
+      "searchTitle": "Advanced Search",
+      "searchDescription": "Find products, categories, and locations with powerful full-text search"
+    },
+    "register": {
+      "title": "Unda shirika lako",
+      "description": "Sajili shirika jipya na weka akaunti yako kama mmiliki.",
+      "organizationName": "Jina la shirika",
+      "organizationPlaceholder": "Acme Corp",
+      "slugLabel": "Slug (si lazima)",
+      "slugHint": "— Kitambulisho salama cha URL, mf. acme-corp",
+      "slugPlaceholder": "acme-corp",
+      "username": "Jina la mtumiaji",
+      "usernamePlaceholder": "jdoe",
+      "email": "Barua pepe",
+      "emailPlaceholder": "john@acme.com",
+      "firstName": "Jina la kwanza",
+      "firstNamePlaceholder": "John",
+      "lastName": "Jina la ukoo",
+      "lastNamePlaceholder": "Doe",
+      "password": "Nenosiri",
+      "passwordPlaceholder": "Angalau herufi 8",
+      "submit": "Unda shirika",
+      "submitting": "Inaunda…",
+      "hasAccountPrompt": "Tayari una akaunti?",
+      "signInLink": "Ingia"
+    },
+    "account": {
+      "loadError": "Imeshindwa kupakia akaunti yako. Jaribu kuingia tena.",
+      "pageTitle": "Akaunti",
+      "pageDescription": "Wasifu wako na nenosiri hutumika kwa mtumiaji wako katika mashirika yote.",
+      "profileTitle": "Wasifu",
+      "profileDescription": "Jina na barua pepe hutumika kwa kila shirika unaloshiriki.",
+      "username": "Username",
+      "usernameReadOnlyHint": "Username cannot be changed here.",
+      "email": "Email",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "reset": "Reset",
+      "saveProfile": "Hifadhi wasifu",
+      "savingProfile": "Inahifadhi…",
+      "passwordTitle": "Nenosiri",
+      "passwordDescription": "Use a strong password you do not reuse on other sites.",
+      "currentPassword": "Current password",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm new password",
+      "updatePassword": "Sasisha nenosiri",
+      "updatingPassword": "Inasasisha…",
+      "workspaceTitle": "Nafasi ya kazi ya sasa",
+      "workspaceNoTenantDescription": "Chagua shirika kutoka kichaguzi kichwani kufanya kazi kwenye hesabu.",
+      "workspaceDescription": "Data na vitendo vya hesabu vimefungwa kwa shirika hili.",
+      "organisation": "Shirika",
+      "slug": "Slug",
+      "yourRole": "Jukumu lako"
+    },
+    "guard": {
+      "loading": "Inapakia…"
+    },
+    "invitation": {
+      "invalidTitle": "Invalid Invitation",
+      "invalidDescription": "This invitation link is invalid, expired, or has already been used.",
+      "goToLogin": "Go to Login",
+      "processed": {
+        "accepted": {
+          "title": "Invitation accepted",
+          "description": "This invitation has already been accepted."
+        },
+        "cancelled": {
+          "title": "Invitation cancelled",
+          "description": "This invitation has been cancelled."
+        },
+        "expired": {
+          "title": "Invitation expired",
+          "description": "This invitation has expired."
+        }
+      },
+      "processedUnknownTitle": "Invitation ({status})",
+      "processedUnknownDescription": "This invitation is no longer pending.",
+      "joinTitle": "Join {tenant}",
+      "invitedAs": "You've been invited to join as",
+      "invitationFor": "Invitation for {email}",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "username": "Username",
+      "password": "Password",
+      "firstNamePlaceholder": "Jane",
+      "lastNamePlaceholder": "Doe",
+      "usernamePlaceholder": "janedoe",
+      "passwordPlaceholderNew": "Min. 8 characters",
+      "existingAccountHint": "An account with this email already exists. Enter your password to confirm your identity and join the organization.",
+      "existingPassword": "Password",
+      "existingPasswordPlaceholder": "Your password",
+      "joining": "Joining…",
+      "joinTenant": "Join {tenant}",
+      "expires": "Expires {date}"
+    },
+    "validation": {
+      "usernameRequired": "Username is required",
+      "passwordRequired": "Password is required",
+      "emailRequired": "Email is required",
+      "validEmail": "Valid email is required",
+      "currentPasswordRequired": "Current password is required",
+      "newPasswordMin": "New password must be at least 8 characters",
+      "confirmPasswordRequired": "Please confirm your new password",
+      "passwordsMismatch": "Passwords do not match",
+      "organizationNameRequired": "Organization name is required",
+      "slugFormat": "Slug must be lowercase letters, numbers, and hyphens only",
+      "registerPasswordMin": "Password must be at least 8 characters"
+    }
+  },
+  "Audit": {
+    "system": "System",
+    "emDash": "—",
+    "tenantPage": {
+      "title": "Kumbukumbu ya ukaguzi",
+      "description": "Njia ya ukaguzi kwa uzingatifu wa kanuni na ufuatiliaji wa uendeshaji.",
+      "exportCsv": "Hamisha CSV",
+      "exportFailed": "Imeshindwa kuhamisha CSV",
+      "empty": "Hakuna maingizo ya ukaguzi."
+    },
+    "platformPage": {
+      "title": "Ukaguzi wa jukwaa",
+      "description": "Njia moja kwa wateja wote. Kwa msimilizi pekee.",
+      "exportCsv": "Export CSV",
+      "exportExcel": "Export Excel",
+      "exportCsvSuccess": "CSV exported successfully",
+      "exportExcelSuccess": "Excel exported successfully",
+      "exportCsvFailed": "Failed to export CSV",
+      "exportExcelFailed": "Failed to export Excel",
+      "empty": "Hakuna maingizo ya ukaguzi wa jukwaa.",
+      "allTenants": "Wateja wote",
+      "tenantPlaceholder": "Wateja wote"
+    },
+    "columns": {
+      "timestamp": "Muda",
+      "action": "Kitendo",
+      "product": "Bidhaa",
+      "user": "Mtumiaji",
+      "ipAddress": "Anwani ya IP",
+      "tenant": "Mteja",
+      "view": "Tazama"
+    },
+    "filters": {
+      "actionType": "Aina ya kitendo",
+      "fromDate": "Kutoka tarehe",
+      "toDate": "Hadi tarehe"
+    },
+    "detail": {
+      "title": "Ingizo la ukaguzi #{id}",
+      "recordedOn": "Lilirekodiwa {datetime}",
+      "action": "Action",
+      "product": "Product",
+      "user": "User",
+      "ipAddress": "IP Address",
+      "detailsJson": "Maelezo (JSON)"
+    },
+    "actionLabels": {
+      "stock_received": "Hesabu ilipokelewa",
+      "stock_issued": "Hesabu ilitolewa",
+      "stock_transferred": "Hesabu ilihamishwa",
+      "stock_adjusted": "Hesabu ilirekebishwa",
+      "reservation_created": "Hifadhi iliundwa",
+      "reservation_fulfilled": "Hifadhi ilitimizwa",
+      "reservation_cancelled": "Hifadhi ilighairiwa",
+      "cycle_count_started": "Hesabu ya mzunguko ilianza",
+      "cycle_count_reconciled": "Hesabu ya mzunguko ilipatanishwa",
+      "bulk_operation": "Operesheni kubwa",
+      "tenant_accessed": "Mteja alifikiwa",
+      "tenant_export": "Data ya mteja ilisafirishwa"
+    }
+  },
+  "Reports": {
+    "index": {
+      "title": "Reports",
+      "description": "Generate and export inventory, procurement, and sales reports"
+    },
+    "shared": {
+      "dateFrom": "From",
+      "dateTo": "To",
+      "pickDate": "Pick a date",
+      "all": "All",
+      "selectMethod": "Select method",
+      "selectPeriod": "Select period"
+    },
+    "filters": {
+      "valuationMethod": "Valuation Method",
+      "period": "Period",
+      "movementType": "Movement type",
+      "varianceType": "Variance type",
+      "lookAheadDays": "Look-ahead (days)",
+      "thresholdMultiplier": "Threshold multiplier",
+      "productSku": "Product SKU",
+      "lotNumber": "Lot number"
+    },
+    "options": {
+      "period": {
+        "daily": "Daily",
+        "weekly": "Weekly",
+        "monthly": "Monthly"
+      },
+      "valuation": {
+        "weighted_average": "Weighted Average",
+        "latest_cost": "Latest Cost"
+      },
+      "movement": {
+        "receipt": "Receipt",
+        "issue": "Issue",
+        "transfer": "Transfer",
+        "adjustment": "Adjustment",
+        "return": "Return"
+      },
+      "variance": {
+        "shortage": "Shortage",
+        "surplus": "Surplus",
+        "match": "Match"
+      }
+    },
+    "expiryBadge": {
+      "expired": "Expired",
+      "expiring": "Expiring"
+    },
+    "columns": {
+      "cellEmpty": "—",
+      "sku": "SKU",
+      "product": "Product",
+      "category": "Category",
+      "quantity": "Quantity",
+      "unitCost": "Unit Cost",
+      "totalValue": "Total Value",
+      "type": "Type",
+      "qty": "Qty",
+      "from": "From",
+      "to": "To",
+      "reference": "Reference",
+      "date": "Date",
+      "reorderPoint": "Reorder Point",
+      "currentStock": "Current Stock",
+      "deficit": "Deficit",
+      "threshold": "Threshold",
+      "excess": "Excess",
+      "period": "Period",
+      "orders": "Orders",
+      "totalCost": "Total Cost",
+      "totalRevenue": "Total Revenue",
+      "totalQty": "Total Qty",
+      "reserved": "Reserved",
+      "available": "Available",
+      "reservedValue": "Reserved Value",
+      "status": "Status",
+      "lotNumber": "Lot Number",
+      "expiryDate": "Expiry Date",
+      "daysLeft": "Days Left",
+      "qtyRemaining": "Qty Remaining",
+      "supplier": "Supplier",
+      "cycle": "Cycle",
+      "location": "Location",
+      "systemQty": "System Qty",
+      "physicalQty": "Physical Qty",
+      "variance": "Variance",
+      "resolution": "Resolution",
+      "action": "Action",
+      "fromToLocation": "From / Location",
+      "salesOrder": "Sales Order",
+      "name": "Name",
+      "scheduled": "Scheduled",
+      "lines": "Lines",
+      "variances": "Variances",
+      "shortages": "Shortages",
+      "surpluses": "Surpluses",
+      "netVariance": "Net Variance",
+      "allLocations": "All"
+    },
+    "cards": {
+      "stockValuation": {
+        "title": "Stock Valuation",
+        "description": "View total inventory value using weighted average or latest cost methods"
+      },
+      "movementHistory": {
+        "title": "Movement History",
+        "description": "Browse all stock movements with date range and type filters"
+      },
+      "lowStock": {
+        "title": "Low Stock",
+        "description": "Products at or below their reorder point"
+      },
+      "overstock": {
+        "title": "Overstock",
+        "description": "Products exceeding their reorder point threshold"
+      },
+      "purchaseSummary": {
+        "title": "Purchase Summary",
+        "description": "Purchase order totals grouped by period"
+      },
+      "salesSummary": {
+        "title": "Sales Summary",
+        "description": "Sales order totals grouped by period"
+      },
+      "availability": {
+        "title": "Availability",
+        "description": "Per-product stock, reserved, and available quantities"
+      },
+      "productExpiry": {
+        "title": "Product Expiry",
+        "description": "Lots expiring soon or already expired"
+      },
+      "variances": {
+        "title": "Variances",
+        "description": "Inventory variance report from cycle counts"
+      },
+      "traceability": {
+        "title": "Traceability",
+        "description": "Full movement chain for a specific product and lot"
+      }
+    },
+    "pages": {
+      "stockValuation": {
+        "title": "Stock Valuation",
+        "description": "Inventory value by product using selected costing method",
+        "summaryTotalProducts": "Total Products",
+        "summaryTotalQuantity": "Total Quantity",
+        "summaryTotalValue": "Total Value",
+        "empty": "No stock valuation data."
+      },
+      "movementHistory": {
+        "title": "Movement History",
+        "description": "All stock movements with filters",
+        "empty": "No movements found for the selected filters."
+      },
+      "lowStock": {
+        "title": "Low Stock Report",
+        "description": "Products at or below their reorder point",
+        "empty": "No low-stock items found."
+      },
+      "overstock": {
+        "title": "Overstock Report",
+        "description": "Products exceeding their reorder point by the threshold multiplier",
+        "empty": "No overstock items found."
+      },
+      "purchaseSummary": {
+        "title": "Purchase Summary",
+        "description": "Purchase order totals grouped by period",
+        "totalOrders": "Total Orders",
+        "totalCost": "Total Cost",
+        "empty": "No purchase summary data for the selected period."
+      },
+      "salesSummary": {
+        "title": "Sales Summary",
+        "description": "Sales order totals grouped by period",
+        "totalOrders": "Total Orders",
+        "totalRevenue": "Total Revenue",
+        "empty": "No sales summary data for the selected period."
+      },
+      "availability": {
+        "title": "Availability Report",
+        "description": "Per-product stock, reserved, and available quantities",
+        "products": "Products",
+        "totalReservedValue": "Total Reserved Value",
+        "empty": "No availability data."
+      },
+      "productExpiry": {
+        "title": "Product Expiry Report",
+        "description": "Lots expiring soon or already expired",
+        "expired": "Expired lots",
+        "expiringSoon": "Expiring soon",
+        "totalLots": "Total lots (in window)",
+        "empty": "No expiry data for the selected window."
+      },
+      "variances": {
+        "title": "Variance Report",
+        "description": "Inventory variances from cycle counts",
+        "totalVariances": "Total variances",
+        "shortages": "Shortages",
+        "surpluses": "Surpluses",
+        "netVariance": "Net variance",
+        "empty": "No variances found for the selected filters."
+      },
+      "traceability": {
+        "title": "Product Traceability",
+        "description": "Full movement chain for a specific product and lot",
+        "placeholderSku": "Enter SKU",
+        "placeholderLot": "Enter lot number",
+        "promptEnterSkuAndLot": "Enter a product SKU and lot number to load the traceability chain.",
+        "productLabel": "Product",
+        "lotLabel": "Lot",
+        "expiresWithDate": "Expires {date}",
+        "supplierWithName": "Supplier: {name}",
+        "empty": "No traceability events found."
+      }
+    }
+  }
+}

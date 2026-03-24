@@ -11,6 +11,8 @@ Wagtail admin. API impersonation uses token swap (no middleware).
 import logging
 
 from django.conf import settings as django_settings
+from django.utils import translation
+from django.utils.translation import get_supported_language_variant
 
 from tenants.context import (
     clear_current_tenant,
@@ -31,15 +33,46 @@ class TenantMiddleware:
         tenant = self._resolve_tenant(request)
         request.tenant = tenant
         set_current_tenant(tenant)
+        applied_tenant_locale = self._activate_translation_for_tenant(tenant)
         self._audit_tenant_access(request, tenant)
 
         try:
             response = self.get_response(request)
         finally:
+            if applied_tenant_locale:
+                translation.deactivate()
             clear_current_tenant()
         return response
 
     # -----------------------------------------------------------------
+
+    @staticmethod
+    def _activate_translation_for_tenant(tenant):
+        """Set Django's active locale from the tenant when one is resolved.
+
+        Skips when *tenant* is None so :class:`~django.middleware.locale.LocaleMiddleware`
+        (URL prefix, cookie, ``Accept-Language``) remains in effect for anonymous
+        or unscoped requests. When a preference is missing or invalid, falls
+        back to :setting:`LANGUAGE_CODE`.
+
+        Returns:
+            bool: True if this method called ``translation.activate`` and the
+            caller should ``translation.deactivate()`` in ``finally``.
+        """
+        if tenant is None:
+            return False
+
+        default = django_settings.LANGUAGE_CODE
+        pref = (getattr(tenant, "preferred_language", None) or "").strip()
+        candidate = pref if pref else default
+
+        try:
+            lang = get_supported_language_variant(candidate, strict=False)
+        except LookupError:
+            lang = get_supported_language_variant(default, strict=False)
+
+        translation.activate(lang)
+        return True
 
     @staticmethod
     def _audit_tenant_access(request, tenant):

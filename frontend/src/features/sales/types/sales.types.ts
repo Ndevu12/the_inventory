@@ -13,7 +13,8 @@ export interface Customer {
 }
 
 export interface CustomerCreatePayload {
-  code: string
+  /** Omit or leave empty; the API assigns a unique code (C- prefix). */
+  code?: string
   name: string
   contact_name?: string
   email?: string
@@ -71,7 +72,8 @@ export interface SalesOrderLinePayload {
 }
 
 export interface SalesOrderCreatePayload {
-  order_number: string
+  /** Omit when empty; the API assigns a unique sales order number (SO- prefix). */
+  order_number?: string
   customer: number
   order_date: string
   notes?: string

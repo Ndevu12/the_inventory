@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { XCircle, Clock, Mail } from "lucide-react"
 
@@ -25,36 +26,31 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { ROLE_MAP, ROLE_COLOR_MAP } from "../helpers/settings-constants"
+import { ROLE_COLOR_MAP } from "../helpers/settings-constants"
 import { useInvitations, useCancelInvitation } from "../hooks/use-invitations"
 import type { Invitation, TenantRole } from "../types/settings.types"
 import { cn } from "@/lib/utils"
 
-const STATUS_BADGE: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; label: string }> = {
-  pending: { variant: "outline", label: "Pending" },
-  accepted: { variant: "default", label: "Accepted" },
-  cancelled: { variant: "secondary", label: "Cancelled" },
-  expired: { variant: "destructive", label: "Expired" },
-}
-
 export function PendingInvitations() {
+  const t = useTranslations("SettingsTenant.pendingInvitations")
+  const tRoles = useTranslations("SettingsTenant.roles")
   const { data: invitations, isLoading } = useInvitations()
   const cancelMutation = useCancelInvitation()
   const [toCancel, setToCancel] = React.useState<Invitation | null>(null)
 
   const pending = React.useMemo(
     () => (invitations ?? []).filter((i) => i.status === "pending"),
-    [invitations]
+    [invitations],
   )
 
   function handleCancelConfirm() {
     if (!toCancel) return
     cancelMutation.mutate(toCancel.id, {
       onSuccess: () => {
-        toast.success(`Invitation to ${toCancel.email} cancelled`)
+        toast.success(t("toastCancelled", { email: toCancel.email }))
         setToCancel(null)
       },
-      onError: () => toast.error("Failed to cancel invitation"),
+      onError: () => toast.error(t("toastCancelFailed")),
     })
   }
 
@@ -73,24 +69,30 @@ export function PendingInvitations() {
     <div className="space-y-3">
       <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
         <Mail className="size-4" />
-        Pending Invitations ({pending.length})
+        {t("heading")} {t("headingCount", { count: pending.length })}
       </div>
 
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Email</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Expires</TableHead>
+              <TableHead>{t("columns.email")}</TableHead>
+              <TableHead>{t("columns.role")}</TableHead>
+              <TableHead>{t("columns.status")}</TableHead>
+              <TableHead>{t("columns.expires")}</TableHead>
               <TableHead className="w-[80px]" />
             </TableRow>
           </TableHeader>
           <TableBody>
             {pending.map((inv) => {
               const roleColors = ROLE_COLOR_MAP[inv.role as TenantRole]
-              const statusInfo = STATUS_BADGE[inv.status] ?? STATUS_BADGE.pending
+              const statusLabel = t(
+                `invitationStatus.${inv.status}` as
+                  | "invitationStatus.pending"
+                  | "invitationStatus.accepted"
+                  | "invitationStatus.cancelled"
+                  | "invitationStatus.expired",
+              )
               return (
                 <TableRow key={inv.id}>
                   <TableCell className="font-medium">{inv.email}</TableCell>
@@ -100,16 +102,16 @@ export function PendingInvitations() {
                       className={cn(
                         "border-transparent font-medium",
                         roleColors?.bg,
-                        roleColors?.text
+                        roleColors?.text,
                       )}
                     >
-                      {ROLE_MAP[inv.role as TenantRole] ?? inv.role}
+                      {tRoles(inv.role as TenantRole)}
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={statusInfo.variant}>
+                    <Badge variant="outline">
                       <Clock className="mr-1 size-3" />
-                      {statusInfo.label}
+                      {statusLabel}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-muted-foreground">
@@ -123,7 +125,7 @@ export function PendingInvitations() {
                       onClick={() => setToCancel(inv)}
                     >
                       <XCircle className="size-4" />
-                      <span className="sr-only">Cancel invitation</span>
+                      <span className="sr-only">{t("srCancelInvitation")}</span>
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -135,25 +137,27 @@ export function PendingInvitations() {
 
       <AlertDialog
         open={toCancel !== null}
-        onOpenChange={(open) => { if (!open) setToCancel(null) }}
+        onOpenChange={(open) => {
+          if (!open) setToCancel(null)
+        }}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Cancel invitation</AlertDialogTitle>
+            <AlertDialogTitle>{t("cancelDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to cancel the invitation to{" "}
-              <strong>{toCancel?.email}</strong>? The invitation link will no
-              longer work.
+              {t("cancelDialog.descriptionLead")}{" "}
+              <strong>{toCancel?.email}</strong>
+              {t("cancelDialog.descriptionTrail")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Keep</AlertDialogCancel>
+            <AlertDialogCancel>{t("keep")}</AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
               onClick={handleCancelConfirm}
               disabled={cancelMutation.isPending}
             >
-              {cancelMutation.isPending ? "Cancelling…" : "Cancel Invitation"}
+              {cancelMutation.isPending ? t("cancelling") : t("cancelInvitation")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

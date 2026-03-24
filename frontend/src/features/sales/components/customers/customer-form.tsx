@@ -1,6 +1,7 @@
 "use client"
 
 import type { UseFormReturn } from "react-hook-form"
+import { useTranslations } from "next-intl"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -12,6 +13,8 @@ interface CustomerFormProps {
 }
 
 export function CustomerForm({ form }: CustomerFormProps) {
+  const t = useTranslations("Sales.customers.form")
+  const tPh = useTranslations("Sales.customers.form.placeholders")
   const {
     register,
     formState: { errors },
@@ -23,16 +26,20 @@ export function CustomerForm({ form }: CustomerFormProps) {
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="code">Code *</Label>
-          <Input id="code" placeholder="e.g. CUST-001" {...register("code")} />
+          <Label htmlFor="code">{t("codeOptional")}</Label>
+          <Input
+            id="code"
+            placeholder={tPh("code")}
+            {...register("code")}
+          />
           {errors.code && (
             <p className="text-xs text-destructive">{errors.code.message}</p>
           )}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="name">Name *</Label>
-          <Input id="name" placeholder="Customer name" {...register("name")} />
+          <Label htmlFor="name">{t("name")}</Label>
+          <Input id="name" placeholder={tPh("name")} {...register("name")} />
           {errors.name && (
             <p className="text-xs text-destructive">{errors.name.message}</p>
           )}
@@ -41,10 +48,10 @@ export function CustomerForm({ form }: CustomerFormProps) {
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="contact_name">Contact Person</Label>
+          <Label htmlFor="contact_name">{t("contactPerson")}</Label>
           <Input
             id="contact_name"
-            placeholder="Primary contact"
+            placeholder={tPh("contact")}
             {...register("contact_name")}
           />
           {errors.contact_name && (
@@ -55,11 +62,11 @@ export function CustomerForm({ form }: CustomerFormProps) {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">{t("email")}</Label>
           <Input
             id="email"
             type="email"
-            placeholder="contact@example.com"
+            placeholder={tPh("email")}
             {...register("email")}
           />
           {errors.email && (
@@ -70,8 +77,8 @@ export function CustomerForm({ form }: CustomerFormProps) {
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="phone">Phone</Label>
-          <Input id="phone" placeholder="+1 555-0100" {...register("phone")} />
+          <Label htmlFor="phone">{t("phone")}</Label>
+          <Input id="phone" placeholder={tPh("phone")} {...register("phone")} />
           {errors.phone && (
             <p className="text-xs text-destructive">{errors.phone.message}</p>
           )}
@@ -83,16 +90,16 @@ export function CustomerForm({ form }: CustomerFormProps) {
             checked={watch("is_active")}
             onCheckedChange={(checked) => setValue("is_active", checked)}
           />
-          <Label htmlFor="is_active">Active</Label>
+          <Label htmlFor="is_active">{t("active")}</Label>
         </div>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="address">Address</Label>
+        <Label htmlFor="address">{t("address")}</Label>
         <Textarea
           id="address"
           rows={3}
-          placeholder="Full mailing or physical address"
+          placeholder={tPh("address")}
           {...register("address")}
         />
         {errors.address && (
@@ -101,11 +108,11 @@ export function CustomerForm({ form }: CustomerFormProps) {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="notes">Notes</Label>
+        <Label htmlFor="notes">{t("notes")}</Label>
         <Textarea
           id="notes"
           rows={3}
-          placeholder="Internal notes about this customer"
+          placeholder={tPh("notes")}
           {...register("notes")}
         />
         {errors.notes && (

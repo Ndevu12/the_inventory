@@ -36,8 +36,8 @@ export type {
 
 // Schemas
 export {
-  bulkTransferSchema,
-  bulkAdjustmentSchema,
+  createBulkTransferSchema,
+  createBulkAdjustmentSchema,
 } from "./helpers/bulk-schemas";
 export type {
   BulkTransferFormValues,

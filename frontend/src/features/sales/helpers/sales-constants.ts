@@ -1,11 +1,11 @@
-import type { FacetedFilterOption } from "@/components/data-table"
 import type { SalesOrderStatus } from "../types/sales.types"
 
-export const SO_STATUS_OPTIONS: FacetedFilterOption[] = [
-  { label: "Draft", value: "draft" },
-  { label: "Confirmed", value: "confirmed" },
-  { label: "Fulfilled", value: "fulfilled" },
-  { label: "Cancelled", value: "cancelled" },
+/** Values for sales order status filter (labels come from `Sales.soStatus`). */
+export const SO_STATUS_FILTER_VALUES: SalesOrderStatus[] = [
+  "draft",
+  "confirmed",
+  "fulfilled",
+  "cancelled",
 ]
 
 export const SO_STATUS_COLOR_MAP: Record<

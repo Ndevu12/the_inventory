@@ -108,5 +108,17 @@ class TenantReadOnlyOrManager(BasePermission):
 
     def has_permission(self, request, view):
         if request.method in ("GET", "HEAD", "OPTIONS"):
-            return get_membership(request.user, request=request) is not None
+            membership = get_membership(request.user, request=request)
+            if membership is not None:
+                return True
+            tenant = get_current_tenant()
+            if tenant is None:
+                tenant = get_effective_tenant(request)
+            if (
+                tenant is None
+                and request.user
+                and request.user.is_authenticated
+            ):
+                self.message = "No tenant context available."
+            return False
         return can_manage(request.user, request=request)

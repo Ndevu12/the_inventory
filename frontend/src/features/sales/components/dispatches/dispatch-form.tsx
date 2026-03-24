@@ -3,6 +3,7 @@
 import * as React from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useTranslations } from "next-intl"
 import {
   Card,
   CardContent,
@@ -22,7 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import {
-  createDispatchSchema,
+  buildCreateDispatchSchema,
   type CreateDispatchInput,
   type CreateDispatchFormValues,
 } from "../../helpers/dispatch-schemas"
@@ -47,8 +48,24 @@ export function DispatchForm({
   isSubmitting,
   onCancel,
 }: DispatchFormProps) {
+  const t = useTranslations("Sales.dispatches.form")
+  const tPh = useTranslations("Sales.dispatches.form.placeholders")
+  const tVal = useTranslations("Sales.dispatches.validation")
+  const tShared = useTranslations("Sales.shared")
+  const tCommon = useTranslations("Common.actions")
+
+  const dispatchSchema = React.useMemo(
+    () =>
+      buildCreateDispatchSchema({
+        salesOrderRequired: tVal("salesOrderRequired"),
+        dispatchDateRequired: tVal("dispatchDateRequired"),
+        fromLocationRequired: tVal("fromLocationRequired"),
+      }),
+    [tVal],
+  )
+
   const form = useForm<CreateDispatchInput, unknown, CreateDispatchFormValues>({
-    resolver: zodResolver(createDispatchSchema),
+    resolver: zodResolver(dispatchSchema),
     defaultValues: {
       dispatch_number: "",
       sales_order: undefined as unknown as number,
@@ -58,28 +75,28 @@ export function DispatchForm({
     },
   })
 
+  const sep = tShared("nameSeparator")
+
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Dispatch Details</CardTitle>
-          <CardDescription>
-            Create a dispatch to ship goods against a sales order.
-          </CardDescription>
+          <CardTitle>{t("detailsTitle")}</CardTitle>
+          <CardDescription>{t("detailsDescription")}</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-6 sm:grid-cols-2">
           <FormField
-            label="Dispatch Number"
+            label={t("dispatchNumberOptional")}
             error={form.formState.errors.dispatch_number?.message}
           >
             <Input
-              placeholder="e.g. DSP-2026-001"
+              placeholder={tPh("dispatchNumber")}
               {...form.register("dispatch_number")}
             />
           </FormField>
 
           <FormField
-            label="Sales Order"
+            label={t("salesOrder")}
             error={form.formState.errors.sales_order?.message}
           >
             <Select
@@ -94,29 +111,37 @@ export function DispatchForm({
               <SelectTrigger className="w-full">
                 <SelectValue
                   placeholder={
-                    salesOrdersLoading ? "Loading..." : "Select sales order"
+                    salesOrdersLoading ? t("loading") : tPh("selectSalesOrder")
                   }
                 />
               </SelectTrigger>
               <SelectContent>
-                {salesOrders.map((so) => (
-                  <SelectItem key={so.id} value={so.id.toString()}>
-                    {so.order_number} — {so.customer_name}
-                  </SelectItem>
-                ))}
+                {salesOrders.length === 0 ? (
+                  <div className="px-2 py-3 text-sm text-muted-foreground">
+                    {t("emptySalesOrdersHint")}
+                  </div>
+                ) : (
+                  salesOrders.map((so) => (
+                    <SelectItem key={so.id} value={so.id.toString()}>
+                      {so.order_number}
+                      {sep}
+                      {so.customer_name}
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
           </FormField>
 
           <FormField
-            label="Dispatch Date"
+            label={t("dispatchDate")}
             error={form.formState.errors.dispatch_date?.message}
           >
             <Input type="date" {...form.register("dispatch_date")} />
           </FormField>
 
           <FormField
-            label="From Location"
+            label={t("fromLocation")}
             error={form.formState.errors.from_location?.message}
           >
             <Select
@@ -131,7 +156,7 @@ export function DispatchForm({
               <SelectTrigger className="w-full">
                 <SelectValue
                   placeholder={
-                    locationsLoading ? "Loading..." : "Select location"
+                    locationsLoading ? t("loading") : tPh("selectLocation")
                   }
                 />
               </SelectTrigger>
@@ -149,16 +174,16 @@ export function DispatchForm({
 
       <Card>
         <CardHeader>
-          <CardTitle>Additional Notes</CardTitle>
+          <CardTitle>{t("notesSectionTitle")}</CardTitle>
         </CardHeader>
         <CardContent>
           <FormField
-            label="Notes"
+            label={t("notes")}
             error={form.formState.errors.notes?.message}
           >
             <Textarea
               rows={3}
-              placeholder="Shipping instructions, special handling, etc."
+              placeholder={tPh("notes")}
               {...form.register("notes")}
             />
           </FormField>
@@ -167,10 +192,10 @@ export function DispatchForm({
 
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Creating..." : "Create Dispatch"}
+          {isSubmitting ? t("creating") : t("submit")}
         </Button>
         <Button type="button" variant="outline" onClick={onCancel}>
-          Cancel
+          {tCommon("cancel")}
         </Button>
       </div>
     </form>

@@ -1,6 +1,7 @@
 "use client"
 
 import type { UseFormReturn } from "react-hook-form"
+import { useTranslations } from "next-intl"
 import {
   Card,
   CardContent,
@@ -36,6 +37,9 @@ export function GRNForm({
   isLoadingPOs,
   isLoadingLocations,
 }: GRNFormProps) {
+  const t = useTranslations("Procurement.grn.form")
+  const tPh = useTranslations("Procurement.grn.form.placeholders")
+  const tShared = useTranslations("Procurement.shared")
   const {
     register,
     formState: { errors },
@@ -47,24 +51,22 @@ export function GRNForm({
     <>
       <Card>
         <CardHeader>
-          <CardTitle>GRN Details</CardTitle>
-          <CardDescription>
-            Record goods received against a purchase order.
-          </CardDescription>
+          <CardTitle>{t("detailsTitle")}</CardTitle>
+          <CardDescription>{t("detailsDescription")}</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-6 sm:grid-cols-2">
           <FormField
-            label="GRN Number"
+            label={t("grnNumber")}
             error={errors.grn_number?.message}
           >
             <Input
-              placeholder="e.g. GRN-2026-001"
+              placeholder={tPh("grnNumber")}
               {...register("grn_number")}
             />
           </FormField>
 
           <FormField
-            label="Purchase Order"
+            label={t("purchaseOrder")}
             error={errors.purchase_order?.message}
           >
             <Select
@@ -78,13 +80,17 @@ export function GRNForm({
             >
               <SelectTrigger className="w-full">
                 <SelectValue
-                  placeholder={isLoadingPOs ? "Loading..." : "Select purchase order"}
+                  placeholder={
+                    isLoadingPOs ? t("loading") : t("selectPO")
+                  }
                 />
               </SelectTrigger>
               <SelectContent>
                 {purchaseOrders.map((po) => (
                   <SelectItem key={po.id} value={po.id.toString()}>
-                    {po.order_number} — {po.supplier_name}
+                    {po.order_number}
+                    {tShared("nameSeparator")}
+                    {po.supplier_name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -92,14 +98,14 @@ export function GRNForm({
           </FormField>
 
           <FormField
-            label="Received Date"
+            label={t("receivedDate")}
             error={errors.received_date?.message}
           >
             <Input type="date" {...register("received_date")} />
           </FormField>
 
           <FormField
-            label="Location"
+            label={t("location")}
             error={errors.location?.message}
           >
             <Select
@@ -113,7 +119,9 @@ export function GRNForm({
             >
               <SelectTrigger className="w-full">
                 <SelectValue
-                  placeholder={isLoadingLocations ? "Loading..." : "Select location"}
+                  placeholder={
+                    isLoadingLocations ? t("loading") : t("selectLocation")
+                  }
                 />
               </SelectTrigger>
               <SelectContent>
@@ -130,13 +138,13 @@ export function GRNForm({
 
       <Card>
         <CardHeader>
-          <CardTitle>Additional Notes</CardTitle>
+          <CardTitle>{t("notesSectionTitle")}</CardTitle>
         </CardHeader>
         <CardContent>
-          <FormField label="Notes" error={errors.notes?.message}>
+          <FormField label={t("notes")} error={errors.notes?.message}>
             <Textarea
               rows={3}
-              placeholder="Condition of goods, discrepancies, etc."
+              placeholder={tPh("notes")}
               {...register("notes")}
             />
           </FormField>

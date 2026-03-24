@@ -12,14 +12,32 @@ interface GRNColumnActions {
   onDelete?: (grn: GoodsReceivedNote) => void
 }
 
+export interface GRNColumnLabels {
+  tColumns: (key: string) => string
+  emDash: string
+  processedLabel: string
+  pendingLabel: string
+  viewLabel: string
+  receiveGoodsLabel: string
+  deleteLabel: string
+  locale: string
+}
+
 export function getGRNColumns(
   actions: GRNColumnActions,
+  labels: GRNColumnLabels,
 ): ColumnDef<GoodsReceivedNote>[] {
+  const dateOpts: Intl.DateTimeFormatOptions = {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  }
+
   return [
     {
       accessorKey: "grn_number",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="GRN #" />
+        <DataTableColumnHeader column={column} title={labels.tColumns("grnNumber")} />
       ),
       cell: ({ row }) => (
         <span className="font-medium">{row.getValue("grn_number")}</span>
@@ -28,25 +46,27 @@ export function getGRNColumns(
     {
       accessorKey: "purchase_order_number",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Purchase Order" />
+        <DataTableColumnHeader
+          column={column}
+          title={labels.tColumns("purchaseOrder")}
+        />
       ),
-      cell: ({ row }) => row.getValue("purchase_order_number") || "—",
+      cell: ({ row }) => row.getValue("purchase_order_number") || labels.emDash,
       enableSorting: false,
     },
     {
       accessorKey: "received_date",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Received Date" />
+        <DataTableColumnHeader
+          column={column}
+          title={labels.tColumns("receivedDate")}
+        />
       ),
       cell: ({ row }) => {
         const date = new Date(row.getValue<string>("received_date"))
         return (
           <span className="whitespace-nowrap text-sm">
-            {date.toLocaleDateString(undefined, {
-              year: "numeric",
-              month: "short",
-              day: "numeric",
-            })}
+            {date.toLocaleDateString(labels.locale, dateOpts)}
           </span>
         )
       },
@@ -54,19 +74,19 @@ export function getGRNColumns(
     {
       accessorKey: "location_name",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Location" />
+        <DataTableColumnHeader column={column} title={labels.tColumns("location")} />
       ),
-      cell: ({ row }) => row.getValue("location_name") || "—",
+      cell: ({ row }) => row.getValue("location_name") || labels.emDash,
       enableSorting: false,
     },
     {
       accessorKey: "is_processed",
-      header: "Status",
+      header: labels.tColumns("status"),
       cell: ({ row }) => {
         const processed = row.getValue<boolean>("is_processed")
         return (
           <Badge variant={processed ? "default" : "secondary"}>
-            {processed ? "Processed" : "Pending"}
+            {processed ? labels.processedLabel : labels.pendingLabel}
           </Badge>
         )
       },
@@ -75,17 +95,13 @@ export function getGRNColumns(
     {
       accessorKey: "created_at",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Created" />
+        <DataTableColumnHeader column={column} title={labels.tColumns("created")} />
       ),
       cell: ({ row }) => {
         const date = new Date(row.getValue<string>("created_at"))
         return (
           <span className="whitespace-nowrap text-sm text-muted-foreground">
-            {date.toLocaleDateString(undefined, {
-              year: "numeric",
-              month: "short",
-              day: "numeric",
-            })}
+            {date.toLocaleDateString(labels.locale, dateOpts)}
           </span>
         )
       },
@@ -98,21 +114,21 @@ export function getGRNColumns(
 
         if (actions.onView) {
           rowActions.push({
-            label: "View",
+            label: labels.viewLabel,
             onClick: () => actions.onView!(grn),
           })
         }
 
         if (actions.onReceive && !grn.is_processed) {
           rowActions.push({
-            label: "Receive Goods",
+            label: labels.receiveGoodsLabel,
             onClick: () => actions.onReceive!(grn),
           })
         }
 
         if (actions.onDelete && !grn.is_processed) {
           rowActions.push({
-            label: "Delete",
+            label: labels.deleteLabel,
             onClick: () => actions.onDelete!(grn),
             variant: "destructive",
             separator: true,

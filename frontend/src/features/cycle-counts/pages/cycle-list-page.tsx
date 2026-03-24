@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
+import { useRouter } from "@/i18n/navigation";
 import type { PaginationState } from "@tanstack/react-table";
 import { PlusIcon } from "lucide-react";
 
@@ -14,17 +15,23 @@ import {
 
 import { useCycles } from "../hooks/use-cycles";
 import { useCycleFiltersStore } from "../stores/cycle-filters-store";
-import { CYCLE_STATUSES } from "../helpers/cycle-constants";
+import { CYCLE_STATUS_VALUES } from "../helpers/cycle-constants";
 import { CycleTable } from "../components/cycle-table";
-
-const STATUS_OPTIONS: FacetedFilterOption[] = CYCLE_STATUSES.map((s) => ({
-  label: s.label,
-  value: s.value,
-}));
 
 export function CycleListPage() {
   const router = useRouter();
   const filters = useCycleFiltersStore();
+  const t = useTranslations("CycleCounts");
+  const tStatus = useTranslations("CycleCounts.status");
+
+  const STATUS_OPTIONS: FacetedFilterOption[] = useMemo(
+    () =>
+      CYCLE_STATUS_VALUES.map((value) => ({
+        value,
+        label: tStatus(value),
+      })),
+    [tStatus],
+  );
 
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
@@ -44,12 +51,12 @@ export function CycleListPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Cycle Counts"
-        description="Schedule and manage physical inventory count cycles."
+        title={t("list.title")}
+        description={t("list.description")}
         actions={
           <Button onClick={() => router.push("/cycle-counts/new")}>
             <PlusIcon className="mr-2 size-4" />
-            New Cycle Count
+            {t("list.newCycle")}
           </Button>
         }
       />
@@ -64,7 +71,7 @@ export function CycleListPage() {
         isLoading={isLoading}
         filterContent={
           <DataTableFacetedFilter
-            title="Status"
+            title={t("list.filterStatus")}
             options={STATUS_OPTIONS}
           />
         }

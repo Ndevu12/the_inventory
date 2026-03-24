@@ -1,26 +1,29 @@
-"use client";
+"use client"
 
-import { AlertTriangleIcon, CheckCircleIcon } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { useTranslations } from "next-intl"
+import { AlertTriangleIcon, CheckCircleIcon } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
 
 interface LowStockBadgeProps {
-  isLowStock: boolean;
+  isLowStock: boolean
 }
 
 export function LowStockBadge({ isLowStock }: LowStockBadgeProps) {
+  const t = useTranslations("Inventory")
+
   if (isLowStock) {
     return (
       <Badge variant="destructive">
         <AlertTriangleIcon data-icon="inline-start" />
-        Low Stock
+        {t("stockRecords.badges.lowStock")}
       </Badge>
-    );
+    )
   }
 
   return (
     <Badge variant="secondary">
       <CheckCircleIcon data-icon="inline-start" />
-      OK
+      {t("stockRecords.badges.ok")}
     </Badge>
-  );
+  )
 }

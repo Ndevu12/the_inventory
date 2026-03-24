@@ -1,21 +1,41 @@
 import { z } from "zod"
 
-export const poLineSchema = z.object({
-  product: z.number().min(1, "Product is required"),
-  quantity: z.number().int().min(1, "Quantity must be at least 1"),
-  unit_cost: z.string().min(1, "Unit cost is required").refine(
-    (v) => !isNaN(Number(v)) && Number(v) > 0,
-    "Must be a positive number",
-  ),
-})
+export interface POLineSchemaMessages {
+  productRequired: string
+  quantityMin: string
+  unitCostRequired: string
+  unitCostPositive: string
+}
 
-export const createPurchaseOrderSchema = z.object({
-  supplier: z.number().min(1, "Supplier is required"),
-  order_date: z.string().min(1, "Order date is required"),
-  expected_delivery_date: z.string(),
-  notes: z.string(),
-  lines: z.array(poLineSchema).min(1, "At least one line item is required"),
-})
+export function buildPoLineSchema(messages: POLineSchemaMessages) {
+  return z.object({
+    product: z.number().min(1, messages.productRequired),
+    quantity: z.number().int().min(1, messages.quantityMin),
+    unit_cost: z.string().min(1, messages.unitCostRequired).refine(
+      (v) => !isNaN(Number(v)) && Number(v) > 0,
+      messages.unitCostPositive,
+    ),
+  })
+}
 
-export type POLineFormValues = z.infer<typeof poLineSchema>
-export type CreatePurchaseOrderFormValues = z.infer<typeof createPurchaseOrderSchema>
+export interface CreatePurchaseOrderSchemaMessages extends POLineSchemaMessages {
+  supplierRequired: string
+  orderDateRequired: string
+  atLeastOneLine: string
+}
+
+export function buildCreatePurchaseOrderSchema(messages: CreatePurchaseOrderSchemaMessages) {
+  const line = buildPoLineSchema(messages)
+  return z.object({
+    supplier: z.number().min(1, messages.supplierRequired),
+    order_date: z.string().min(1, messages.orderDateRequired),
+    expected_delivery_date: z.string(),
+    notes: z.string(),
+    lines: z.array(line).min(1, messages.atLeastOneLine),
+  })
+}
+
+export type POLineFormValues = z.infer<ReturnType<typeof buildPoLineSchema>>
+export type CreatePurchaseOrderFormValues = z.infer<
+  ReturnType<typeof buildCreatePurchaseOrderSchema>
+>

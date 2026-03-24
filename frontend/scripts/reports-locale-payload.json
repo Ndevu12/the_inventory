@@ -1,0 +1,1316 @@
+{
+  "en": {
+    "index": {
+      "title": "Reports",
+      "description": "Generate and export inventory, procurement, and sales reports"
+    },
+    "shared": {
+      "dateFrom": "From",
+      "dateTo": "To",
+      "pickDate": "Pick a date",
+      "all": "All",
+      "selectMethod": "Select method",
+      "selectPeriod": "Select period"
+    },
+    "filters": {
+      "valuationMethod": "Valuation Method",
+      "period": "Period",
+      "movementType": "Movement type",
+      "varianceType": "Variance type",
+      "lookAheadDays": "Look-ahead (days)",
+      "thresholdMultiplier": "Threshold multiplier",
+      "productSku": "Product SKU",
+      "lotNumber": "Lot number"
+    },
+    "options": {
+      "period": {
+        "daily": "Daily",
+        "weekly": "Weekly",
+        "monthly": "Monthly"
+      },
+      "valuation": {
+        "weighted_average": "Weighted Average",
+        "latest_cost": "Latest Cost"
+      },
+      "movement": {
+        "receipt": "Receipt",
+        "issue": "Issue",
+        "transfer": "Transfer",
+        "adjustment": "Adjustment",
+        "return": "Return"
+      },
+      "variance": {
+        "shortage": "Shortage",
+        "surplus": "Surplus",
+        "match": "Match"
+      }
+    },
+    "expiryBadge": {
+      "expired": "Expired",
+      "expiring": "Expiring"
+    },
+    "columns": {
+      "cellEmpty": "—",
+      "sku": "SKU",
+      "product": "Product",
+      "category": "Category",
+      "quantity": "Quantity",
+      "unitCost": "Unit Cost",
+      "totalValue": "Total Value",
+      "type": "Type",
+      "qty": "Qty",
+      "from": "From",
+      "to": "To",
+      "reference": "Reference",
+      "date": "Date",
+      "reorderPoint": "Reorder Point",
+      "currentStock": "Current Stock",
+      "deficit": "Deficit",
+      "threshold": "Threshold",
+      "excess": "Excess",
+      "period": "Period",
+      "orders": "Orders",
+      "totalCost": "Total Cost",
+      "totalRevenue": "Total Revenue",
+      "totalQty": "Total Qty",
+      "reserved": "Reserved",
+      "available": "Available",
+      "reservedValue": "Reserved Value",
+      "status": "Status",
+      "lotNumber": "Lot Number",
+      "expiryDate": "Expiry Date",
+      "daysLeft": "Days Left",
+      "qtyRemaining": "Qty Remaining",
+      "supplier": "Supplier",
+      "cycle": "Cycle",
+      "location": "Location",
+      "systemQty": "System Qty",
+      "physicalQty": "Physical Qty",
+      "variance": "Variance",
+      "resolution": "Resolution",
+      "action": "Action",
+      "fromToLocation": "From / Location",
+      "salesOrder": "Sales Order",
+      "name": "Name",
+      "scheduled": "Scheduled",
+      "lines": "Lines",
+      "variances": "Variances",
+      "shortages": "Shortages",
+      "surpluses": "Surpluses",
+      "netVariance": "Net Variance",
+      "allLocations": "All"
+    },
+    "cards": {
+      "stockValuation": {
+        "title": "Stock Valuation",
+        "description": "View total inventory value using weighted average or latest cost methods"
+      },
+      "movementHistory": {
+        "title": "Movement History",
+        "description": "Browse all stock movements with date range and type filters"
+      },
+      "lowStock": {
+        "title": "Low Stock",
+        "description": "Products at or below their reorder point"
+      },
+      "overstock": {
+        "title": "Overstock",
+        "description": "Products exceeding their reorder point threshold"
+      },
+      "purchaseSummary": {
+        "title": "Purchase Summary",
+        "description": "Purchase order totals grouped by period"
+      },
+      "salesSummary": {
+        "title": "Sales Summary",
+        "description": "Sales order totals grouped by period"
+      },
+      "availability": {
+        "title": "Availability",
+        "description": "Per-product stock, reserved, and available quantities"
+      },
+      "productExpiry": {
+        "title": "Product Expiry",
+        "description": "Lots expiring soon or already expired"
+      },
+      "variances": {
+        "title": "Variances",
+        "description": "Inventory variance report from cycle counts"
+      },
+      "traceability": {
+        "title": "Traceability",
+        "description": "Full movement chain for a specific product and lot"
+      }
+    },
+    "pages": {
+      "stockValuation": {
+        "title": "Stock Valuation",
+        "description": "Inventory value by product using selected costing method",
+        "summaryTotalProducts": "Total Products",
+        "summaryTotalQuantity": "Total Quantity",
+        "summaryTotalValue": "Total Value",
+        "empty": "No stock valuation data."
+      },
+      "movementHistory": {
+        "title": "Movement History",
+        "description": "All stock movements with filters",
+        "empty": "No movements found for the selected filters."
+      },
+      "lowStock": {
+        "title": "Low Stock Report",
+        "description": "Products at or below their reorder point",
+        "empty": "No low-stock items found."
+      },
+      "overstock": {
+        "title": "Overstock Report",
+        "description": "Products exceeding their reorder point by the threshold multiplier",
+        "empty": "No overstock items found."
+      },
+      "purchaseSummary": {
+        "title": "Purchase Summary",
+        "description": "Purchase order totals grouped by period",
+        "totalOrders": "Total Orders",
+        "totalCost": "Total Cost",
+        "empty": "No purchase summary data for the selected period."
+      },
+      "salesSummary": {
+        "title": "Sales Summary",
+        "description": "Sales order totals grouped by period",
+        "totalOrders": "Total Orders",
+        "totalRevenue": "Total Revenue",
+        "empty": "No sales summary data for the selected period."
+      },
+      "availability": {
+        "title": "Availability Report",
+        "description": "Per-product stock, reserved, and available quantities",
+        "products": "Products",
+        "totalReservedValue": "Total Reserved Value",
+        "empty": "No availability data."
+      },
+      "productExpiry": {
+        "title": "Product Expiry Report",
+        "description": "Lots expiring soon or already expired",
+        "expired": "Expired lots",
+        "expiringSoon": "Expiring soon",
+        "totalLots": "Total lots (in window)",
+        "empty": "No expiry data for the selected window."
+      },
+      "variances": {
+        "title": "Variance Report",
+        "description": "Inventory variances from cycle counts",
+        "totalVariances": "Total variances",
+        "shortages": "Shortages",
+        "surpluses": "Surpluses",
+        "netVariance": "Net variance",
+        "empty": "No variances found for the selected filters."
+      },
+      "traceability": {
+        "title": "Product Traceability",
+        "description": "Full movement chain for a specific product and lot",
+        "placeholderSku": "Enter SKU",
+        "placeholderLot": "Enter lot number",
+        "promptEnterSkuAndLot": "Enter a product SKU and lot number to load the traceability chain.",
+        "productLabel": "Product",
+        "lotLabel": "Lot",
+        "expiresWithDate": "Expires {date}",
+        "supplierWithName": "Supplier: {name}",
+        "empty": "No traceability events found."
+      }
+    }
+  },
+  "fr": {
+    "index": {
+      "title": "Rapports",
+      "description": "Générez et exportez des rapports d'inventaire, d'achats et de ventes"
+    },
+    "shared": {
+      "dateFrom": "Du",
+      "dateTo": "Au",
+      "pickDate": "Choisir une date",
+      "all": "Tous",
+      "selectMethod": "Choisir la méthode",
+      "selectPeriod": "Choisir la période"
+    },
+    "filters": {
+      "valuationMethod": "Méthode de valorisation",
+      "period": "Période",
+      "movementType": "Type de mouvement",
+      "varianceType": "Type d'écart",
+      "lookAheadDays": "Fenêtre (jours)",
+      "thresholdMultiplier": "Multiplicateur de seuil",
+      "productSku": "SKU produit",
+      "lotNumber": "Numéro de lot"
+    },
+    "options": {
+      "period": {
+        "daily": "Quotidien",
+        "weekly": "Hebdomadaire",
+        "monthly": "Mensuel"
+      },
+      "valuation": {
+        "weighted_average": "Moyenne pondérée",
+        "latest_cost": "Dernier coût"
+      },
+      "movement": {
+        "receipt": "Réception",
+        "issue": "Sortie",
+        "transfer": "Transfert",
+        "adjustment": "Ajustement",
+        "return": "Retour"
+      },
+      "variance": {
+        "shortage": "Manquant",
+        "surplus": "Surplus",
+        "match": "Conforme"
+      }
+    },
+    "expiryBadge": {
+      "expired": "Expiré",
+      "expiring": "Expire bientôt"
+    },
+    "columns": {
+      "cellEmpty": "—",
+      "sku": "SKU",
+      "product": "Produit",
+      "category": "Catégorie",
+      "quantity": "Quantité",
+      "unitCost": "Coût unitaire",
+      "totalValue": "Valeur totale",
+      "type": "Type",
+      "qty": "Qté",
+      "from": "De",
+      "to": "Vers",
+      "reference": "Référence",
+      "date": "Date",
+      "reorderPoint": "Seuil de réappro.",
+      "currentStock": "Stock actuel",
+      "deficit": "Déficit",
+      "threshold": "Seuil",
+      "excess": "Excédent",
+      "period": "Période",
+      "orders": "Commandes",
+      "totalCost": "Coût total",
+      "totalRevenue": "Chiffre d'affaires",
+      "totalQty": "Qté totale",
+      "reserved": "Réservé",
+      "available": "Disponible",
+      "reservedValue": "Valeur réservée",
+      "status": "Statut",
+      "lotNumber": "N° de lot",
+      "expiryDate": "Date d'expiration",
+      "daysLeft": "Jours restants",
+      "qtyRemaining": "Qté restante",
+      "supplier": "Fournisseur",
+      "cycle": "Cycle",
+      "location": "Emplacement",
+      "systemQty": "Qté système",
+      "physicalQty": "Qté physique",
+      "variance": "Écart",
+      "resolution": "Résolution",
+      "action": "Action",
+      "fromToLocation": "De / Emplacement",
+      "salesOrder": "Commande client",
+      "name": "Nom",
+      "scheduled": "Planifié",
+      "lines": "Lignes",
+      "variances": "Écarts",
+      "shortages": "Manquants",
+      "surpluses": "Surplus",
+      "netVariance": "Écart net",
+      "allLocations": "Tous"
+    },
+    "cards": {
+      "stockValuation": {
+        "title": "Valorisation des stocks",
+        "description": "Valeur totale de l'inventaire (moyenne pondérée ou dernier coût)"
+      },
+      "movementHistory": {
+        "title": "Historique des mouvements",
+        "description": "Tous les mouvements de stock avec filtres par date et type"
+      },
+      "lowStock": {
+        "title": "Stock bas",
+        "description": "Produits au ou sous le seuil de réapprovisionnement"
+      },
+      "overstock": {
+        "title": "Surstock",
+        "description": "Produits dépassant le seuil selon le multiplicateur"
+      },
+      "purchaseSummary": {
+        "title": "Synthèse des achats",
+        "description": "Totaux des commandes fournisseurs par période"
+      },
+      "salesSummary": {
+        "title": "Synthèse des ventes",
+        "description": "Totaux des commandes clients par période"
+      },
+      "availability": {
+        "title": "Disponibilité",
+        "description": "Stock, réservé et disponible par produit"
+      },
+      "productExpiry": {
+        "title": "Expiration des produits",
+        "description": "Lots bientôt expirés ou déjà expirés"
+      },
+      "variances": {
+        "title": "Écarts d'inventaire",
+        "description": "Écarts issus des inventaires cycliques"
+      },
+      "traceability": {
+        "title": "Traçabilité",
+        "description": "Chaîne complète des mouvements pour un produit et un lot"
+      }
+    },
+    "pages": {
+      "stockValuation": {
+        "title": "Valorisation des stocks",
+        "description": "Valeur d'inventaire par produit selon la méthode choisie",
+        "summaryTotalProducts": "Total produits",
+        "summaryTotalQuantity": "Quantité totale",
+        "summaryTotalValue": "Valeur totale",
+        "empty": "Aucune donnée de valorisation."
+      },
+      "movementHistory": {
+        "title": "Historique des mouvements",
+        "description": "Tous les mouvements de stock avec filtres",
+        "empty": "Aucun mouvement pour les filtres sélectionnés."
+      },
+      "lowStock": {
+        "title": "Rapport stock bas",
+        "description": "Produits au ou sous le seuil de réapprovisionnement",
+        "empty": "Aucun article en stock bas."
+      },
+      "overstock": {
+        "title": "Rapport surstock",
+        "description": "Produits dépassant le seuil selon le multiplicateur",
+        "empty": "Aucun article en surstock."
+      },
+      "purchaseSummary": {
+        "title": "Synthèse des achats",
+        "description": "Totaux des commandes fournisseurs par période",
+        "totalOrders": "Total commandes",
+        "totalCost": "Coût total",
+        "empty": "Aucune donnée pour la période sélectionnée."
+      },
+      "salesSummary": {
+        "title": "Synthèse des ventes",
+        "description": "Totaux des commandes clients par période",
+        "totalOrders": "Total commandes",
+        "totalRevenue": "Chiffre d'affaires",
+        "empty": "Aucune donnée pour la période sélectionnée."
+      },
+      "availability": {
+        "title": "Rapport de disponibilité",
+        "description": "Stock, réservé et disponible par produit",
+        "products": "Produits",
+        "totalReservedValue": "Valeur totale réservée",
+        "empty": "Aucune donnée de disponibilité."
+      },
+      "productExpiry": {
+        "title": "Rapport d'expiration",
+        "description": "Lots bientôt expirés ou déjà expirés",
+        "expired": "Lots expirés",
+        "expiringSoon": "Expire bientôt",
+        "totalLots": "Total lots (fenêtre)",
+        "empty": "Aucune donnée d'expiration pour la fenêtre choisie."
+      },
+      "variances": {
+        "title": "Rapport des écarts",
+        "description": "Écarts d'inventaire issus des cycles de comptage",
+        "totalVariances": "Total écarts",
+        "shortages": "Manquants",
+        "surpluses": "Surplus",
+        "netVariance": "Écart net",
+        "empty": "Aucun écart pour les filtres sélectionnés."
+      },
+      "traceability": {
+        "title": "Traçabilité produit",
+        "description": "Chaîne complète des mouvements pour un produit et un lot",
+        "placeholderSku": "Saisir le SKU",
+        "placeholderLot": "Saisir le n° de lot",
+        "promptEnterSkuAndLot": "Saisissez un SKU et un numéro de lot pour charger la traçabilité.",
+        "productLabel": "Produit",
+        "lotLabel": "Lot",
+        "expiresWithDate": "Expire le {date}",
+        "supplierWithName": "Fournisseur : {name}",
+        "empty": "Aucun événement de traçabilité."
+      }
+    }
+  },
+  "es": {
+    "index": {
+      "title": "Informes",
+      "description": "Genere y exporte informes de inventario, compras y ventas"
+    },
+    "shared": {
+      "dateFrom": "Desde",
+      "dateTo": "Hasta",
+      "pickDate": "Elegir fecha",
+      "all": "Todos",
+      "selectMethod": "Seleccionar método",
+      "selectPeriod": "Seleccionar período"
+    },
+    "filters": {
+      "valuationMethod": "Método de valoración",
+      "period": "Período",
+      "movementType": "Tipo de movimiento",
+      "varianceType": "Tipo de discrepancia",
+      "lookAheadDays": "Anticipación (días)",
+      "thresholdMultiplier": "Multiplicador de umbral",
+      "productSku": "SKU del producto",
+      "lotNumber": "Número de lote"
+    },
+    "options": {
+      "period": {
+        "daily": "Diario",
+        "weekly": "Semanal",
+        "monthly": "Mensual"
+      },
+      "valuation": {
+        "weighted_average": "Promedio ponderado",
+        "latest_cost": "Último costo"
+      },
+      "movement": {
+        "receipt": "Recepción",
+        "issue": "Salida",
+        "transfer": "Transferencia",
+        "adjustment": "Ajuste",
+        "return": "Devolución"
+      },
+      "variance": {
+        "shortage": "Faltante",
+        "surplus": "Sobrante",
+        "match": "Coincide"
+      }
+    },
+    "expiryBadge": {
+      "expired": "Caducado",
+      "expiring": "Por caducar"
+    },
+    "columns": {
+      "cellEmpty": "—",
+      "sku": "SKU",
+      "product": "Producto",
+      "category": "Categoría",
+      "quantity": "Cantidad",
+      "unitCost": "Costo unitario",
+      "totalValue": "Valor total",
+      "type": "Tipo",
+      "qty": "Cant.",
+      "from": "Origen",
+      "to": "Destino",
+      "reference": "Referencia",
+      "date": "Fecha",
+      "reorderPoint": "Punto de pedido",
+      "currentStock": "Stock actual",
+      "deficit": "Déficit",
+      "threshold": "Umbral",
+      "excess": "Exceso",
+      "period": "Período",
+      "orders": "Pedidos",
+      "totalCost": "Costo total",
+      "totalRevenue": "Ingresos totales",
+      "totalQty": "Cant. total",
+      "reserved": "Reservado",
+      "available": "Disponible",
+      "reservedValue": "Valor reservado",
+      "status": "Estado",
+      "lotNumber": "N.º de lote",
+      "expiryDate": "Fecha de caducidad",
+      "daysLeft": "Días restantes",
+      "qtyRemaining": "Cant. restante",
+      "supplier": "Proveedor",
+      "cycle": "Ciclo",
+      "location": "Ubicación",
+      "systemQty": "Cant. sistema",
+      "physicalQty": "Cant. física",
+      "variance": "Discrepancia",
+      "resolution": "Resolución",
+      "action": "Acción",
+      "fromToLocation": "Origen / Ubicación",
+      "salesOrder": "Pedido de venta",
+      "name": "Nombre",
+      "scheduled": "Programado",
+      "lines": "Líneas",
+      "variances": "Discrepancias",
+      "shortages": "Faltantes",
+      "surpluses": "Sobrantes",
+      "netVariance": "Discrepancia neta",
+      "allLocations": "Todas"
+    },
+    "cards": {
+      "stockValuation": {
+        "title": "Valoración de stock",
+        "description": "Valor total del inventario (promedio ponderado o último costo)"
+      },
+      "movementHistory": {
+        "title": "Historial de movimientos",
+        "description": "Todos los movimientos de stock con filtros"
+      },
+      "lowStock": {
+        "title": "Stock bajo",
+        "description": "Productos en o por debajo del punto de pedido"
+      },
+      "overstock": {
+        "title": "Sobrestock",
+        "description": "Productos que superan el umbral según el multiplicador"
+      },
+      "purchaseSummary": {
+        "title": "Resumen de compras",
+        "description": "Totales de pedidos de compra por período"
+      },
+      "salesSummary": {
+        "title": "Resumen de ventas",
+        "description": "Totales de pedidos de venta por período"
+      },
+      "availability": {
+        "title": "Disponibilidad",
+        "description": "Stock, reservado y disponible por producto"
+      },
+      "productExpiry": {
+        "title": "Caducidad de productos",
+        "description": "Lotes próximos a caducar o ya caducados"
+      },
+      "variances": {
+        "title": "Discrepancias",
+        "description": "Discrepancias de inventario por conteos cíclicos"
+      },
+      "traceability": {
+        "title": "Trazabilidad",
+        "description": "Cadena completa de movimientos para un producto y lote"
+      }
+    },
+    "pages": {
+      "stockValuation": {
+        "title": "Valoración de stock",
+        "description": "Valor del inventario por producto según el método seleccionado",
+        "summaryTotalProducts": "Total productos",
+        "summaryTotalQuantity": "Cantidad total",
+        "summaryTotalValue": "Valor total",
+        "empty": "No hay datos de valoración."
+      },
+      "movementHistory": {
+        "title": "Historial de movimientos",
+        "description": "Todos los movimientos de stock con filtros",
+        "empty": "No hay movimientos para los filtros seleccionados."
+      },
+      "lowStock": {
+        "title": "Informe de stock bajo",
+        "description": "Productos en o por debajo del punto de pedido",
+        "empty": "No hay artículos con stock bajo."
+      },
+      "overstock": {
+        "title": "Informe de sobrestock",
+        "description": "Productos que superan el umbral según el multiplicador",
+        "empty": "No hay artículos en sobrestock."
+      },
+      "purchaseSummary": {
+        "title": "Resumen de compras",
+        "description": "Totales de pedidos de compra por período",
+        "totalOrders": "Total pedidos",
+        "totalCost": "Costo total",
+        "empty": "No hay datos para el período seleccionado."
+      },
+      "salesSummary": {
+        "title": "Resumen de ventas",
+        "description": "Totales de pedidos de venta por período",
+        "totalOrders": "Total pedidos",
+        "totalRevenue": "Ingresos totales",
+        "empty": "No hay datos para el período seleccionado."
+      },
+      "availability": {
+        "title": "Informe de disponibilidad",
+        "description": "Stock, reservado y disponible por producto",
+        "products": "Productos",
+        "totalReservedValue": "Valor total reservado",
+        "empty": "No hay datos de disponibilidad."
+      },
+      "productExpiry": {
+        "title": "Informe de caducidad",
+        "description": "Lotes próximos a caducar o ya caducados",
+        "expired": "Lotes caducados",
+        "expiringSoon": "Próximos a caducar",
+        "totalLots": "Total lotes (ventana)",
+        "empty": "No hay datos de caducidad para la ventana seleccionada."
+      },
+      "variances": {
+        "title": "Informe de discrepancias",
+        "description": "Discrepancias de inventario por conteos cíclicos",
+        "totalVariances": "Total discrepancias",
+        "shortages": "Faltantes",
+        "surpluses": "Sobrantes",
+        "netVariance": "Discrepancia neta",
+        "empty": "No hay discrepancias para los filtros seleccionados."
+      },
+      "traceability": {
+        "title": "Trazabilidad del producto",
+        "description": "Cadena completa de movimientos para un producto y lote",
+        "placeholderSku": "Introduzca SKU",
+        "placeholderLot": "Introduzca n.º de lote",
+        "promptEnterSkuAndLot": "Introduzca SKU y número de lote para cargar la trazabilidad.",
+        "productLabel": "Producto",
+        "lotLabel": "Lote",
+        "expiresWithDate": "Caduca el {date}",
+        "supplierWithName": "Proveedor: {name}",
+        "empty": "No hay eventos de trazabilidad."
+      }
+    }
+  },
+  "ar": {
+    "index": {
+      "title": "التقارير",
+      "description": "إنشاء وتصدير تقارير المخزون والمشتريات والمبيعات"
+    },
+    "shared": {
+      "dateFrom": "من",
+      "dateTo": "إلى",
+      "pickDate": "اختر تاريخًا",
+      "all": "الكل",
+      "selectMethod": "اختر الطريقة",
+      "selectPeriod": "اختر الفترة"
+    },
+    "filters": {
+      "valuationMethod": "طريقة التقييم",
+      "period": "الفترة",
+      "movementType": "نوع الحركة",
+      "varianceType": "نوع الفرق",
+      "lookAheadDays": "الأيام المستقبلية",
+      "thresholdMultiplier": "مضاعف العتبة",
+      "productSku": "رمز المنتج (SKU)",
+      "lotNumber": "رقم الدفعة"
+    },
+    "options": {
+      "period": {
+        "daily": "يومي",
+        "weekly": "أسبوعي",
+        "monthly": "شهري"
+      },
+      "valuation": {
+        "weighted_average": "متوسط مرجح",
+        "latest_cost": "آخر تكلفة"
+      },
+      "movement": {
+        "receipt": "استلام",
+        "issue": "صرف",
+        "transfer": "تحويل",
+        "adjustment": "تسوية",
+        "return": "إرجاع"
+      },
+      "variance": {
+        "shortage": "عجز",
+        "surplus": "فائض",
+        "match": "مطابقة"
+      }
+    },
+    "expiryBadge": {
+      "expired": "منتهٍ",
+      "expiring": "قارب على الانتهاء"
+    },
+    "columns": {
+      "cellEmpty": "—",
+      "sku": "رمز SKU",
+      "product": "المنتج",
+      "category": "الفئة",
+      "quantity": "الكمية",
+      "unitCost": "تكلفة الوحدة",
+      "totalValue": "القيمة الإجمالية",
+      "type": "النوع",
+      "qty": "الكمية",
+      "from": "من",
+      "to": "إلى",
+      "reference": "المرجع",
+      "date": "التاريخ",
+      "reorderPoint": "نقطة إعادة الطلب",
+      "currentStock": "المخزون الحالي",
+      "deficit": "العجز",
+      "threshold": "العتبة",
+      "excess": "الفائض",
+      "period": "الفترة",
+      "orders": "الطلبات",
+      "totalCost": "التكلفة الإجمالية",
+      "totalRevenue": "إجمالي الإيرادات",
+      "totalQty": "الكمية الإجمالية",
+      "reserved": "محجوز",
+      "available": "متاح",
+      "reservedValue": "قيمة المحجوز",
+      "status": "الحالة",
+      "lotNumber": "رقم الدفعة",
+      "expiryDate": "تاريخ الانتهاء",
+      "daysLeft": "الأيام المتبقية",
+      "qtyRemaining": "الكمية المتبقية",
+      "supplier": "المورد",
+      "cycle": "الدورة",
+      "location": "الموقع",
+      "systemQty": "كمية النظام",
+      "physicalQty": "كمية فعلية",
+      "variance": "الفرق",
+      "resolution": "الحل",
+      "action": "الإجراء",
+      "fromToLocation": "من / الموقع",
+      "salesOrder": "أمر البيع",
+      "name": "الاسم",
+      "scheduled": "مجدول",
+      "lines": "الأسطر",
+      "variances": "الفروقات",
+      "shortages": "العجز",
+      "surpluses": "الفائض",
+      "netVariance": "صافي الفرق",
+      "allLocations": "الكل"
+    },
+    "cards": {
+      "stockValuation": {
+        "title": "تقييم المخزون",
+        "description": "إجمالي قيمة المخزون بالمتوسط المرجح أو آخر تكلفة"
+      },
+      "movementHistory": {
+        "title": "سجل الحركات",
+        "description": "جميع حركات المخزون مع تصفية التاريخ والنوع"
+      },
+      "lowStock": {
+        "title": "مخزون منخفض",
+        "description": "منتجات عند أو تحت نقطة إعادة الطلب"
+      },
+      "overstock": {
+        "title": "فائض المخزون",
+        "description": "منتجات تتجاوز العتبة حسب المضاعف"
+      },
+      "purchaseSummary": {
+        "title": "ملخص المشتريات",
+        "description": "إجماليات أوامر الشراء حسب الفترة"
+      },
+      "salesSummary": {
+        "title": "ملخص المبيعات",
+        "description": "إجماليات أوامر البيع حسب الفترة"
+      },
+      "availability": {
+        "title": "التوفر",
+        "description": "المخزون والمحجوز والمتاح لكل منتج"
+      },
+      "productExpiry": {
+        "title": "انتهاء المنتجات",
+        "description": "دفعات قاربت على الانتهاء أو منتهية"
+      },
+      "variances": {
+        "title": "الفروقات",
+        "description": "فروقات الجرد من جرد الدورات"
+      },
+      "traceability": {
+        "title": "التتبع",
+        "description": "سلسلة الحركات الكاملة لمنتج ودفعة"
+      }
+    },
+    "pages": {
+      "stockValuation": {
+        "title": "تقييم المخزون",
+        "description": "قيمة المخزون لكل منتج حسب طريقة التكلفة",
+        "summaryTotalProducts": "إجمالي المنتجات",
+        "summaryTotalQuantity": "الكمية الإجمالية",
+        "summaryTotalValue": "القيمة الإجمالية",
+        "empty": "لا توجد بيانات تقييم."
+      },
+      "movementHistory": {
+        "title": "سجل الحركات",
+        "description": "جميع حركات المخزون مع المرشحات",
+        "empty": "لا توجد حركات للمرشحات المحددة."
+      },
+      "lowStock": {
+        "title": "تقرير المخزون المنخفض",
+        "description": "منتجات عند أو تحت نقطة إعادة الطلب",
+        "empty": "لا توجد عناصر بمخزون منخفض."
+      },
+      "overstock": {
+        "title": "تقرير فائض المخزون",
+        "description": "منتجات تتجاوز العتبة حسب المضاعف",
+        "empty": "لا توجد عناصر بفائض مخزون."
+      },
+      "purchaseSummary": {
+        "title": "ملخص المشتريات",
+        "description": "إجماليات أوامر الشراء حسب الفترة",
+        "totalOrders": "إجمالي الطلبات",
+        "totalCost": "التكلفة الإجمالية",
+        "empty": "لا توجد بيانات للفترة المحددة."
+      },
+      "salesSummary": {
+        "title": "ملخص المبيعات",
+        "description": "إجماليات أوامر البيع حسب الفترة",
+        "totalOrders": "إجمالي الطلبات",
+        "totalRevenue": "إجمالي الإيرادات",
+        "empty": "لا توجد بيانات للفترة المحددة."
+      },
+      "availability": {
+        "title": "تقرير التوفر",
+        "description": "المخزون والمحجوز والمتاح لكل منتج",
+        "products": "المنتجات",
+        "totalReservedValue": "إجمالي قيمة المحجوز",
+        "empty": "لا توجد بيانات توفر."
+      },
+      "productExpiry": {
+        "title": "تقرير انتهاء الصلاحية",
+        "description": "دفعات قاربت على الانتهاء أو منتهية",
+        "expired": "دفعات منتهية",
+        "expiringSoon": "قاربة على الانتهاء",
+        "totalLots": "إجمالي الدفعات (النافذة)",
+        "empty": "لا توجد بيانات انتهاء للنافذة المحددة."
+      },
+      "variances": {
+        "title": "تقرير الفروقات",
+        "description": "فروقات الجرد من جرد الدورات",
+        "totalVariances": "إجمالي الفروقات",
+        "shortages": "العجز",
+        "surpluses": "الفائض",
+        "netVariance": "صافي الفرق",
+        "empty": "لا توجد فروقات للمرشحات المحددة."
+      },
+      "traceability": {
+        "title": "تتبع المنتج",
+        "description": "سلسلة الحركات الكاملة لمنتج ودفعة",
+        "placeholderSku": "أدخل SKU",
+        "placeholderLot": "أدخل رقم الدفعة",
+        "promptEnterSkuAndLot": "أدخل رمز المنتج ورقم الدفعة لتحميل سلسلة التتبع.",
+        "productLabel": "المنتج",
+        "lotLabel": "الدفعة",
+        "expiresWithDate": "ينتهي في {date}",
+        "supplierWithName": "المورد: {name}",
+        "empty": "لا توجد أحداث تتبع."
+      }
+    }
+  },
+  "rw": {
+    "index": {
+      "title": "Reports",
+      "description": "Generate and export inventory, procurement, and sales reports"
+    },
+    "shared": {
+      "dateFrom": "From",
+      "dateTo": "To",
+      "pickDate": "Pick a date",
+      "all": "All",
+      "selectMethod": "Select method",
+      "selectPeriod": "Select period"
+    },
+    "filters": {
+      "valuationMethod": "Valuation Method",
+      "period": "Period",
+      "movementType": "Movement type",
+      "varianceType": "Variance type",
+      "lookAheadDays": "Look-ahead (days)",
+      "thresholdMultiplier": "Threshold multiplier",
+      "productSku": "Product SKU",
+      "lotNumber": "Lot number"
+    },
+    "options": {
+      "period": {
+        "daily": "Daily",
+        "weekly": "Weekly",
+        "monthly": "Monthly"
+      },
+      "valuation": {
+        "weighted_average": "Weighted Average",
+        "latest_cost": "Latest Cost"
+      },
+      "movement": {
+        "receipt": "Receipt",
+        "issue": "Issue",
+        "transfer": "Transfer",
+        "adjustment": "Adjustment",
+        "return": "Return"
+      },
+      "variance": {
+        "shortage": "Shortage",
+        "surplus": "Surplus",
+        "match": "Match"
+      }
+    },
+    "expiryBadge": {
+      "expired": "Expired",
+      "expiring": "Expiring"
+    },
+    "columns": {
+      "cellEmpty": "—",
+      "sku": "SKU",
+      "product": "Product",
+      "category": "Category",
+      "quantity": "Quantity",
+      "unitCost": "Unit Cost",
+      "totalValue": "Total Value",
+      "type": "Type",
+      "qty": "Qty",
+      "from": "From",
+      "to": "To",
+      "reference": "Reference",
+      "date": "Date",
+      "reorderPoint": "Reorder Point",
+      "currentStock": "Current Stock",
+      "deficit": "Deficit",
+      "threshold": "Threshold",
+      "excess": "Excess",
+      "period": "Period",
+      "orders": "Orders",
+      "totalCost": "Total Cost",
+      "totalRevenue": "Total Revenue",
+      "totalQty": "Total Qty",
+      "reserved": "Reserved",
+      "available": "Available",
+      "reservedValue": "Reserved Value",
+      "status": "Status",
+      "lotNumber": "Lot Number",
+      "expiryDate": "Expiry Date",
+      "daysLeft": "Days Left",
+      "qtyRemaining": "Qty Remaining",
+      "supplier": "Supplier",
+      "cycle": "Cycle",
+      "location": "Location",
+      "systemQty": "System Qty",
+      "physicalQty": "Physical Qty",
+      "variance": "Variance",
+      "resolution": "Resolution",
+      "action": "Action",
+      "fromToLocation": "From / Location",
+      "salesOrder": "Sales Order",
+      "name": "Name",
+      "scheduled": "Scheduled",
+      "lines": "Lines",
+      "variances": "Variances",
+      "shortages": "Shortages",
+      "surpluses": "Surpluses",
+      "netVariance": "Net Variance",
+      "allLocations": "All"
+    },
+    "cards": {
+      "stockValuation": {
+        "title": "Stock Valuation",
+        "description": "View total inventory value using weighted average or latest cost methods"
+      },
+      "movementHistory": {
+        "title": "Movement History",
+        "description": "Browse all stock movements with date range and type filters"
+      },
+      "lowStock": {
+        "title": "Low Stock",
+        "description": "Products at or below their reorder point"
+      },
+      "overstock": {
+        "title": "Overstock",
+        "description": "Products exceeding their reorder point threshold"
+      },
+      "purchaseSummary": {
+        "title": "Purchase Summary",
+        "description": "Purchase order totals grouped by period"
+      },
+      "salesSummary": {
+        "title": "Sales Summary",
+        "description": "Sales order totals grouped by period"
+      },
+      "availability": {
+        "title": "Availability",
+        "description": "Per-product stock, reserved, and available quantities"
+      },
+      "productExpiry": {
+        "title": "Product Expiry",
+        "description": "Lots expiring soon or already expired"
+      },
+      "variances": {
+        "title": "Variances",
+        "description": "Inventory variance report from cycle counts"
+      },
+      "traceability": {
+        "title": "Traceability",
+        "description": "Full movement chain for a specific product and lot"
+      }
+    },
+    "pages": {
+      "stockValuation": {
+        "title": "Stock Valuation",
+        "description": "Inventory value by product using selected costing method",
+        "summaryTotalProducts": "Total Products",
+        "summaryTotalQuantity": "Total Quantity",
+        "summaryTotalValue": "Total Value",
+        "empty": "No stock valuation data."
+      },
+      "movementHistory": {
+        "title": "Movement History",
+        "description": "All stock movements with filters",
+        "empty": "No movements found for the selected filters."
+      },
+      "lowStock": {
+        "title": "Low Stock Report",
+        "description": "Products at or below their reorder point",
+        "empty": "No low-stock items found."
+      },
+      "overstock": {
+        "title": "Overstock Report",
+        "description": "Products exceeding their reorder point by the threshold multiplier",
+        "empty": "No overstock items found."
+      },
+      "purchaseSummary": {
+        "title": "Purchase Summary",
+        "description": "Purchase order totals grouped by period",
+        "totalOrders": "Total Orders",
+        "totalCost": "Total Cost",
+        "empty": "No purchase summary data for the selected period."
+      },
+      "salesSummary": {
+        "title": "Sales Summary",
+        "description": "Sales order totals grouped by period",
+        "totalOrders": "Total Orders",
+        "totalRevenue": "Total Revenue",
+        "empty": "No sales summary data for the selected period."
+      },
+      "availability": {
+        "title": "Availability Report",
+        "description": "Per-product stock, reserved, and available quantities",
+        "products": "Products",
+        "totalReservedValue": "Total Reserved Value",
+        "empty": "No availability data."
+      },
+      "productExpiry": {
+        "title": "Product Expiry Report",
+        "description": "Lots expiring soon or already expired",
+        "expired": "Expired lots",
+        "expiringSoon": "Expiring soon",
+        "totalLots": "Total lots (in window)",
+        "empty": "No expiry data for the selected window."
+      },
+      "variances": {
+        "title": "Variance Report",
+        "description": "Inventory variances from cycle counts",
+        "totalVariances": "Total variances",
+        "shortages": "Shortages",
+        "surpluses": "Surpluses",
+        "netVariance": "Net variance",
+        "empty": "No variances found for the selected filters."
+      },
+      "traceability": {
+        "title": "Product Traceability",
+        "description": "Full movement chain for a specific product and lot",
+        "placeholderSku": "Enter SKU",
+        "placeholderLot": "Enter lot number",
+        "promptEnterSkuAndLot": "Enter a product SKU and lot number to load the traceability chain.",
+        "productLabel": "Product",
+        "lotLabel": "Lot",
+        "expiresWithDate": "Expires {date}",
+        "supplierWithName": "Supplier: {name}",
+        "empty": "No traceability events found."
+      }
+    }
+  },
+  "sw": {
+    "index": {
+      "title": "Reports",
+      "description": "Generate and export inventory, procurement, and sales reports"
+    },
+    "shared": {
+      "dateFrom": "From",
+      "dateTo": "To",
+      "pickDate": "Pick a date",
+      "all": "All",
+      "selectMethod": "Select method",
+      "selectPeriod": "Select period"
+    },
+    "filters": {
+      "valuationMethod": "Valuation Method",
+      "period": "Period",
+      "movementType": "Movement type",
+      "varianceType": "Variance type",
+      "lookAheadDays": "Look-ahead (days)",
+      "thresholdMultiplier": "Threshold multiplier",
+      "productSku": "Product SKU",
+      "lotNumber": "Lot number"
+    },
+    "options": {
+      "period": {
+        "daily": "Daily",
+        "weekly": "Weekly",
+        "monthly": "Monthly"
+      },
+      "valuation": {
+        "weighted_average": "Weighted Average",
+        "latest_cost": "Latest Cost"
+      },
+      "movement": {
+        "receipt": "Receipt",
+        "issue": "Issue",
+        "transfer": "Transfer",
+        "adjustment": "Adjustment",
+        "return": "Return"
+      },
+      "variance": {
+        "shortage": "Shortage",
+        "surplus": "Surplus",
+        "match": "Match"
+      }
+    },
+    "expiryBadge": {
+      "expired": "Expired",
+      "expiring": "Expiring"
+    },
+    "columns": {
+      "cellEmpty": "—",
+      "sku": "SKU",
+      "product": "Product",
+      "category": "Category",
+      "quantity": "Quantity",
+      "unitCost": "Unit Cost",
+      "totalValue": "Total Value",
+      "type": "Type",
+      "qty": "Qty",
+      "from": "From",
+      "to": "To",
+      "reference": "Reference",
+      "date": "Date",
+      "reorderPoint": "Reorder Point",
+      "currentStock": "Current Stock",
+      "deficit": "Deficit",
+      "threshold": "Threshold",
+      "excess": "Excess",
+      "period": "Period",
+      "orders": "Orders",
+      "totalCost": "Total Cost",
+      "totalRevenue": "Total Revenue",
+      "totalQty": "Total Qty",
+      "reserved": "Reserved",
+      "available": "Available",
+      "reservedValue": "Reserved Value",
+      "status": "Status",
+      "lotNumber": "Lot Number",
+      "expiryDate": "Expiry Date",
+      "daysLeft": "Days Left",
+      "qtyRemaining": "Qty Remaining",
+      "supplier": "Supplier",
+      "cycle": "Cycle",
+      "location": "Location",
+      "systemQty": "System Qty",
+      "physicalQty": "Physical Qty",
+      "variance": "Variance",
+      "resolution": "Resolution",
+      "action": "Action",
+      "fromToLocation": "From / Location",
+      "salesOrder": "Sales Order",
+      "name": "Name",
+      "scheduled": "Scheduled",
+      "lines": "Lines",
+      "variances": "Variances",
+      "shortages": "Shortages",
+      "surpluses": "Surpluses",
+      "netVariance": "Net Variance",
+      "allLocations": "All"
+    },
+    "cards": {
+      "stockValuation": {
+        "title": "Stock Valuation",
+        "description": "View total inventory value using weighted average or latest cost methods"
+      },
+      "movementHistory": {
+        "title": "Movement History",
+        "description": "Browse all stock movements with date range and type filters"
+      },
+      "lowStock": {
+        "title": "Low Stock",
+        "description": "Products at or below their reorder point"
+      },
+      "overstock": {
+        "title": "Overstock",
+        "description": "Products exceeding their reorder point threshold"
+      },
+      "purchaseSummary": {
+        "title": "Purchase Summary",
+        "description": "Purchase order totals grouped by period"
+      },
+      "salesSummary": {
+        "title": "Sales Summary",
+        "description": "Sales order totals grouped by period"
+      },
+      "availability": {
+        "title": "Availability",
+        "description": "Per-product stock, reserved, and available quantities"
+      },
+      "productExpiry": {
+        "title": "Product Expiry",
+        "description": "Lots expiring soon or already expired"
+      },
+      "variances": {
+        "title": "Variances",
+        "description": "Inventory variance report from cycle counts"
+      },
+      "traceability": {
+        "title": "Traceability",
+        "description": "Full movement chain for a specific product and lot"
+      }
+    },
+    "pages": {
+      "stockValuation": {
+        "title": "Stock Valuation",
+        "description": "Inventory value by product using selected costing method",
+        "summaryTotalProducts": "Total Products",
+        "summaryTotalQuantity": "Total Quantity",
+        "summaryTotalValue": "Total Value",
+        "empty": "No stock valuation data."
+      },
+      "movementHistory": {
+        "title": "Movement History",
+        "description": "All stock movements with filters",
+        "empty": "No movements found for the selected filters."
+      },
+      "lowStock": {
+        "title": "Low Stock Report",
+        "description": "Products at or below their reorder point",
+        "empty": "No low-stock items found."
+      },
+      "overstock": {
+        "title": "Overstock Report",
+        "description": "Products exceeding their reorder point by the threshold multiplier",
+        "empty": "No overstock items found."
+      },
+      "purchaseSummary": {
+        "title": "Purchase Summary",
+        "description": "Purchase order totals grouped by period",
+        "totalOrders": "Total Orders",
+        "totalCost": "Total Cost",
+        "empty": "No purchase summary data for the selected period."
+      },
+      "salesSummary": {
+        "title": "Sales Summary",
+        "description": "Sales order totals grouped by period",
+        "totalOrders": "Total Orders",
+        "totalRevenue": "Total Revenue",
+        "empty": "No sales summary data for the selected period."
+      },
+      "availability": {
+        "title": "Availability Report",
+        "description": "Per-product stock, reserved, and available quantities",
+        "products": "Products",
+        "totalReservedValue": "Total Reserved Value",
+        "empty": "No availability data."
+      },
+      "productExpiry": {
+        "title": "Product Expiry Report",
+        "description": "Lots expiring soon or already expired",
+        "expired": "Expired lots",
+        "expiringSoon": "Expiring soon",
+        "totalLots": "Total lots (in window)",
+        "empty": "No expiry data for the selected window."
+      },
+      "variances": {
+        "title": "Variance Report",
+        "description": "Inventory variances from cycle counts",
+        "totalVariances": "Total variances",
+        "shortages": "Shortages",
+        "surpluses": "Surpluses",
+        "netVariance": "Net variance",
+        "empty": "No variances found for the selected filters."
+      },
+      "traceability": {
+        "title": "Product Traceability",
+        "description": "Full movement chain for a specific product and lot",
+        "placeholderSku": "Enter SKU",
+        "placeholderLot": "Enter lot number",
+        "promptEnterSkuAndLot": "Enter a product SKU and lot number to load the traceability chain.",
+        "productLabel": "Product",
+        "lotLabel": "Lot",
+        "expiresWithDate": "Expires {date}",
+        "supplierWithName": "Supplier: {name}",
+        "empty": "No traceability events found."
+      }
+    }
+  }
+}

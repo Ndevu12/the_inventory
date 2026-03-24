@@ -1,9 +1,10 @@
 "use client"
 
 import * as React from "react"
-import { useRouter } from "next/navigation"
+import { useRouter } from "@/i18n/navigation"
 import { toast } from "sonner"
 import { Package, CheckCircle2, AlertCircle } from "lucide-react"
+import { useTranslations } from "next-intl"
 
 import { useAuthStore } from "@/lib/auth-store"
 import { Button } from "@/components/ui/button"
@@ -29,6 +30,8 @@ interface AcceptInvitationPageProps {
 
 export function AcceptInvitationPage({ token }: AcceptInvitationPageProps) {
   const router = useRouter()
+  const t = useTranslations("Auth")
+  const tInv = useTranslations("Auth.invitation")
   const { setTokens, setUser, setTenant, setMemberships } = useAuthStore()
 
   const { data: info, isLoading, isError } = useInvitationInfo(token)
@@ -38,6 +41,28 @@ export function AcceptInvitationPage({ token }: AcceptInvitationPageProps) {
   const [password, setPassword] = React.useState("")
   const [firstName, setFirstName] = React.useState("")
   const [lastName, setLastName] = React.useState("")
+
+  function processedCopy(status: string): { title: string; description: string } | null {
+    if (status === "accepted") {
+      return {
+        title: tInv("processed.accepted.title"),
+        description: tInv("processed.accepted.description"),
+      }
+    }
+    if (status === "cancelled") {
+      return {
+        title: tInv("processed.cancelled.title"),
+        description: tInv("processed.cancelled.description"),
+      }
+    }
+    if (status === "expired") {
+      return {
+        title: tInv("processed.expired.title"),
+        description: tInv("processed.expired.description"),
+      }
+    }
+    return null
+  }
 
   function handleAccept(e: React.FormEvent) {
     e.preventDefault()
@@ -66,7 +91,7 @@ export function AcceptInvitationPage({ token }: AcceptInvitationPageProps) {
               role: data.tenant.role,
               is_default: true,
             },
-          ]
+          ],
         )
         toast.success(data.detail)
         router.push("/")
@@ -74,7 +99,7 @@ export function AcceptInvitationPage({ token }: AcceptInvitationPageProps) {
       onError: (error) => {
         const msg =
           (error as { message?: string }).message ??
-          "Failed to accept invitation"
+          t("acceptInvitationFailed")
         toast.error(msg)
       },
     })
@@ -106,15 +131,12 @@ export function AcceptInvitationPage({ token }: AcceptInvitationPageProps) {
             <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-destructive/10">
               <AlertCircle className="h-6 w-6 text-destructive" />
             </div>
-            <CardTitle>Invalid Invitation</CardTitle>
-            <CardDescription>
-              This invitation link is invalid, expired, or has already been
-              used.
-            </CardDescription>
+            <CardTitle>{tInv("invalidTitle")}</CardTitle>
+            <CardDescription>{tInv("invalidDescription")}</CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center">
             <Button variant="outline" onClick={() => router.push("/login")}>
-              Go to Login
+              {tInv("goToLogin")}
             </Button>
           </CardContent>
         </Card>
@@ -123,6 +145,7 @@ export function AcceptInvitationPage({ token }: AcceptInvitationPageProps) {
   }
 
   if (info.status !== "pending") {
+    const copy = processedCopy(info.status)
     return (
       <div className="flex min-h-screen items-center justify-center px-4">
         <Card className="w-full max-w-md">
@@ -130,14 +153,17 @@ export function AcceptInvitationPage({ token }: AcceptInvitationPageProps) {
             <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-muted">
               <CheckCircle2 className="h-6 w-6 text-muted-foreground" />
             </div>
-            <CardTitle>Invitation {info.status}</CardTitle>
+            <CardTitle>
+              {copy?.title ?? tInv("processedUnknownTitle", { status: info.status })}
+            </CardTitle>
             <CardDescription>
-              This invitation has already been {info.status}.
+              {copy?.description ??
+                tInv("processedUnknownDescription", { status: info.status })}
             </CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center">
             <Button variant="outline" onClick={() => router.push("/login")}>
-              Go to Login
+              {tInv("goToLogin")}
             </Button>
           </CardContent>
         </Card>
@@ -153,16 +179,16 @@ export function AcceptInvitationPage({ token }: AcceptInvitationPageProps) {
             <Package className="h-6 w-6 text-primary" />
           </div>
           <CardTitle className="text-xl">
-            Join {info.tenant_name}
+            {tInv("joinTitle", { tenant: info.tenant_name })}
           </CardTitle>
           <CardDescription>
-            You&apos;ve been invited to join as{" "}
+            {tInv("invitedAs")}{" "}
             <Badge variant="secondary" className="ml-1 capitalize">
               {info.role}
             </Badge>
           </CardDescription>
           <p className="mt-1 text-xs text-muted-foreground">
-            Invitation for <strong>{info.email}</strong>
+            {tInv("invitationFor", { email: info.email })}
           </p>
         </CardHeader>
 
@@ -172,45 +198,45 @@ export function AcceptInvitationPage({ token }: AcceptInvitationPageProps) {
               <>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
-                    <Label htmlFor="first-name">First name</Label>
+                    <Label htmlFor="first-name">{tInv("firstName")}</Label>
                     <Input
                       id="first-name"
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
-                      placeholder="Jane"
+                      placeholder={tInv("firstNamePlaceholder")}
                     />
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="last-name">Last name</Label>
+                    <Label htmlFor="last-name">{tInv("lastName")}</Label>
                     <Input
                       id="last-name"
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
-                      placeholder="Doe"
+                      placeholder={tInv("lastNamePlaceholder")}
                     />
                   </div>
                 </div>
 
                 <div className="grid gap-2">
-                  <Label htmlFor="username">Username</Label>
+                  <Label htmlFor="username">{tInv("username")}</Label>
                   <Input
                     id="username"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    placeholder="janedoe"
+                    placeholder={tInv("usernamePlaceholder")}
                     required
                     autoFocus
                   />
                 </div>
 
                 <div className="grid gap-2">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password">{tInv("password")}</Label>
                   <Input
                     id="password"
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Min. 8 characters"
+                    placeholder={tInv("passwordPlaceholderNew")}
                     required
                     minLength={8}
                   />
@@ -221,17 +247,16 @@ export function AcceptInvitationPage({ token }: AcceptInvitationPageProps) {
             {!info.needs_account && (
               <>
                 <p className="text-center text-sm text-muted-foreground">
-                  An account with this email already exists. Enter your password
-                  to confirm your identity and join the organization.
+                  {tInv("existingAccountHint")}
                 </p>
                 <div className="grid gap-2">
-                  <Label htmlFor="existing-password">Password</Label>
+                  <Label htmlFor="existing-password">{tInv("existingPassword")}</Label>
                   <Input
                     id="existing-password"
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Your password"
+                    placeholder={tInv("existingPasswordPlaceholder")}
                     required
                   />
                 </div>
@@ -244,12 +269,14 @@ export function AcceptInvitationPage({ token }: AcceptInvitationPageProps) {
               disabled={acceptMutation.isPending}
             >
               {acceptMutation.isPending
-                ? "Joining…"
-                : `Join ${info.tenant_name}`}
+                ? tInv("joining")
+                : tInv("joinTenant", { tenant: info.tenant_name })}
             </Button>
 
             <p className="text-center text-xs text-muted-foreground">
-              Expires {new Date(info.expires_at).toLocaleDateString()}
+              {tInv("expires", {
+                date: new Date(info.expires_at).toLocaleDateString(),
+              })}
             </p>
           </form>
         </CardContent>

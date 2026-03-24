@@ -1,6 +1,7 @@
 "use client"
 
 import { DownloadIcon, FileSpreadsheetIcon, FileTextIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import type { ExportFormat } from "@/types/api-common"
 
@@ -10,6 +11,7 @@ interface ExportButtonsProps {
 }
 
 export function ExportButtons({ onExport, exporting }: ExportButtonsProps) {
+  const t = useTranslations("Reports.shared")
   return (
     <div className="flex items-center gap-2">
       <Button
@@ -23,7 +25,7 @@ export function ExportButtons({ onExport, exporting }: ExportButtonsProps) {
         ) : (
           <FileSpreadsheetIcon className="size-4" />
         )}
-        CSV
+        {t("csv")}
       </Button>
       <Button
         variant="outline"
@@ -36,7 +38,7 @@ export function ExportButtons({ onExport, exporting }: ExportButtonsProps) {
         ) : (
           <FileTextIcon className="size-4" />
         )}
-        PDF
+        {t("pdf")}
       </Button>
     </div>
   )

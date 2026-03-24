@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslations } from "next-intl"
 import { Badge } from "@/components/ui/badge"
 import {
   Card,
@@ -11,27 +12,15 @@ import {
 import { Progress } from "@/components/ui/progress"
 import type { Tenant, SubscriptionPlan, SubscriptionStatus } from "../types/settings.types"
 
-const PLAN_LABELS: Record<SubscriptionPlan, string> = {
-  free: "Free",
-  starter: "Starter",
-  professional: "Professional",
-  enterprise: "Enterprise",
-}
-
-const STATUS_VARIANT: Record<SubscriptionStatus, "default" | "secondary" | "destructive" | "outline"> = {
+const STATUS_VARIANT: Record<
+  SubscriptionStatus,
+  "default" | "secondary" | "destructive" | "outline"
+> = {
   active: "default",
   trial: "secondary",
   past_due: "destructive",
   cancelled: "destructive",
   suspended: "destructive",
-}
-
-const STATUS_LABELS: Record<SubscriptionStatus, string> = {
-  active: "Active",
-  trial: "Trial",
-  past_due: "Past Due",
-  cancelled: "Cancelled",
-  suspended: "Suspended",
 }
 
 interface SubscriptionInfoCardProps {
@@ -63,33 +52,37 @@ function UsageRow({
 }
 
 export function SubscriptionInfoCard({ tenant }: SubscriptionInfoCardProps) {
+  const t = useTranslations("SettingsTenant.subscription")
+  const tPlans = useTranslations("SettingsTenant.plans")
+  const tStatus = useTranslations("SettingsTenant.subscriptionStatus")
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">Subscription</CardTitle>
-        <CardDescription>Your current plan and usage</CardDescription>
+        <CardTitle className="text-lg">{t("title")}</CardTitle>
+        <CardDescription>{t("description")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="flex items-center gap-3">
           <div className="space-y-1">
-            <p className="text-sm text-muted-foreground">Plan</p>
+            <p className="text-sm text-muted-foreground">{t("planLabel")}</p>
             <p className="text-xl font-semibold">
-              {PLAN_LABELS[tenant.subscription_plan]}
+              {tPlans(tenant.subscription_plan as SubscriptionPlan)}
             </p>
           </div>
           <Badge variant={STATUS_VARIANT[tenant.subscription_status]}>
-            {STATUS_LABELS[tenant.subscription_status]}
+            {tStatus(tenant.subscription_status as SubscriptionStatus)}
           </Badge>
         </div>
 
         <div className="space-y-4">
           <UsageRow
-            label="Users"
+            label={t("usageUsers")}
             current={tenant.user_count}
             max={tenant.max_users}
           />
           <UsageRow
-            label="Products"
+            label={t("usageProducts")}
             current={tenant.product_count}
             max={tenant.max_products}
           />

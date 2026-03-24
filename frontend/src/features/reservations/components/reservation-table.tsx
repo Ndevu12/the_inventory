@@ -1,12 +1,11 @@
 "use client";
 
 import { useMemo } from "react";
+import { useTranslations } from "next-intl";
 import type { ColumnDef, PaginationState } from "@tanstack/react-table";
 import { CheckCircleIcon, XCircleIcon } from "lucide-react";
 import { DataTable } from "@/components/data-table";
-import {
-  DataTableColumnHeader,
-} from "@/components/data-table/data-table-column-header";
+import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import {
   DataTableRowActions,
   type RowAction,
@@ -39,12 +38,15 @@ export function ReservationTable({
   filterContent,
   isLoading = false,
 }: ReservationTableProps) {
+  const t = useTranslations("Reservations.table");
+  const tDash = useTranslations("Inventory.shared");
+
   const columns = useMemo<ColumnDef<StockReservation, unknown>[]>(
     () => [
       {
         accessorKey: "product_name",
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Product" />
+          <DataTableColumnHeader column={column} title={t("product")} />
         ),
         cell: ({ row }) => (
           <div>
@@ -59,19 +61,19 @@ export function ReservationTable({
       {
         accessorKey: "location_name",
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Location" />
+          <DataTableColumnHeader column={column} title={t("location")} />
         ),
         enableSorting: false,
       },
       {
         accessorKey: "quantity",
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Qty" />
+          <DataTableColumnHeader column={column} title={t("qty")} />
         ),
       },
       {
         accessorKey: "status",
-        header: "Status",
+        header: t("status"),
         cell: ({ row }) => (
           <ReservationStatusBadge status={row.original.status} />
         ),
@@ -82,31 +84,33 @@ export function ReservationTable({
       },
       {
         accessorKey: "sales_order_number",
-        header: "Sales Order",
-        cell: ({ row }) => row.original.sales_order_number ?? "—",
+        header: t("salesOrder"),
+        cell: ({ row }) =>
+          row.original.sales_order_number ?? tDash("emDash"),
         enableSorting: false,
       },
       {
         accessorKey: "reserved_by_username",
-        header: "Reserved By",
-        cell: ({ row }) => row.original.reserved_by_username ?? "—",
+        header: t("reservedBy"),
+        cell: ({ row }) =>
+          row.original.reserved_by_username ?? tDash("emDash"),
         enableSorting: false,
       },
       {
         accessorKey: "expires_at",
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Expires" />
+          <DataTableColumnHeader column={column} title={t("expires")} />
         ),
         cell: ({ row }) => {
           const expiresAt = row.original.expires_at;
-          if (!expiresAt) return "—";
+          if (!expiresAt) return tDash("emDash");
           return new Date(expiresAt).toLocaleDateString();
         },
       },
       {
         accessorKey: "created_at",
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Created" />
+          <DataTableColumnHeader column={column} title={t("created")} />
         ),
         cell: ({ row }) =>
           new Date(row.original.created_at).toLocaleDateString(),
@@ -124,13 +128,13 @@ export function ReservationTable({
           const actions: RowAction<StockReservation>[] = [];
 
           actions.push({
-            label: "Fulfill",
+            label: t("fulfill"),
             icon: <CheckCircleIcon className="size-4" />,
             onClick: () => onFulfill(reservation),
           });
 
           actions.push({
-            label: "Cancel",
+            label: t("cancelReservation"),
             icon: <XCircleIcon className="size-4" />,
             onClick: () => onCancel(reservation),
             variant: "destructive",
@@ -141,7 +145,7 @@ export function ReservationTable({
         },
       },
     ],
-    [onFulfill, onCancel],
+    [onFulfill, onCancel, t, tDash],
   );
 
   return (
@@ -153,10 +157,10 @@ export function ReservationTable({
       onPaginationChange={onPaginationChange}
       searchValue={searchValue}
       onSearchChange={onSearchChange}
-      searchPlaceholder="Search reservations..."
+      searchPlaceholder={t("searchPlaceholder")}
       filterContent={filterContent}
       isLoading={isLoading}
-      emptyMessage="No reservations found."
+      emptyMessage={t("empty")}
     />
   );
 }

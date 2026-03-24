@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { format as formatDateFn } from "date-fns"
+import { useTranslations } from "next-intl"
 import { CalendarIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
@@ -36,17 +37,20 @@ export function DateRangeFilter({
   onDateFromChange,
   onDateToChange,
 }: DateRangeFilterProps) {
+  const t = useTranslations("Reports.shared")
   return (
     <div className="flex flex-wrap items-end gap-3">
       <DatePickerField
-        label="From"
+        label={t("dateFrom")}
         value={dateFrom}
         onChange={onDateFromChange}
+        pickDateLabel={t("pickDate")}
       />
       <DatePickerField
-        label="To"
+        label={t("dateTo")}
         value={dateTo}
         onChange={onDateToChange}
+        pickDateLabel={t("pickDate")}
       />
     </div>
   )
@@ -56,9 +60,10 @@ interface DatePickerFieldProps {
   label: string
   value: string
   onChange: (value: string) => void
+  pickDateLabel: string
 }
 
-function DatePickerField({ label, value, onChange }: DatePickerFieldProps) {
+function DatePickerField({ label, value, onChange, pickDateLabel }: DatePickerFieldProps) {
   const date = value ? new Date(value) : undefined
 
   return (
@@ -67,7 +72,7 @@ function DatePickerField({ label, value, onChange }: DatePickerFieldProps) {
       <Popover>
         <PopoverTrigger render={<Button variant="outline" className={cn("w-[180px] justify-start text-left font-normal", !date && "text-muted-foreground")} />}>
           <CalendarIcon className="mr-2 size-4" />
-          {date ? formatDateFn(date, "MMM d, yyyy") : "Pick a date"}
+          {date ? formatDateFn(date, "MMM d, yyyy") : pickDateLabel}
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
           <Calendar
@@ -96,8 +101,10 @@ export function SelectFilter({
   value,
   onChange,
   options,
-  placeholder = "All",
+  placeholder,
 }: SelectFilterProps) {
+  const t = useTranslations("Reports.shared")
+  const resolvedPlaceholder = placeholder ?? t("all")
   return (
     <div className="space-y-1">
       <Label className="text-xs text-muted-foreground">{label}</Label>
@@ -106,10 +113,10 @@ export function SelectFilter({
         onValueChange={(val) => onChange(val === "__all__" ? "" : (val ?? ""))}
       >
         <SelectTrigger className="w-[180px]">
-          <SelectValue placeholder={placeholder} />
+          <SelectValue placeholder={resolvedPlaceholder} />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="__all__">{placeholder}</SelectItem>
+          <SelectItem value="__all__">{resolvedPlaceholder}</SelectItem>
           {options.map((opt) => (
             <SelectItem key={opt.value} value={opt.value}>
               {opt.label}

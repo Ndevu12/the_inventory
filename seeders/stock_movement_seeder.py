@@ -13,12 +13,20 @@ class StockMovementSeeder(BaseSeeder):
         """Create realistic stock movement history."""
         self.log("Creating stock movements...")
 
-        # Get some products and locations
-        phone_1 = Product.objects.get(sku="PHONE-001", tenant=self.tenant)
-        phone_2 = Product.objects.get(sku="PHONE-002", tenant=self.tenant)
-        laptop_1 = Product.objects.get(sku="LAPTOP-001", tenant=self.tenant)
-        acc_1 = Product.objects.get(sku="ACC-001", tenant=self.tenant)
-        chair = Product.objects.get(sku="CHAIR-001", tenant=self.tenant)
+        loc = self.canonical_locale
+
+        # Get some products and locations (canonical locale rows — same as stock FKs)
+        phone_1 = Product.objects.get(
+            sku="PHONE-001", tenant=self.tenant, locale=loc,
+        )
+        phone_2 = Product.objects.get(
+            sku="PHONE-002", tenant=self.tenant, locale=loc,
+        )
+        laptop_1 = Product.objects.get(
+            sku="LAPTOP-001", tenant=self.tenant, locale=loc,
+        )
+        acc_1 = Product.objects.get(sku="ACC-001", tenant=self.tenant, locale=loc)
+        chair = Product.objects.get(sku="CHAIR-001", tenant=self.tenant, locale=loc)
 
         bin_a1_1 = StockLocation.objects.get(name="Bin A1-1", tenant=self.tenant)
         bin_a1_2 = StockLocation.objects.get(name="Bin A1-2", tenant=self.tenant)

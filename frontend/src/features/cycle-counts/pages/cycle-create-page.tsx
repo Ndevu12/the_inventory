@@ -1,6 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { useRouter } from "@/i18n/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -31,18 +32,22 @@ function useLocations() {
 
 export function CycleCreatePage() {
   const router = useRouter();
+  const t = useTranslations("CycleCounts");
   const startMutation = useStartCycle();
   const { data: locations, isLoading: locationsLoading } = useLocations();
 
   function handleSubmit(values: CycleCreatePayload) {
     startMutation.mutate(values, {
       onSuccess: (cycle) => {
-        toast.success("Cycle count started successfully");
+        toast.success(t("create.toastSuccess"));
         router.push(`/cycle-counts/${cycle.id}`);
       },
       onError: (error) => {
         toast.error(
-          `Failed to start cycle: ${(error as { message?: string }).message ?? "Unknown error"}`,
+          t("create.toastFailed", {
+            message:
+              (error as { message?: string }).message ?? t("errors.unknown"),
+          }),
         );
       },
     });
@@ -51,8 +56,8 @@ export function CycleCreatePage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Start Cycle Count"
-        description="Create a new physical inventory count cycle."
+        title={t("create.title")}
+        description={t("create.description")}
       />
 
       {locationsLoading ? (

@@ -3,6 +3,7 @@
 import * as React from "react"
 import type { PaginationState } from "@tanstack/react-table"
 import { toast } from "sonner"
+import { useTranslations } from "next-intl"
 
 import { PageHeader } from "@/components/layout/page-header"
 import {
@@ -23,6 +24,10 @@ import { PendingInvitations } from "../components/pending-invitations"
 import type { TenantMember, TenantRole } from "../types/settings.types"
 
 export function TeamMembersPage() {
+  const t = useTranslations("SettingsTenant")
+  const tRoles = useTranslations("SettingsTenant.roles")
+  const tCommon = useTranslations("Common.actions")
+
   const [pagination, setPagination] = React.useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,
@@ -48,25 +53,30 @@ export function TeamMembersPage() {
         {
           onSuccess: () =>
             toast.success(
-              `Updated ${member.username}'s role to ${role}`
+              t("members.toast.roleUpdated", {
+                username: member.username,
+                role: tRoles(role),
+              }),
             ),
-          onError: () => toast.error("Failed to update role"),
-        }
+          onError: () => toast.error(t("members.toast.roleFailed")),
+        },
       )
     },
-    [updateMutation]
+    [updateMutation, t, tRoles],
   )
 
   const handleRemoveConfirm = React.useCallback(() => {
     if (!memberToRemove) return
     removeMutation.mutate(memberToRemove.id, {
       onSuccess: () => {
-        toast.success(`Removed ${memberToRemove.username} from team`)
+        toast.success(
+          t("members.toast.removed", { username: memberToRemove.username }),
+        )
         setMemberToRemove(null)
       },
-      onError: () => toast.error("Failed to remove member"),
+      onError: () => toast.error(t("members.toast.removeFailed")),
     })
-  }, [memberToRemove, removeMutation])
+  }, [memberToRemove, removeMutation, t])
 
   const columns = React.useMemo(
     () =>
@@ -74,8 +84,9 @@ export function TeamMembersPage() {
         onRoleChange: handleRoleChange,
         onRemove: setMemberToRemove,
         isUpdating: updateMutation.isPending,
+        t,
       }),
-    [handleRoleChange, updateMutation.isPending]
+    [handleRoleChange, updateMutation.isPending, t],
   )
 
   const members = data?.results ?? []
@@ -85,8 +96,8 @@ export function TeamMembersPage() {
     <div className="flex flex-1 flex-col gap-6 p-6">
       <div className="flex items-center justify-between">
         <PageHeader
-          title="Team Members"
-          description="Manage team members and their roles"
+          title={t("members.page.title")}
+          description={t("members.page.description")}
         />
         <InviteMemberDialog />
       </div>
@@ -112,21 +123,23 @@ export function TeamMembersPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remove team member</AlertDialogTitle>
+            <AlertDialogTitle>{t("members.removeDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to remove{" "}
-              <strong>{memberToRemove?.username}</strong> from the team? They
-              will lose access to this tenant immediately.
+              {t("members.removeDialog.descriptionLead")}{" "}
+              <strong>{memberToRemove?.username}</strong>{" "}
+              {t("members.removeDialog.descriptionTrail")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{tCommon("cancel")}</AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
               onClick={handleRemoveConfirm}
               disabled={removeMutation.isPending}
             >
-              {removeMutation.isPending ? "Removing…" : "Remove"}
+              {removeMutation.isPending
+                ? t("members.removing")
+                : t("members.remove")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

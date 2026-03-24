@@ -1,455 +1,436 @@
 # Project Tasks
 
-> Tasks are independent unless noted in the **Depends On** column.
-> All tasks are part of the **Tenant-Scoping Security Initiative** to ensure all features properly enforce tenant isolation and prevent cross-tenant data leakage.
+> Tasks are designed for parallel execution unless noted in **Depends On**. **This file only lists remaining work** for **Next.js static UI copy** ([next-intl](https://next-intl.dev/), [`frontend/public/locales/`](../frontend/public/locales/)). **Already shipped:** locale routing, language switcher, shell copy (`Nav`, `Shell`, `Breadcrumbs`), API `?language=` from the active UI locale ([`frontend/src/lib/api-client.ts`](../frontend/src/lib/api-client.ts)), and backend catalog localization (Wagtail locales, `TranslatableMixin`, DRF serializers)—extend those by following existing code, not this checklist.
 
 ---
 
-## Tenant-Scoping Security Tasks (TSS-*)
+## Next.js page UI — Internationalization (I18N-01–I18N-10)
 
-Fixing tenant-scoping issues across the codebase to ensure all features properly enforce tenant isolation and prevent cross-tenant data leakage.
+**Goal:** Replace hardcoded English in feature pages with message keys in **all six** JSON files (`en`, `fr`, `sw`, `rw`, `es`, `ar`) and `useTranslations` / `getTranslations`. **CI:** [`tests/test_locale_catalogs.py`](../tests/test_locale_catalogs.py) enforces identical key trees across locales.
 
 ---
 
-### TSS-01 — Add explicit tenant filtering to InventoryReportService
+### Shared rules — Next.js page UI (next-intl)
 
-**Priority:** HIGH | **Depends On:** None | **Parallel:** Yes
+**Applies to I18N-01 through I18N-10.** Follow these for every task so CI and translators stay consistent.
+
+| Rule | Detail |
+| ---- | ------ |
+| Key parity | Add strings to [`frontend/public/locales/en.json`](../frontend/public/locales/en.json) first, then mirror the **exact same key tree** in **fr, sw, rw, es, ar** (see [`tests/test_locale_catalogs.py`](../tests/test_locale_catalogs.py)). |
+| Namespaces | Use one top-level JSON object per task area (e.g. `Dashboard`, `Products`) with nested keys (`title`, `description`, `actions.save`). Avoid flat collisions across features. |
+| Client vs server | Prefer **`useTranslations('Namespace')`** in client components. For rare RSC-only pages, use **`getTranslations({ locale, namespace: '…' })`** from `next-intl/server`. |
+| Data tables | Column headers live in `*-columns.tsx`; refactor to **`createXColumns(t)`** or pass **`t`** into factories so headers translate. |
+| Reuse | If copy matches an existing key (e.g. `Nav.items.products`), either import the same namespace key or duplicate only when wording must differ—note the choice in the PR. |
+| API copy | Choice labels and model-backed strings come from the **API** when `?language=` is set; these tasks cover **static UI only** (buttons, headings, empty states, zod messages in forms). |
+| Verify | After JSON edits: `python manage.py test tests.test_locale_catalogs` and `cd frontend && yarn test`. |
+
+---
+
+### I18N-01 — Shared UI strings & cross-cutting patterns
+
+**Priority:** HIGH | **Depends On:** None (assumes next-intl + locale JSON pipeline exists) | **Parallel:** Yes (recommended first; not blocking other tasks)
 
 **Problem:**
-The `InventoryReportService` queries Product, StockMovement, StockReservation, and other models without explicit tenant filtering. While these models inherit from `TenantAwareModel` and should auto-filter via the manager, the service doesn't explicitly set tenant context. This could lead to cross-tenant data leakage if tenant context is not properly set in the request middleware.
+Buttons, errors, empty states, and table patterns repeat across features. Without a shared namespace, parallel contributors duplicate keys or English literals.
 
 **Scope:**
 
 | Capability | Description |
 | ---------- | ----------- |
-| Explicit tenant filtering | Add explicit `.filter(tenant=tenant)` to all querysets |
-| Accept tenant parameter | Update all service methods to accept optional `tenant` parameter |
-| Fallback to context | Use `get_current_tenant()` if tenant parameter not provided |
-| Validation | Raise error if no tenant can be determined |
+| `Common` (or `Ui`) keys | Save, Cancel, Delete, Edit, Create, New, Back, Close, Submit, Search, Filter, Export, Import, Loading…, Error, Retry, No results, Required field, etc. |
+| Optional `Errors` / `Validation` | Generic load failed, network error, permission denied (where not API-driven). |
+| Column pattern doc | One short example in a README comment or this file: `const columns = useMemo(() => createColumns(t), [t])`. |
+| Layout chrome | Command palette / search dialog ([`search-command.tsx`](../frontend/src/components/layout/search-command.tsx)), theme toggle labels if any user-visible string remains English. |
 
 **Acceptance Criteria:**
 
-- [x] `reports/services/inventory_reports.py` updated
-- [x] All methods that query models accept optional `tenant` parameter
-- [x] Methods use `get_current_tenant()` as fallback if tenant not provided
-- [x] All querysets include explicit `.filter(tenant=tenant)` after model query
-- [x] Methods affected: `get_stock_valuation()`, `get_low_stock_products()`, `get_overstock_products()`, `get_movement_history()`, `get_movement_summary()`, `get_reservation_summary()`, `get_availability_report()`, `get_variance_report()`, `get_variance_summary()`, `get_cycle_history()`, `get_expiring_lots()`, `get_expired_lots()`, `get_lot_history()`, `get_product_traceability()`
-- [x] Raises `ValueError` if tenant cannot be determined
-- [x] Tested: All report methods return only current tenant's data
-- [x] Tested: Cross-tenant queries are blocked
+- [x] New keys added under an agreed namespace (extend `Common` or add `Ui`) in **all six** locale JSON files
+- [x] At least one refactored consumer (e.g. a shared button label or search palette string) uses `useTranslations` + shared keys
+- [x] `python manage.py test tests.test_locale_catalogs` passes
+- [x] `cd frontend && yarn test` passes
 
-**Files to Modify:**
-- `reports/services/inventory_reports.py` — Add tenant parameter and filtering
+**Files to Modify (typical):**
+- `frontend/public/locales/*.json`
+- `frontend/src/components/layout/search-command.tsx` — optional
+- `frontend/src/components/ui/*` — only where strings are user-visible and shared
 
 **Implementation Notes:**
-- Import `get_current_tenant` from `tenants.context`
-- Add tenant parameter to method signatures: `def method_name(self, *, tenant=None, ...)`
-- Use pattern: `tenant = tenant or get_current_tenant()` followed by `if not tenant: raise ValueError(...)`
+- Keep keys stable; prefer `actions.save` over `saveButton`.
+- **Table columns:** pass `t` from `useTranslations('Common')` (or a feature namespace) into a column factory, e.g. `const columns = useMemo(() => createColumns(t), [t])`, so headers and cell labels resolve from JSON.
+- ICU / plurals: use next-intl rich text only when needed (see **Future enhancements** below).
 
 ---
 
-### TSS-02 — Add explicit tenant filtering to OrderReportService
+### I18N-02 — Dashboard feature UI strings
 
-**Priority:** HIGH | **Depends On:** None | **Parallel:** Yes
+**Priority:** HIGH | **Depends On:** None | **Parallel:** Yes (recommended after I18N-01 for shared labels)
 
 **Problem:**
-The `OrderReportService` queries PurchaseOrder and SalesOrder without explicit tenant filtering. While these models inherit from `TenantAwareModel`, the service relies on implicit tenant context filtering which may not be reliable in all scenarios.
+[`dashboard-page.tsx`](../frontend/src/features/dashboard/pages/dashboard-page.tsx) and dashboard widgets use hardcoded English titles, descriptions, chart labels, and empty states.
 
 **Scope:**
 
 | Capability | Description |
 | ---------- | ----------- |
-| Explicit tenant filtering | Add explicit `.filter(tenant=tenant)` to all querysets |
-| Accept tenant parameter | Update all service methods to accept optional `tenant` parameter |
-| Fallback to context | Use `get_current_tenant()` if tenant parameter not provided |
-| Validation | Raise error if no tenant can be determined |
+| Page chrome | H1, subtitle, section headings |
+| KPI / charts | Card titles, axis labels, legends, “no data” states |
+| Hooks/components | All TSX under [`frontend/src/features/dashboard/`](../frontend/src/features/dashboard/) that render user-visible English |
 
 **Acceptance Criteria:**
 
-- [ ] `reports/services/order_reports.py` updated
-- [ ] All methods that query models accept optional `tenant` parameter
-- [ ] Methods use `get_current_tenant()` as fallback if tenant not provided
-- [ ] All querysets include explicit `.filter(tenant=tenant)` after model query
-- [ ] Methods affected: `get_purchase_summary()`, `get_purchase_totals()`, `get_sales_summary()`, `get_sales_totals()`
-- [ ] Raises `ValueError` if tenant cannot be determined
-- [ ] Tested: All report methods return only current tenant's data
-- [ ] Tested: Cross-tenant queries are blocked
+- [x] Namespace (e.g. `Dashboard`) in all six `*.json` files with full key parity
+- [x] Dashboard page and child components use `useTranslations` (or pass `t` into pure helpers)
+- [x] Locale catalog test + frontend tests pass
 
 **Files to Modify:**
-- `reports/services/order_reports.py` — Add tenant parameter and filtering
-
-**Implementation Notes:**
-- Import `get_current_tenant` from `tenants.context`
-- Add tenant parameter to method signatures: `def method_name(self, *, tenant=None, ...)`
-- Use pattern: `tenant = tenant or get_current_tenant()` followed by `if not tenant: raise ValueError(...)`
+- `frontend/public/locales/*.json`
+- `frontend/src/features/dashboard/**/*.tsx`
 
 ---
 
-### TSS-03 — Add explicit tenant verification to Report API views
+### I18N-03 — Inventory feature UI strings
 
-**Priority:** HIGH | **Depends On:** None | **Parallel:** Yes
+**Priority:** HIGH | **Depends On:** None | **Parallel:** Yes (recommended after I18N-01)
 
 **Problem:**
-Report API views instantiate `InventoryReportService` and `OrderReportService` without explicitly verifying or setting tenant context. While the middleware should set this, there's no explicit validation that the current tenant matches the authenticated user's tenant.
+Products, categories, stock locations, records, movements, and lots pages, dialogs, and tables contain hardcoded English.
 
 **Scope:**
 
 | Capability | Description |
 | ---------- | ----------- |
-| Tenant verification | Add explicit check that user belongs to current tenant |
-| Pass tenant to services | Pass tenant parameter to all service method calls |
-| Permission checks | Verify user has access to tenant before returning data |
+| List & detail pages | Titles, filters, empty states, pagination hints |
+| Forms & dialogs | Labels, placeholders, zod `message` strings where local to this feature |
+| Tables | Column headers via column factories + `t` |
+| Mutations | Toast / success copy if hardcoded |
 
 **Acceptance Criteria:**
 
-- [ ] `api/views/reports.py` updated
-- [ ] All report view classes add tenant verification in `get()` method
-- [ ] Add helper method `_get_current_tenant()` that verifies user belongs to tenant
-- [ ] All service method calls pass `tenant=self.tenant` parameter
-- [ ] Views affected: `StockValuationView`, `MovementHistoryView`, `LowStockReportView`, `OverstockReportView`, `ReservationSummaryView`, `AvailabilityReportView`, `PurchaseSummaryView`, `SalesSummaryView`, `ProductExpiryView`, `LotHistoryView`, `VarianceReportView`, `CycleHistoryView`, `ProductTraceabilityView`
-- [ ] Returns 403 Forbidden if user doesn't belong to tenant
-- [ ] Tested: Authenticated user can only access their tenant's reports
-- [ ] Tested: Cross-tenant access is blocked with 403
+- [x] One or more namespaces (e.g. `InventoryProducts`, `InventoryCategories`, `StockRecords`) — structure is up to implementer but must be documented in PR
+- [x] All six locale files updated with identical key trees
+- [x] Locale catalog test + `yarn test` pass
 
 **Files to Modify:**
-- `api/views/reports.py` — Add tenant verification and pass to services
-
-**Implementation Notes:**
-- Add method: `def _get_current_tenant(self):` that calls `get_current_tenant()` and verifies user membership
-- Use `from tenants.context import get_current_tenant`
-- Add permission check: verify user is in `tenant.members.all()`
+- `frontend/public/locales/*.json`
+- `frontend/src/features/inventory/**/*.tsx`
 
 ---
 
-### TSS-04 — Add explicit tenant filtering to Wagtail report views
+### I18N-04 — Reservations, cycle counts & bulk operations UI strings
 
-**Priority:** HIGH | **Depends On:** None | **Parallel:** Yes
+**Priority:** MEDIUM | **Depends On:** None | **Parallel:** Yes (recommended after I18N-01)
 
 **Problem:**
-Wagtail admin report views (StockValuationView, MovementHistoryView, etc.) don't explicitly filter by tenant. These views are accessible to admin users and could potentially expose data from other tenants if tenant context is not properly set.
+[`reservations/`](../frontend/src/features/reservations/), [`cycle-counts/`](../frontend/src/features/cycle-counts/), and [`bulk-operations/`](../frontend/src/features/bulk-operations/) still use English literals in pages and forms.
 
 **Scope:**
 
 | Capability | Description |
 | ---------- | ----------- |
-| Explicit tenant filtering | Add explicit `.filter(tenant=tenant)` to all querysets |
-| Tenant verification | Verify tenant context is set in get_context_data |
-| Permission checks | Add tenant-based permission checks |
+| All pages & components | Titles, descriptions, wizard steps, confirmations |
+| Tables & forms | Headers, validation messages, tooltips |
 
 **Acceptance Criteria:**
 
-- [x] `reports/views.py` updated
-- [x] All report view classes verify tenant context in `get_context_data()`
-- [x] All querysets include explicit `.filter(tenant=tenant)` filtering
-- [x] Views affected: `StockValuationView`, `MovementHistoryView`, `LowStockReportView`, `OverstockReportView`, `ExpiryReportView`, `PurchaseSummaryView`, `SalesSummaryView`
-- [x] Add helper method `_get_current_tenant()` for tenant verification
-- [x] Returns error or empty results if tenant context is not set
-- [x] Tested: Admin users can only see their tenant's reports
-- [x] Tested: Cross-tenant access is blocked
+- [x] Namespaced JSON keys in all six locales; parity enforced by test
+- [x] Feature folders use `useTranslations` consistently
+- [x] Tests pass
 
 **Files to Modify:**
-- `reports/views.py` — Add tenant verification and filtering
-- `reports/services/inventory_reports.py` — Add tenant parameter to methods used by views
-
-**Implementation Notes:**
-- Add method: `def _get_current_tenant(self):` that calls `get_current_tenant()` and raises error if None
-- Use `from tenants.context import get_current_tenant`
-- Add to all `get_context_data()` methods: `tenant = self._get_current_tenant()`
+- `frontend/public/locales/*.json`
+- `frontend/src/features/reservations/**/*.tsx`
+- `frontend/src/features/cycle-counts/**/*.tsx`
+- `frontend/src/features/bulk-operations/**/*.tsx`
 
 ---
 
-### TSS-05 — Add explicit tenant filtering to Inventory admin views
+### I18N-05 — Procurement feature UI strings
 
-**Priority:** HIGH | **Depends On:** None | **Parallel:** Yes
+**Priority:** MEDIUM | **Depends On:** None | **Parallel:** Yes (recommended after I18N-01)
 
 **Problem:**
-`LowStockAlertView` and `InventorySearchView` query Product, Category, and StockLocation without explicit tenant filtering. While these models inherit from `TenantAwareModel`, the views should explicitly verify tenant context.
+Suppliers, purchase orders, and goods-received flows under [`frontend/src/features/procurement/`](../frontend/src/features/procurement/) are English-only in the UI.
 
 **Scope:**
 
 | Capability | Description |
 | ---------- | ----------- |
-| Explicit tenant filtering | Add explicit `.filter(tenant=tenant)` to all querysets |
-| Tenant verification | Verify tenant context is set in get_queryset |
-| Permission checks | Add tenant-based permission checks |
+| List/detail/new/edit flows | All visible copy |
+| Line items & PO/GRN specifics | Status labels shown in UI (distinct from API enum **values**) |
 
 **Acceptance Criteria:**
 
-- [x] `inventory/views.py` updated
-- [x] `LowStockAlertView.get_queryset()` includes explicit tenant filtering
-- [x] `InventorySearchView.get_context_data()` includes explicit tenant filtering
-- [x] Add helper method `_get_current_tenant()` for tenant verification
-- [x] All querysets include explicit `.filter(tenant=tenant)` filtering
-- [x] Returns error or empty results if tenant context is not set
-- [x] Tested: Admin users can only see their tenant's inventory
-- [x] Tested: Cross-tenant access is blocked
+- [x] JSON namespaces + six-locale parity
+- [x] Column definitions and forms translated
+- [x] Tests pass
 
 **Files to Modify:**
-- `inventory/views.py` — Add tenant verification and filtering
-- `inventory/filters.py` — Add tenant-scoped category/location dropdowns
-
-**Implementation Notes:**
-- Add method: `def _get_current_tenant(self):` that calls `get_current_tenant()` and raises PermissionDenied if None
-- Use `from tenants.context import get_current_tenant` and `from tenants.permissions import get_membership`
-- Update `get_queryset()` and `get_context_data()` methods
-- ProductFilterSet accepts `tenant` kwarg to restrict category/location filter choices
+- `frontend/public/locales/*.json`
+- `frontend/src/features/procurement/**/*.tsx`
 
 ---
 
-### TSS-06 — Add explicit tenant verification to Inventory API viewsets
+### I18N-06 — Sales feature UI strings
 
-**Priority:** HIGH | **Depends On:** None | **Parallel:** Yes
+**Priority:** MEDIUM | **Depends On:** None | **Parallel:** Yes (recommended after I18N-01)
 
 **Problem:**
-`CategoryViewSet`, `ProductViewSet`, `StockLocationViewSet`, and other inventory viewsets rely on implicit tenant filtering via `TenantAwareManager`. While this should work, there's no explicit validation that the user belongs to the tenant being queried.
+Customers, sales orders, and dispatches under [`frontend/src/features/sales/`](../frontend/src/features/sales/) need next-intl coverage.
 
 **Scope:**
 
 | Capability | Description |
 | ---------- | ----------- |
-| Explicit tenant filtering | Override `get_queryset()` to explicitly filter by current tenant |
-| Permission checks | Add permission checks to verify user belongs to tenant |
-| Custom actions | Add tenant verification to custom actions (stock, movements, etc.) |
+| CRUD pages & dialogs | Titles, buttons, empty states |
+| Tables | Sort/filter labels, column headers |
+| Wizards / multi-step | Step titles and descriptions |
 
 **Acceptance Criteria:**
 
-- [x] `api/views/inventory.py` updated
-- [x] All viewsets override `get_queryset()` to explicitly filter by current tenant
-- [x] Add helper method `_get_current_tenant()` for tenant verification (`TenantScopedInventoryMixin`)
-- [x] All querysets include explicit `.filter(tenant=tenant)` filtering
-- [x] Viewsets affected: `CategoryViewSet`, `ProductViewSet`, `StockLocationViewSet`, `StockRecordViewSet`, `StockMovementViewSet`, `StockLotViewSet`
-- [x] Custom actions (stock, movements, availability, lots) verify tenant ownership
-- [x] Returns 403 Forbidden if user doesn't belong to tenant (or no resolvable tenant)
-- [x] Tested: Authenticated user can only access their tenant's data
-- [x] Tested: Cross-tenant data access blocked; users without tenant membership get 403
+- [x] JSON namespaces + six-locale parity
+- [x] Sales feature TSX uses translations; tests pass
 
 **Files to Modify:**
-- `api/views/inventory.py` — Add tenant verification and filtering
-- `api/views/reservation.py` — `product_availability_action` explicit tenant filters
-- `tenants/middleware.py` — `resolve_tenant_for_request()` for DRF Token auth (middleware runs before DRF auth)
-
-**Implementation Notes:**
-- Add method: `def _get_current_tenant(self):` that calls `get_current_tenant()` and raises error if None
-- Override `get_queryset()` in each viewset to add explicit filtering
-- Use `from tenants.context import get_current_tenant`
-- Add tenant checks to custom actions
+- `frontend/public/locales/*.json`
+- `frontend/src/features/sales/**/*.tsx`
 
 ---
 
-### TSS-07 — Add tenant field to PurchaseOrderLine model
+### I18N-07 — Reports feature UI strings
 
-**Priority:** MEDIUM | **Depends On:** None | **Parallel:** Yes
+**Priority:** MEDIUM | **Depends On:** None | **Parallel:** Yes (recommended after I18N-01)
 
 **Problem:**
-`PurchaseOrderLine` inherits from `TimeStampedModel` but doesn't have explicit tenant field. While it's related to `PurchaseOrder` which has tenant, there's no direct tenant field on `PurchaseOrderLine`, making it harder to query by tenant directly.
+Report routes under [`frontend/src/features/reports/`](../frontend/src/features/reports/) (valuation, movement history, low stock, etc.) expose English-only headings and filter labels.
 
 **Scope:**
 
 | Capability | Description |
 | ---------- | ----------- |
-| Add tenant field | Add explicit `tenant` FK to PurchaseOrderLine |
-| Add constraint | Add unique constraint on (tenant, purchase_order, product) |
-| Migration | Create migration to backfill tenant from purchase_order |
-| Validation | Ensure tenant is set when creating PurchaseOrderLine instances |
+| Each report page | Title, description, chart/table chrome |
+| Shared report UI | Date range, export, filter components |
 
 **Acceptance Criteria:**
 
-- [x] `procurement/models/order.py` updated
-- [x] `PurchaseOrderLine` model adds `tenant` FK field *(via `TimeStampedModel`; documented on the model)*
-- [x] Tenant field: `tenant = models.ForeignKey("tenants.Tenant", on_delete=models.CASCADE, ...)`
-- [x] Add unique constraint: `UniqueConstraint(fields=["tenant", "purchase_order", "product"], ...)`
-- [x] Migration created to backfill tenant from purchase_order
-- [x] Migration file: `procurement/migrations/0004_add_tenant_to_purchaseorderline.py`
-- [x] Tested: All PurchaseOrderLine instances have tenant populated
-- [x] Tested: Unique constraint prevents duplicate lines per tenant
-- [x] Tested: Queries can filter by tenant directly on PurchaseOrderLine
-
-**Files to Create:**
-- `procurement/migrations/XXXX_add_tenant_to_purchaseorderline.py` *(new)*
+- [x] Namespaced messages per report or a single `Reports` tree with sub-keys per route
+- [x] Six-locale parity; tests pass
 
 **Files to Modify:**
-- `procurement/models/order.py` — Add tenant field and constraint
-
-**Implementation Notes:**
-- Use data migration (RunPython) to backfill tenant from related purchase_order
-- Add `null=False, blank=False` to tenant field after backfill
+- `frontend/public/locales/*.json`
+- `frontend/src/features/reports/**/*.tsx`
 
 ---
 
-### TSS-08 — Add tenant field to SalesOrderLine model
+### I18N-08 — Settings & platform admin UI strings
 
-**Priority:** MEDIUM | **Depends On:** None | **Parallel:** Yes
+**Priority:** MEDIUM | **Depends On:** None | **Parallel:** Yes (recommended after I18N-01)
 
 **Problem:**
-`SalesOrderLine` inherits from `TimeStampedModel` but doesn't have explicit tenant field. While it's related to `SalesOrder` which has tenant, there's no direct tenant field on `SalesOrderLine`.
+Tenant settings, profile, members, invitations, billing, users, and platform audit UI under [`frontend/src/features/settings/`](../frontend/src/features/settings/) remain English.
 
 **Scope:**
 
 | Capability | Description |
 | ---------- | ----------- |
-| Add tenant field | Add explicit `tenant` FK to SalesOrderLine |
-| Add constraint | Add unique constraint on (tenant, sales_order, product) |
-| Migration | Create migration to backfill tenant from sales_order |
-| Validation | Ensure tenant is set when creating SalesOrderLine instances |
+| Tenant vs platform | Separate sub-namespaces if helpful (`SettingsTenant`, `SettingsPlatform`) |
+| Destructive actions | Confirm dialogs, irreversible warnings |
 
 **Acceptance Criteria:**
 
-- [x] `sales/models/order.py` updated
-- [x] `SalesOrderLine` model adds `tenant` FK field *(via `TimeStampedModel`, same as `PurchaseOrderLine`)*
-- [x] Tenant field: `tenant = models.ForeignKey("tenants.Tenant", on_delete=models.CASCADE, ...)`
-- [x] Add unique constraint: `UniqueConstraint(fields=["tenant", "sales_order", "product"], ...)`
-- [x] Migration created to backfill tenant from sales_order
-- [x] Migration file: `sales/migrations/XXXX_add_tenant_to_salesorderline.py`
-- [x] Tested: All SalesOrderLine instances have tenant populated
-- [x] Tested: Unique constraint prevents duplicate lines per tenant
-- [x] Tested: Queries can filter by tenant directly on SalesOrderLine
-
-**Files to Create:**
-- `sales/migrations/0004_add_tenant_to_salesorderline.py` *(new)*
+- [ ] JSON + components updated; superuser-only screens included
+- [ ] Six-locale parity; tests pass
 
 **Files to Modify:**
-- `sales/models/order.py` — Add tenant field and constraint
-
-**Implementation Notes:**
-- Use data migration (RunPython) to backfill tenant from related sales_order
-- Add `null=False, blank=False` to tenant field after backfill
+- `frontend/public/locales/*.json`
+- `frontend/src/features/settings/**/*.tsx`
 
 ---
 
-### TSS-09 — Add logging and fallback to TenantAwareManager
+### I18N-09 — Auth & tenant audit UI strings
 
-**Priority:** MEDIUM | **Depends On:** None | **Parallel:** Yes
+**Priority:** MEDIUM | **Depends On:** None | **Parallel:** Yes (recommended after I18N-01)
 
 **Problem:**
-The `TenantAwareManager` in `tenants/managers.py` returns unfiltered querysets when no tenant is set in context. This could lead to data leakage if tenant context is accidentally cleared or not set. There's no explicit validation or warning.
+Login, register, accept-invitation, and tenant [`audit/`](../frontend/src/features/audit/) pages still hardcode English.
 
 **Scope:**
 
 | Capability | Description |
 | ---------- | ----------- |
-| Add logging | Log warning when tenant context is None |
-| Add fallback | Add explicit tenant parameter to manager methods as fallback |
-| Add validation | Optionally raise exception in production when tenant context is missing |
+| Auth flows | Headings, hints, error banners, link text |
+| Audit log | Column headers, filters, empty states |
 
 **Acceptance Criteria:**
 
-- [x] `tenants/managers.py` updated
-- [x] Add logging import: `import logging`
-- [x] Add logger: `logger = logging.getLogger(__name__)`
-- [x] Log warning when `get_current_tenant()` returns None: `logger.warning("Querying without tenant context")`
-- [x] Add `for_tenant(tenant)` method to explicitly filter by tenant
-- [x] Add `unscoped()` method to explicitly bypass tenant filtering (for admin/migrations)
-- [x] Add docstring explaining when to use each method
-- [x] Tested: Warning logged when tenant context is None
-- [x] Tested: `for_tenant(tenant)` filters correctly
-- [x] Tested: `unscoped()` returns all records
+- [x] `Auth` / `Audit` (or similar) namespaces in all six locales
+- [x] Tests pass
 
 **Files to Modify:**
-- `tenants/managers.py` — Add logging, fallback methods, validation
-
-**Implementation Notes:**
-- Use `logger.warning()` for non-critical cases
-- Consider `logger.error()` for production environments
-- Document when to use `unscoped()` (migrations, management commands only)
+- `frontend/public/locales/*.json`
+- `frontend/src/features/auth/**/*.tsx`
+- `frontend/src/features/audit/**/*.tsx`
 
 ---
 
-### TSS-10 — Add tenant verification to ProductViewSet and StockLocationViewSet custom actions
+### I18N-10 — Page i18n QA sweep
 
-**Priority:** MEDIUM | **Depends On:** None | **Parallel:** Yes
+**Priority:** MEDIUM | **Depends On:** I18N-01–I18N-09 (all merged or nearly complete) | **Parallel:** No (final pass)
 
 **Problem:**
-The `stock()` action in `ProductViewSet` and `StockLocationViewSet` retrieves records without verifying that the product/location belongs to the current tenant. An authenticated user could potentially access data from other tenants.
+Parallel PRs can miss strings, drift key naming, or skip `ar.json`.
 
 **Scope:**
 
 | Capability | Description |
 | ---------- | ----------- |
-| Tenant verification | Add explicit tenant check in custom actions |
-| Verify ownership | Verify product/location tenant matches current tenant |
-| Add similar checks | Apply to movements(), availability(), and lots() actions |
+| Grep pass | Search `frontend/src/features` for obvious English literals in JSX (iterate until acceptable) |
+| Manual smoke | Two locales (e.g. en + fr + ar) on one page per feature area |
+| Docs | Update this file’s checklists to checked state when done |
 
 **Acceptance Criteria:**
 
-- [x] `api/views/inventory.py` updated
-- [x] `ProductViewSet.stock()` action verifies `product.tenant == current_tenant`
-- [x] `ProductViewSet.movements()` action verifies `product.tenant == current_tenant`
-- [x] `ProductViewSet.availability()` action verifies `product.tenant == current_tenant`
-- [x] `ProductViewSet.lots()` action verifies `product.tenant == current_tenant`
-- [x] `StockLocationViewSet.stock()` action verifies `location.tenant == current_tenant`
-- [x] Returns 403 Forbidden if tenant doesn't match
-- [x] Tested: User can only access their tenant's product stock data
-- [x] Tested: Cross-tenant access is blocked with 403
+- [x] `python manage.py test tests.test_locale_catalogs` passes on `main`
+- [x] `cd frontend && yarn test` passes
+- [ ] Spot-check: language switch updates **page** copy (not only nav) for sampled routes *(manual — recommended on `/reports`, `/reports/stock-valuation`, and one other feature route in **en / fr / ar**)*
+- [x] Any remaining intentional English (e.g. brand names) documented in PR or code comment *(see **Sweep notes** below)*
 
 **Files to Modify:**
-- `api/views/inventory.py` — Add tenant verification to custom actions
+- As found during sweep
+- `docs/TASKS.MD` — check off Implementation Checklist when complete
 
 **Implementation Notes:**
-- Add helper method: `def _verify_tenant_ownership(self, obj):` that checks `obj.tenant == get_current_tenant()`
-- Raise `PermissionDenied` if tenant doesn't match
-- Use `from rest_framework.exceptions import PermissionDenied`
+- Do not block feature PRs on I18N-10; run when most of I18N-02–I18N-09 have landed.
+
+**Sweep notes (close-out):**
+- **Reports:** The UI already called `useTranslations('Reports.…')` but locale files were missing the `Reports` tree. Added **`Reports`** to all six catalogs via [`frontend/scripts/reports-locale-payload.json`](../frontend/scripts/reports-locale-payload.json) and [`frontend/scripts/merge-reports-locale.mjs`](../frontend/scripts/merge-reports-locale.mjs) (re-run after editing the payload). **Kinyarwanda** and **Swahili** currently reuse the English `Reports` strings until dedicated translations are added (`payload[code] ?? payload.en`).
+- **Residual English:** A grep pass still finds literals on some **platform-only settings** screens (e.g. billing, platform users); keep **I18N-08** open until those components read from `SettingsPlatform` / `SettingsTenant` only. **SKU** and similar abbreviations remain as neutral catalog labels across locales.
 
 ---
 
 ## Dependency Graph
 
 ```
-TSS-01 (InventoryReportService)
-TSS-02 (OrderReportService)
-TSS-03 (Report API views) ──→ depends on TSS-01, TSS-02
-TSS-04 (Wagtail report views)
-TSS-05 (Inventory admin views)
-TSS-06 (Inventory API viewsets)
-TSS-07 (PurchaseOrderLine tenant field)
-TSS-08 (SalesOrderLine tenant field)
-TSS-09 (TenantAwareManager logging)
-TSS-10 (Custom action verification)
-
-All tasks are independent and can be implemented in parallel.
+I18N-01 (Shared UI strings — recommended first)
+├─ I18N-02 (Dashboard)
+├─ I18N-03 (Inventory)
+├─ I18N-04 (Reservations / cycle counts / bulk)
+├─ I18N-05 (Procurement)
+├─ I18N-06 (Sales)
+├─ I18N-07 (Reports)
+├─ I18N-08 (Settings & platform)
+└─ I18N-09 (Auth & tenant audit)
+   (all of I18N-02–I18N-09 are parallel to each other after optional I18N-01 patterns land)
+        └─ I18N-10 (Page i18n QA sweep — after most page tasks merge)
 ```
 
 ---
 
 ## Recommended Execution Order
 
-All 10 tasks are **independent** and can be implemented in parallel. However, for logical grouping:
+**Phase A (optional but recommended):**
+- **I18N-01:** Shared labels + patterns so feature PRs reuse keys.
 
-### Group 1 — Service Layer (TSS-01, TSS-02)
-- TSS-01: Add explicit tenant filtering to InventoryReportService
-- TSS-02: Add explicit tenant filtering to OrderReportService
+**Phase B (maximum parallelization — assign one area per contributor):**
+- **I18N-02** through **I18N-09** in any order or all at once.
 
-### Group 2 — API & View Layer (TSS-03, TSS-04, TSS-05, TSS-06, TSS-10)
-- TSS-03: Add explicit tenant verification to Report API views
-- TSS-04: Add explicit tenant filtering to Wagtail report views
-- TSS-05: Add explicit tenant filtering to Inventory admin views
-- TSS-06: Add explicit tenant verification to Inventory API viewsets
-- TSS-10: Add tenant verification to custom actions
+**Phase C (close-out):**
+- **I18N-10:** Grep/manual QA and checklist sign-off.
 
-### Group 3 — Model Layer (TSS-07, TSS-08, TSS-09)
-- TSS-07: Add tenant field to PurchaseOrderLine model
-- TSS-08: Add tenant field to SalesOrderLine model
-- TSS-09: Add logging and fallback to TenantAwareManager
+---
+
+## Parallelization Summary
+
+| Phase | Who can work in parallel | Notes |
+|-------|-------------------------|--------|
+| A | 1 contributor (or pair with B) | Establishes `Common` / `Ui` keys others import |
+| B | Up to **8** contributors | One task ID per feature area (I18N-02 … I18N-09) |
+| C | 1 owner | Run when most of Phase B is on `main` |
 
 ---
 
 ## Testing Strategy
 
-After implementing each task:
+### Per-task (I18N-01–I18N-09)
 
-1. Run unit tests for the modified module
-2. Run integration tests to verify tenant isolation
-3. Run full test suite: `python manage.py test`
-4. Manual testing: verify cross-tenant access is blocked
+- **`tests.test_locale_catalogs`:** After every JSON change, all six locale files must share the same key tree as `en.json`.
+- **`cd frontend && yarn test`:** Avoid breaking Vitest; add tests for new shared helpers if introduced.
+- **Manual:** Switch locale on a page touched by the task; confirm **page** copy updates (not only nav), and RTL for **ar** if layout-sensitive.
+
+### Final sweep (I18N-10)
+
+- Grep for remaining English literals under `frontend/src/features`.
+- Spot-check **en / fr / ar** on representative routes per area.
+
+### Manual Testing Checklist
+
+- [ ] **I18N-01:** Shared action labels appear translated on at least one consumer screen
+- [ ] **I18N-02–I18N-09:** Each merged area: open two locales on a list + a form page; strings match JSON
+- [ ] **I18N-10:** No orphaned English in primary flows; intentional exceptions documented *(reports area cleared; platform settings still partial — see I18N-10 **Sweep notes**)*
 
 ---
 
-## Security Checklist
+## Implementation Checklist
 
-- [ ] All querysets explicitly filter by tenant
-- [ ] All API views verify user belongs to tenant
-- [ ] All custom actions verify tenant ownership
-- [ ] All models with tenant FK have non-nullable tenant field
-- [ ] All migrations backfill tenant data correctly
-- [ ] No cross-tenant data leakage in reports
-- [ ] No cross-tenant data leakage in API responses
-- [ ] Logging captures tenant context for audit trail
+- [x] **I18N-01** — Shared UI strings & cross-cutting patterns
+- [x] **I18N-02** — Dashboard feature UI strings
+- [x] **I18N-03** — Inventory feature UI strings
+- [x] **I18N-04** — Reservations, cycle counts & bulk operations UI strings
+- [x] **I18N-05** — Procurement feature UI strings
+- [x] **I18N-06** — Sales feature UI strings
+- [x] **I18N-07** — Reports feature UI strings
+- [ ] **I18N-08** — Settings & platform admin UI strings
+- [x] **I18N-09** — Auth & tenant audit UI strings
+- [x] **I18N-10** — Page i18n QA sweep *(automated checks + documented residuals; manual spot-check item still open in task criteria)*
+- [x] `python manage.py test tests.test_locale_catalogs` passes
+- [x] `cd frontend && yarn test` passes
+
+---
+
+## Reference — Message files (this initiative)
+
+Tenant UI strings for **pages and features** live here (not in Django `.po`):
+
+```
+frontend/public/locales/
+├── en.json
+├── fr.json
+├── sw.json
+├── rw.json
+├── es.json
+└── ar.json
+```
+
+Request config loads them via [`frontend/src/i18n/load-messages.ts`](../frontend/src/i18n/load-messages.ts) and [`frontend/src/i18n.ts`](../frontend/src/i18n.ts). Locale list is synced from Wagtail with `sync_frontend_locales` when admin locales change.
+
+---
+
+## Future enhancements (frontend UI)
+
+- [ ] **Machine-aided translation** for JSON values (optional tooling; keep key parity)
+- [ ] **RTL polish** for **ar** where individual components still assume LTR
+- [ ] **Number/currency / date formatting** per active locale in tables and forms
+- [ ] **ICU / plural rules** in next-intl messages where copy needs plurals
+
+---
+
+## Notes for developers
+
+### New Next.js UI copy
+
+1. Add keys to **`en.json`**, then mirror the **same tree** in **fr, sw, rw, es, ar**.
+2. Use **`useTranslations('YourNamespace')`** in client components (or **`getTranslations`** in server components).
+3. Run **`python manage.py test tests.test_locale_catalogs`** and **`cd frontend && yarn test`** before merging.
+
+### Backend or catalog behavior
+
+Do **not** use this task list for Django/Wagtail work—it is already implemented. For new API fields or translatable models, follow existing patterns under `api/`, `inventory/services/localization.py`, and Wagtail `TranslatableMixin` docs in the codebase.
+
+### Local quick check
+
+```bash
+cd frontend && yarn dev
+# Visit http://localhost:3000/fr/… (or /ar/…) and confirm strings update after editing JSON.
+
+python manage.py test tests.test_locale_catalogs
+cd frontend && yarn test
+```

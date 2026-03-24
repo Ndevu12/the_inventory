@@ -1,8 +1,9 @@
 "use client"
 
 import { use } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter } from "@/i18n/navigation"
 import { ArrowLeftIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -24,6 +25,8 @@ export function PODetailPage({ params }: PODetailPageProps) {
   const { id: rawId } = use(params)
   const id = Number(rawId)
   const router = useRouter()
+  const t = useTranslations("Procurement.purchaseOrders.detail")
+  const tShared = useTranslations("Procurement.shared")
   const { data: order, isLoading } = usePurchaseOrder(id)
 
   const confirmMutation = useConfirmPurchaseOrder()
@@ -31,29 +34,35 @@ export function PODetailPage({ params }: PODetailPageProps) {
 
   function handleConfirm() {
     confirmMutation.mutate(id, {
-      onSuccess: () => toast.success("Purchase order confirmed"),
-      onError: (error) =>
-        toast.error(
-          `Failed to confirm: ${(error as { message?: string }).message ?? "Unknown error"}`,
-        ),
+      onSuccess: () => toast.success(t("toastConfirmed")),
+      onError: (error) => {
+        const message =
+          (error as { message?: string }).message ?? tShared("unknownError")
+        toast.error(t("confirmFailed", { message }))
+      },
     })
   }
 
   function handleCancel() {
-    if (!confirm("Cancel this purchase order?")) return
+    if (!confirm(t("cancelConfirm"))) return
     cancelMutation.mutate(id, {
-      onSuccess: () => toast.success("Purchase order cancelled"),
-      onError: (error) =>
-        toast.error(
-          `Failed to cancel: ${(error as { message?: string }).message ?? "Unknown error"}`,
-        ),
+      onSuccess: () => toast.success(t("toastCancelled")),
+      onError: (error) => {
+        const message =
+          (error as { message?: string }).message ?? tShared("unknownError")
+        toast.error(t("cancelFailed", { message }))
+      },
     })
   }
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title={order ? `PO: ${order.order_number}` : "Purchase Order"}
+        title={
+          order
+            ? t("title", { orderNumber: order.order_number })
+            : t("titleLoading")
+        }
         description={order?.supplier_name}
         actions={
           <Button
@@ -61,7 +70,7 @@ export function PODetailPage({ params }: PODetailPageProps) {
             onClick={() => router.push("/procurement/purchase-orders")}
           >
             <ArrowLeftIcon className="mr-2 size-4" />
-            Back to List
+            {t("backToList")}
           </Button>
         }
       />

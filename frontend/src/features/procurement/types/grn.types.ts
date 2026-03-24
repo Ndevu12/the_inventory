@@ -20,7 +20,7 @@ export interface GRNCreatePayload {
   notes?: string
 }
 
-export interface GRNUpdatePayload extends Partial<GRNCreatePayload> {}
+export type GRNUpdatePayload = Partial<GRNCreatePayload>
 
 export interface GRNListParams {
   page?: number

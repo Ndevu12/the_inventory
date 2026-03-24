@@ -1,5 +1,6 @@
 from django.contrib.sessions.backends.db import SessionStore
 from django.test import RequestFactory, TestCase, override_settings
+from django.utils import translation
 
 from inventory.models.audit import ComplianceAuditLog
 from tenants.context import get_current_tenant
@@ -85,7 +86,7 @@ class TenantMiddlewareTest(TestCase):
         self.assertEqual(request._captured_tenant, self.tenant)
 
     def test_inactive_membership_ignored(self):
-        user2 = create_user()
+        user2 = create_user(username="inactive-membership-user")
         create_membership(
             tenant=self.tenant,
             user=user2,
@@ -98,7 +99,7 @@ class TenantMiddlewareTest(TestCase):
 
     def test_inactive_tenant_ignored(self):
         t_inactive = create_tenant(is_active=False)
-        user2 = create_user()
+        user2 = create_user(username="inactive-tenant-user")
         create_membership(
             tenant=t_inactive,
             user=user2,
@@ -110,7 +111,7 @@ class TenantMiddlewareTest(TestCase):
         self.assertIsNone(request.tenant)
 
     def test_fallback_to_first_membership(self):
-        user2 = create_user()
+        user2 = create_user(username="fallback-first-membership-user")
         t2 = create_tenant(slug="epsilon")
         create_membership(
             tenant=t2,
@@ -121,6 +122,101 @@ class TenantMiddlewareTest(TestCase):
         request = self._make_request(user=user2)
         self.mw(request)
         self.assertEqual(request.tenant, t2)
+
+
+@override_settings(LANGUAGE_CODE="en", LANGUAGES=[("en", "English"), ("fr", "French")])
+class TenantMiddlewareLocaleTest(TestCase):
+    """I18N-09: active locale follows tenant.preferred_language when a tenant is resolved."""
+
+    def setUp(self):
+        self.factory = RequestFactory()
+
+    def tearDown(self):
+        translation.deactivate()
+
+    def _make_request(self, user=None, **kwargs):
+        request = self.factory.get("/", **kwargs)
+        if user:
+            request.user = user
+        else:
+            from django.contrib.auth.models import AnonymousUser
+
+            request.user = AnonymousUser()
+        return request
+
+    def test_anonymous_does_not_override_locale_middleware(self):
+        translation.activate("fr")
+
+        def inner(request):
+            request._lang_during_view = translation.get_language()
+            return "ok"
+
+        mw = TenantMiddleware(inner)
+        request = self._make_request()
+        mw(request)
+
+        self.assertEqual(request._lang_during_view, "fr")
+        self.assertEqual(translation.get_language(), "fr")
+
+    def test_tenant_preferred_language_fr_activates_locale(self):
+        tenant = create_tenant(slug="acme-fr", preferred_language="fr")
+        user = create_user()
+        create_membership(
+            tenant=tenant, user=user, role=TenantRole.ADMIN, is_default=True,
+        )
+
+        def inner(request):
+            request._lang_during_view = translation.get_language()
+            return "ok"
+
+        mw = TenantMiddleware(inner)
+        request = self._make_request(user=user)
+        mw(request)
+
+        self.assertEqual(request._lang_during_view, "fr")
+
+    def test_different_tenants_switch_active_locale_via_header(self):
+        t_en = create_tenant(slug="locale-en", preferred_language="en")
+        t_fr = create_tenant(slug="locale-fr", preferred_language="fr")
+        user = create_user()
+        create_membership(
+            tenant=t_en, user=user, role=TenantRole.ADMIN, is_default=True,
+        )
+        create_membership(tenant=t_fr, user=user, role=TenantRole.VIEWER)
+
+        captured = []
+
+        def inner(request):
+            captured.append(translation.get_language())
+            return "ok"
+
+        mw = TenantMiddleware(inner)
+        mw(self._make_request(user=user))
+        mw(
+            self._make_request(
+                user=user,
+                HTTP_X_TENANT="locale-fr",
+            ),
+        )
+
+        self.assertEqual(captured, ["en", "fr"])
+
+    def test_invalid_preferred_language_falls_back_to_language_code(self):
+        tenant = create_tenant(slug="acme-bogus", preferred_language="zz")
+        user = create_user()
+        create_membership(
+            tenant=tenant, user=user, role=TenantRole.ADMIN, is_default=True,
+        )
+
+        def inner(request):
+            request._lang_during_view = translation.get_language()
+            return "ok"
+
+        mw = TenantMiddleware(inner)
+        request = self._make_request(user=user)
+        mw(request)
+
+        self.assertEqual(request._lang_during_view, "en")
 
 
 @override_settings(AUDIT_TENANT_ACCESS=True)

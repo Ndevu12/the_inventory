@@ -1,5 +1,7 @@
 """Serializers for sales models."""
 
+import uuid
+
 from rest_framework import serializers
 
 from inventory.models import StockRecord
@@ -10,8 +12,25 @@ from sales.models import (
     SalesOrderLine,
 )
 
+from api.serializers.localized_strings import (
+    attribute_in_display_locale,
+    display_locale_from_context,
+)
+from tenants.middleware import get_effective_tenant
 
-class CustomerSerializer(serializers.ModelSerializer):
+from api.serializers.translatable_representation import TranslatableRepresentationMixin
+from api.serializers.translatable_writable import TranslatableWritableMixin
+
+
+class CustomerSerializer(
+    TranslatableWritableMixin,
+    TranslatableRepresentationMixin,
+    serializers.ModelSerializer,
+):
+    """Translatable: ``name``, ``contact_name``, ``address``, ``notes``."""
+
+    translatable_overlay_fields = ("name", "contact_name", "address", "notes")
+
     class Meta:
         model = Customer
         fields = [
@@ -20,11 +39,61 @@ class CustomerSerializer(serializers.ModelSerializer):
             "created_at", "updated_at",
         ]
         read_only_fields = ["created_at", "updated_at"]
+        extra_kwargs = {
+            "code": {"required": False, "allow_blank": True},
+        }
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        if self.instance is not None and "code" in attrs:
+            raw = attrs.get("code")
+            if raw is not None and str(raw).strip() == "":
+                attrs.pop("code")
+        return attrs
+
+    def validate_code(self, value):
+        if value is None or (isinstance(value, str) and not str(value).strip()):
+            return value
+        request = self.context.get("request")
+        tenant = self.context.get("tenant") or (
+            get_effective_tenant(request) if request else None
+        )
+        loc = self.context.get("wagtail_write_locale")
+        qs = Customer.objects.filter(code=value)
+        if tenant:
+            qs = qs.filter(tenant=tenant)
+        if loc:
+            qs = qs.filter(locale_id=loc.id)
+        qs = self._same_translation_group_qs(qs, self.instance)
+        if qs.exists():
+            raise serializers.ValidationError(
+                "A customer with this code already exists for this tenant."
+            )
+        return value
+
+    def create(self, validated_data):
+        raw = validated_data.get("code")
+        if raw is None or not str(raw).strip():
+            validated_data["code"] = f"C-{uuid.uuid4().hex[:10].upper()}"
+        else:
+            validated_data["code"] = str(raw).strip()
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        raw = validated_data.get("code", None)
+        if raw is not None:
+            if not str(raw).strip():
+                validated_data.pop("code", None)
+            else:
+                validated_data["code"] = str(raw).strip()
+        return super().update(instance, validated_data)
 
 
 class SalesOrderLineSerializer(serializers.ModelSerializer):
+    """``product_name`` uses the request display locale for translated catalog products."""
+
     product_sku = serializers.CharField(source="product.sku", read_only=True)
-    product_name = serializers.CharField(source="product.name", read_only=True)
+    product_name = serializers.SerializerMethodField()
     line_total = serializers.DecimalField(
         max_digits=12, decimal_places=2, read_only=True,
     )
@@ -37,6 +106,11 @@ class SalesOrderLineSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id"]
 
+    def get_product_name(self, obj):
+        return attribute_in_display_locale(
+            obj.product, "name", display_locale_from_context(self.context),
+        )
+
 
 class SalesOrderLineWriteSerializer(serializers.Serializer):
     product = serializers.PrimaryKeyRelatedField(
@@ -47,9 +121,9 @@ class SalesOrderLineWriteSerializer(serializers.Serializer):
 
 
 class SalesOrderSerializer(serializers.ModelSerializer):
-    customer_name = serializers.CharField(
-        source="customer.name", read_only=True,
-    )
+    """``customer_name`` uses the request display locale for translated customers."""
+
+    customer_name = serializers.SerializerMethodField()
     status_display = serializers.CharField(
         source="get_status_display", read_only=True,
     )
@@ -68,6 +142,14 @@ class SalesOrderSerializer(serializers.ModelSerializer):
             "created_at", "updated_at",
         ]
         read_only_fields = ["status", "created_at", "updated_at"]
+        extra_kwargs = {
+            "order_number": {"required": False, "allow_blank": True},
+        }
+
+    def get_customer_name(self, obj):
+        return attribute_in_display_locale(
+            obj.customer, "name", display_locale_from_context(self.context),
+        )
 
     def get_can_fulfill(self, obj):
         """True when every order line can be met by available stock across all locations."""
@@ -84,6 +166,16 @@ class SalesOrderSerializer(serializers.ModelSerializer):
         lines_data = self.initial_data.get("lines", [])
         line_serializer = SalesOrderLineWriteSerializer(data=lines_data, many=True)
         line_serializer.is_valid(raise_exception=True)
+        if not line_serializer.validated_data:
+            raise serializers.ValidationError(
+                {"lines": ["At least one line item is required."]},
+            )
+
+        order_number = validated_data.get("order_number")
+        if order_number is None or not str(order_number).strip():
+            validated_data["order_number"] = f"SO-{uuid.uuid4().hex[:10].upper()}"
+        else:
+            validated_data["order_number"] = str(order_number).strip()
 
         order = SalesOrder.objects.create(**validated_data)
         for line in line_serializer.validated_data:
@@ -109,3 +201,31 @@ class DispatchSerializer(serializers.ModelSerializer):
             "created_at", "updated_at",
         ]
         read_only_fields = ["is_processed", "created_at", "updated_at"]
+        extra_kwargs = {
+            "dispatch_number": {"required": False, "allow_blank": True},
+        }
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        if self.instance is not None and "dispatch_number" in attrs:
+            raw = attrs.get("dispatch_number")
+            if raw is not None and str(raw).strip() == "":
+                attrs.pop("dispatch_number")
+        return attrs
+
+    def create(self, validated_data):
+        raw = validated_data.get("dispatch_number")
+        if raw is None or not str(raw).strip():
+            validated_data["dispatch_number"] = f"DSP-{uuid.uuid4().hex[:10].upper()}"
+        else:
+            validated_data["dispatch_number"] = str(raw).strip()
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        raw = validated_data.get("dispatch_number", None)
+        if raw is not None:
+            if not str(raw).strip():
+                validated_data.pop("dispatch_number", None)
+            else:
+                validated_data["dispatch_number"] = str(raw).strip()
+        return super().update(instance, validated_data)

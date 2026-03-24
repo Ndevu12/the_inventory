@@ -1,6 +1,7 @@
 "use client"
 
 import type { ColumnDef, PaginationState } from "@tanstack/react-table"
+import { useTranslations } from "next-intl"
 import { DataTable } from "@/components/data-table/data-table"
 import type { Dispatch } from "../../types/dispatch.types"
 
@@ -23,6 +24,8 @@ export function DispatchTable({
   isLoading,
   filterContent,
 }: DispatchTableProps) {
+  const t = useTranslations("Sales.dispatches.table")
+
   return (
     <DataTable
       columns={columns}
@@ -31,7 +34,7 @@ export function DispatchTable({
       pagination={pagination}
       onPaginationChange={onPaginationChange}
       isLoading={isLoading}
-      emptyMessage="No dispatches found."
+      emptyMessage={t("empty")}
       filterContent={filterContent}
     />
   )

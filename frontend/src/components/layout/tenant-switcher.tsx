@@ -17,21 +17,45 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { useMe } from "@/features/auth/hooks/use-auth";
 import { useAuthStore } from "@/lib/auth-store";
+import { useTranslations } from "next-intl";
 
 export function TenantSwitcher() {
+  const t = useTranslations("Shell");
   const { isMobile } = useSidebar();
   const queryClient = useQueryClient();
   const memberships = useAuthStore((s) => s.memberships);
   const tenantSlug = useAuthStore((s) => s.tenantSlug);
+  const accessToken = useAuthStore((s) => s.accessToken);
   const setTenant = useAuthStore((s) => s.setTenant);
 
-  const currentTenant = memberships.find(
-    (m) => m.tenant__slug === tenantSlug,
-  );
+  const { data: meData, isPending, isFetching } = useMe();
+
+  const effectiveSlug = tenantSlug ?? meData?.tenant?.slug ?? null;
+  const orgList =
+    memberships.length > 0 ? memberships : (meData?.memberships ?? []);
+  const currentRow = effectiveSlug
+    ? orgList.find((m) => m.tenant__slug === effectiveSlug)
+    : undefined;
+
+  const bootstrapping =
+    !!accessToken && orgList.length === 0 && (isPending || isFetching);
+
+  const displayName = bootstrapping
+    ? t("tenantLoading")
+    : (currentRow?.tenant__name ??
+        (meData?.tenant &&
+        (!effectiveSlug || meData.tenant.slug === effectiveSlug)
+          ? meData.tenant.name
+          : null) ??
+        t("selectTenant"));
+
+  const roleLabel =
+    currentRow?.role ?? meData?.tenant?.role ?? "";
 
   function handleSwitch(slug: string) {
-    if (slug === tenantSlug) return;
+    if (slug === effectiveSlug) return;
     setTenant(slug);
     queryClient.invalidateQueries();
   }
@@ -52,11 +76,9 @@ export function TenantSwitcher() {
               <BuildingIcon className="size-4" />
             </div>
             <div className="grid flex-1 text-left text-sm leading-tight">
-              <span className="truncate font-semibold">
-                {currentTenant?.tenant__name ?? "Select Tenant"}
-              </span>
+              <span className="truncate font-semibold">{displayName}</span>
               <span className="truncate text-xs text-muted-foreground">
-                {currentTenant?.role ?? ""}
+                {roleLabel}
               </span>
             </div>
             <ChevronsUpDownIcon className="ml-auto size-4" />
@@ -68,25 +90,31 @@ export function TenantSwitcher() {
             sideOffset={4}
           >
             <DropdownMenuGroup>
-              <DropdownMenuLabel>Organizations</DropdownMenuLabel>
+              <DropdownMenuLabel>{t("organizations")}</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              {memberships.map((membership) => (
-                <DropdownMenuItem
-                  key={membership.tenant__slug}
-                  onClick={() => handleSwitch(membership.tenant__slug)}
-                >
-                  <BuildingIcon className="size-4" />
-                  <span className="flex-1 truncate">
-                    {membership.tenant__name}
-                  </span>
-                  {membership.tenant__slug === tenantSlug && (
-                    <CheckIcon className="ml-auto size-4" />
-                  )}
-                </DropdownMenuItem>
-              ))}
-              {memberships.length === 0 && (
+              {bootstrapping && (
                 <div className="px-2 py-4 text-center text-sm text-muted-foreground">
-                  No organizations found
+                  {t("loadingOrganizations")}
+                </div>
+              )}
+              {!bootstrapping &&
+                orgList.map((membership) => (
+                  <DropdownMenuItem
+                    key={membership.tenant__slug}
+                    onClick={() => handleSwitch(membership.tenant__slug)}
+                  >
+                    <BuildingIcon className="size-4" />
+                    <span className="flex-1 truncate">
+                      {membership.tenant__name}
+                    </span>
+                    {membership.tenant__slug === effectiveSlug && (
+                      <CheckIcon className="ml-auto size-4" />
+                    )}
+                  </DropdownMenuItem>
+                ))}
+              {!bootstrapping && orgList.length === 0 && (
+                <div className="px-2 py-4 text-center text-sm text-muted-foreground">
+                  {t("noOrganizations")}
                 </div>
               )}
             </DropdownMenuGroup>

@@ -48,6 +48,21 @@ class SeederManager:
             ("Low-Stock Scenarios", LowStockSeeder(verbose=verbose)),
         ]
 
+    @staticmethod
+    def _tenant_for_partial_seed(tenant=None):
+        """Partial seed helpers need a tenant; default to slug ``default`` when omitted."""
+        if tenant is not None:
+            return tenant
+        from tenants.models import Tenant
+
+        t = Tenant.objects.filter(slug="default").first()
+        if t is None:
+            raise ValueError(
+                "No tenant passed and no tenant with slug 'default' exists. "
+                "Run a full seed, use --tenant, or create the default tenant first."
+            )
+        return t
+
     def clear_all_data(self):
         """Delete all inventory data from the database."""
         from inventory.models import (
@@ -102,6 +117,16 @@ class SeederManager:
         if self.verbose:
             print("🌱 Seeding database with sample data...\n")
 
+        from home.i18n_sync import refresh_i18n_settings_from_wagtail
+        from seeders.wagtail_locale_seeder import ensure_default_wagtail_locales
+
+        if self.verbose:
+            print("📋 Ensuring Wagtail locales...")
+        ensure_default_wagtail_locales(verbose=self.verbose)
+        refresh_i18n_settings_from_wagtail()
+        if self.verbose:
+            print()
+
         # Step 1: Run TenantSeeder first to ensure tenant exists
         if tenant is None:
             if self.verbose:
@@ -149,8 +174,9 @@ class SeederManager:
         if self.verbose:
             print("\n✅ Users seeding complete!")
 
-    def seed_categories_only(self):
+    def seed_categories_only(self, tenant=None):
         """Seed only categories."""
+        tenant = self._tenant_for_partial_seed(tenant)
         if self.clear_data:
             from inventory.models import (
                 Category,
@@ -168,38 +194,42 @@ class SeederManager:
 
         if self.verbose:
             print("🌱 Seeding Categories...\n")
-        self.seeders[1][1].execute()
+        self.seeders[1][1].execute(tenant=tenant)
         if self.verbose:
             print("\n✅ Categories seeding complete!")
 
-    def seed_products_only(self):
+    def seed_products_only(self, tenant=None):
         """Seed only products (requires categories to exist)."""
+        tenant = self._tenant_for_partial_seed(tenant)
         if self.verbose:
             print("🌱 Seeding Products...\n")
-        self.seeders[2][1].execute()
+        self.seeders[2][1].execute(tenant=tenant)
         if self.verbose:
             print("\n✅ Products seeding complete!")
 
-    def seed_locations_only(self):
+    def seed_locations_only(self, tenant=None):
         """Seed only stock locations."""
+        tenant = self._tenant_for_partial_seed(tenant)
         if self.verbose:
             print("🌱 Seeding Stock Locations...\n")
-        self.seeders[3][1].execute()
+        self.seeders[3][1].execute(tenant=tenant)
         if self.verbose:
             print("\n✅ Stock Locations seeding complete!")
 
-    def seed_stock_records_only(self):
+    def seed_stock_records_only(self, tenant=None):
         """Seed only stock records (requires products and locations)."""
+        tenant = self._tenant_for_partial_seed(tenant)
         if self.verbose:
             print("🌱 Seeding Stock Records...\n")
-        self.seeders[4][1].execute()
+        self.seeders[4][1].execute(tenant=tenant)
         if self.verbose:
             print("\n✅ Stock Records seeding complete!")
 
-    def seed_movements_only(self):
+    def seed_movements_only(self, tenant=None):
         """Seed only stock movements (requires products and locations)."""
+        tenant = self._tenant_for_partial_seed(tenant)
         if self.verbose:
             print("🌱 Seeding Stock Movements...\n")
-        self.seeders[5][1].execute()
+        self.seeders[5][1].execute(tenant=tenant)
         if self.verbose:
             print("\n✅ Stock Movements seeding complete!")

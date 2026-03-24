@@ -6,10 +6,13 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.response import Response
+from drf_spectacular.utils import extend_schema
 
 from procurement.models import GoodsReceivedNote, PurchaseOrder, Supplier
 from procurement.services.procurement import ProcurementService
 
+from api.mixins import TranslatableAPIReadMixin
+from api.schema_i18n import OPENAPI_LANGUAGE_QUERY_PARAMETER
 from api.serializers.procurement import (
     GoodsReceivedNoteSerializer,
     PurchaseOrderSerializer,
@@ -22,7 +25,8 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class SupplierViewSet(TenantScopedInventoryMixin, viewsets.ModelViewSet):
+@extend_schema(parameters=[OPENAPI_LANGUAGE_QUERY_PARAMETER])
+class SupplierViewSet(TranslatableAPIReadMixin, TenantScopedInventoryMixin, viewsets.ModelViewSet):
     queryset = Supplier.objects.all()
     serializer_class = SupplierSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -36,7 +40,12 @@ class SupplierViewSet(TenantScopedInventoryMixin, viewsets.ModelViewSet):
         return super().get_queryset().filter(tenant=tenant)
 
 
-class PurchaseOrderViewSet(TenantScopedInventoryMixin, viewsets.ModelViewSet):
+@extend_schema(parameters=[OPENAPI_LANGUAGE_QUERY_PARAMETER])
+class PurchaseOrderViewSet(
+    TranslatableAPIReadMixin,
+    TenantScopedInventoryMixin,
+    viewsets.ModelViewSet,
+):
     queryset = PurchaseOrder.objects.select_related("supplier").prefetch_related(
         "lines", "lines__product",
     ).all()

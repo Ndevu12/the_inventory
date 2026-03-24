@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslations } from "next-intl"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import type { SalesOrderStatus } from "../../types/sales.types"
@@ -7,13 +8,12 @@ import { SO_STATUS_COLOR_MAP } from "../../helpers/sales-constants"
 
 interface SOStatusBadgeProps {
   status: SalesOrderStatus
-  label?: string
   className?: string
 }
 
-export function SOStatusBadge({ status, label, className }: SOStatusBadgeProps) {
+export function SOStatusBadge({ status, className }: SOStatusBadgeProps) {
+  const t = useTranslations("Sales.soStatus")
   const colors = SO_STATUS_COLOR_MAP[status]
-  const displayLabel = label ?? status.charAt(0).toUpperCase() + status.slice(1)
 
   return (
     <Badge
@@ -25,7 +25,7 @@ export function SOStatusBadge({ status, label, className }: SOStatusBadgeProps) 
         className,
       )}
     >
-      {displayLabel}
+      {t(status)}
     </Badge>
   )
 }

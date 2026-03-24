@@ -30,7 +30,7 @@ export interface SupplierCreatePayload {
   notes?: string
 }
 
-export interface SupplierUpdatePayload extends Partial<SupplierCreatePayload> {}
+export type SupplierUpdatePayload = Partial<SupplierCreatePayload>
 
 export interface SupplierListParams {
   page?: number

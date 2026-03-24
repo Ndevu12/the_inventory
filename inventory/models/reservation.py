@@ -1,20 +1,21 @@
 from django.conf import settings
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from .base import TimeStampedModel
 
 
 class AllocationStrategy(models.TextChoices):
-    FIFO = "FIFO", "FIFO"
-    LIFO = "LIFO", "LIFO"
+    FIFO = "FIFO", _("FIFO")
+    LIFO = "LIFO", _("LIFO")
 
 
 class ReservationStatus(models.TextChoices):
-    PENDING = "pending", "Pending"
-    CONFIRMED = "confirmed", "Confirmed"
-    FULFILLED = "fulfilled", "Fulfilled"
-    CANCELLED = "cancelled", "Cancelled"
-    EXPIRED = "expired", "Expired"
+    PENDING = "pending", _("Pending")
+    CONFIRMED = "confirmed", _("Confirmed")
+    FULFILLED = "fulfilled", _("Fulfilled")
+    CANCELLED = "cancelled", _("Cancelled")
+    EXPIRED = "expired", _("Expired")
 
 
 class ReservationRule(TimeStampedModel):

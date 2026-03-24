@@ -13,7 +13,8 @@ export interface Dispatch {
 }
 
 export interface DispatchCreatePayload {
-  dispatch_number: string
+  /** Omit or leave empty; the API assigns a unique dispatch number (DSP- prefix). */
+  dispatch_number?: string
   sales_order: number
   dispatch_date: string
   from_location: number
@@ -41,4 +42,22 @@ export interface SimpleSalesOrder {
 export interface SimpleLocation {
   id: number
   name: string
+}
+
+export interface DispatchFulfillmentLine {
+  line_id: number
+  product_id: number
+  product_sku: string
+  product_name: string | null
+  ordered_quantity: number
+  available_quantity: number
+  issue_now_quantity: number
+}
+
+export interface DispatchFulfillmentPreview {
+  from_location: { id: number; name: string }
+  sales_order_id: number
+  lines: DispatchFulfillmentLine[]
+  can_full_dispatch: boolean
+  total_issue_if_available_only: number
 }

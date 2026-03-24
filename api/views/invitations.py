@@ -47,7 +47,7 @@ from tenants.models import (
     TenantInvitation,
     TenantMembership,
 )
-from tenants.permissions import IsTenantAdmin
+from tenants.permissions import IsTenantAdmin, IsTenantMember
 
 User = get_user_model()
 
@@ -55,13 +55,17 @@ User = get_user_model()
 class InvitationListCreateView(ListAPIView):
     """List or create invitations for the current tenant.
 
-    GET  — list all invitations (any status).
+    GET  — list all invitations (any member).
     POST — create a new invitation (admin/owner only).
     """
 
     serializer_class = InvitationSerializer
-    permission_classes = (IsAuthenticated, IsTenantAdmin)
     pagination_class = None
+
+    def get_permissions(self):
+        if self.request.method == "POST":
+            return [IsAuthenticated(), IsTenantAdmin()]
+        return [IsAuthenticated(), IsTenantMember()]
 
     def get_queryset(self):
         tenant = get_effective_tenant(self.request)

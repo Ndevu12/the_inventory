@@ -1,10 +1,12 @@
 "use client"
 
 import type { ColumnDef } from "@tanstack/react-table"
+import { TrashIcon } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { DataTableColumnHeader } from "@/components/data-table"
 import { cn } from "@/lib/utils"
-import { ROLE_MAP, ROLE_COLOR_MAP } from "../helpers/settings-constants"
+import { ROLE_COLOR_MAP } from "../helpers/settings-constants"
 import { MemberRoleSelect } from "./member-role-select"
 import type { TenantMember, TenantRole } from "../types/settings.types"
 
@@ -12,6 +14,7 @@ interface MemberColumnActions {
   onRoleChange: (member: TenantMember, role: TenantRole) => void
   onRemove: (member: TenantMember) => void
   isUpdating?: boolean
+  t: (key: string) => string
 }
 
 function fullName(member: TenantMember): string {
@@ -20,13 +23,14 @@ function fullName(member: TenantMember): string {
 }
 
 export function getMemberColumns(
-  actions: MemberColumnActions
+  actions: MemberColumnActions,
 ): ColumnDef<TenantMember>[] {
+  const { t } = actions
   return [
     {
       accessorKey: "username",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="User" />
+        <DataTableColumnHeader column={column} title={t("members.columns.user")} />
       ),
       cell: ({ row }) => {
         const member = row.original
@@ -43,7 +47,7 @@ export function getMemberColumns(
     {
       accessorKey: "email",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Email" />
+        <DataTableColumnHeader column={column} title={t("members.columns.email")} />
       ),
       cell: ({ row }) => (
         <span className="text-muted-foreground">
@@ -54,7 +58,7 @@ export function getMemberColumns(
     {
       accessorKey: "role",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Role" />
+        <DataTableColumnHeader column={column} title={t("members.columns.role")} />
       ),
       cell: ({ row }) => {
         const member = row.original
@@ -68,10 +72,10 @@ export function getMemberColumns(
               className={cn(
                 "border-transparent font-medium",
                 colors.bg,
-                colors.text
+                colors.text,
               )}
             >
-              {ROLE_MAP[member.role]}
+              {t(`roles.${member.role}`)}
             </Badge>
           )
         }
@@ -88,12 +92,14 @@ export function getMemberColumns(
     },
     {
       accessorKey: "is_active",
-      header: "Status",
+      header: t("members.columns.status"),
       cell: ({ row }) => {
         const active = row.getValue<boolean>("is_active")
         return (
           <Badge variant={active ? "default" : "secondary"}>
-            {active ? "Active" : "Inactive"}
+            {active
+              ? t("members.memberStatus.active")
+              : t("members.memberStatus.inactive")}
           </Badge>
         )
       },
@@ -102,7 +108,7 @@ export function getMemberColumns(
     {
       accessorKey: "created_at",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Joined" />
+        <DataTableColumnHeader column={column} title={t("members.columns.joined")} />
       ),
       cell: ({ row }) => {
         const date = new Date(row.getValue<string>("created_at"))
@@ -115,9 +121,7 @@ export function getMemberColumns(
         const member = row.original
         if (member.role === "owner") return null
 
-        return (
-          <RemoveButton onClick={() => actions.onRemove(member)} />
-        )
+        return <RemoveButton onClick={() => actions.onRemove(member)} label={t("members.srRemoveMember")} />
       },
       enableSorting: false,
       enableHiding: false,
@@ -125,10 +129,7 @@ export function getMemberColumns(
   ]
 }
 
-import { TrashIcon } from "lucide-react"
-import { Button } from "@/components/ui/button"
-
-function RemoveButton({ onClick }: { onClick: () => void }) {
+function RemoveButton({ onClick, label }: { onClick: () => void; label: string }) {
   return (
     <Button
       variant="ghost"
@@ -137,7 +138,7 @@ function RemoveButton({ onClick }: { onClick: () => void }) {
       onClick={onClick}
     >
       <TrashIcon className="size-4" />
-      <span className="sr-only">Remove member</span>
+      <span className="sr-only">{label}</span>
     </Button>
   )
 }

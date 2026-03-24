@@ -1,5 +1,6 @@
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 from django.db.models import Sum
 from treebeard.mp_tree import MP_Node
 from wagtail.admin.panels import FieldPanel, MultiFieldPanel, TabbedInterface
@@ -150,10 +151,10 @@ class StockRecord(TimeStampedModel):
 
 
 class MovementType(models.TextChoices):
-    RECEIVE = "receive", "Receive"
-    ISSUE = "issue", "Issue"
-    TRANSFER = "transfer", "Transfer"
-    ADJUSTMENT = "adjustment", "Adjustment"
+    RECEIVE = "receive", _("Receive")
+    ISSUE = "issue", _("Issue")
+    TRANSFER = "transfer", _("Transfer")
+    ADJUSTMENT = "adjustment", _("Adjustment")
 
 
 class StockMovement(TimeStampedModel):

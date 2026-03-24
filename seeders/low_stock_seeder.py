@@ -16,6 +16,8 @@ class LowStockSeeder(BaseSeeder):
         """Create stock records that trigger low-stock alerts."""
         self.log("Creating low-stock scenarios...")
 
+        loc = self.canonical_locale
+
         # Critical items: quantity = 0 (completely out of stock)
         critical_items = [
             ("PHONE-001", "Bin A1-1"),  # iPhone 15 Pro - reorder_point: 5
@@ -37,8 +39,12 @@ class LowStockSeeder(BaseSeeder):
         self.log("\n  Creating CRITICAL items (out of stock):")
         for sku, location_name in critical_items:
             try:
-                product = Product.objects.get(sku=sku)
-                location = StockLocation.objects.get(name=location_name)
+                product = Product.objects.get(
+                    sku=sku, tenant=self.tenant, locale=loc,
+                )
+                location = StockLocation.objects.get(
+                    name=location_name, tenant=self.tenant,
+                )
 
                 # Delete any existing record for this combo
                 StockRecord.objects.filter(
@@ -64,8 +70,12 @@ class LowStockSeeder(BaseSeeder):
         self.log("\n  Creating LOW-STOCK items (below reorder point):")
         for sku, location_name, quantity in low_stock_items:
             try:
-                product = Product.objects.get(sku=sku)
-                location = StockLocation.objects.get(name=location_name)
+                product = Product.objects.get(
+                    sku=sku, tenant=self.tenant, locale=loc,
+                )
+                location = StockLocation.objects.get(
+                    name=location_name, tenant=self.tenant,
+                )
 
                 # Delete any existing record for this combo
                 StockRecord.objects.filter(

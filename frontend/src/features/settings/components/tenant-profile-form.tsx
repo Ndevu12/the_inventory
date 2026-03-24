@@ -1,7 +1,7 @@
 "use client"
 
-import * as React from "react"
 import type { UseFormReturn } from "react-hook-form"
+import { useTranslations } from "next-intl"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import type { TenantProfileFormValues } from "../helpers/tenant-schemas"
@@ -11,6 +11,7 @@ interface TenantProfileFormProps {
 }
 
 export function TenantProfileForm({ form }: TenantProfileFormProps) {
+  const t = useTranslations("SettingsTenant.tenant.form")
   const {
     register,
     formState: { errors },
@@ -24,11 +25,15 @@ export function TenantProfileForm({ form }: TenantProfileFormProps) {
     <div className="grid gap-6 sm:grid-cols-2">
       <div className="space-y-2">
         <Label htmlFor="name">
-          Tenant Name <span className="text-destructive">*</span>
+          {t("tenantName")}{" "}
+          <span className="text-destructive" aria-hidden>
+            *
+          </span>
+          <span className="sr-only">{t("requiredMarker")}</span>
         </Label>
         <Input
           id="name"
-          placeholder="My Organisation"
+          placeholder={t("placeholderOrg")}
           aria-invalid={!!errors.name}
           {...register("name")}
         />
@@ -38,10 +43,10 @@ export function TenantProfileForm({ form }: TenantProfileFormProps) {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="branding_site_name">Site Name</Label>
+        <Label htmlFor="branding_site_name">{t("siteName")}</Label>
         <Input
           id="branding_site_name"
-          placeholder="Inventory Portal"
+          placeholder={t("placeholderSite")}
           {...register("branding_site_name")}
         />
         {errors.branding_site_name && (
@@ -52,11 +57,11 @@ export function TenantProfileForm({ form }: TenantProfileFormProps) {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="branding_primary_color">Primary Color</Label>
+        <Label htmlFor="branding_primary_color">{t("primaryColor")}</Label>
         <div className="flex items-center gap-3">
           <Input
             id="branding_primary_color"
-            placeholder="#3B82F6"
+            placeholder={t("placeholderColor")}
             className="flex-1"
             aria-invalid={!!errors.branding_primary_color}
             {...register("branding_primary_color")}
@@ -70,7 +75,7 @@ export function TenantProfileForm({ form }: TenantProfileFormProps) {
               })
             }
             className="h-9 w-9 shrink-0 cursor-pointer rounded border border-input p-0.5"
-            aria-label="Pick primary color"
+            aria-label={t("colorPickerAria")}
           />
         </div>
         {errors.branding_primary_color && (

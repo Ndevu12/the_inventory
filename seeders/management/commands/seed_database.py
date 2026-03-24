@@ -80,7 +80,7 @@ class Command(BaseCommand):
                         )
 
                     for model in models:
-                        available_models[model]()
+                        available_models[model](tenant=tenant)
                         if verbose:
                             self.stdout.write("")
                 else:

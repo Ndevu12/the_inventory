@@ -3,6 +3,7 @@
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase
@@ -81,6 +82,64 @@ class PurchaseOrderAPITests(APISetupMixin, APITestCase):
         response = self.client.get("/api/v1/purchase-orders/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["count"], 1)
+
+    def test_create_purchase_order_with_lines_auto_number(self):
+        response = self.client.post(
+            "/api/v1/purchase-orders/",
+            {
+                "supplier": self.supplier.pk,
+                "order_date": str(timezone.localdate()),
+                "expected_delivery_date": None,
+                "notes": "",
+                "lines": [
+                    {
+                        "product": self.product.pk,
+                        "quantity": 2,
+                        "unit_cost": "10.50",
+                    },
+                ],
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
+        self.assertTrue(str(response.data.get("order_number", "")).startswith("PO-"))
+        self.assertEqual(len(response.data["lines"]), 1)
+        self.assertEqual(
+            Decimal(str(response.data["lines"][0]["line_total"])),
+            Decimal("21.00"),
+        )
+
+    def test_create_purchase_order_explicit_order_number(self):
+        response = self.client.post(
+            "/api/v1/purchase-orders/",
+            {
+                "supplier": self.supplier.pk,
+                "order_number": "PO-MANUAL-001",
+                "order_date": str(timezone.localdate()),
+                "lines": [
+                    {
+                        "product": self.product.pk,
+                        "quantity": 1,
+                        "unit_cost": "1.00",
+                    },
+                ],
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
+        self.assertEqual(response.data["order_number"], "PO-MANUAL-001")
+
+    def test_create_purchase_order_requires_lines(self):
+        response = self.client.post(
+            "/api/v1/purchase-orders/",
+            {
+                "supplier": self.supplier.pk,
+                "order_date": str(timezone.localdate()),
+                "lines": [],
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_retrieve_includes_lines(self):
         po = create_purchase_order(supplier=self.supplier)

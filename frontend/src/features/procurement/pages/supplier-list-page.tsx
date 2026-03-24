@@ -1,10 +1,11 @@
 "use client"
 
 import * as React from "react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { Link } from "@/i18n/navigation"
+import { useRouter } from "@/i18n/navigation"
 import type { PaginationState } from "@tanstack/react-table"
 import { PlusIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -16,6 +17,12 @@ import type { Supplier } from "../types/procurement.types"
 
 export function SupplierListPage() {
   const router = useRouter()
+  const t = useTranslations("Procurement.suppliers.list")
+  const tCol = useTranslations("Procurement.suppliers.columns")
+  const tPay = useTranslations("Procurement.paymentTerms")
+  const tShared = useTranslations("Procurement.shared")
+  const tInv = useTranslations("Inventory.shared")
+  const tTable = useTranslations("Inventory.tableActions")
 
   const [pagination, setPagination] = React.useState<PaginationState>({
     pageIndex: 0,
@@ -34,25 +41,45 @@ export function SupplierListPage() {
 
   const handleEdit = React.useCallback(
     (supplier: Supplier) => {
-      router.push(`/suppliers/${supplier.id}/edit`)
+      router.push(`/procurement/suppliers/${supplier.id}/edit`)
     },
-    [router]
+    [router],
   )
 
   const handleDelete = React.useCallback(
     (supplier: Supplier) => {
-      if (!confirm(`Delete supplier "${supplier.name}"?`)) return
+      if (!confirm(t("deleteConfirm", { name: supplier.name }))) return
       deleteMutation.mutate(supplier.id, {
-        onSuccess: () => toast.success(`Supplier "${supplier.name}" deleted`),
-        onError: () => toast.error("Failed to delete supplier"),
+        onSuccess: () => toast.success(t("toastDeleted", { name: supplier.name })),
+        onError: () => toast.error(t("toastDeleteFailed")),
       })
     },
-    [deleteMutation]
+    [deleteMutation, t],
   )
 
   const columns = React.useMemo(
-    () => getSupplierColumns({ onEdit: handleEdit, onDelete: handleDelete }),
-    [handleEdit, handleDelete]
+    () =>
+      getSupplierColumns(
+        { onEdit: handleEdit, onDelete: handleDelete },
+        {
+          tColumns: (key, values) => tCol(key, values as Record<string, string | number>),
+          tPaymentTerms: (key) => tPay(key),
+          emDash: tShared("emDash"),
+          activeLabel: tInv("active"),
+          inactiveLabel: tInv("inactive"),
+          editLabel: tTable("edit"),
+          deleteLabel: tTable("delete"),
+        },
+      ),
+    [
+      handleEdit,
+      handleDelete,
+      tCol,
+      tPay,
+      tShared,
+      tInv,
+      tTable,
+    ],
   )
 
   const suppliers = data?.results ?? []
@@ -61,12 +88,12 @@ export function SupplierListPage() {
   return (
     <div className="flex flex-1 flex-col gap-6 p-6">
       <PageHeader
-        title="Suppliers"
-        description="Manage your supplier directory"
+        title={t("title")}
+        description={t("description")}
         actions={
-          <Button render={<Link href="/suppliers/new" />}>
+          <Button render={<Link href="/procurement/suppliers/new" />}>
             <PlusIcon className="size-4" data-icon="inline-start" />
-            New Supplier
+            {t("newButton")}
           </Button>
         }
       />

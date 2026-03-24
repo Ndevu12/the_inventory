@@ -1,12 +1,13 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { toast } from "sonner";
-import { Plus, Search } from "lucide-react";
-import { PageHeader } from "@/components/layout/page-header";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useState } from "react"
+import { useTranslations } from "next-intl"
+import { toast } from "sonner"
+import { Plus, Search } from "lucide-react"
+import { PageHeader } from "@/components/layout/page-header"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
   Dialog,
   DialogContent,
@@ -14,86 +15,90 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from "@/components/ui/dialog";
+} from "@/components/ui/dialog"
 import {
   useCategories,
   useCreateCategory,
   useUpdateCategory,
   useDeleteCategory,
-} from "../hooks/use-categories";
-import { CategoryTree } from "../components/categories/category-tree";
-import { CategoryFormDialog } from "../components/categories/category-form-dialog";
-import type { Category } from "../types/inventory.types";
-import type { CategoryFormValues } from "../helpers/category-schemas";
-import type { ApiError } from "@/types";
+} from "../hooks/use-categories"
+import { CategoryTree } from "../components/categories/category-tree"
+import { CategoryFormDialog } from "../components/categories/category-form-dialog"
+import type { Category } from "../types/inventory.types"
+import type { CategoryFormValues } from "../helpers/category-schemas"
+import type { ApiError } from "@/types"
 
 export function CategoryListPage() {
-  const [search, setSearch] = useState("");
-  const [formOpen, setFormOpen] = useState(false);
-  const [editTarget, setEditTarget] = useState<Category | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<Category | null>(null);
+  const t = useTranslations("Inventory")
+  const tCommon = useTranslations("Common.actions")
+  const [search, setSearch] = useState("")
+  const [formOpen, setFormOpen] = useState(false)
+  const [editTarget, setEditTarget] = useState<Category | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<Category | null>(null)
 
   const { data, isLoading } = useCategories({
     search: search || undefined,
     page_size: 100,
-  });
-  const createMutation = useCreateCategory();
-  const updateMutation = useUpdateCategory();
-  const deleteMutation = useDeleteCategory();
+  })
+  const createMutation = useCreateCategory()
+  const updateMutation = useUpdateCategory()
+  const deleteMutation = useDeleteCategory()
 
   function openCreateDialog() {
-    setEditTarget(null);
-    setFormOpen(true);
+    setEditTarget(null)
+    setFormOpen(true)
   }
 
   function openEditDialog(category: Category) {
-    setEditTarget(category);
-    setFormOpen(true);
+    setEditTarget(category)
+    setFormOpen(true)
   }
 
   function closeFormDialog(open: boolean) {
-    setFormOpen(open);
-    if (!open) setEditTarget(null);
+    setFormOpen(open)
+    if (!open) setEditTarget(null)
   }
 
   async function handleFormSubmit(values: CategoryFormValues) {
     try {
       if (editTarget) {
-        await updateMutation.mutateAsync({ id: editTarget.id, data: values });
-        toast.success(`Category "${values.name}" updated`);
+        await updateMutation.mutateAsync({ id: editTarget.id, data: values })
+        toast.success(t("categories.toastUpdated", { name: values.name }))
       } else {
-        await createMutation.mutateAsync(values);
-        toast.success(`Category "${values.name}" created`);
+        await createMutation.mutateAsync(values)
+        toast.success(t("categories.toastCreated", { name: values.name }))
       }
-      setFormOpen(false);
-      setEditTarget(null);
+      setFormOpen(false)
+      setEditTarget(null)
     } catch (err) {
-      const apiErr = err as ApiError;
-      toast.error(apiErr?.message || "Failed to save category");
+      const apiErr = err as ApiError
+      toast.error(apiErr?.message || t("categories.toastSaveFailed"))
     }
   }
 
   async function handleDeleteConfirm() {
-    if (!deleteTarget) return;
+    if (!deleteTarget) return
     try {
-      await deleteMutation.mutateAsync(deleteTarget.id);
-      toast.success(`Category "${deleteTarget.name}" deleted`);
-      setDeleteTarget(null);
+      await deleteMutation.mutateAsync(deleteTarget.id)
+      toast.success(
+        t("categories.toastDeleted", { name: deleteTarget.name }),
+      )
+      setDeleteTarget(null)
     } catch (err) {
-      const apiErr = err as ApiError;
-      toast.error(apiErr?.message || "Failed to delete category");
+      const apiErr = err as ApiError
+      toast.error(apiErr?.message || t("categories.toastDeleteFailed"))
     }
   }
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Categories"
-        description="Organize your products into categories."
+        title={t("categories.title")}
+        description={t("categories.description")}
         actions={
           <Button onClick={openCreateDialog}>
             <Plus className="size-4" data-icon="inline-start" />
-            Add Category
+            {t("categories.addCategory")}
           </Button>
         }
       />
@@ -102,7 +107,7 @@ export function CategoryListPage() {
         <div className="relative max-w-sm flex-1">
           <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search categories…"
+            placeholder={t("categories.searchPlaceholder")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
@@ -132,35 +137,39 @@ export function CategoryListPage() {
         isSubmitting={createMutation.isPending || updateMutation.isPending}
       />
 
-      {/* Delete confirmation dialog */}
       <Dialog
         open={!!deleteTarget}
         onOpenChange={(open) => {
-          if (!open) setDeleteTarget(null);
+          if (!open) setDeleteTarget(null)
         }}
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Category</DialogTitle>
+            <DialogTitle>{t("categories.deleteTitle")}</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete &ldquo;{deleteTarget?.name}
-              &rdquo;? This action cannot be undone.
+              {deleteTarget
+                ? t("categories.deleteDescription", {
+                    name: deleteTarget.name,
+                  })
+                : null}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteTarget(null)}>
-              Cancel
+              {tCommon("cancel")}
             </Button>
             <Button
               variant="destructive"
               onClick={handleDeleteConfirm}
               disabled={deleteMutation.isPending}
             >
-              {deleteMutation.isPending ? "Deleting…" : "Delete"}
+              {deleteMutation.isPending
+                ? t("shared.deleting")
+                : tCommon("delete")}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
-  );
+  )
 }

@@ -3,6 +3,7 @@
 import * as React from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { PlusIcon, TrashIcon } from "lucide-react"
 
@@ -34,8 +35,15 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { useSOLineItemsStore } from "../../stores/so-line-items-store"
-import { createSOSchema, type CreateSOFormValues } from "../../helpers/so-schemas"
-import type { SimpleProduct, SimpleCustomer, SalesOrderCreatePayload } from "../../types/sales.types"
+import {
+  buildCreateSOSchema,
+  type CreateSOFormValues,
+} from "../../helpers/so-schemas"
+import type {
+  SimpleProduct,
+  SimpleCustomer,
+  SalesOrderCreatePayload,
+} from "../../types/sales.types"
 
 interface SOFormProps {
   products: SimpleProduct[]
@@ -56,6 +64,12 @@ export function SOForm({
   isSubmitting,
   onCancel,
 }: SOFormProps) {
+  const t = useTranslations("Sales.salesOrders.form")
+  const tPh = useTranslations("Sales.salesOrders.form.placeholders")
+  const tVal = useTranslations("Sales.salesOrders.validation")
+  const tShared = useTranslations("Sales.shared")
+  const tCommon = useTranslations("Common.actions")
+
   const { items, addItem, removeItem, updateItem, reset, orderTotal } =
     useSOLineItemsStore()
 
@@ -63,8 +77,17 @@ export function SOForm({
     return () => reset()
   }, [reset])
 
+  const soSchema = React.useMemo(
+    () =>
+      buildCreateSOSchema({
+        customerRequired: tVal("customerRequired"),
+        orderDateRequired: tVal("orderDateRequired"),
+      }),
+    [tVal],
+  )
+
   const form = useForm<CreateSOFormValues>({
-    resolver: zodResolver(createSOSchema),
+    resolver: zodResolver(soSchema),
     defaultValues: {
       order_number: "",
       customer: undefined,
@@ -77,7 +100,7 @@ export function SOForm({
     const validLines = items.filter((item) => item.product !== null)
 
     if (validLines.length === 0) {
-      toast.error("Add at least one line item")
+      toast.error(t("toastAtLeastOneLine"))
       return
     }
 
@@ -85,12 +108,16 @@ export function SOForm({
       (item) => item.quantity < 1 || parseFloat(item.unitPrice) < 0,
     )
     if (hasInvalid) {
-      toast.error("Fix line item errors before submitting")
+      toast.error(t("toastFixLines"))
       return
     }
 
+    const orderNumber = (values.order_number ?? "").trim()
     onSubmit({
-      ...values,
+      ...(orderNumber ? { order_number: orderNumber } : {}),
+      customer: values.customer,
+      order_date: values.order_date,
+      notes: values.notes,
       lines: validLines.map((item) => ({
         product: item.product!,
         quantity: item.quantity,
@@ -99,26 +126,28 @@ export function SOForm({
     })
   }
 
+  const sep = tShared("nameSeparator")
+
   return (
     <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Order Details</CardTitle>
-          <CardDescription>Basic information for the sales order.</CardDescription>
+          <CardTitle>{t("orderDetailsTitle")}</CardTitle>
+          <CardDescription>{t("orderDetailsDescription")}</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-6 sm:grid-cols-2">
           <FormField
-            label="Order Number"
+            label={t("orderNumberOptional")}
             error={form.formState.errors.order_number?.message}
           >
             <Input
-              placeholder="e.g. SO-2026-001"
+              placeholder={tPh("orderNumber")}
               {...form.register("order_number")}
             />
           </FormField>
 
           <FormField
-            label="Customer"
+            label={t("customer")}
             error={form.formState.errors.customer?.message}
           >
             <Select
@@ -130,13 +159,17 @@ export function SOForm({
             >
               <SelectTrigger className="w-full">
                 <SelectValue
-                  placeholder={customersLoading ? "Loading..." : "Select customer"}
+                  placeholder={
+                    customersLoading ? t("loading") : tPh("selectCustomer")
+                  }
                 />
               </SelectTrigger>
               <SelectContent>
                 {customers.map((c) => (
                   <SelectItem key={c.id} value={c.id.toString()}>
-                    {c.code} — {c.name}
+                    {c.code}
+                    {sep}
+                    {c.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -144,7 +177,7 @@ export function SOForm({
           </FormField>
 
           <FormField
-            label="Order Date"
+            label={t("orderDate")}
             error={form.formState.errors.order_date?.message}
           >
             <Input type="date" {...form.register("order_date")} />
@@ -155,12 +188,12 @@ export function SOForm({
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0">
           <div>
-            <CardTitle>Line Items</CardTitle>
-            <CardDescription>Add products to this order.</CardDescription>
+            <CardTitle>{t("lineItemsTitle")}</CardTitle>
+            <CardDescription>{t("lineItemsDescription")}</CardDescription>
           </div>
           <Button type="button" variant="outline" size="sm" onClick={addItem}>
             <PlusIcon className="mr-1 size-4" />
-            Add Line
+            {t("addLine")}
           </Button>
         </CardHeader>
         <CardContent className="p-0">
@@ -168,10 +201,14 @@ export function SOForm({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="min-w-[200px]">Product</TableHead>
-                  <TableHead className="w-[120px]">Quantity</TableHead>
-                  <TableHead className="w-[140px]">Unit Price</TableHead>
-                  <TableHead className="w-[120px] text-right">Line Total</TableHead>
+                  <TableHead className="min-w-[200px]">
+                    {t("colProduct")}
+                  </TableHead>
+                  <TableHead className="w-[120px]">{t("colQuantity")}</TableHead>
+                  <TableHead className="w-[140px]">{t("colUnitPrice")}</TableHead>
+                  <TableHead className="w-[120px] text-right">
+                    {t("colLineTotal")}
+                  </TableHead>
                   <TableHead className="w-[60px]" />
                 </TableRow>
               </TableHeader>
@@ -185,20 +222,26 @@ export function SOForm({
                           const p = products.find((pr) => pr.id === Number(val))
                           updateItem(item.key, {
                             product: Number(val),
-                            productLabel: p ? `${p.sku} — ${p.name}` : "",
+                            productLabel: p ? `${p.sku}${sep}${p.name}` : "",
                           })
                         }}
                         disabled={productsLoading}
                       >
                         <SelectTrigger className="w-full">
                           <SelectValue
-                            placeholder={productsLoading ? "Loading..." : "Select product"}
+                            placeholder={
+                              productsLoading
+                                ? t("loading")
+                                : tPh("selectProduct")
+                            }
                           />
                         </SelectTrigger>
                         <SelectContent>
                           {products.map((p) => (
                             <SelectItem key={p.id} value={p.id.toString()}>
-                              {p.sku} — {p.name}
+                              {p.sku}
+                              {sep}
+                              {p.name}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -251,7 +294,7 @@ export function SOForm({
               <TableFooter>
                 <TableRow>
                   <TableCell colSpan={3} className="text-right font-semibold">
-                    Order Total
+                    {t("orderTotal")}
                   </TableCell>
                   <TableCell className="text-right font-bold tabular-nums">
                     {parseFloat(orderTotal()).toLocaleString(undefined, {
@@ -269,13 +312,13 @@ export function SOForm({
 
       <Card>
         <CardHeader>
-          <CardTitle>Additional Notes</CardTitle>
+          <CardTitle>{t("notesSectionTitle")}</CardTitle>
         </CardHeader>
         <CardContent>
-          <FormField label="Notes" error={form.formState.errors.notes?.message}>
+          <FormField label={t("notes")} error={form.formState.errors.notes?.message}>
             <Textarea
               rows={3}
-              placeholder="Internal notes, special instructions, etc."
+              placeholder={t("notesPlaceholder")}
               {...form.register("notes")}
             />
           </FormField>
@@ -284,10 +327,10 @@ export function SOForm({
 
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Creating..." : "Create Sales Order"}
+          {isSubmitting ? t("creating") : t("submit")}
         </Button>
         <Button type="button" variant="outline" onClick={onCancel}>
-          Cancel
+          {tCommon("cancel")}
         </Button>
       </div>
     </form>

@@ -1,15 +1,12 @@
 import type { SubscriptionPlan, SubscriptionStatus, TenantRole } from "../types/settings.types"
 
-export const ROLE_OPTIONS: { value: TenantRole; label: string }[] = [
-  { value: "owner", label: "Owner" },
-  { value: "admin", label: "Admin" },
-  { value: "manager", label: "Manager" },
-  { value: "viewer", label: "Viewer" },
+/** Role keys for selects and badges (labels come from i18n `SettingsTenant.roles.*`). */
+export const TENANT_ROLE_VALUES: TenantRole[] = [
+  "owner",
+  "admin",
+  "manager",
+  "viewer",
 ]
-
-export const ROLE_MAP: Record<TenantRole, string> = Object.fromEntries(
-  ROLE_OPTIONS.map((o) => [o.value, o.label])
-) as Record<TenantRole, string>
 
 export const ROLE_COLOR_MAP: Record<
   TenantRole,
@@ -33,25 +30,17 @@ export const ROLE_COLOR_MAP: Record<
   },
 }
 
-export const SUBSCRIPTION_PLAN_OPTIONS: { value: SubscriptionPlan; label: string }[] = [
-  { value: "free", label: "Free" },
-  { value: "starter", label: "Starter" },
-  { value: "professional", label: "Professional" },
-  { value: "enterprise", label: "Enterprise" },
+export const SUBSCRIPTION_PLAN_VALUES: SubscriptionPlan[] = [
+  "free",
+  "starter",
+  "professional",
+  "enterprise",
 ]
 
-export const SUBSCRIPTION_STATUS_OPTIONS: { value: SubscriptionStatus; label: string }[] = [
-  { value: "active", label: "Active" },
-  { value: "trial", label: "Trial" },
-  { value: "past_due", label: "Past Due" },
-  { value: "cancelled", label: "Cancelled" },
-  { value: "suspended", label: "Suspended" },
+export const SUBSCRIPTION_STATUS_VALUES: SubscriptionStatus[] = [
+  "active",
+  "trial",
+  "past_due",
+  "cancelled",
+  "suspended",
 ]
-
-export const SUBSCRIPTION_PLAN_MAP: Record<SubscriptionPlan, string> = Object.fromEntries(
-  SUBSCRIPTION_PLAN_OPTIONS.map((o) => [o.value, o.label])
-) as Record<SubscriptionPlan, string>
-
-export const SUBSCRIPTION_STATUS_MAP: Record<SubscriptionStatus, string> = Object.fromEntries(
-  SUBSCRIPTION_STATUS_OPTIONS.map((o) => [o.value, o.label])
-) as Record<SubscriptionStatus, string>

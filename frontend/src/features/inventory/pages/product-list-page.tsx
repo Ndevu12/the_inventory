@@ -1,7 +1,8 @@
 "use client"
 
 import { useCallback, useMemo } from "react"
-import Link from "next/link"
+import { useTranslations } from "next-intl"
+import { Link } from "@/i18n/navigation"
 import { PlusIcon } from "lucide-react"
 import type { PaginationState } from "@tanstack/react-table"
 
@@ -19,9 +20,10 @@ import { ProductTable } from "../components/products/product-table"
 import { useProducts, useDeleteProduct } from "../hooks/use-products"
 import { useCategories } from "../hooks/use-categories"
 import { useProductFiltersStore } from "../stores/product-filters-store"
-import { ACTIVE_STATUS_OPTIONS } from "../helpers/inventory-constants"
+import { ACTIVE_STATUS_VALUES } from "../helpers/inventory-constants"
 
 export function ProductListPage() {
+  const t = useTranslations("Inventory")
   const {
     search,
     category,
@@ -65,24 +67,25 @@ export function ProductListPage() {
 
   const categoryFilterItems = useMemo(
     () => [
-      { value: "__all__", label: "All Categories" },
+      { value: "__all__", label: t("filters.allCategories") },
       ...(categoriesData?.results.map((cat) => ({
         value: String(cat.id),
         label: cat.name,
       })) ?? []),
     ],
-    [categoriesData],
+    [categoriesData, t],
   )
 
   const statusFilterItems = useMemo(
     () => [
-      { value: "__all__", label: "All Status" },
-      ...ACTIVE_STATUS_OPTIONS.map((opt) => ({
-        value: opt.value,
-        label: opt.label,
+      { value: "__all__", label: t("filters.allStatus") },
+      ...ACTIVE_STATUS_VALUES.map((val) => ({
+        value: val,
+        label:
+          val === "true" ? t("shared.active") : t("shared.inactive"),
       })),
     ],
-    [],
+    [t],
   )
 
   const filterContent = (
@@ -93,10 +96,10 @@ export function ProductListPage() {
         onValueChange={(val) => setCategory(val === "__all__" ? "" : (val ?? ""))}
       >
         <SelectTrigger size="sm" className="h-8 w-[150px]">
-          <SelectValue placeholder="Category" />
+          <SelectValue placeholder={t("filters.category")} />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="__all__">All Categories</SelectItem>
+          <SelectItem value="__all__">{t("filters.allCategories")}</SelectItem>
           {categoriesData?.results.map((cat) => (
             <SelectItem key={cat.id} value={String(cat.id)}>
               {cat.name}
@@ -111,13 +114,13 @@ export function ProductListPage() {
         onValueChange={(val) => setIsActive(val === "__all__" ? "" : (val ?? ""))}
       >
         <SelectTrigger size="sm" className="h-8 w-[120px]">
-          <SelectValue placeholder="Status" />
+          <SelectValue placeholder={t("filters.status")} />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="__all__">All Status</SelectItem>
-          {ACTIVE_STATUS_OPTIONS.map((opt) => (
-            <SelectItem key={opt.value} value={opt.value}>
-              {opt.label}
+          <SelectItem value="__all__">{t("filters.allStatus")}</SelectItem>
+          {ACTIVE_STATUS_VALUES.map((val) => (
+            <SelectItem key={val} value={val}>
+              {val === "true" ? t("shared.active") : t("shared.inactive")}
             </SelectItem>
           ))}
         </SelectContent>
@@ -128,13 +131,13 @@ export function ProductListPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Products"
-        description="Manage your product catalog"
+        title={t("products.title")}
+        description={t("products.description")}
         actions={
           <Button asChild>
             <Link href="/products/new">
               <PlusIcon className="mr-2 size-4" />
-              Add Product
+              {t("products.addProduct")}
             </Link>
           </Button>
         }

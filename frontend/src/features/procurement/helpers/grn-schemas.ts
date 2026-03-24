@@ -1,15 +1,24 @@
 import { z } from "zod"
 
-export const createGRNSchema = z.object({
-  grn_number: z.string().min(1, "GRN number is required").max(100),
-  purchase_order: z.coerce
-    .number()
-    .refine((val) => val > 0, { message: "Purchase order is required" }),
-  received_date: z.string().min(1, "Received date is required"),
-  location: z.coerce
-    .number()
-    .refine((val) => val > 0, { message: "Location is required" }),
-  notes: z.string().optional().default(""),
-})
+export interface CreateGRNSchemaMessages {
+  grnNumberRequired: string
+  purchaseOrderRequired: string
+  receivedDateRequired: string
+  locationRequired: string
+}
 
-export type CreateGRNFormValues = z.infer<typeof createGRNSchema>
+export function buildCreateGRNSchema(messages: CreateGRNSchemaMessages) {
+  return z.object({
+    grn_number: z.string().min(1, messages.grnNumberRequired).max(100),
+    purchase_order: z.coerce
+      .number()
+      .refine((val) => val > 0, { message: messages.purchaseOrderRequired }),
+    received_date: z.string().min(1, messages.receivedDateRequired),
+    location: z.coerce
+      .number()
+      .refine((val) => val > 0, { message: messages.locationRequired }),
+    notes: z.string().optional().default(""),
+  })
+}
+
+export type CreateGRNFormValues = z.infer<ReturnType<typeof buildCreateGRNSchema>>

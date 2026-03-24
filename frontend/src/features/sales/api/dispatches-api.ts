@@ -5,6 +5,7 @@ import type {
   DispatchCreatePayload,
   DispatchUpdatePayload,
   DispatchListParams,
+  DispatchFulfillmentPreview,
   SimpleSalesOrder,
   SimpleLocation,
 } from "../types/dispatch.types"
@@ -45,15 +46,25 @@ export const dispatchesApi = {
     return apiClient.delete(`${BASE}/${id}/`)
   },
 
-  process(id: number) {
-    return apiClient.post<Dispatch>(`${BASE}/${id}/process/`)
+  process(id: number, body?: { issue_available_only?: boolean }) {
+    return apiClient.post<Dispatch>(
+      `${BASE}/${id}/process/`,
+      body === undefined ? undefined : body,
+    )
+  },
+
+  fulfillmentPreview(id: number) {
+    return apiClient.get<DispatchFulfillmentPreview>(
+      `${BASE}/${id}/fulfillment-preview/`,
+    )
   },
 }
 
-export function fetchSalesOrders() {
+/** Confirmed orders only — dispatches can be processed only for confirmed SOs. */
+export function fetchSalesOrdersForDispatch() {
   return apiClient.get<PaginatedResponse<SimpleSalesOrder>>(
     "/sales-orders/",
-    { page_size: "1000" },
+    { page_size: "1000", status: "confirmed" },
   )
 }
 

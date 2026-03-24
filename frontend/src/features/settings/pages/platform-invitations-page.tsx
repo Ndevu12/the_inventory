@@ -3,6 +3,7 @@
 import * as React from "react"
 import type { PaginationState } from "@tanstack/react-table"
 import { toast } from "sonner"
+import { useTranslations } from "next-intl"
 
 import { PageHeader } from "@/components/layout/page-header"
 import { DataTable } from "@/components/data-table/data-table"
@@ -22,16 +23,23 @@ import {
 import { usePlatformTenants } from "../hooks/use-platform-users"
 import { getPlatformInvitationColumns } from "../components/platform-invitation-columns"
 import type { PlatformInvitation, PlatformInvitationListParams } from "../types/settings.types"
+import type { TenantRole } from "../types/settings.types"
 
-const STATUS_OPTIONS = [
-  { value: "pending", label: "Pending" },
-  { value: "accepted", label: "Accepted" },
-  { value: "cancelled", label: "Cancelled" },
-  { value: "expired", label: "Expired" },
-]
+const STATUS_FILTER_VALUES = ["pending", "accepted", "cancelled", "expired"] as const
 
 export function PlatformInvitationsPage() {
   const { data: tenants = [] } = usePlatformTenants()
+  const t = useTranslations("SettingsPlatform.invitations")
+  const tRoles = useTranslations("SettingsTenant.roles")
+
+  const tInv = React.useCallback(
+    (key: string) => t(key as Parameters<typeof t>[0]),
+    [t],
+  )
+  const roleLabel = React.useCallback(
+    (role: TenantRole) => tRoles(role),
+    [tRoles],
+  )
 
   const [pagination, setPagination] = React.useState<PaginationState>({
     pageIndex: 0,
@@ -64,21 +72,21 @@ export function PlatformInvitationsPage() {
   const handleCancel = React.useCallback(
     (invitation: PlatformInvitation) => {
       cancelMutation.mutate(invitation.id, {
-        onSuccess: () => toast.success("Invitation cancelled"),
-        onError: () => toast.error("Failed to cancel invitation"),
+        onSuccess: () => toast.success(t("toast.cancelled")),
+        onError: () => toast.error(t("toast.cancelFailed")),
       })
     },
-    [cancelMutation]
+    [cancelMutation, t],
   )
 
   const handleResend = React.useCallback(
     (invitation: PlatformInvitation) => {
       resendMutation.mutate(invitation.id, {
-        onSuccess: () => toast.success("Invitation resent successfully"),
-        onError: () => toast.error("Failed to resend invitation"),
+        onSuccess: () => toast.success(t("toast.resent")),
+        onError: () => toast.error(t("toast.resendFailed")),
       })
     },
-    [resendMutation]
+    [resendMutation, t],
   )
 
   const columns = React.useMemo(
@@ -88,15 +96,24 @@ export function PlatformInvitationsPage() {
         onResend: handleResend,
         isCancelling: cancelMutation.isPending,
         isResending: resendMutation.isPending,
+        t: tInv,
+        roleLabel,
       }),
-    [handleCancel, handleResend, cancelMutation.isPending, resendMutation.isPending]
+    [
+      handleCancel,
+      handleResend,
+      cancelMutation.isPending,
+      resendMutation.isPending,
+      tInv,
+      roleLabel,
+    ],
   )
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-6">
       <PageHeader
-        title="Invitations"
-        description="All tenant invitations across the platform. Superuser only."
+        title={t("page.title")}
+        description={t("page.description")}
       />
 
       <DataTable
@@ -106,31 +123,31 @@ export function PlatformInvitationsPage() {
         pagination={pagination}
         onPaginationChange={setPagination}
         isLoading={isLoading}
-        emptyMessage="No invitations found."
+        emptyMessage={t("emptyMessage")}
         filterContent={
           <div className="flex flex-wrap items-center gap-2">
             <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v ?? "all")}>
               <SelectTrigger className="h-8 w-[140px]">
-                <SelectValue placeholder="Status" />
+                <SelectValue placeholder={t("filterStatusPlaceholder")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All statuses</SelectItem>
-                {STATUS_OPTIONS.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>
-                    {opt.label}
+                <SelectItem value="all">{t("filterAllStatuses")}</SelectItem>
+                {STATUS_FILTER_VALUES.map((value) => (
+                  <SelectItem key={value} value={value}>
+                    {t(`status.${value}`)}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
             <Select value={tenantFilter} onValueChange={(v) => setTenantFilter(v ?? "all")}>
               <SelectTrigger className="h-8 w-[180px]">
-                <SelectValue placeholder="Tenant" />
+                <SelectValue placeholder={t("filterTenantPlaceholder")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All tenants</SelectItem>
-                {tenants.map((t) => (
-                  <SelectItem key={t.id} value={String(t.id)}>
-                    {t.name}
+                <SelectItem value="all">{t("filterAllTenants")}</SelectItem>
+                {tenants.map((tenant) => (
+                  <SelectItem key={tenant.id} value={String(tenant.id)}>
+                    {tenant.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -140,14 +157,14 @@ export function PlatformInvitationsPage() {
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
               className="h-8 w-[150px]"
-              placeholder="From"
+              placeholder={t("filterFrom")}
             />
             <Input
               type="date"
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
               className="h-8 w-[150px]"
-              placeholder="To"
+              placeholder={t("filterTo")}
             />
           </div>
         }

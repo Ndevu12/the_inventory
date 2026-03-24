@@ -9,7 +9,9 @@ import type {
   RegisterRequest,
   RegisterResponse,
   ImpersonateStartResponse,
+  UpdateProfileRequest,
 } from "../types/auth.types";
+import type { User } from "@/lib/auth-store";
 
 const AUTH_BASE = "/auth";
 
@@ -27,6 +29,10 @@ export function register(payload: RegisterRequest): Promise<RegisterResponse> {
 
 export function fetchMe(): Promise<MeResponse> {
   return apiClient.get<MeResponse>(`${AUTH_BASE}/me/`);
+}
+
+export function updateProfile(data: UpdateProfileRequest): Promise<User> {
+  return apiClient.patch<User>(`${AUTH_BASE}/me/`, data);
 }
 
 export function changePassword(

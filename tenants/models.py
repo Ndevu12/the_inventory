@@ -19,6 +19,7 @@ import secrets
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 from modelcluster.fields import ParentalKey
 from modelcluster.models import ClusterableModel
 from wagtail.admin.panels import (
@@ -30,6 +31,8 @@ from wagtail.admin.panels import (
 )
 from wagtail.search import index
 
+from tenants.wagtail_locales import wagtail_locale_choices
+
 
 # ---------------------------------------------------------------------------
 # Choices
@@ -37,25 +40,25 @@ from wagtail.search import index
 
 
 class TenantRole(models.TextChoices):
-    OWNER = "owner", "Owner"
-    ADMIN = "admin", "Admin"
-    MANAGER = "manager", "Manager"
-    VIEWER = "viewer", "Viewer"
+    OWNER = "owner", _("Owner")
+    ADMIN = "admin", _("Admin")
+    MANAGER = "manager", _("Manager")
+    VIEWER = "viewer", _("Viewer")
 
 
 class SubscriptionPlan(models.TextChoices):
-    FREE = "free", "Free"
-    STARTER = "starter", "Starter"
-    PROFESSIONAL = "professional", "Professional"
-    ENTERPRISE = "enterprise", "Enterprise"
+    FREE = "free", _("Free")
+    STARTER = "starter", _("Starter")
+    PROFESSIONAL = "professional", _("Professional")
+    ENTERPRISE = "enterprise", _("Enterprise")
 
 
 class SubscriptionStatus(models.TextChoices):
-    ACTIVE = "active", "Active"
-    TRIAL = "trial", "Trial"
-    PAST_DUE = "past_due", "Past Due"
-    CANCELLED = "cancelled", "Cancelled"
-    SUSPENDED = "suspended", "Suspended"
+    ACTIVE = "active", _("Active")
+    TRIAL = "trial", _("Trial")
+    PAST_DUE = "past_due", _("Past Due")
+    CANCELLED = "cancelled", _("Cancelled")
+    SUSPENDED = "suspended", _("Suspended")
 
 
 # ---------------------------------------------------------------------------
@@ -82,6 +85,15 @@ class Tenant(ClusterableModel, index.Indexed, models.Model):
     is_active = models.BooleanField(
         default=True,
         help_text="Inactive tenants cannot log in or access data.",
+    )
+    preferred_language = models.CharField(
+        max_length=32,
+        default="en",
+        choices=wagtail_locale_choices,
+        help_text=(
+            "Default locale for this tenant (admin strings, API fallbacks). "
+            "Options match Wagtail Settings → Locales."
+        ),
     )
 
     # -- Branding ----------------------------------------------------------
@@ -153,6 +165,7 @@ class Tenant(ClusterableModel, index.Indexed, models.Model):
                     FieldPanel("slug", classname="col6"),
                 ]),
                 FieldPanel("is_active"),
+                FieldPanel("preferred_language"),
             ],
             heading="Identity",
         ),
@@ -321,10 +334,10 @@ def _make_token():
 
 
 class InvitationStatus(models.TextChoices):
-    PENDING = "pending", "Pending"
-    ACCEPTED = "accepted", "Accepted"
-    CANCELLED = "cancelled", "Cancelled"
-    EXPIRED = "expired", "Expired"
+    PENDING = "pending", _("Pending")
+    ACCEPTED = "accepted", _("Accepted")
+    CANCELLED = "cancelled", _("Cancelled")
+    EXPIRED = "expired", _("Expired")
 
 
 class TenantInvitation(models.Model):

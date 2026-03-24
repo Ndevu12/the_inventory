@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { Cell, Pie, PieChart } from "recharts";
 import {
   ChartContainer,
@@ -18,6 +19,7 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useTranslations } from "next-intl";
 import type { OrderStatusData } from "../types/dashboard.types";
 import { toPieData, type PieDatum } from "../helpers/chart-helpers";
 import { useDashboardStore } from "../stores/dashboard-store";
@@ -26,13 +28,25 @@ import {
   getDashboardErrorMessage,
 } from "./dashboard-widget-error";
 
-const chartConfig = {
-  Draft: { label: "Draft", color: "var(--color-chart-1)" },
-  Confirmed: { label: "Confirmed", color: "var(--color-chart-2)" },
-  Received: { label: "Received", color: "var(--color-chart-3)" },
-  Fulfilled: { label: "Fulfilled", color: "var(--color-chart-3)" },
-  Cancelled: { label: "Cancelled", color: "var(--color-chart-4)" },
-} satisfies ChartConfig;
+const STATUS_KEYS = [
+  "Draft",
+  "Confirmed",
+  "Received",
+  "Fulfilled",
+  "Cancelled",
+] as const;
+
+type StatusKey = (typeof STATUS_KEYS)[number];
+
+const STATUS_COLORS: Record<StatusKey, string> = {
+  Draft: "var(--color-chart-1)",
+  Confirmed: "var(--color-chart-2)",
+  Received: "var(--color-chart-3)",
+  Fulfilled: "var(--color-chart-3)",
+  Cancelled: "var(--color-chart-4)",
+};
+
+const STATUS_KEY_SET = new Set<string>(STATUS_KEYS);
 
 interface OrderStatusChartProps {
   data: OrderStatusData | undefined;
@@ -42,13 +56,36 @@ interface OrderStatusChartProps {
   onRetry?: () => void;
 }
 
-function StatusPie({ items }: { items: PieDatum[] }) {
-  const total = items.reduce((sum, d) => sum + d.value, 0);
+function StatusPie({
+  items,
+  chartConfig,
+  emptyLabel,
+  totalLabel,
+}: {
+  items: PieDatum[];
+  chartConfig: ChartConfig;
+  emptyLabel: string;
+  totalLabel: string;
+}) {
+  const tLabels = useTranslations("Dashboard.orderStatus.statusLabels");
+
+  const displayItems = useMemo(
+    () =>
+      items.map((d) => ({
+        ...d,
+        name: STATUS_KEY_SET.has(d.name)
+          ? tLabels(d.name as StatusKey)
+          : d.name,
+      })),
+    [items, tLabels],
+  );
+
+  const total = displayItems.reduce((sum, d) => sum + d.value, 0);
 
   if (total === 0) {
     return (
       <div className="flex h-[250px] items-center justify-center text-muted-foreground">
-        No orders yet
+        {emptyLabel}
       </div>
     );
   }
@@ -58,7 +95,7 @@ function StatusPie({ items }: { items: PieDatum[] }) {
       <PieChart accessibilityLayer>
         <ChartTooltip content={<ChartTooltipContent hideLabel />} />
         <Pie
-          data={items}
+          data={displayItems}
           dataKey="value"
           nameKey="name"
           innerRadius={60}
@@ -66,8 +103,8 @@ function StatusPie({ items }: { items: PieDatum[] }) {
           strokeWidth={2}
           paddingAngle={2}
         >
-          {items.map((entry) => (
-            <Cell key={entry.name} fill={entry.fill} />
+          {displayItems.map((entry, i) => (
+            <Cell key={`${items[i]?.name ?? i}-${i}`} fill={entry.fill} />
           ))}
         </Pie>
         <ChartLegend content={<ChartLegendContent nameKey="name" />} />
@@ -87,7 +124,7 @@ function StatusPie({ items }: { items: PieDatum[] }) {
           dominantBaseline="central"
           className="fill-muted-foreground text-xs"
         >
-          Total
+          {totalLabel}
         </text>
       </PieChart>
     </ChartContainer>
@@ -102,19 +139,35 @@ export function OrderStatusChart({
   onRetry,
 }: OrderStatusChartProps) {
   const { orderChartTab, setOrderChartTab } = useDashboardStore();
+  const t = useTranslations("Dashboard");
+  const tOrder = useTranslations("Dashboard.orderStatus");
+  const tLabels = useTranslations("Dashboard.orderStatus.statusLabels");
+  const genericError = t("error.generic");
+
+  const chartConfig = useMemo(() => {
+    const cfg: ChartConfig = {};
+    for (const key of STATUS_KEYS) {
+      const label = tLabels(key);
+      cfg[label] = {
+        label,
+        color: STATUS_COLORS[key],
+      };
+    }
+    return cfg;
+  }, [tLabels]);
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Order Status</CardTitle>
-        <CardDescription>Distribution by current status</CardDescription>
+        <CardTitle>{tOrder("title")}</CardTitle>
+        <CardDescription>{tOrder("description")}</CardDescription>
       </CardHeader>
       <CardContent>
         {isLoading ? (
           <Skeleton className="h-[300px] w-full" />
         ) : isError ? (
           <DashboardWidgetError
-            message={getDashboardErrorMessage(error)}
+            message={getDashboardErrorMessage(error, genericError)}
             onRetry={onRetry}
             minHeight="300px"
           />
@@ -128,14 +181,24 @@ export function OrderStatusChart({
             }
           >
             <TabsList className="w-full">
-              <TabsTrigger value="purchase">Purchase Orders</TabsTrigger>
-              <TabsTrigger value="sales">Sales Orders</TabsTrigger>
+              <TabsTrigger value="purchase">{tOrder("tabPurchase")}</TabsTrigger>
+              <TabsTrigger value="sales">{tOrder("tabSales")}</TabsTrigger>
             </TabsList>
             <TabsContent value="purchase">
-              <StatusPie items={toPieData(data.purchase_orders)} />
+              <StatusPie
+                items={toPieData(data.purchase_orders)}
+                chartConfig={chartConfig}
+                emptyLabel={tOrder("empty")}
+                totalLabel={tOrder("totalLabel")}
+              />
             </TabsContent>
             <TabsContent value="sales">
-              <StatusPie items={toPieData(data.sales_orders)} />
+              <StatusPie
+                items={toPieData(data.sales_orders)}
+                chartConfig={chartConfig}
+                emptyLabel={tOrder("empty")}
+                totalLabel={tOrder("totalLabel")}
+              />
             </TabsContent>
           </Tabs>
         )}

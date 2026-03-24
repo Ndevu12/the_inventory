@@ -1,0 +1,246 @@
+{
+  "shared": {
+    "emDash": "—",
+    "unknownError": "Unknown error",
+    "nameSeparator": " — "
+  },
+  "paymentTerms": {
+    "net_30": "Net 30",
+    "net_60": "Net 60",
+    "net_90": "Net 90",
+    "cod": "Cash on delivery",
+    "prepaid": "Prepaid"
+  },
+  "poStatus": {
+    "draft": "Draft",
+    "confirmed": "Confirmed",
+    "received": "Received",
+    "cancelled": "Cancelled"
+  },
+  "grnProcessStatus": {
+    "pending": "Pending",
+    "processed": "Processed"
+  },
+  "suppliers": {
+    "list": {
+      "title": "Suppliers",
+      "description": "Manage your supplier directory",
+      "newButton": "New supplier",
+      "searchPlaceholder": "Search suppliers...",
+      "empty": "No suppliers found.",
+      "deleteConfirm": "Delete supplier “{name}”?",
+      "toastDeleted": "Supplier “{name}” deleted",
+      "toastDeleteFailed": "Failed to delete supplier"
+    },
+    "create": {
+      "title": "New supplier",
+      "description": "Add a supplier to your directory",
+      "toastCreated": "Supplier “{name}” created",
+      "toastCreateFailed": "Failed to create supplier",
+      "creating": "Creating...",
+      "submit": "Create supplier"
+    },
+    "edit": {
+      "title": "Edit {name}",
+      "description": "Update supplier information",
+      "notFound": "Supplier not found",
+      "backToList": "Back to suppliers",
+      "toastUpdated": "Supplier “{name}” updated",
+      "toastUpdateFailed": "Failed to update supplier",
+      "saving": "Saving...",
+      "submit": "Save changes"
+    },
+    "columns": {
+      "code": "Code",
+      "name": "Name",
+      "contact": "Contact",
+      "email": "Email",
+      "phone": "Phone",
+      "paymentTerms": "Payment terms",
+      "leadTime": "Lead time",
+      "status": "Status",
+      "leadTimeDays": "{count, plural, one {# day} other {# days}}"
+    },
+    "form": {
+      "code": "Code",
+      "name": "Name",
+      "contactName": "Contact name",
+      "email": "Email",
+      "phone": "Phone",
+      "leadTimeDays": "Lead time (days)",
+      "paymentTerms": "Payment terms",
+      "address": "Address",
+      "notes": "Notes",
+      "active": "Active",
+      "selectTerms": "Select terms",
+      "placeholders": {
+        "code": "e.g. SUP-001",
+        "companyName": "Company name",
+        "contactPerson": "Contact person",
+        "email": "email@example.com",
+        "phone": "+1 555 000 0000",
+        "address": "Street, city, postal code",
+        "notes": "Internal notes about this supplier"
+      }
+    },
+    "validation": {
+      "codeRequired": "Code is required",
+      "nameRequired": "Name is required",
+      "emailInvalid": "Invalid email address",
+      "leadTimeMin": "Must be greater than or equal to 0"
+    }
+  },
+  "purchaseOrders": {
+    "list": {
+      "title": "Purchase orders",
+      "description": "Manage orders placed with suppliers.",
+      "newButton": "New purchase order",
+      "searchPlaceholder": "Search purchase orders...",
+      "empty": "No purchase orders found.",
+      "statusFilter": "Status",
+      "toastConfirmed": "Purchase order {orderNumber} confirmed",
+      "toastCancelled": "Purchase order {orderNumber} cancelled",
+      "confirmFailed": "Failed to confirm: {message}",
+      "cancelFailed": "Failed to cancel: {message}",
+      "cancelConfirm": "Cancel purchase order “{orderNumber}”?"
+    },
+    "create": {
+      "title": "Create purchase order",
+      "description": "Place a new order with a supplier.",
+      "toastSuccess": "Purchase order created successfully",
+      "toastError": "Failed to create purchase order: {message}"
+    },
+    "detail": {
+      "title": "PO: {orderNumber}",
+      "titleLoading": "Purchase order",
+      "backToList": "Back to list",
+      "toastConfirmed": "Purchase order confirmed",
+      "toastCancelled": "Purchase order cancelled",
+      "cancelConfirm": "Cancel this purchase order?",
+      "confirmFailed": "Failed to confirm: {message}",
+      "cancelFailed": "Failed to cancel: {message}"
+    },
+    "columns": {
+      "orderNumber": "Order #",
+      "supplier": "Supplier",
+      "status": "Status",
+      "orderDate": "Order date",
+      "expectedDelivery": "Expected delivery",
+      "total": "Total",
+      "created": "Created"
+    },
+    "actions": {
+      "view": "View",
+      "confirm": "Confirm",
+      "cancel": "Cancel"
+    },
+    "form": {
+      "orderDetailsTitle": "Order details",
+      "orderDetailsDescription": "Basic purchase order information",
+      "supplier": "Supplier",
+      "selectSupplier": "Select a supplier...",
+      "orderDate": "Order date",
+      "expectedDeliveryDate": "Expected delivery date",
+      "notes": "Notes",
+      "notesPlaceholder": "Internal notes about this order...",
+      "lineItemsTitle": "Lines",
+      "lineItemsDescription": "Products to order from this supplier",
+      "addLine": "Add line",
+      "colProduct": "Product",
+      "colQuantity": "Quantity",
+      "colUnitCost": "Unit cost",
+      "colLineTotal": "Line total",
+      "grandTotal": "Grand total",
+      "selectProduct": "Select a product...",
+      "unitCostPlaceholder": "0.00",
+      "creating": "Creating...",
+      "submit": "Create purchase order"
+    },
+    "detailView": {
+      "confirming": "Confirming...",
+      "confirm": "Confirm",
+      "cancelling": "Cancelling...",
+      "cancelOrder": "Cancel order",
+      "orderDate": "Order date",
+      "expectedDelivery": "Expected delivery",
+      "totalCost": "Total cost",
+      "created": "Created",
+      "notes": "Notes",
+      "lineItemsTitle": "Lines",
+      "lineItemsCount": "{count, plural, one {# line item} other {# line items}} on this order",
+      "colProduct": "Product",
+      "colSku": "SKU",
+      "colQuantity": "Quantity",
+      "colUnitCost": "Unit cost",
+      "colLineTotal": "Line total",
+      "grandTotal": "Grand total"
+    },
+    "validation": {
+      "productRequired": "Product is required",
+      "quantityMin": "Quantity must be at least 1",
+      "unitCostRequired": "Unit cost is required",
+      "unitCostPositive": "Must be a positive number",
+      "supplierRequired": "Supplier is required",
+      "orderDateRequired": "Order date is required",
+      "atLeastOneLine": "At least one line is required"
+    }
+  },
+  "grn": {
+    "list": {
+      "title": "Goods received",
+      "description": "Track and process goods received against purchase orders",
+      "newButton": "New GRN",
+      "empty": "No goods received notes found.",
+      "statusFilter": "Status",
+      "processConfirm": "Process GRN “{grnNumber}”? Stock movements will be created; this cannot be undone.",
+      "toastProcessed": "GRN “{grnNumber}” processed — stock movements created",
+      "toastProcessFailed": "Failed to process GRN",
+      "deleteConfirm": "Delete GRN “{grnNumber}”?",
+      "toastDeleted": "GRN “{grnNumber}” deleted",
+      "toastDeleteFailed": "Failed to delete GRN"
+    },
+    "create": {
+      "title": "New goods received note",
+      "description": "Record goods received against a purchase order",
+      "toastCreated": "GRN “{grnNumber}” created",
+      "toastError": "Failed to create GRN",
+      "creating": "Creating...",
+      "submit": "Create GRN"
+    },
+    "columns": {
+      "grnNumber": "GRN #",
+      "purchaseOrder": "Purchase order",
+      "receivedDate": "Received date",
+      "location": "Location",
+      "status": "Status",
+      "created": "Created"
+    },
+    "actions": {
+      "view": "View",
+      "receiveGoods": "Receive goods"
+    },
+    "form": {
+      "detailsTitle": "GRN details",
+      "detailsDescription": "Record goods received against a purchase order.",
+      "grnNumber": "GRN number",
+      "purchaseOrder": "Purchase order",
+      "receivedDate": "Received date",
+      "location": "Location",
+      "notesSectionTitle": "Additional notes",
+      "notes": "Notes",
+      "placeholders": {
+        "grnNumber": "e.g. GRN-2026-001",
+        "notes": "Condition of goods, discrepancies, etc."
+      },
+      "loading": "Loading...",
+      "selectPO": "Select a purchase order",
+      "selectLocation": "Select a location"
+    },
+    "validation": {
+      "grnNumberRequired": "GRN number is required",
+      "purchaseOrderRequired": "Purchase order is required",
+      "receivedDateRequired": "Received date is required",
+      "locationRequired": "Location is required"
+    }
+  }
+}

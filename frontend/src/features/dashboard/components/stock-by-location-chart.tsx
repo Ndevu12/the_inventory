@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import {
   Bar,
   BarChart,
@@ -23,23 +24,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useTranslations } from "next-intl";
 import type { StockByLocationData } from "../types/dashboard.types";
 import { toStockByLocationBarData } from "../helpers/chart-helpers";
 import {
   DashboardWidgetError,
   getDashboardErrorMessage,
 } from "./dashboard-widget-error";
-
-const chartConfig = {
-  reserved: {
-    label: "Reserved",
-    color: "var(--color-chart-4)",
-  },
-  available: {
-    label: "Available",
-    color: "var(--color-chart-2)",
-  },
-} satisfies ChartConfig;
 
 interface StockByLocationChartProps {
   data: StockByLocationData | undefined;
@@ -56,20 +47,37 @@ export function StockByLocationChart({
   error,
   onRetry,
 }: StockByLocationChartProps) {
+  const t = useTranslations("Dashboard");
+  const tStock = useTranslations("Dashboard.stockByLocation");
+  const genericError = t("error.generic");
+
+  const chartConfig = useMemo(
+    () =>
+      ({
+        reserved: {
+          label: tStock("legendReserved"),
+          color: "var(--color-chart-4)",
+        },
+        available: {
+          label: tStock("legendAvailable"),
+          color: "var(--color-chart-2)",
+        },
+      }) satisfies ChartConfig,
+    [tStock],
+  );
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Stock by Location</CardTitle>
-        <CardDescription>
-          Available and reserved quantities per location
-        </CardDescription>
+        <CardTitle>{tStock("title")}</CardTitle>
+        <CardDescription>{tStock("description")}</CardDescription>
       </CardHeader>
       <CardContent>
         {isLoading ? (
           <Skeleton className="h-[300px] w-full" />
         ) : isError ? (
           <DashboardWidgetError
-            message={getDashboardErrorMessage(error)}
+            message={getDashboardErrorMessage(error, genericError)}
             onRetry={onRetry}
             minHeight="300px"
           />
@@ -77,7 +85,7 @@ export function StockByLocationChart({
           <Skeleton className="h-[300px] w-full" />
         ) : data.labels.length === 0 ? (
           <div className="flex h-[300px] items-center justify-center text-muted-foreground">
-            No stock data available
+            {tStock("empty")}
           </div>
         ) : (
           <ChartContainer config={chartConfig} className="h-[300px] w-full">

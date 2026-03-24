@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -23,14 +24,20 @@ import {
 } from "@/components/ui/form";
 import { cn } from "@/lib/utils";
 import {
-  countLineSchema,
+  createCountLineSchema,
   type CountLineFormValues,
 } from "../helpers/count-line-schemas";
 import type { CycleCountLine } from "../types/cycle-count.types";
 
 interface CountLineFormProps {
   lines: CycleCountLine[];
-  onRecord: (lineId: number, product: number, location: number, countedQuantity: number, notes: string) => void;
+  onRecord: (
+    lineId: number,
+    product: number,
+    location: number,
+    countedQuantity: number,
+    notes: string,
+  ) => void;
   isRecording?: boolean;
 }
 
@@ -39,10 +46,23 @@ export function CountLineForm({
   onRecord,
   isRecording = false,
 }: CountLineFormProps) {
+  const t = useTranslations("CycleCounts.countLine");
+  const tVal = useTranslations("CycleCounts.countLine.validation");
+  const tCommon = useTranslations("Common.actions");
+
+  const schema = useMemo(
+    () =>
+      createCountLineSchema({
+        quantityInt: tVal("quantityInt"),
+        quantityNonNegative: tVal("quantityNonNegative"),
+      }),
+    [tVal],
+  );
+
   const [editingLine, setEditingLine] = useState<number | null>(null);
 
   const form = useForm<CountLineFormValues>({
-    resolver: zodResolver(countLineSchema),
+    resolver: zodResolver(schema),
     defaultValues: {
       quantity: 0,
       notes: "",
@@ -59,7 +79,13 @@ export function CountLineForm({
 
   function handleSubmit(line: CycleCountLine) {
     return form.handleSubmit((values) => {
-      onRecord(line.id, line.product, line.location, values.quantity, values.notes ?? "");
+      onRecord(
+        line.id,
+        line.product,
+        line.location,
+        values.quantity,
+        values.notes ?? "",
+      );
       setEditingLine(null);
       form.reset({ quantity: 0, notes: "" });
     });
@@ -78,9 +104,9 @@ export function CountLineForm({
       {uncountedLines.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Pending Counts</CardTitle>
+            <CardTitle className="text-base">{t("pendingTitle")}</CardTitle>
             <CardDescription>
-              {uncountedLines.length} item{uncountedLines.length !== 1 ? "s" : ""} remaining
+              {t("pendingRemaining", { count: uncountedLines.length })}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -94,7 +120,12 @@ export function CountLineForm({
                         {line.product_sku}
                       </span>
                       <div className="text-sm text-muted-foreground">
-                        {line.location_name} — System qty: {line.system_quantity}
+                        {t("locationSystemLine", {
+                          location: line.location_name,
+                          systemQty: t("systemQty", {
+                            qty: line.system_quantity,
+                          }),
+                        })}
                       </div>
                     </div>
                     {editingLine !== line.id && (
@@ -103,7 +134,7 @@ export function CountLineForm({
                         size="sm"
                         onClick={() => handleStartEdit(line)}
                       >
-                        Record Count
+                        {t("recordCount")}
                       </Button>
                     )}
                   </div>
@@ -120,13 +151,19 @@ export function CountLineForm({
                             name="quantity"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Physical Count *</FormLabel>
+                                <FormLabel>{t("physicalCount")}</FormLabel>
                                 <FormControl>
                                   <Input
                                     type="number"
                                     min={0}
-                                    {...field}
                                     autoFocus
+                                    value={field.value}
+                                    onChange={(e) => {
+                                      const n = parseInt(e.target.value, 10);
+                                      field.onChange(
+                                        Number.isNaN(n) ? 0 : n,
+                                      );
+                                    }}
                                   />
                                 </FormControl>
                                 <FormMessage />
@@ -138,11 +175,11 @@ export function CountLineForm({
                             name="notes"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Notes</FormLabel>
+                                <FormLabel>{t("notes")}</FormLabel>
                                 <FormControl>
                                   <Textarea
                                     rows={1}
-                                    placeholder="Optional notes..."
+                                    placeholder={t("notesPlaceholder")}
                                     {...field}
                                   />
                                 </FormControl>
@@ -157,7 +194,7 @@ export function CountLineForm({
                             size="sm"
                             disabled={isRecording}
                           >
-                            {isRecording ? "Saving..." : "Save"}
+                            {isRecording ? t("saving") : t("save")}
                           </Button>
                           <Button
                             type="button"
@@ -165,7 +202,7 @@ export function CountLineForm({
                             variant="ghost"
                             onClick={handleCancel}
                           >
-                            Cancel
+                            {tCommon("cancel")}
                           </Button>
                         </div>
                       </form>
@@ -181,9 +218,9 @@ export function CountLineForm({
       {countedLines.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Counted</CardTitle>
+            <CardTitle className="text-base">{t("countedTitle")}</CardTitle>
             <CardDescription>
-              {countedLines.length} item{countedLines.length !== 1 ? "s" : ""} counted
+              {t("countedSummary", { count: countedLines.length })}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -191,7 +228,10 @@ export function CountLineForm({
               {countedLines.map((line) => {
                 const variance = line.variance ?? 0;
                 return (
-                  <div key={line.id} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
+                  <div
+                    key={line.id}
+                    className="flex items-center justify-between py-3 first:pt-0 last:pb-0"
+                  >
                     <div>
                       <span className="font-medium">{line.product_name}</span>
                       <span className="ml-2 text-xs text-muted-foreground">
@@ -203,17 +243,18 @@ export function CountLineForm({
                     </div>
                     <div className="flex items-center gap-4 text-sm">
                       <div className="text-muted-foreground">
-                        System: {line.system_quantity}
+                        {t("systemLabel")} {line.system_quantity}
                       </div>
                       <div>
-                        Counted: {line.counted_quantity}
+                        {t("countedLabel")} {line.counted_quantity}
                       </div>
                       <div
                         className={cn(
                           "font-medium",
                           variance > 0 && "text-blue-600 dark:text-blue-400",
                           variance < 0 && "text-red-600 dark:text-red-400",
-                          variance === 0 && "text-green-600 dark:text-green-400",
+                          variance === 0 &&
+                            "text-green-600 dark:text-green-400",
                         )}
                       >
                         {variance > 0 ? `+${variance}` : variance}
@@ -223,7 +264,7 @@ export function CountLineForm({
                         size="sm"
                         onClick={() => handleStartEdit(line)}
                       >
-                        Recount
+                        {t("recount")}
                       </Button>
                     </div>
                   </div>
@@ -237,7 +278,7 @@ export function CountLineForm({
       {lines.length === 0 && (
         <Card>
           <CardContent className="py-8 text-center text-muted-foreground">
-            No count lines found for this cycle.
+            {t("emptyLines")}
           </CardContent>
         </Card>
       )}
