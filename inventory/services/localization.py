@@ -1,4 +1,11 @@
-"""Programmatic wagtail-localize flows for tenant catalog models (API authoring)."""
+"""Programmatic wagtail-localize flows for tenant catalog models (API authoring).
+
+Domain copy (product name, etc.) lives in the DB as linked rows per Wagtail locale.
+Create or update those via this service and translatable serializers; use ``GET`` with
+``?language=`` (sent automatically from the Next.js UI locale) to read overlays. Static UI
+strings belong in ``frontend/public/locales/*.json``, not here. See
+``tests/api/test_api_i18n_authoring.py`` for API examples.
+"""
 
 from __future__ import annotations
 

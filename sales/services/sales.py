@@ -12,9 +12,9 @@ import logging
 from django.core.exceptions import ValidationError
 from django.db import transaction
 
-from inventory.exceptions import InventoryError
+from inventory.exceptions import InsufficientStockError, InventoryError
 from inventory.models.reservation import ReservationRule
-from inventory.models.stock import MovementType
+from inventory.models.stock import MovementType, StockRecord
 from inventory.services.reservation import ReservationService
 from inventory.services.stock import StockService
 
@@ -101,16 +101,32 @@ class SalesService:
         sales_order.save(update_fields=["status", "updated_at"])
         return sales_order
 
-    def process_dispatch(self, *, dispatch, dispatched_by=None):
+    def process_dispatch(
+        self,
+        *,
+        dispatch,
+        dispatched_by=None,
+        issue_available_only: bool = False,
+    ):
         """Process a dispatch: issue stock for each sales order line.
 
         Creates an ``issue`` StockMovement for each line on the
         associated sales order, decrementing stock at the dispatch's
         source location.  Marks the dispatch as processed and
-        transitions the SO to fulfilled status.
+        transitions the SO to fulfilled status (or leaves it confirmed
+        when ``issue_available_only`` ships a partial quantity).
+
+        When ``issue_available_only`` is True, each line issues
+        ``min(line quantity, available quantity at the dispatch source
+        location)`` (available = on-hand minus reservations).  If every
+        non-zero line can be fully covered, behaviour matches a normal
+        full dispatch (line quantities on the SO are not reduced).
+        Otherwise remaining quantities stay on the order for a later
+        dispatch.
 
         The entire operation is wrapped in a transaction — if any
-        movement fails (e.g. insufficient stock), nothing is persisted.
+        movement fails (e.g. insufficient stock on full dispatch),
+        nothing is persisted.
         """
         if dispatch.is_processed:
             raise ValidationError(
@@ -130,18 +146,32 @@ class SalesService:
                 "The sales order has no line items to dispatch."
             )
 
+        lines_list = list(lines.order_by("pk"))
+
+        if issue_available_only:
+            return self._process_dispatch_available_only(
+                dispatch=dispatch,
+                sales_order=so,
+                lines=lines_list,
+                dispatched_by=dispatched_by,
+            )
+
         with transaction.atomic():
             try:
-                for line in lines:
-                    self._stock_service.process_movement(
-                        product=line.product,
-                        movement_type=MovementType.ISSUE,
-                        quantity=line.quantity,
-                        from_location=dispatch.from_location,
-                        unit_cost=line.product.unit_cost,
-                        reference=dispatch.dispatch_number,
-                        created_by=dispatched_by,
-                    )
+                self._issue_full_quantities(
+                    dispatch=dispatch,
+                    lines=lines_list,
+                    dispatched_by=dispatched_by,
+                )
+            except InsufficientStockError as exc:
+                loc = dispatch.from_location
+                loc_label = getattr(loc, "name", None) or "the source location"
+                raise ValidationError(
+                    f"{exc} "
+                    f'Receive or transfer stock into "{loc_label}" first, '
+                    f"then process this dispatch again, or use "
+                    f'"issue available quantities only" if supported.',
+                ) from exc
             except InventoryError as exc:
                 raise ValidationError(str(exc)) from exc
 
@@ -153,9 +183,158 @@ class SalesService:
 
         return dispatch
 
+    def fulfillment_preview(self, *, dispatch):
+        """Per-line ordered vs available (unreserved) stock at dispatch source."""
+        if dispatch.is_processed:
+            raise ValidationError("This dispatch has already been processed.")
+
+        so = dispatch.sales_order
+        if so.status != SalesOrderStatus.CONFIRMED:
+            raise ValidationError(
+                f"Sales order must be confirmed. "
+                f"Current status: {so.get_status_display()}."
+            )
+
+        loc = dispatch.from_location
+        rows = []
+        for line in so.lines.select_related("product").order_by("pk"):
+            ordered = line.quantity
+            available = self._available_at_location(
+                product=line.product,
+                location=loc,
+            )
+            issue_now = min(ordered, available) if ordered > 0 else 0
+            rows.append({
+                "line_id": line.id,
+                "product_id": line.product_id,
+                "product_sku": line.product.sku,
+                "ordered_quantity": ordered,
+                "available_quantity": available,
+                "issue_now_quantity": issue_now,
+            })
+
+        can_full = all(
+            r["ordered_quantity"] <= r["available_quantity"]
+            for r in rows
+        )
+        total_issue = sum(r["issue_now_quantity"] for r in rows)
+        return {
+            "from_location": {"id": loc.pk, "name": loc.name},
+            "sales_order_id": so.pk,
+            "lines": rows,
+            "can_full_dispatch": can_full,
+            "total_issue_if_available_only": total_issue,
+        }
+
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
+
+    @staticmethod
+    def _available_at_location(*, product, location) -> int:
+        rec = (
+            StockRecord.objects.filter(product=product, location=location)
+            .first()
+        )
+        if rec is None:
+            return 0
+        return max(0, rec.available_quantity)
+
+    def _issue_full_quantities(self, *, dispatch, lines, dispatched_by):
+        for line in lines:
+            qty = line.quantity
+            if qty <= 0:
+                continue
+            self._stock_service.process_movement(
+                product=line.product,
+                movement_type=MovementType.ISSUE,
+                quantity=qty,
+                from_location=dispatch.from_location,
+                unit_cost=line.product.unit_cost,
+                reference=dispatch.dispatch_number,
+                created_by=dispatched_by,
+            )
+
+    def _process_dispatch_available_only(
+        self,
+        *,
+        dispatch,
+        sales_order,
+        lines,
+        dispatched_by,
+    ):
+        loc = dispatch.from_location
+        loc_label = getattr(loc, "name", None) or "the source location"
+
+        planned = []
+        for line in lines:
+            if line.quantity <= 0:
+                planned.append((line, 0))
+                continue
+            av = self._available_at_location(
+                product=line.product,
+                location=loc,
+            )
+            planned.append((line, min(line.quantity, av)))
+
+        total_issue = sum(q for _, q in planned)
+        if total_issue <= 0:
+            raise ValidationError(
+                f'No unreserved stock available at "{loc_label}" for any line '
+                f"on this order. Receive or transfer stock there first, "
+                f"reduce quantities on the sales order, or cancel this dispatch."
+            )
+
+        full_ship = all(
+            line.quantity == 0 or to_issue == line.quantity
+            for line, to_issue in planned
+        )
+
+        with transaction.atomic():
+            try:
+                if full_ship:
+                    self._issue_full_quantities(
+                        dispatch=dispatch,
+                        lines=lines,
+                        dispatched_by=dispatched_by,
+                    )
+                else:
+                    for line, to_issue in planned:
+                        if to_issue <= 0:
+                            continue
+                        self._stock_service.process_movement(
+                            product=line.product,
+                            movement_type=MovementType.ISSUE,
+                            quantity=to_issue,
+                            from_location=dispatch.from_location,
+                            unit_cost=line.product.unit_cost,
+                            reference=dispatch.dispatch_number,
+                            created_by=dispatched_by,
+                        )
+                        line.quantity -= to_issue
+                        line.save(
+                            update_fields=["quantity", "updated_at"],
+                        )
+            except InsufficientStockError as exc:
+                raise ValidationError(
+                    f"{exc} "
+                    f'Stock changed while processing; retry or check "{loc_label}".',
+                ) from exc
+            except InventoryError as exc:
+                raise ValidationError(str(exc)) from exc
+
+            dispatch.is_processed = True
+            dispatch.save(update_fields=["is_processed", "updated_at"])
+
+            if full_ship or not sales_order.lines.filter(
+                quantity__gt=0,
+            ).exists():
+                sales_order.status = SalesOrderStatus.FULFILLED
+            else:
+                sales_order.status = SalesOrderStatus.CONFIRMED
+            sales_order.save(update_fields=["status", "updated_at"])
+
+        return dispatch
 
     def _auto_reserve_lines(self, sales_order, *, confirmed_by, default_location):
         """Create reservations for lines whose products have auto-reserve rules."""

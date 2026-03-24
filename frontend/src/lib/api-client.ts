@@ -1,3 +1,4 @@
+import { getApiUiLocale } from "./api-ui-locale";
 import { useAuthStore } from "./auth-store";
 import type { ApiError } from "@/types/api-common";
 
@@ -65,6 +66,20 @@ function buildHeaders(custom?: HeadersInit): Headers {
   return headers;
 }
 
+/** Merge ``language`` for DRF/Wagtail display + translatable writes (I18N). */
+function mergeLanguageParam(
+  params?: Record<string, string>,
+): Record<string, string> | undefined {
+  if (params && Object.prototype.hasOwnProperty.call(params, "language")) {
+    return params;
+  }
+  const language = getApiUiLocale();
+  if (!params || Object.keys(params).length === 0) {
+    return { language };
+  }
+  return { ...params, language };
+}
+
 function buildUrl(path: string, params?: Record<string, string>): string {
   // Ensure trailing slash for Django's APPEND_SLASH (avoids POST redirect issues)
   const normalizedPath =
@@ -119,6 +134,27 @@ function drfErrorsRecord(
   return Object.keys(out).length ? out : undefined;
 }
 
+/** DRF often returns ``detail`` as a string, a string array, or nested objects. */
+function normalizeDetail(detail: unknown): string | undefined {
+  if (typeof detail === "string" && detail.trim()) {
+    return detail;
+  }
+  if (Array.isArray(detail)) {
+    const parts = detail
+      .map((item) => {
+        if (typeof item === "string") return item;
+        if (item != null && typeof item === "object" && "string" in item) {
+          const s = (item as { string: unknown }).string;
+          return typeof s === "string" ? s : null;
+        }
+        return null;
+      })
+      .filter((x): x is string => Boolean(x?.trim()));
+    if (parts.length) return parts.join(" ");
+  }
+  return undefined;
+}
+
 async function parseErrorResponse(res: Response): Promise<ApiError> {
   let body: Record<string, unknown> = {};
   try {
@@ -127,8 +163,7 @@ async function parseErrorResponse(res: Response): Promise<ApiError> {
     // non-JSON error body
   }
 
-  const detailStr =
-    typeof body.detail === "string" ? body.detail : undefined;
+  const detailStr = normalizeDetail(body.detail);
   const fieldMessage = drfErrorsToMessage(body);
   const message =
     detailStr ??
@@ -154,7 +189,7 @@ async function request<T>(
     headers?: HeadersInit;
   } = {},
 ): Promise<T> {
-  const url = buildUrl(path, options.params);
+  const url = buildUrl(path, mergeLanguageParam(options.params));
   const headers = buildHeaders(options.headers);
 
   const init: RequestInit = { method, headers };
@@ -197,23 +232,39 @@ export const apiClient = {
     return request<T>("GET", path, { params });
   },
 
-  post<T>(path: string, body?: unknown): Promise<T> {
-    return request<T>("POST", path, { body });
+  post<T>(
+    path: string,
+    body?: unknown,
+    params?: Record<string, string>,
+  ): Promise<T> {
+    return request<T>("POST", path, { body, params });
   },
 
-  patch<T>(path: string, body?: unknown): Promise<T> {
-    return request<T>("PATCH", path, { body });
+  patch<T>(
+    path: string,
+    body?: unknown,
+    params?: Record<string, string>,
+  ): Promise<T> {
+    return request<T>("PATCH", path, { body, params });
   },
 
-  put<T>(path: string, body?: unknown): Promise<T> {
-    return request<T>("PUT", path, { body });
+  put<T>(
+    path: string,
+    body?: unknown,
+    params?: Record<string, string>,
+  ): Promise<T> {
+    return request<T>("PUT", path, { body, params });
   },
 
-  delete(path: string): Promise<void> {
-    return request<void>("DELETE", path);
+  delete(path: string, params?: Record<string, string>): Promise<void> {
+    return request<void>("DELETE", path, { params });
   },
 
-  upload<T>(path: string, formData: FormData): Promise<T> {
-    return request<T>("POST", path, { body: formData });
+  upload<T>(
+    path: string,
+    formData: FormData,
+    params?: Record<string, string>,
+  ): Promise<T> {
+    return request<T>("POST", path, { body: formData, params });
   },
 };

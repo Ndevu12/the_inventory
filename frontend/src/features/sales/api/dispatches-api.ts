@@ -5,6 +5,7 @@ import type {
   DispatchCreatePayload,
   DispatchUpdatePayload,
   DispatchListParams,
+  DispatchFulfillmentPreview,
   SimpleSalesOrder,
   SimpleLocation,
 } from "../types/dispatch.types"
@@ -45,8 +46,17 @@ export const dispatchesApi = {
     return apiClient.delete(`${BASE}/${id}/`)
   },
 
-  process(id: number) {
-    return apiClient.post<Dispatch>(`${BASE}/${id}/process/`)
+  process(id: number, body?: { issue_available_only?: boolean }) {
+    return apiClient.post<Dispatch>(
+      `${BASE}/${id}/process/`,
+      body === undefined ? undefined : body,
+    )
+  },
+
+  fulfillmentPreview(id: number) {
+    return apiClient.get<DispatchFulfillmentPreview>(
+      `${BASE}/${id}/fulfillment-preview/`,
+    )
   },
 }
 

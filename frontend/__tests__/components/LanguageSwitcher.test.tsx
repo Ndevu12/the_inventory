@@ -7,6 +7,11 @@ import { DJANGO_LANGUAGE_COOKIE } from "@/lib/locale-preference"
 import { routing } from "@/i18n/routing"
 
 const routerReplace = vi.fn()
+const routerRefresh = vi.fn()
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh: routerRefresh }),
+}))
 
 vi.mock("next-intl", () => ({
   useLocale: () => "en",
@@ -59,6 +64,7 @@ describe("LanguageSwitcher", () => {
       expect(document.cookie).toContain(`${DJANGO_LANGUAGE_COOKIE}=es`)
       expect(localStorage.getItem("the-inventory.locale")).toBe("es")
       expect(routerReplace).toHaveBeenCalledWith("/en/dashboard", { locale: "es" })
+      expect(routerRefresh).toHaveBeenCalled()
     })
   })
 })

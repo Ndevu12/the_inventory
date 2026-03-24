@@ -7,6 +7,14 @@ export const loginSchema = z.object({
 
 export type LoginFormValues = z.infer<typeof loginSchema>;
 
+export const profileSchema = z.object({
+  email: z.string().min(1, "Email is required").email("Valid email is required"),
+  first_name: z.string(),
+  last_name: z.string(),
+});
+
+export type ProfileFormValues = z.infer<typeof profileSchema>;
+
 export const changePasswordSchema = z
   .object({
     old_password: z.string().min(1, "Current password is required"),

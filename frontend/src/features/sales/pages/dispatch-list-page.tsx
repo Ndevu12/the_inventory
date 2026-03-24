@@ -12,6 +12,7 @@ import type { ApiError } from "@/types/api-common"
 import {
   DataTableFacetedFilter,
 } from "@/components/data-table/data-table-faceted-filter"
+import { DispatchFulfillmentDialog } from "../components/dispatches/dispatch-fulfillment-dialog"
 import { DispatchTable } from "../components/dispatches/dispatch-table"
 import { getDispatchColumns } from "../components/dispatch-columns"
 import {
@@ -35,6 +36,10 @@ export function DispatchListPage() {
     { id: "dispatch_date", desc: true },
   ])
   const [processedFilter, setProcessedFilter] = React.useState<string[]>([])
+  const [fulfillmentDialog, setFulfillmentDialog] = React.useState<{
+    dispatch: Dispatch
+    intro?: string
+  } | null>(null)
 
   const params = React.useMemo<DispatchListParams>(() => {
     const p: DispatchListParams = {
@@ -71,19 +76,32 @@ export function DispatchListPage() {
         )
       )
         return
-      processMutation.mutate(dispatch.id, {
-        onSuccess: () =>
-          toast.success(
-            `Dispatch "${dispatch.dispatch_number}" processed — stock movements created`,
-          ),
-        onError: (error: unknown) => {
-          const e = error as unknown as ApiError
-          toast.error(e.message || "Failed to process dispatch")
+      processMutation.mutate(
+        { id: dispatch.id },
+        {
+          onSuccess: () =>
+            toast.success(
+              `Dispatch "${dispatch.dispatch_number}" processed — stock movements created`,
+            ),
+          onError: (error: unknown) => {
+            const e = error as unknown as ApiError
+            toast.error(e.message || "Failed to process dispatch")
+            if (e.status === 400) {
+              setFulfillmentDialog({
+                dispatch,
+                intro: e.message,
+              })
+            }
+          },
         },
-      })
+      )
     },
     [processMutation],
   )
+
+  const handleReviewStock = React.useCallback((dispatch: Dispatch) => {
+    setFulfillmentDialog({ dispatch })
+  }, [])
 
   const handleDelete = React.useCallback(
     (dispatch: Dispatch) => {
@@ -101,8 +119,14 @@ export function DispatchListPage() {
   )
 
   const columns = React.useMemo(
-    () => getDispatchColumns({ onView: handleView, onProcess: handleProcess, onDelete: handleDelete }),
-    [handleView, handleProcess, handleDelete],
+    () =>
+      getDispatchColumns({
+        onView: handleView,
+        onReviewStock: handleReviewStock,
+        onProcess: handleProcess,
+        onDelete: handleDelete,
+      }),
+    [handleView, handleReviewStock, handleProcess, handleDelete],
   )
 
   const pageCount = data ? Math.ceil(data.count / pagination.pageSize) : 0
@@ -147,6 +171,15 @@ export function DispatchListPage() {
             options={DISPATCH_PROCESSED_OPTIONS}
           />
         }
+      />
+
+      <DispatchFulfillmentDialog
+        open={fulfillmentDialog != null}
+        onOpenChange={(open) => {
+          if (!open) setFulfillmentDialog(null)
+        }}
+        dispatch={fulfillmentDialog?.dispatch ?? null}
+        introText={fulfillmentDialog?.intro}
       />
     </div>
   )

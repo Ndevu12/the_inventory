@@ -8,6 +8,10 @@ from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema
 
+from api.serializers.localized_strings import (
+    attribute_in_display_locale,
+    display_locale_from_context,
+)
 from sales.models import Customer, Dispatch, SalesOrder
 from sales.services.sales import SalesService
 
@@ -102,15 +106,30 @@ class DispatchViewSet(TenantScopedInventoryMixin, viewsets.ModelViewSet):
         tenant = self._get_current_tenant()
         return super().get_queryset().filter(tenant=tenant)
 
+    @extend_schema(
+        parameters=[OPENAPI_LANGUAGE_QUERY_PARAMETER],
+        request={
+            "application/json": {
+                "type": "object",
+                "properties": {
+                    "issue_available_only": {"type": "boolean"},
+                },
+            },
+        },
+    )
     @action(detail=True, methods=["post"])
     def process(self, request, pk=None):
         """Process this dispatch — create issue stock movements."""
         dispatch = self.get_object()
         service = SalesService()
+        issue_available_only = bool(
+            (request.data or {}).get("issue_available_only"),
+        )
         try:
             service.process_dispatch(
                 dispatch=dispatch,
                 dispatched_by=request.user,
+                issue_available_only=issue_available_only,
             )
         except DjangoValidationError as e:
             return Response(
@@ -119,3 +138,31 @@ class DispatchViewSet(TenantScopedInventoryMixin, viewsets.ModelViewSet):
             )
         dispatch.refresh_from_db()
         return Response(self.get_serializer(dispatch).data)
+
+    @extend_schema(parameters=[OPENAPI_LANGUAGE_QUERY_PARAMETER])
+    @action(detail=True, methods=["get"], url_path="fulfillment-preview")
+    def fulfillment_preview(self, request, pk=None):
+        """Ordered vs available (unreserved) quantities at the dispatch source."""
+        dispatch = self.get_object()
+        service = SalesService()
+        try:
+            payload = service.fulfillment_preview(dispatch=dispatch)
+        except DjangoValidationError as e:
+            return Response(
+                {"detail": e.message if hasattr(e, "message") else str(e)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        display_locale = display_locale_from_context({"request": request})
+        line_map = {
+            ln.id: ln
+            for ln in dispatch.sales_order.lines.select_related("product").order_by(
+                "pk",
+            )
+        }
+        for row in payload["lines"]:
+            line = line_map.get(row["line_id"])
+            product = line.product if line else None
+            row["product_name"] = attribute_in_display_locale(
+                product, "name", display_locale,
+            )
+        return Response(payload)

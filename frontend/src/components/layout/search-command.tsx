@@ -17,6 +17,7 @@ import {
   ScrollTextIcon,
 } from "lucide-react";
 import {
+  Command,
   CommandDialog,
   CommandEmpty,
   CommandGroup,
@@ -124,26 +125,28 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
 
   return (
     <CommandDialog open={open} onOpenChange={onOpenChange}>
-      <CommandInput placeholder="Search pages..." />
-      <CommandList>
-        <CommandEmpty>No results found.</CommandEmpty>
-        {SEARCH_ROUTES.map((group, index) => (
-          <div key={group.group}>
-            {index > 0 && <CommandSeparator />}
-            <CommandGroup heading={group.group}>
-              {group.items.map((item) => (
-                <CommandItem
-                  key={item.href}
-                  onSelect={() => navigate(item.href)}
-                >
-                  <item.icon className="mr-2 size-4" />
-                  <span>{item.title}</span>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </div>
-        ))}
-      </CommandList>
+      <Command>
+        <CommandInput placeholder="Search pages..." />
+        <CommandList>
+          <CommandEmpty>No results found.</CommandEmpty>
+          {SEARCH_ROUTES.map((group, index) => (
+            <div key={group.group}>
+              {index > 0 && <CommandSeparator />}
+              <CommandGroup heading={group.group}>
+                {group.items.map((item) => (
+                  <CommandItem
+                    key={item.href}
+                    onSelect={() => navigate(item.href)}
+                  >
+                    <item.icon className="mr-2 size-4" />
+                    <span>{item.title}</span>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </div>
+          ))}
+        </CommandList>
+      </Command>
     </CommandDialog>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { Languages } from "lucide-react";
+import { useRouter as useNextRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { localeEntries, routing } from "@/i18n/routing";
+import { setApiUiLocale } from "@/lib/api-ui-locale";
 import { persistLocalePreference } from "@/lib/locale-preference";
 
 function displayNameForLocale(code: string): string {
@@ -23,6 +25,7 @@ export function LanguageSwitcher() {
   const locale = useLocale();
   const t = useTranslations("LanguageSwitcher");
   const router = useRouter();
+  const refresh = useNextRouter().refresh;
   const pathname = usePathname();
 
   return (
@@ -45,7 +48,9 @@ export function LanguageSwitcher() {
           onValueChange={(next) => {
             if (next === locale) return;
             persistLocalePreference(next);
+            setApiUiLocale(next);
             router.replace(pathname, { locale: next });
+            refresh();
           }}
         >
           {routing.locales.map((code) => (

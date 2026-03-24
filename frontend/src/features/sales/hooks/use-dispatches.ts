@@ -75,10 +75,32 @@ export function useProcessDispatch() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (id: number) => dispatchesApi.process(id),
+    mutationFn: ({
+      id,
+      issueAvailableOnly,
+    }: {
+      id: number
+      issueAvailableOnly?: boolean
+    }) =>
+      dispatchesApi.process(
+        id,
+        issueAvailableOnly ? { issue_available_only: true } : undefined,
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: DISPATCHES_KEY })
+      queryClient.invalidateQueries({ queryKey: ["sales-orders"] })
     },
+  })
+}
+
+export function useDispatchFulfillmentPreview(
+  dispatchId: number | null,
+  enabled: boolean,
+) {
+  return useQuery({
+    queryKey: [...DISPATCHES_KEY, dispatchId, "fulfillment-preview"],
+    queryFn: () => dispatchesApi.fulfillmentPreview(dispatchId!),
+    enabled: enabled && dispatchId != null && dispatchId > 0,
   })
 }
 

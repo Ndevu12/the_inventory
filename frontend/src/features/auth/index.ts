@@ -1,4 +1,5 @@
 export { LoginPage } from "./pages/login-page";
+export { AccountSettingsPage } from "./pages/account-settings-page";
 export { AuthGuard } from "./components/auth-guard";
 export { LoginForm } from "./components/login-form";
 export { AuthProvider, useAuth } from "./context/auth-context";
@@ -8,6 +9,7 @@ export {
   useBootstrapAuth,
   useLogout,
   useChangePassword,
+  useUpdateProfile,
   useAuthConfig,
 } from "./hooks/use-auth";
 export { isTokenExpired, parseJwtPayload } from "./helpers/auth-utils";
@@ -16,4 +18,5 @@ export type {
   LoginResponse,
   MeResponse,
   ChangePasswordRequest,
+  UpdateProfileRequest,
 } from "./types/auth.types";

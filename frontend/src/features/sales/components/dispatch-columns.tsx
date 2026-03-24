@@ -9,6 +9,8 @@ import type { Dispatch } from "../types/dispatch.types"
 interface DispatchColumnActions {
   onView?: (dispatch: Dispatch) => void
   onProcess?: (dispatch: Dispatch) => void
+  /** Open stock preview: available qty at source vs ordered; partial issue. */
+  onReviewStock?: (dispatch: Dispatch) => void
   onDelete?: (dispatch: Dispatch) => void
 }
 
@@ -102,6 +104,13 @@ export function getDispatchColumns(
           rowActions.push({
             label: "View",
             onClick: () => actions.onView!(dispatch),
+          })
+        }
+
+        if (actions.onReviewStock && !dispatch.is_processed) {
+          rowActions.push({
+            label: "Review stock / partial ship",
+            onClick: () => actions.onReviewStock!(dispatch),
           })
         }
 

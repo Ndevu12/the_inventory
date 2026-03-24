@@ -7,7 +7,7 @@
 
 ## Internationalization & Localization Tasks (I18N-*)
 
-Implementing comprehensive multi-language support using **Wagtail’s built-in i18n** and **wagtail-localize**, with per-tenant language selection (English, French, Swahili, Kinyarwanda, Spanish). **Do not** add custom translation models or manual columns such as `name_fr` / `name_en`—use **linked instances per locale** (Wagtail’s model), which wagtail-localize manages.
+Implementing multi-language support using **Wagtail i18n** + **wagtail-localize** for **domain data** (products, customers, etc.) and **next-intl** for **static tenant UI copy**. Supported UI locales include **en, fr, sw, rw, es, ar** (see [frontend/public/locales/](../frontend/public/locales/)). **Do not** add parallel columns such as `name_fr` / `name_en` on catalog models—use **linked instances per locale** (Wagtail’s model). **The numbered tasks in this section (I18N-17+) are for internationalizing Next.js pages and feature modules in parallel**; backend API language resolution and layout shell (nav, breadcrumbs, language switcher) are already integrated in the codebase.
 
 ### Mental model: API-first tenants, Wagtail-shaped storage
 
@@ -23,8 +23,8 @@ Inventory listing menus for products/categories were removed from Wagtail in the
 **What to build (storage vs authoring)**
 
 1. **Storage — what and why:** Add `TranslatableMixin` to Product, Category, Supplier, Customer and use **wagtail-localize** so each locale is a **linked row** in Wagtail’s translation graph. **Why:** avoids hand-maintained columns such as `name_fr` / `name_en`, keeps one schema, and lets localize manage relationships between locale variants.
-2. **Read path for tenants — how:** **I18N-10** / **I18N-11**—resolve `?language=`, `Accept-Language`, and tenant default in viewsets/serializers so API responses return the correct localized instance or field values.
-3. **Write path for tenants — how:** **I18N-16**—DRF create/update must drive the same linked-locale data (programmatic localize APIs). **I18N-06** configures **which model fields** localize treats as translated vs synchronized; normal **`FieldPanel`** in admin is enough—there is **no** `TranslatableFieldPanel` in wagtail-localize 1.x. Staff **Translate** flows in Wagtail apply when models are exposed there; **I18N-06** does **not** replace **I18N-16** for tenant operators.
+2. **Read path for tenants — how:** resolve `?language=`, `Accept-Language`, and tenant default in viewsets/serializers so API responses return the correct localized instance or field values (DRF + `TranslatableMixin`).
+3. **Write path for tenants — how:** DRF create/update must drive linked-locale rows via programmatic wagtail-localize APIs. **`FieldPanel`** in Wagtail is enough for staff—there is **no** `TranslatableFieldPanel` in wagtail-localize 1.x; use `override_translatable_fields` only when defaults are wrong. Tenant operators primarily use the **Next.js app + API**, not Wagtail, for day-to-day edits.
 
 ```text
 Tenant UI (Next.js)  ──HTTP──►  DRF API  ──►  TranslatableMixin models + wagtail-localize

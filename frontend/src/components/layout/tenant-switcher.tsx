@@ -19,8 +19,10 @@ import {
 } from "@/components/ui/sidebar";
 import { useMe } from "@/features/auth/hooks/use-auth";
 import { useAuthStore } from "@/lib/auth-store";
+import { useTranslations } from "next-intl";
 
 export function TenantSwitcher() {
+  const t = useTranslations("Shell");
   const { isMobile } = useSidebar();
   const queryClient = useQueryClient();
   const memberships = useAuthStore((s) => s.memberships);
@@ -41,13 +43,13 @@ export function TenantSwitcher() {
     !!accessToken && orgList.length === 0 && (isPending || isFetching);
 
   const displayName = bootstrapping
-    ? "Loading…"
+    ? t("tenantLoading")
     : (currentRow?.tenant__name ??
         (meData?.tenant &&
         (!effectiveSlug || meData.tenant.slug === effectiveSlug)
           ? meData.tenant.name
           : null) ??
-        "Select Tenant");
+        t("selectTenant"));
 
   const roleLabel =
     currentRow?.role ?? meData?.tenant?.role ?? "";
@@ -88,11 +90,11 @@ export function TenantSwitcher() {
             sideOffset={4}
           >
             <DropdownMenuGroup>
-              <DropdownMenuLabel>Organizations</DropdownMenuLabel>
+              <DropdownMenuLabel>{t("organizations")}</DropdownMenuLabel>
               <DropdownMenuSeparator />
               {bootstrapping && (
                 <div className="px-2 py-4 text-center text-sm text-muted-foreground">
-                  Loading organizations…
+                  {t("loadingOrganizations")}
                 </div>
               )}
               {!bootstrapping &&
@@ -112,7 +114,7 @@ export function TenantSwitcher() {
                 ))}
               {!bootstrapping && orgList.length === 0 && (
                 <div className="px-2 py-4 text-center text-sm text-muted-foreground">
-                  No organizations found
+                  {t("noOrganizations")}
                 </div>
               )}
             </DropdownMenuGroup>

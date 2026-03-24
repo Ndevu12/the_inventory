@@ -43,3 +43,21 @@ export interface SimpleLocation {
   id: number
   name: string
 }
+
+export interface DispatchFulfillmentLine {
+  line_id: number
+  product_id: number
+  product_sku: string
+  product_name: string | null
+  ordered_quantity: number
+  available_quantity: number
+  issue_now_quantity: number
+}
+
+export interface DispatchFulfillmentPreview {
+  from_location: { id: number; name: string }
+  sales_order_id: number
+  lines: DispatchFulfillmentLine[]
+  can_full_dispatch: boolean
+  total_issue_if_available_only: number
+}

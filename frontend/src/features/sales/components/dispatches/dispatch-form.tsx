@@ -65,8 +65,8 @@ export function DispatchForm({
           <CardTitle>Dispatch Details</CardTitle>
           <CardDescription>
             Pick a confirmed sales order. After you create the dispatch, use
-            &quot;Process&quot; on the list to issue stock (order must stay
-            confirmed until then).
+            ‘Process’ on the list to issue stock (the order must stay confirmed
+            until then).
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-6 sm:grid-cols-2">

@@ -12,7 +12,9 @@ import type {
   ChangePasswordRequest,
   MeResponse,
   RegisterRequest,
+  UpdateProfileRequest,
 } from "../types/auth.types";
+import type { ApiError } from "@/types/api-common";
 
 export const authKeys = {
   me: ["auth", "me"] as const,
@@ -109,6 +111,30 @@ export function useChangePassword() {
     },
     onError: () => {
       toast.error("Failed to change password. Please check your current password.");
+    },
+  });
+}
+
+export function useUpdateProfile() {
+  const { setUser } = useAuthStore();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: UpdateProfileRequest) => authApi.updateProfile(data),
+    onSuccess: (user) => {
+      setUser(user);
+      void queryClient.invalidateQueries({ queryKey: authKeys.me });
+      toast.success("Profile updated");
+    },
+    onError: (error: unknown) => {
+      const message =
+        error &&
+        typeof error === "object" &&
+        "message" in error &&
+        typeof (error as ApiError).message === "string"
+          ? (error as ApiError).message
+          : "Failed to update profile";
+      toast.error(message);
     },
   });
 }

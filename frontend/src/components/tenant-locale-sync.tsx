@@ -1,10 +1,12 @@
 "use client";
 
+import { useRouter as useNextRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { useLocale } from "next-intl";
 
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { useMe } from "@/features/auth/hooks/use-auth";
+import { setApiUiLocale } from "@/lib/api-ui-locale";
 import {
   hasExplicitLocalePreference,
   persistLocalePreference,
@@ -18,6 +20,7 @@ import { routing } from "@/i18n/routing";
 export function TenantLocaleSync() {
   const locale = useLocale();
   const router = useRouter();
+  const refresh = useNextRouter().refresh;
   const pathname = usePathname();
   const { data, isSuccess } = useMe();
   const didRun = useRef(false);
@@ -31,8 +34,17 @@ export function TenantLocaleSync() {
     if (pref === locale) return;
     didRun.current = true;
     persistLocalePreference(pref);
+    setApiUiLocale(pref);
     router.replace(pathname, { locale: pref });
-  }, [data?.tenant?.preferred_language, isSuccess, locale, pathname, router]);
+    refresh();
+  }, [
+    data?.tenant?.preferred_language,
+    isSuccess,
+    locale,
+    pathname,
+    refresh,
+    router,
+  ]);
 
   return null;
 }
