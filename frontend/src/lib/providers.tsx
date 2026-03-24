@@ -19,6 +19,11 @@ function getQueryClient() {
   return browserQueryClient;
 }
 
+/** Clears the browser QueryClient cache (e.g. between Vitest cases that share Providers). */
+export function clearQueryClientCache(): void {
+  browserQueryClient?.clear();
+}
+
 export function Providers({ children }: { children: React.ReactNode }) {
   const queryClient = getQueryClient();
 
