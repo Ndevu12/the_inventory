@@ -34,7 +34,7 @@ export function SupplierListPage() {
 
   const handleEdit = React.useCallback(
     (supplier: Supplier) => {
-      router.push(`/suppliers/${supplier.id}/edit`)
+      router.push(`/procurement/suppliers/${supplier.id}/edit`)
     },
     [router]
   )
@@ -64,7 +64,7 @@ export function SupplierListPage() {
         title="Suppliers"
         description="Manage your supplier directory"
         actions={
-          <Button render={<Link href="/suppliers/new" />}>
+          <Button render={<Link href="/procurement/suppliers/new" />}>
             <PlusIcon className="size-4" data-icon="inline-start" />
             New Supplier
           </Button>

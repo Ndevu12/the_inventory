@@ -2,7 +2,9 @@
 
 from django.db import migrations
 
-# Matches Next.js routing and ``WAGTAIL_CONTENT_LANGUAGES`` in settings.
+# Historical bootstrap (repeatable deploys). Default set also in
+# ``seeders.wagtail_locale_seeder.DEFAULT_LOCALE_CODES``; runtime languages
+# follow Wagtail Settings → Locales (see ``home.i18n_sync``).
 SUPPORTED_LOCALES = (
     "en",
     "fr",

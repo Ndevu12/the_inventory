@@ -9,12 +9,14 @@ import { Link } from "@/i18n/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { PageHeader } from "@/components/layout/page-header"
+import type { ApiError } from "@/types/api-common"
 import { useCreateCustomer } from "../hooks/use-customers"
 import {
   createCustomerSchema,
   type CreateCustomerFormValues,
 } from "../helpers/customer-schemas"
 import { CustomerForm } from "../components/customers/customer-form"
+import type { CustomerCreatePayload } from "../types/sales.types"
 
 export function CustomerCreatePage() {
   const router = useRouter()
@@ -35,13 +37,20 @@ export function CustomerCreatePage() {
   })
 
   function onSubmit(values: CreateCustomerFormValues) {
-    createMutation.mutate(values, {
+    const { code, ...rest } = values
+    const trimmedCode = code.trim()
+    const payload: CustomerCreatePayload = {
+      ...rest,
+      ...(trimmedCode ? { code: trimmedCode } : {}),
+    }
+    createMutation.mutate(payload, {
       onSuccess: (customer) => {
         toast.success(`Customer "${customer.name}" created`)
         router.push("/sales/customers")
       },
-      onError: () => {
-        toast.error("Failed to create customer")
+      onError: (error: unknown) => {
+        const e = error as unknown as ApiError
+        toast.error(e.message || "Failed to create customer")
       },
     })
   }

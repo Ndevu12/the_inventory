@@ -69,7 +69,7 @@ export function SupplierEditPage({ params }: SupplierEditPageProps) {
       {
         onSuccess: () => {
           toast.success(`Supplier "${values.name}" updated`)
-          router.push("/suppliers")
+          router.push("/procurement/suppliers")
         },
         onError: () => {
           toast.error("Failed to update supplier")
@@ -94,7 +94,7 @@ export function SupplierEditPage({ params }: SupplierEditPageProps) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-4 p-6">
         <p className="text-muted-foreground">Supplier not found</p>
-        <Button variant="outline" render={<Link href="/suppliers" />}>
+        <Button variant="outline" render={<Link href="/procurement/suppliers" />}>
           Back to Suppliers
         </Button>
       </div>
@@ -114,7 +114,7 @@ export function SupplierEditPage({ params }: SupplierEditPageProps) {
             <SupplierForm form={form} />
           </CardContent>
           <CardFooter className="flex justify-end gap-2">
-            <Button variant="outline" render={<Link href="/suppliers" />}>
+            <Button variant="outline" render={<Link href="/procurement/suppliers" />}>
               Cancel
             </Button>
             <Button type="submit" disabled={updateMutation.isPending}>

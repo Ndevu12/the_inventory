@@ -85,7 +85,7 @@ def wagtail_locale_for_language(code: str) -> Locale | None:
     """Return Wagtail ``Locale`` for *code*, or ``None`` if not configured.
 
     Prefer :meth:`~wagtail.models.Locale.objects.get_for_language` when the code
-    is in ``WAGTAIL_CONTENT_LANGUAGES``. Fall back to an exact ``language_code``
+    is a configured Wagtail content language. Fall back to an exact ``language_code``
     row so API ``?language=`` works for locales created in Wagtail admin even if
     settings lag behind.
     """

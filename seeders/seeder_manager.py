@@ -117,6 +117,16 @@ class SeederManager:
         if self.verbose:
             print("🌱 Seeding database with sample data...\n")
 
+        from home.i18n_sync import refresh_i18n_settings_from_wagtail
+        from seeders.wagtail_locale_seeder import ensure_default_wagtail_locales
+
+        if self.verbose:
+            print("📋 Ensuring Wagtail locales...")
+        ensure_default_wagtail_locales(verbose=self.verbose)
+        refresh_i18n_settings_from_wagtail()
+        if self.verbose:
+            print()
+
         # Step 1: Run TenantSeeder first to ensure tenant exists
         if tenant is None:
             if self.verbose:

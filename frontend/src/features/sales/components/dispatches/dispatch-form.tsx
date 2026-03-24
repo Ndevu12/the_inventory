@@ -64,16 +64,18 @@ export function DispatchForm({
         <CardHeader>
           <CardTitle>Dispatch Details</CardTitle>
           <CardDescription>
-            Create a dispatch to ship goods against a sales order.
+            Pick a confirmed sales order. After you create the dispatch, use
+            &quot;Process&quot; on the list to issue stock (order must stay
+            confirmed until then).
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-6 sm:grid-cols-2">
           <FormField
-            label="Dispatch Number"
+            label="Dispatch number (optional)"
             error={form.formState.errors.dispatch_number?.message}
           >
             <Input
-              placeholder="e.g. DSP-2026-001"
+              placeholder="Leave blank to auto-generate"
               {...form.register("dispatch_number")}
             />
           </FormField>
@@ -99,11 +101,18 @@ export function DispatchForm({
                 />
               </SelectTrigger>
               <SelectContent>
-                {salesOrders.map((so) => (
-                  <SelectItem key={so.id} value={so.id.toString()}>
-                    {so.order_number} — {so.customer_name}
-                  </SelectItem>
-                ))}
+                {salesOrders.length === 0 ? (
+                  <div className="px-2 py-3 text-sm text-muted-foreground">
+                    No confirmed sales orders. Confirm a draft order first, then
+                    create a dispatch.
+                  </div>
+                ) : (
+                  salesOrders.map((so) => (
+                    <SelectItem key={so.id} value={so.id.toString()}>
+                      {so.order_number} — {so.customer_name}
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
           </FormField>

@@ -6,12 +6,11 @@ import { getMessages, getTranslations, setRequestLocale } from "next-intl/server
 import { LocaleLayoutShell } from "./locale-layout-shell";
 import { Providers } from "@/lib/providers";
 import { APP_NAME } from "@/lib/utils/constants";
-import { routing } from "@/i18n/routing";
-
-const RTL_LOCALES = new Set<string>(["ar"]);
+import { localeEntries, routing } from "@/i18n/routing";
 
 function textDirectionForLocale(locale: string): "rtl" | "ltr" {
-  return RTL_LOCALES.has(locale) ? "rtl" : "ltr";
+  const entry = localeEntries.find((e) => e.code === locale);
+  return entry?.isRtl ? "rtl" : "ltr";
 }
 
 export async function generateMetadata({

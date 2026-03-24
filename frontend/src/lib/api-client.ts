@@ -78,8 +78,45 @@ function buildUrl(path: string, params?: Record<string, string>): string {
     ? path
     : `${API_BASE}${normalizedPath}`;
   if (!params) return url;
-  const searchParams = new URLSearchParams(params);
-  return `${url}?${searchParams.toString()}`;
+  const searchParams = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value === undefined || value === null) continue;
+    searchParams.set(key, String(value));
+  }
+  const qs = searchParams.toString();
+  return qs ? `${url}?${qs}` : url;
+}
+
+/** Flatten DRF-style ``{ field: ["msg"], ... }`` bodies into one readable string. */
+function drfErrorsToMessage(body: Record<string, unknown>): string | null {
+  const parts: string[] = [];
+  for (const [key, val] of Object.entries(body)) {
+    if (key === "detail") continue;
+    if (Array.isArray(val)) {
+      const msgs = val.filter((x): x is string => typeof x === "string");
+      if (msgs.length) {
+        const prefix =
+          key === "non_field_errors" ? "" : `${key.replace(/_/g, " ")}: `;
+        parts.push(prefix + msgs.join(", "));
+      }
+    } else if (typeof val === "string" && val.trim()) {
+      parts.push(`${key.replace(/_/g, " ")}: ${val}`);
+    }
+  }
+  return parts.length ? parts.join(" · ") : null;
+}
+
+function drfErrorsRecord(
+  body: Record<string, unknown>,
+): Record<string, string[]> | undefined {
+  const out: Record<string, string[]> = {};
+  for (const [k, v] of Object.entries(body)) {
+    if (k === "detail") continue;
+    if (Array.isArray(v) && v.every((x) => typeof x === "string")) {
+      out[k] = v as string[];
+    }
+  }
+  return Object.keys(out).length ? out : undefined;
 }
 
 async function parseErrorResponse(res: Response): Promise<ApiError> {
@@ -90,14 +127,21 @@ async function parseErrorResponse(res: Response): Promise<ApiError> {
     // non-JSON error body
   }
 
+  const detailStr =
+    typeof body.detail === "string" ? body.detail : undefined;
+  const fieldMessage = drfErrorsToMessage(body);
+  const message =
+    detailStr ??
+    fieldMessage ??
+    `Request failed with status ${res.status}`;
+
   return {
     status: res.status,
-    message:
-      typeof body.detail === "string"
-        ? body.detail
-        : `Request failed with status ${res.status}`,
-    detail: typeof body.detail === "string" ? body.detail : undefined,
-    errors: body.errors as Record<string, string[]> | undefined,
+    message,
+    detail: detailStr,
+    errors:
+      (body.errors as Record<string, string[]> | undefined) ??
+      drfErrorsRecord(body),
   };
 }
 

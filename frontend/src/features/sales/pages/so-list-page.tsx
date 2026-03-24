@@ -21,6 +21,7 @@ import {
   useDeleteSalesOrder,
 } from "../hooks/use-sales-orders"
 import { SO_STATUS_OPTIONS } from "../helpers/sales-constants"
+import type { ApiError } from "@/types/api-common"
 import type { SalesOrder, SalesOrderListParams } from "../types/sales.types"
 
 export function SOListPage() {
@@ -65,7 +66,7 @@ export function SOListPage() {
 
   const handleView = React.useCallback(
     (so: SalesOrder) => {
-      router.push(`/sales/orders/${so.id}`)
+      router.push(`/sales/sales-orders/${so.id}`)
     },
     [router],
   )
@@ -75,10 +76,9 @@ export function SOListPage() {
       if (!confirm(`Confirm sales order "${so.order_number}"?`)) return
       confirmMutation.mutate(so.id, {
         onSuccess: () => toast.success(`Order "${so.order_number}" confirmed`),
-        onError: (error) => {
-          const message =
-            (error as { message?: string }).message ?? "Failed to confirm order"
-          toast.error(message)
+        onError: (error: unknown) => {
+          const e = error as unknown as ApiError
+          toast.error(e.message || "Failed to confirm order")
         },
       })
     },
@@ -90,10 +90,9 @@ export function SOListPage() {
       if (!confirm(`Cancel sales order "${so.order_number}"?`)) return
       cancelMutation.mutate(so.id, {
         onSuccess: () => toast.success(`Order "${so.order_number}" cancelled`),
-        onError: (error) => {
-          const message =
-            (error as { message?: string }).message ?? "Failed to cancel order"
-          toast.error(message)
+        onError: (error: unknown) => {
+          const e = error as unknown as ApiError
+          toast.error(e.message || "Failed to cancel order")
         },
       })
     },
@@ -105,7 +104,10 @@ export function SOListPage() {
       if (!confirm(`Delete sales order "${so.order_number}"?`)) return
       deleteMutation.mutate(so.id, {
         onSuccess: () => toast.success(`Order "${so.order_number}" deleted`),
-        onError: () => toast.error("Failed to delete order"),
+        onError: (error: unknown) => {
+          const e = error as unknown as ApiError
+          toast.error(e.message || "Failed to delete order")
+        },
       })
     },
     [deleteMutation],
@@ -143,7 +145,7 @@ export function SOListPage() {
         title="Sales Orders"
         description="Manage sales orders and track fulfillment"
         actions={
-          <Button render={<Link href="/sales/orders/new" />}>
+          <Button render={<Link href="/sales/sales-orders/new" />}>
             <PlusIcon className="size-4" data-icon="inline-start" />
             New Order
           </Button>

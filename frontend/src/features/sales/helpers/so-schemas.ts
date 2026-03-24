@@ -9,7 +9,7 @@ export const soLineSchema = z.object({
 })
 
 export const createSOSchema = z.object({
-  order_number: z.string().min(1, "Order number is required").max(100),
+  order_number: z.string().max(100).optional().nullable(),
   customer: z.number().refine((val) => val >= 1, { message: "Customer is required" }),
   order_date: z.string().min(1, "Order date is required"),
   notes: z.string(),

@@ -26,7 +26,7 @@ export function TenantLocaleSync() {
     if (!isSuccess || didRun.current) return;
     const pref = data?.tenant?.preferred_language;
     if (!pref) return;
-    if (!routing.locales.includes(pref as (typeof routing.locales)[number])) return;
+    if (!routing.locales.includes(pref)) return;
     if (hasExplicitLocalePreference()) return;
     if (pref === locale) return;
     didRun.current = true;

@@ -14,17 +14,6 @@ vi.mock("next-intl", () => ({
     if (namespace === "LanguageSwitcher") {
       return (key: string) => (key === "ariaLabel" ? "Language" : key)
     }
-    if (namespace === "LanguageSwitcher.languages") {
-      const labels: Record<string, string> = {
-        en: "English",
-        fr: "French",
-        sw: "Swahili",
-        rw: "Kinyarwanda",
-        es: "Spanish",
-        ar: "Arabic",
-      }
-      return (key: string) => labels[key] ?? key
-    }
     return (key: string) => key
   },
 }))

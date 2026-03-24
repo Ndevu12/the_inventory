@@ -5,7 +5,7 @@ import {
 } from "@tanstack/react-query"
 import {
   dispatchesApi,
-  fetchSalesOrders,
+  fetchSalesOrdersForDispatch,
   fetchLocations,
 } from "../api/dispatches-api"
 import type {
@@ -84,9 +84,9 @@ export function useProcessDispatch() {
 
 export function useDispatchSalesOrders() {
   return useQuery({
-    queryKey: ["sales-orders", "list-all"],
-    queryFn: fetchSalesOrders,
-    staleTime: 5 * 60 * 1000,
+    queryKey: ["sales-orders", "for-dispatch", "confirmed"],
+    queryFn: fetchSalesOrdersForDispatch,
+    staleTime: 60 * 1000,
   })
 }
 

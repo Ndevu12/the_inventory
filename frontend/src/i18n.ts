@@ -7,8 +7,8 @@ import { routing } from "./i18n/routing";
 /**
  * next-intl request config (Node runtime). Imported only via `next-intl/plugin`.
  *
- * Language list and `routing` live in `./i18n/routing.ts` so middleware and
- * client navigation stay Edge-safe.
+ * Locale codes are bundled from `./i18n/locales-config.json` (run Django
+ * ``sync_frontend_locales`` after Wagtail locale changes).
  */
 export default getRequestConfig(async ({ requestLocale }) => {
   const requested = await requestLocale;

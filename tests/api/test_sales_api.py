@@ -3,6 +3,7 @@
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase
@@ -58,6 +59,15 @@ class CustomerAPITests(APISetupMixin, APITestCase):
         })
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
+    def test_create_customer_without_code_auto_generates(self):
+        response = self.client.post(
+            "/api/v1/customers/",
+            {"name": "Walk-in Buyer"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
+        self.assertTrue(str(response.data.get("code", "")).startswith("C-"))
+
     def test_search_customers(self):
         create_customer(code="CUST-SRCH", name="Widget Corp")
         response = self.client.get("/api/v1/customers/", {"search": "Widget"})
@@ -81,6 +91,63 @@ class SalesOrderAPITests(APISetupMixin, APITestCase):
         response = self.client.get("/api/v1/sales-orders/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["count"], 1)
+
+    def test_create_sales_order_with_lines_auto_number(self):
+        response = self.client.post(
+            "/api/v1/sales-orders/",
+            {
+                "customer": self.customer.pk,
+                "order_date": str(timezone.localdate()),
+                "notes": "",
+                "lines": [
+                    {
+                        "product": self.product.pk,
+                        "quantity": 2,
+                        "unit_price": "15.00",
+                    },
+                ],
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
+        self.assertTrue(str(response.data.get("order_number", "")).startswith("SO-"))
+        self.assertEqual(len(response.data["lines"]), 1)
+        self.assertEqual(
+            Decimal(str(response.data["lines"][0]["line_total"])),
+            Decimal("30.00"),
+        )
+
+    def test_create_sales_order_explicit_order_number(self):
+        response = self.client.post(
+            "/api/v1/sales-orders/",
+            {
+                "customer": self.customer.pk,
+                "order_number": "SO-MANUAL-001",
+                "order_date": str(timezone.localdate()),
+                "lines": [
+                    {
+                        "product": self.product.pk,
+                        "quantity": 1,
+                        "unit_price": "1.00",
+                    },
+                ],
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
+        self.assertEqual(response.data["order_number"], "SO-MANUAL-001")
+
+    def test_create_sales_order_requires_lines(self):
+        response = self.client.post(
+            "/api/v1/sales-orders/",
+            {
+                "customer": self.customer.pk,
+                "order_date": str(timezone.localdate()),
+                "lines": [],
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_retrieve_includes_lines(self):
         so = create_sales_order(customer=self.customer)
@@ -165,6 +232,24 @@ class DispatchAPITests(APISetupMixin, APITestCase):
         response = self.client.get("/api/v1/dispatches/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["count"], 1)
+
+    def test_create_dispatch_without_number_auto_generates(self):
+        so = create_sales_order(
+            order_number="SO-DSP-POST",
+            customer=self.customer,
+            status=SalesOrderStatus.CONFIRMED,
+        )
+        response = self.client.post(
+            "/api/v1/dispatches/",
+            {
+                "sales_order": so.pk,
+                "dispatch_date": str(timezone.localdate()),
+                "from_location": self.warehouse.pk,
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
+        self.assertTrue(str(response.data.get("dispatch_number", "")).startswith("DSP-"))
 
     def test_process_action_creates_stock_movements(self):
         StockService().process_movement(

@@ -1,7 +1,7 @@
 import { z } from "zod"
 
 export const createDispatchSchema = z.object({
-  dispatch_number: z.string().min(1, "Dispatch number is required").max(100),
+  dispatch_number: z.string().max(100),
   sales_order: z
     .number()
     .refine((val) => val > 0, { message: "Sales order is required" }),

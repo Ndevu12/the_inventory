@@ -11,14 +11,22 @@ python manage.py seed_database --clear --create-default
 ```
 
 This will:
-1. Create a "Default" tenant (if it doesn't exist)
-2. Create 3 test users linked to the Default tenant
-3. Create 10 product categories (hierarchical)
-4. Create 15 products across categories
-5. Create 17 stock locations (warehouse structure)
-6. Create 19 stock records (inventory levels)
-7. Create 10 stock movements (audit history)
-8. Create low-stock scenarios for testing alerts
+1. Ensure default Wagtail **Locale** rows exist (same set as `seeders/wagtail_locale_seeder.py`; staff can add more in Wagtail admin)
+2. Create a "Default" tenant (if it doesn't exist)
+3. Create 3 test users linked to the Default tenant
+4. Create 10 product categories (hierarchical)
+5. Create 15 products across categories
+6. Create 17 stock locations (warehouse structure)
+7. Create 19 stock records (inventory levels)
+8. Create 10 stock movements (audit history)
+9. Create low-stock scenarios for testing alerts
+
+After adding or removing locales in **Wagtail admin** (Settings → Locales), refresh the Next.js locale list and rebuild:
+
+```bash
+python manage.py sync_frontend_locales
+cd frontend && yarn build
+```
 
 ### Docker / Render (auto-seed on deploy)
 
@@ -49,7 +57,8 @@ See `.env.example` (section **AUTO-SEED**) for the full notes.
 seeders/
 ├── management/
 │   └── commands/
-│       └── seed_database.py      # Django management command
+│       ├── seed_database.py      # Django management command
+│       └── sync_frontend_locales.py  # Export locales → frontend/src/i18n/locales-config.json
 ├── tests/                         # Comprehensive test suite (72 tests)
 │   ├── test_base_seeder.py
 │   ├── test_seed_command.py
@@ -66,6 +75,7 @@ seeders/
 ├── stock_record_seeder.py         # StockRecordSeeder
 ├── stock_movement_seeder.py       # StockMovementSeeder
 ├── low_stock_seeder.py            # LowStockSeeder
+├── wagtail_locale_seeder.py       # Default Wagtail Locale bootstrap
 └── README.md                      # This file
 ```
 
@@ -75,6 +85,7 @@ seeders/
 
 Seeders run in dependency order to respect foreign key relationships:
 
+0. **Wagtail locales** — `ensure_default_wagtail_locales()` (global, not tenant-scoped) runs first inside `SeederManager.seed()`
 1. **TenantSeeder** — Creates/retrieves the tenant
 2. **UserSeeder** — Creates tenant users with roles
 3. **CategorySeeder** — Creates product categories (hierarchical)
@@ -95,6 +106,7 @@ Abstract base class providing common functionality:
 
 #### SeederManager
 Orchestrates all seeders in the correct dependency order:
+- Ensures default Wagtail `Locale` rows, then refreshes Django/Wagtail language settings
 - Runs TenantSeeder first to ensure tenant exists
 - Passes tenant to all downstream seeders
 - Supports selective model seeding

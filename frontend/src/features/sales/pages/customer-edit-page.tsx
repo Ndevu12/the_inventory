@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { PageHeader } from "@/components/layout/page-header"
+import type { ApiError } from "@/types/api-common"
 import { useCustomer, useUpdateCustomer } from "../hooks/use-customers"
 import {
   editCustomerSchema,
@@ -67,8 +68,9 @@ export function CustomerEditPage({ params }: CustomerEditPageProps) {
           toast.success(`Customer "${values.name}" updated`)
           router.push("/sales/customers")
         },
-        onError: () => {
-          toast.error("Failed to update customer")
+        onError: (error: unknown) => {
+          const e = error as unknown as ApiError
+          toast.error(e.message || "Failed to update customer")
         },
       }
     )

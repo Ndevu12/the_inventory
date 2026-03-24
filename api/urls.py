@@ -74,6 +74,7 @@ from api.views.invitations import (
     InvitationListCreateView,
     PlatformInvitationViewSet,
 )
+from api.views.locales import WagtailLocalesListView
 from api.views.tenants import (
     CurrentTenantView,
     TenantExportView,
@@ -159,6 +160,9 @@ urlpatterns = [
     # Public invitation endpoints (no auth required)
     path("auth/invitations/<str:token>/", InvitationInfoView.as_view(), name="api-invitation-info"),
     path("auth/invitations/<str:token>/accept/", AcceptInvitationView.as_view(), name="api-invitation-accept"),
+
+    # i18n (public; mirrors Wagtail Settings → Locales)
+    path("locales/", WagtailLocalesListView.as_view(), name="api-locales"),
 
     # Bulk operations
     path("bulk-operations/transfer/", BulkTransferView.as_view(), name="api-bulk-transfer"),

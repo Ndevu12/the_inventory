@@ -1,13 +1,14 @@
 "use client"
 
 import * as React from "react"
-import { Link } from "@/i18n/navigation"
+import { Link, useRouter } from "@/i18n/navigation"
 import type { PaginationState, SortingState } from "@tanstack/react-table"
 import { PlusIcon } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/layout/page-header"
+import type { ApiError } from "@/types/api-common"
 import {
   DataTableFacetedFilter,
 } from "@/components/data-table/data-table-faceted-filter"
@@ -22,6 +23,7 @@ import { DISPATCH_PROCESSED_OPTIONS } from "../helpers/dispatch-constants"
 import type { Dispatch, DispatchListParams } from "../types/dispatch.types"
 
 export function DispatchListPage() {
+  const router = useRouter()
   const processMutation = useProcessDispatch()
   const deleteMutation = useDeleteDispatch()
 
@@ -54,9 +56,12 @@ export function DispatchListPage() {
 
   const { data, isLoading } = useDispatches(params)
 
-  const handleView = React.useCallback((_dispatch: Dispatch) => {
-    // detail view can be added later
-  }, [])
+  const handleView = React.useCallback(
+    (dispatch: Dispatch) => {
+      router.push(`/sales/sales-orders/${dispatch.sales_order}`)
+    },
+    [router],
+  )
 
   const handleProcess = React.useCallback(
     (dispatch: Dispatch) => {
@@ -71,11 +76,9 @@ export function DispatchListPage() {
           toast.success(
             `Dispatch "${dispatch.dispatch_number}" processed — stock movements created`,
           ),
-        onError: (error) => {
-          const message =
-            (error as { message?: string }).message ??
-            "Failed to process dispatch"
-          toast.error(message)
+        onError: (error: unknown) => {
+          const e = error as unknown as ApiError
+          toast.error(e.message || "Failed to process dispatch")
         },
       })
     },
@@ -88,7 +91,10 @@ export function DispatchListPage() {
       deleteMutation.mutate(dispatch.id, {
         onSuccess: () =>
           toast.success(`Dispatch "${dispatch.dispatch_number}" deleted`),
-        onError: () => toast.error("Failed to delete dispatch"),
+        onError: (error: unknown) => {
+          const e = error as unknown as ApiError
+          toast.error(e.message || "Failed to delete dispatch")
+        },
       })
     },
     [deleteMutation],

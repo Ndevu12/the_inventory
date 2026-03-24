@@ -158,22 +158,18 @@ AUTH_PASSWORD_VALIDATORS = [
 LANGUAGE_CODE = env_str("LANGUAGE_CODE", "en") or "en"
 
 # Django's LocaleMiddleware negotiates from Django's built-in ISO catalog.
-# Content locales and tenant default language choices come from Wagtail
-# Settings → Locales (see ``tenants.wagtail_locales.wagtail_locale_choices``).
+# ``home.i18n_sync.refresh_i18n_settings_from_wagtail`` merges in every
+# ``wagtailcore.Locale`` row (plus Kinyarwanda) on startup, after migrations,
+# and when locales change in Wagtail admin.
 _base_langs = list(global_settings.LANGUAGES)
 if "rw" not in dict(_base_langs):
     _base_langs.append(("rw", "Kinyarwanda"))
 LANGUAGES = tuple(_base_langs)
 
-# Must be a subset of LANGUAGES. Drives Wagtail locale picker and
-# ``get_supported_content_language_variant`` (used by API / translatable models).
+# Bootstrap only until DB locales load (see ``home.i18n_sync``). Must stay a
+# subset of LANGUAGES. Replaced at runtime from Wagtail Locale rows.
 WAGTAIL_CONTENT_LANGUAGES = [
     ("en", "English"),
-    ("fr", "French"),
-    ("sw", "Swahili"),
-    ("rw", "Kinyarwanda"),
-    ("es", "Spanish"),
-    ("ar", "Arabic"),
 ]
 
 LOCALE_PATHS = [

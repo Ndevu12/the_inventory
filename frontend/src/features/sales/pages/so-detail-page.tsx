@@ -6,6 +6,7 @@ import { useRouter } from "@/i18n/navigation"
 import { toast } from "sonner"
 
 import { PageHeader } from "@/components/layout/page-header"
+import type { ApiError } from "@/types/api-common"
 import { SODetailView } from "../components/sales-orders/so-detail-view"
 import {
   useSalesOrder,
@@ -30,9 +31,9 @@ export function SODetailPage({ params }: SODetailPageProps) {
     if (!confirm(`Confirm sales order "${order.order_number}"?`)) return
     confirmMutation.mutate(order.id, {
       onSuccess: () => toast.success(`Order "${order.order_number}" confirmed`),
-      onError: (err) => {
-        const message = (err as { message?: string }).message ?? "Failed to confirm order"
-        toast.error(message)
+      onError: (err: unknown) => {
+        const e = err as unknown as ApiError
+        toast.error(e.message || "Failed to confirm order")
       },
     })
   }, [order, confirmMutation])
@@ -42,9 +43,9 @@ export function SODetailPage({ params }: SODetailPageProps) {
     if (!confirm(`Cancel sales order "${order.order_number}"? This cannot be undone.`)) return
     cancelMutation.mutate(order.id, {
       onSuccess: () => toast.success(`Order "${order.order_number}" cancelled`),
-      onError: (err) => {
-        const message = (err as { message?: string }).message ?? "Failed to cancel order"
-        toast.error(message)
+      onError: (err: unknown) => {
+        const e = err as unknown as ApiError
+        toast.error(e.message || "Failed to cancel order")
       },
     })
   }, [order, cancelMutation])
@@ -61,7 +62,7 @@ export function SODetailPage({ params }: SODetailPageProps) {
         error={error}
         onConfirm={handleConfirm}
         onCancel={handleCancel}
-        onBack={() => router.push("/sales/orders")}
+        onBack={() => router.push("/sales/sales-orders")}
         isConfirming={confirmMutation.isPending}
         isCancelling={cancelMutation.isPending}
       />

@@ -4,15 +4,7 @@
     "searchPlaceholder": "Shakisha…"
   },
   "LanguageSwitcher": {
-    "ariaLabel": "Ururimi",
-    "languages": {
-      "en": "Icyongereza",
-      "fr": "Igifaransa",
-      "sw": "Igiswahili",
-      "rw": "Ikinyarwanda",
-      "es": "Icyesipanyolo",
-      "ar": "Icyarabu"
-    }
+    "ariaLabel": "Ururimi"
   },
   "App": {
     "description": "Sisitemu yo gucunga ububiko bw'abakodeshi benshi"

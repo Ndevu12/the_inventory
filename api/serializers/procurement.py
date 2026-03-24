@@ -1,5 +1,7 @@
 """Serializers for procurement models."""
 
+import uuid
+
 from rest_framework import serializers
 
 from procurement.models import (
@@ -83,6 +85,14 @@ class PurchaseOrderLineSerializer(serializers.ModelSerializer):
         )
 
 
+class PurchaseOrderLineWriteSerializer(serializers.Serializer):
+    product = serializers.PrimaryKeyRelatedField(
+        queryset=PurchaseOrderLine._meta.get_field("product").related_model.objects.all(),
+    )
+    quantity = serializers.IntegerField(min_value=1)
+    unit_cost = serializers.DecimalField(max_digits=10, decimal_places=2)
+
+
 class PurchaseOrderSerializer(serializers.ModelSerializer):
     """``supplier_name`` uses the request display locale for translated suppliers."""
 
@@ -104,11 +114,34 @@ class PurchaseOrderSerializer(serializers.ModelSerializer):
             "created_at", "updated_at",
         ]
         read_only_fields = ["status", "created_at", "updated_at"]
+        extra_kwargs = {
+            "order_number": {"required": False, "allow_blank": True},
+        }
 
     def get_supplier_name(self, obj):
         return attribute_in_display_locale(
             obj.supplier, "name", display_locale_from_context(self.context),
         )
+
+    def create(self, validated_data):
+        lines_raw = self.initial_data.get("lines", [])
+        line_serializer = PurchaseOrderLineWriteSerializer(data=lines_raw, many=True)
+        line_serializer.is_valid(raise_exception=True)
+        if not line_serializer.validated_data:
+            raise serializers.ValidationError(
+                {"lines": ["At least one line item is required."]},
+            )
+
+        order_number = validated_data.get("order_number")
+        if order_number is None or not str(order_number).strip():
+            validated_data["order_number"] = f"PO-{uuid.uuid4().hex[:10].upper()}"
+        else:
+            validated_data["order_number"] = str(order_number).strip()
+
+        order = PurchaseOrder.objects.create(**validated_data)
+        for line in line_serializer.validated_data:
+            PurchaseOrderLine.objects.create(purchase_order=order, **line)
+        return order
 
 
 class GoodsReceivedNoteSerializer(serializers.ModelSerializer):

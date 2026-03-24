@@ -89,8 +89,12 @@ export function SOForm({
       return
     }
 
+    const orderNumber = (values.order_number ?? "").trim()
     onSubmit({
-      ...values,
+      ...(orderNumber ? { order_number: orderNumber } : {}),
+      customer: values.customer,
+      order_date: values.order_date,
+      notes: values.notes,
       lines: validLines.map((item) => ({
         product: item.product!,
         quantity: item.quantity,
@@ -108,11 +112,11 @@ export function SOForm({
         </CardHeader>
         <CardContent className="grid gap-6 sm:grid-cols-2">
           <FormField
-            label="Order Number"
+            label="Order number (optional)"
             error={form.formState.errors.order_number?.message}
           >
             <Input
-              placeholder="e.g. SO-2026-001"
+              placeholder="Leave blank to auto-generate"
               {...form.register("order_number")}
             />
           </FormField>

@@ -23,8 +23,12 @@ export function CustomerForm({ form }: CustomerFormProps) {
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="code">Code *</Label>
-          <Input id="code" placeholder="e.g. CUST-001" {...register("code")} />
+          <Label htmlFor="code">Code (optional)</Label>
+          <Input
+            id="code"
+            placeholder="Leave blank to auto-generate"
+            {...register("code")}
+          />
           {errors.code && (
             <p className="text-xs text-destructive">{errors.code.message}</p>
           )}

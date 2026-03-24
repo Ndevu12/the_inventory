@@ -1,4 +1,4 @@
-# Add Arabic content locale (matches WAGTAIL_CONTENT_LANGUAGES / Next.js routing).
+# Add Arabic locale row; also listed in ``seeders.wagtail_locale_seeder``.
 
 from django.db import migrations
 

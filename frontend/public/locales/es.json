@@ -4,15 +4,7 @@
     "searchPlaceholder": "Buscar…"
   },
   "LanguageSwitcher": {
-    "ariaLabel": "Idioma",
-    "languages": {
-      "en": "Inglés",
-      "fr": "Francés",
-      "sw": "Suajili",
-      "rw": "Kinyarwanda",
-      "es": "Español",
-      "ar": "Árabe"
-    }
+    "ariaLabel": "Idioma"
   },
   "App": {
     "description": "Sistema de gestión de inventario multi-inquilino"

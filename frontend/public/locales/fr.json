@@ -4,15 +4,7 @@
     "searchPlaceholder": "Rechercher…"
   },
   "LanguageSwitcher": {
-    "ariaLabel": "Langue",
-    "languages": {
-      "en": "Anglais",
-      "fr": "Français",
-      "sw": "Swahili",
-      "rw": "Kinyarwanda",
-      "es": "Espagnol",
-      "ar": "Arabe"
-    }
+    "ariaLabel": "Langue"
   },
   "App": {
     "description": "Système de gestion des stocks multi-locataires"

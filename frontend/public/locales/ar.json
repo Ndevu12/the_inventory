@@ -4,15 +4,7 @@
     "searchPlaceholder": "بحث…"
   },
   "LanguageSwitcher": {
-    "ariaLabel": "اللغة",
-    "languages": {
-      "en": "الإنجليزية",
-      "fr": "الفرنسية",
-      "sw": "السواحيلية",
-      "rw": "الكينيارواندا",
-      "es": "الإسبانية",
-      "ar": "العربية"
-    }
+    "ariaLabel": "اللغة"
   },
   "App": {
     "description": "نظام إدارة مخزون متعدد المستأجرين"

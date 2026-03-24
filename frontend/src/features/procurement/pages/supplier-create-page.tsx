@@ -40,7 +40,7 @@ export function SupplierCreatePage() {
     createMutation.mutate(values, {
       onSuccess: (supplier) => {
         toast.success(`Supplier "${supplier.name}" created`)
-        router.push("/suppliers")
+        router.push("/procurement/suppliers")
       },
       onError: () => {
         toast.error("Failed to create supplier")
@@ -61,7 +61,7 @@ export function SupplierCreatePage() {
             <SupplierForm form={form} />
           </CardContent>
           <CardFooter className="flex justify-end gap-2">
-            <Button variant="outline" render={<Link href="/suppliers" />}>
+            <Button variant="outline" render={<Link href="/procurement/suppliers" />}>
               Cancel
             </Button>
             <Button type="submit" disabled={createMutation.isPending}>

@@ -13,7 +13,8 @@ export interface Dispatch {
 }
 
 export interface DispatchCreatePayload {
-  dispatch_number: string
+  /** Omit or leave empty; the API assigns a unique dispatch number (DSP- prefix). */
+  dispatch_number?: string
   sales_order: number
   dispatch_date: string
   from_location: number

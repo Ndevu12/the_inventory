@@ -50,10 +50,11 @@ export const dispatchesApi = {
   },
 }
 
-export function fetchSalesOrders() {
+/** Confirmed orders only — dispatches can be processed only for confirmed SOs. */
+export function fetchSalesOrdersForDispatch() {
   return apiClient.get<PaginatedResponse<SimpleSalesOrder>>(
     "/sales-orders/",
-    { page_size: "1000" },
+    { page_size: "1000", status: "confirmed" },
   )
 }
 

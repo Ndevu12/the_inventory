@@ -12,14 +12,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { usePathname, useRouter } from "@/i18n/navigation";
-import type { AppLocale } from "@/i18n/routing";
-import { routing } from "@/i18n/routing";
+import { localeEntries, routing } from "@/i18n/routing";
 import { persistLocalePreference } from "@/lib/locale-preference";
+
+function displayNameForLocale(code: string): string {
+  return localeEntries.find((e) => e.code === code)?.displayName ?? code;
+}
 
 export function LanguageSwitcher() {
   const locale = useLocale();
   const t = useTranslations("LanguageSwitcher");
-  const tLang = useTranslations("LanguageSwitcher.languages");
   const router = useRouter();
   const pathname = usePathname();
 
@@ -48,7 +50,7 @@ export function LanguageSwitcher() {
         >
           {routing.locales.map((code) => (
             <DropdownMenuRadioItem key={code} value={code}>
-              {tLang(code as AppLocale)}
+              {displayNameForLocale(code)}
             </DropdownMenuRadioItem>
           ))}
         </DropdownMenuRadioGroup>

@@ -1,7 +1,7 @@
 import { z } from "zod"
 
 export const createCustomerSchema = z.object({
-  code: z.string().min(1, "Code is required").max(100),
+  code: z.string().max(100),
   name: z.string().min(1, "Name is required").max(255),
   contact_name: z.string().max(255),
   email: z.string().email("Invalid email address").or(z.literal("")),

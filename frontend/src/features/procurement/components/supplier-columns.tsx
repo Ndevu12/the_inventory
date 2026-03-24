@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { DataTableColumnHeader } from "@/components/data-table"
 import { DataTableRowActions } from "@/components/data-table"
 import type { Supplier } from "../types/procurement.types"
-import { PAYMENT_TERMS_MAP } from "../helpers/procurement-constants"
+import { paymentTermsLabel } from "../helpers/procurement-constants"
 
 interface SupplierColumnActions {
   onEdit: (supplier: Supplier) => void
@@ -55,9 +55,12 @@ export function getSupplierColumns(
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Payment Terms" />
       ),
-      cell: ({ row }) =>
-        PAYMENT_TERMS_MAP[row.getValue("payment_terms") as keyof typeof PAYMENT_TERMS_MAP] ??
-        row.getValue("payment_terms"),
+      cell: ({ row }) => {
+        const s = row.original
+        const fromApi = s.payment_terms_display?.trim()
+        if (fromApi) return fromApi
+        return paymentTermsLabel(s.payment_terms) || "—"
+      },
     },
     {
       accessorKey: "lead_time_days",

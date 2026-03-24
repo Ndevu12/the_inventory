@@ -4,15 +4,7 @@
     "searchPlaceholder": "Search…"
   },
   "LanguageSwitcher": {
-    "ariaLabel": "Language",
-    "languages": {
-      "en": "English",
-      "fr": "French",
-      "sw": "Swahili",
-      "rw": "Kinyarwanda",
-      "es": "Spanish",
-      "ar": "Arabic"
-    }
+    "ariaLabel": "Language"
   },
   "App": {
     "description": "Multi-tenant inventory management system"

@@ -12,7 +12,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { PAYMENT_TERMS_OPTIONS } from "../../helpers/procurement-constants"
+import {
+  PAYMENT_TERMS_OPTIONS,
+  paymentTermsLabel,
+} from "../../helpers/procurement-constants"
 import type { CreateSupplierFormValues } from "../../helpers/supplier-schemas"
 
 interface SupplierFormProps {
@@ -121,7 +124,10 @@ export function SupplierForm({ form }: SupplierFormProps) {
           }
         >
           <SelectTrigger id="payment_terms" className="w-full">
-            <SelectValue placeholder="Select terms" />
+            <SelectValue placeholder="Select terms">
+              {(value: string | null) =>
+                value ? paymentTermsLabel(value) : null}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {PAYMENT_TERMS_OPTIONS.map((opt) => (

@@ -16,6 +16,13 @@ export const PAYMENT_TERMS_MAP: Record<PaymentTerms, string> =
     PAYMENT_TERMS_OPTIONS.map((o) => [o.value, o.label])
   ) as Record<PaymentTerms, string>
 
+/** Human-readable label for a stored payment_terms code (API value). */
+export function paymentTermsLabel(code: string | null | undefined): string {
+  if (code == null || code === "") return ""
+  const trimmed = code.trim() as PaymentTerms
+  return PAYMENT_TERMS_MAP[trimmed] ?? code
+}
+
 // ─── Purchase Order Statuses ────────────────────────────────────────────────
 
 export const PO_STATUS_OPTIONS: {
