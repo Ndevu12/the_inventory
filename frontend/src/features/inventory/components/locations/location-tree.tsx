@@ -1,180 +1,340 @@
 "use client"
 
-import { useState } from "react"
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from "react"
+import { useVirtualizer } from "@tanstack/react-virtual"
 import { useTranslations } from "next-intl"
 import {
   ChevronRightIcon,
+  ListIcon,
   PencilIcon,
   Trash2Icon,
   WarehouseIcon,
 } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { CapacityBar } from "./capacity-bar"
-import { useLocationStock, useDeleteLocation } from "../../hooks/use-locations"
-import type { StockLocation, StockRecordAtLocation } from "../../types/location.types"
+import { StockRecordsPanel } from "./stock-records-panel"
+import { useDeleteLocation } from "../../hooks/use-locations"
+import type { StockLocation } from "../../types/location.types"
 
-function StockRecordsPanel({ locationId }: { locationId: number }) {
-  const t = useTranslations("Inventory")
-  const { data: records, isLoading } = useLocationStock(locationId)
+export type LocationTreeHandle = {
+  /** Expand site group + tree ancestors, then scroll the row into view. */
+  revealLocation: (locationId: number, ancestorIds: number[]) => void
+}
 
-  if (isLoading) {
-    return (
-      <div className="space-y-2 px-4 py-3">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <Skeleton key={i} className="h-7 w-full" />
-        ))}
-      </div>
-    )
+type TreeRow =
+  | { kind: "group"; groupKey: string; title: string; count: number }
+  | {
+      kind: "location"
+      location: StockLocation
+      depthIndent: number
+      hasChildren: boolean
+    }
+
+function groupLocations(
+  locations: StockLocation[],
+): Map<string, StockLocation[]> {
+  const map = new Map<string, StockLocation[]>()
+  for (const loc of locations) {
+    const key = loc.warehouse_id != null ? `w:${loc.warehouse_id}` : "retail"
+    const list = map.get(key) ?? []
+    list.push(loc)
+    map.set(key, list)
+  }
+  for (const [, list] of map) {
+    list.sort(sortLocationsByTreeOrder)
+  }
+  return map
+}
+
+function sortLocationsByTreeOrder(a: StockLocation, b: StockLocation) {
+  const pa = a.materialized_path ?? ""
+  const pb = b.materialized_path ?? ""
+  if (pa && pb) return pa.localeCompare(pb)
+  const da = a.depth ?? 1
+  const db = b.depth ?? 1
+  if (da !== db) return da - db
+  return a.name.localeCompare(b.name)
+}
+
+function shallowestDepthInGroup(groupLocationsList: StockLocation[]): number {
+  const depths = groupLocationsList
+    .map((l) => l.depth)
+    .filter((d): d is number => typeof d === "number" && Number.isFinite(d))
+  if (!depths.length) return 1
+  return Math.min(...depths)
+}
+
+/** Indent from treebeard ``depth`` within this site group when the API sends it; otherwise fall back to parent/child walk depth. */
+function buildHierarchyRows(
+  groupLocationsList: StockLocation[],
+  collapsedTreeNodes: Set<number>,
+): Omit<Extract<TreeRow, { kind: "location" }>, "kind">[] {
+  const minDepth = shallowestDepthInGroup(groupLocationsList)
+  const hasMpDepth = groupLocationsList.some(
+    (l) => l.depth != null && Number.isFinite(l.depth),
+  )
+  const byId = new Map(groupLocationsList.map((l) => [l.id, l]))
+  const children = new Map<number | null, StockLocation[]>()
+  for (const loc of groupLocationsList) {
+    let p: number | null = loc.parent_id ?? null
+    if (p != null && !byId.has(p)) p = null
+    const list = children.get(p) ?? []
+    list.push(loc)
+    children.set(p, list)
+  }
+  for (const [, list] of children) {
+    list.sort(sortLocationsByTreeOrder)
   }
 
-  if (!records?.length) {
-    return (
-      <p className="px-4 py-4 text-center text-sm text-muted-foreground">
-        {t("locations.noStock")}
-      </p>
-    )
-  }
+  const out: Omit<Extract<TreeRow, { kind: "location" }>, "kind">[] = []
 
-  return (
-    <div className="border-t">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b bg-muted/50 text-left">
-            <th className="px-4 py-2 font-medium">
-              {t("locations.subTableProduct")}
-            </th>
-            <th className="px-4 py-2 text-right font-medium">
-              {t("locations.subTableQty")}
-            </th>
-            <th className="px-4 py-2 text-right font-medium">
-              {t("locations.subTableReserved")}
-            </th>
-            <th className="px-4 py-2 text-right font-medium">
-              {t("locations.subTableAvailable")}
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {(records as StockRecordAtLocation[]).map((r) => (
-            <tr key={r.id} className="border-b last:border-0">
-              <td className="px-4 py-2">
-                <div className="font-medium">{r.product_name}</div>
-                <div className="text-xs text-muted-foreground">
-                  {r.product_sku}
-                </div>
-              </td>
-              <td className="px-4 py-2 text-right tabular-nums">
-                {r.quantity}
-              </td>
-              <td className="px-4 py-2 text-right tabular-nums">
-                {r.reserved_quantity}
-              </td>
-              <td className="px-4 py-2 text-right tabular-nums">
-                <span
-                  className={cn(
-                    r.is_low_stock && "font-medium text-destructive",
-                  )}
-                >
-                  {r.available_quantity}
-                </span>
-                {r.is_low_stock && (
-                  <Badge variant="destructive" className="ml-2 text-[10px]">
-                    {t("shared.low")}
-                  </Badge>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+  function walk(parentKey: number | null, walkDepth: number) {
+    const kids = children.get(parentKey) ?? []
+    for (const loc of kids) {
+      const hasCh = (children.get(loc.id)?.length ?? 0) > 0
+      const depthIndent = hasMpDepth
+        ? Math.max(
+            0,
+            (loc.depth ?? minDepth) - minDepth,
+          )
+        : walkDepth
+      out.push({ location: loc, depthIndent, hasChildren: hasCh })
+      if (hasCh && !collapsedTreeNodes.has(loc.id)) {
+        walk(loc.id, walkDepth + 1)
+      }
+    }
+  }
+  walk(null, 0)
+  return out
+}
+
+function buildRows(
+  locations: StockLocation[],
+  collapsedGroups: Set<string>,
+  collapsedTreeNodes: Set<number>,
+  titleForGroup: (groupKey: string, sample: StockLocation | undefined) => string,
+): TreeRow[] {
+  const map = groupLocations(locations)
+  const entries = [...map.entries()]
+  entries.sort(([ka], [kb]) => {
+    const isRetailA = ka === "retail"
+    const isRetailB = kb === "retail"
+    if (isRetailA && !isRetailB) return 1
+    if (!isRetailA && isRetailB) return -1
+    const locA = map.get(ka)![0]
+    const locB = map.get(kb)![0]
+    const nameA = locA.warehouse?.name ?? ""
+    const nameB = locB.warehouse?.name ?? ""
+    return nameA.localeCompare(nameB)
+  })
+
+  const rows: TreeRow[] = []
+  for (const [groupKey, locs] of entries) {
+    rows.push({
+      kind: "group",
+      groupKey,
+      title: titleForGroup(groupKey, locs[0]),
+      count: locs.length,
+    })
+    if (!collapsedGroups.has(groupKey)) {
+      const hier = buildHierarchyRows(locs, collapsedTreeNodes)
+      for (const h of hier) {
+        rows.push({ kind: "location", ...h })
+      }
+    }
+  }
+  return rows
+}
+
+function utilizationPercent(location: StockLocation): number | null {
+  if (location.max_capacity === null || location.max_capacity <= 0) return null
+  return Math.min(
+    (location.current_utilization / location.max_capacity) * 100,
+    100,
   )
 }
 
-interface LocationItemProps {
+interface CompactLocationRowProps {
   location: StockLocation
   onEdit: (location: StockLocation) => void
+  stockOpen: boolean
+  onToggleStock: () => void
+  depthIndent: number
+  hasChildren: boolean
+  treeCollapsed: boolean
+  onToggleTree: () => void
 }
 
-function LocationItem({ location, onEdit }: LocationItemProps) {
+function CompactLocationRow({
+  location,
+  onEdit,
+  stockOpen,
+  onToggleStock,
+  depthIndent,
+  hasChildren,
+  treeCollapsed,
+  onToggleTree,
+}: CompactLocationRowProps) {
   const t = useTranslations("Inventory")
-  const [expanded, setExpanded] = useState(false)
+  const tCommon = useTranslations("Common.actions")
+  const tCommonStates = useTranslations("Common.states")
+  const [deleteOpen, setDeleteOpen] = useState(false)
   const deleteMutation = useDeleteLocation()
+  const pct = utilizationPercent(location)
 
-  const handleDelete = () => {
-    if (
-      !confirm(
-        t("shared.confirmDeleteLocation", { name: location.name }),
-      )
-    )
-      return
-
+  const confirmDelete = () => {
     deleteMutation.mutate(location.id, {
-      onSuccess: () =>
-        toast.success(t("locations.toastDeleted", { name: location.name })),
+      onSuccess: () => {
+        toast.success(t("locations.toastDeleted", { name: location.name }))
+        setDeleteOpen(false)
+      },
       onError: (err) =>
         toast.error(err.message || t("locations.toastDeleteFailed")),
     })
   }
 
+  const indentPx = depthIndent * 14
+
   return (
-    <div className="overflow-hidden rounded-lg border bg-card transition-shadow hover:shadow-sm">
-      <div className="flex items-center gap-3 p-4">
+    <div className="border-b bg-card last:border-b-0">
+      <div
+        className={cn(
+          "grid w-full grid-cols-[2rem_minmax(0,1fr)_auto_auto_4.5rem] items-center gap-2 px-2 py-1.5 sm:grid-cols-[2rem_minmax(0,1fr)_5.5rem_4.5rem_4.5rem]",
+        )}
+      >
         <Button
+          type="button"
           variant="ghost"
           size="icon-sm"
-          onClick={() => setExpanded((v) => !v)}
-          aria-label={expanded ? t("shared.collapse") : t("shared.expand")}
+          className="size-8 shrink-0"
+          onClick={onToggleStock}
+          aria-expanded={stockOpen}
+          aria-label={t("locations.list.stockLinesToggle")}
         >
-          <ChevronRightIcon
+          <ListIcon
             className={cn(
-              "size-4 transition-transform duration-200",
-              expanded && "rotate-90",
+              "size-4 transition-colors",
+              stockOpen && "text-primary",
             )}
           />
         </Button>
 
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <span className="truncate font-medium">{location.name}</span>
-            <Badge
-              variant={location.is_active ? "default" : "secondary"}
-              className="shrink-0"
+        <div className="min-w-0">
+          <div
+            className={cn(
+              "flex min-w-0 items-center gap-1 pl-2 sm:gap-2",
+              depthIndent > 0 && "border-l border-border/70",
+            )}
+            style={{ marginLeft: indentPx }}
+          >
+            <div
+              className={cn(
+                "flex h-7 w-7 shrink-0 items-center justify-center",
+                !hasChildren && "pointer-events-none",
+              )}
             >
-              {location.is_active ? t("shared.active") : t("shared.inactive")}
-            </Badge>
+              {hasChildren ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  className="size-7 shrink-0"
+                  onClick={onToggleTree}
+                  aria-expanded={!treeCollapsed}
+                  aria-label={
+                    treeCollapsed
+                      ? t("locations.list.expandBranch")
+                      : t("locations.list.collapseBranch")
+                  }
+                >
+                  <ChevronRightIcon
+                    className={cn(
+                      "size-4 transition-transform duration-200",
+                      !treeCollapsed && "rotate-90",
+                    )}
+                  />
+                </Button>
+              ) : (
+                <span
+                  className="size-1.5 rounded-full bg-muted-foreground/35"
+                  aria-hidden
+                />
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex min-w-0 items-center gap-2">
+                <span className="truncate text-sm font-medium">
+                  {location.name}
+                </span>
+                <Badge
+                  variant={location.is_active ? "default" : "secondary"}
+                  className="hidden shrink-0 text-[10px] sm:inline-flex"
+                >
+                  {location.is_active ? t("shared.active") : t("shared.inactive")}
+                </Badge>
+              </div>
+              {location.description ? (
+                <p className="truncate text-xs text-muted-foreground">
+                  {location.description}
+                </p>
+              ) : null}
+            </div>
           </div>
-          {location.description && (
-            <p className="mt-0.5 truncate text-sm text-muted-foreground">
-              {location.description}
-            </p>
-          )}
         </div>
 
-        <div className="hidden w-48 shrink-0 sm:block">
-          <CapacityBar
-            currentUtilization={location.current_utilization}
-            maxCapacity={location.max_capacity}
-          />
+        <div className="hidden text-right text-xs tabular-nums text-muted-foreground sm:block">
+          {pct != null
+            ? t("locations.capacity.percent", { pct: Math.round(pct) })
+            : t("locations.list.utilUnlimited", {
+                count: location.current_utilization,
+              })}
         </div>
 
-        <div className="flex shrink-0 items-center gap-1">
+        <Badge
+          variant={location.is_active ? "default" : "secondary"}
+          className="justify-self-end text-[10px] sm:hidden"
+        >
+          {location.is_active ? t("shared.active") : t("shared.inactive")}
+        </Badge>
+
+        <div className="flex shrink-0 justify-end gap-0.5">
           <Button
+            type="button"
             variant="ghost"
             size="icon-sm"
+            className="size-8"
             onClick={() => onEdit(location)}
             aria-label={t("shared.editLocation")}
           >
             <PencilIcon className="size-4" />
           </Button>
           <Button
+            type="button"
             variant="ghost"
             size="icon-sm"
-            onClick={handleDelete}
+            className="size-8"
+            onClick={() => setDeleteOpen(true)}
             disabled={deleteMutation.isPending}
             aria-label={t("shared.deleteLocation")}
           >
@@ -183,14 +343,44 @@ function LocationItem({ location, onEdit }: LocationItemProps) {
         </div>
       </div>
 
-      <div className="px-4 pb-3 sm:hidden">
-        <CapacityBar
-          currentUtilization={location.current_utilization}
-          maxCapacity={location.max_capacity}
-        />
-      </div>
+      <AlertDialog
+        open={deleteOpen}
+        onOpenChange={(open) => {
+          setDeleteOpen(open)
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t("locations.deleteDialogTitle")}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("shared.confirmDeleteLocation", { name: location.name })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteMutation.isPending}>
+              {tCommon("cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={confirmDelete}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending
+                ? tCommonStates("loading")
+                : tCommon("delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
-      {expanded && <StockRecordsPanel locationId={location.id} />}
+      {stockOpen ? (
+        <StockRecordsPanel
+          locationId={location.id}
+          locationName={location.name}
+        />
+      ) : null}
     </div>
   )
 }
@@ -199,20 +389,164 @@ interface LocationTreeProps {
   locations: StockLocation[]
   onEdit: (location: StockLocation) => void
   isLoading?: boolean
+  hasNextPage?: boolean
+  isFetchingNextPage?: boolean
+  fetchNextPage?: () => void
+  totalCount?: number
 }
 
-export function LocationTree({
-  locations,
-  onEdit,
-  isLoading,
-}: LocationTreeProps) {
+export const LocationTree = forwardRef<LocationTreeHandle, LocationTreeProps>(
+  function LocationTree(
+    {
+      locations,
+      onEdit,
+      isLoading,
+      hasNextPage,
+      isFetchingNextPage,
+      fetchNextPage,
+      totalCount,
+    },
+    ref,
+  ) {
   const t = useTranslations("Inventory")
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const sentinelRef = useRef<HTMLDivElement>(null)
+  const locationsRef = useRef(locations)
+  locationsRef.current = locations
+
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(
+    () => new Set(),
+  )
+  const [collapsedTreeNodes, setCollapsedTreeNodes] = useState<Set<number>>(
+    () => new Set(),
+  )
+  const [stockExpandedId, setStockExpandedId] = useState<number | null>(null)
+  const [pendingScrollToId, setPendingScrollToId] = useState<number | null>(
+    null,
+  )
+
+  const titleForGroup = useCallback(
+    (groupKey: string, sample: StockLocation | undefined) => {
+      if (groupKey === "retail") return t("locations.siteGroup.storeRetail")
+      return sample?.warehouse?.name ?? t("locations.siteGroup.unknownFacility")
+    },
+    [t],
+  )
+
+  const rows = useMemo(
+    () =>
+      buildRows(
+        locations,
+        collapsedGroups,
+        collapsedTreeNodes,
+        titleForGroup,
+      ),
+    [locations, collapsedGroups, collapsedTreeNodes, titleForGroup],
+  )
+
+  const virtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: (index) => {
+      const row = rows[index]
+      if (!row) return 44
+      if (row.kind === "group") return 40
+      const open = stockExpandedId === row.location.id
+      return open ? 420 : 44
+    },
+    overscan: 8,
+    getItemKey: (index) => {
+      const row = rows[index]
+      if (!row) return String(index)
+      if (row.kind === "group") return `g:${row.groupKey}`
+      return `l:${row.location.id}`
+    },
+  })
+
+  const revealLocation = useCallback(
+    (locationId: number, ancestorIds: number[]) => {
+      const locs = locationsRef.current
+      const loc = locs.find((l) => l.id === locationId)
+      setCollapsedGroups((prev) => {
+        const next = new Set(prev)
+        if (loc) {
+          const gk =
+            loc.warehouse_id != null ? `w:${loc.warehouse_id}` : "retail"
+          next.delete(gk)
+        }
+        return next
+      })
+      setCollapsedTreeNodes((prev) => {
+        const next = new Set(prev)
+        for (const aid of ancestorIds) next.delete(aid)
+        return next
+      })
+      setPendingScrollToId(locationId)
+    },
+    [],
+  )
+
+  useImperativeHandle(ref, () => ({ revealLocation }), [revealLocation])
+
+  useEffect(() => {
+    virtualizer.measure()
+  }, [collapsedGroups, collapsedTreeNodes, rows.length, stockExpandedId, virtualizer])
+
+  useEffect(() => {
+    const root = scrollRef.current
+    const sentinel = sentinelRef.current
+    if (!root || !sentinel || !hasNextPage || !fetchNextPage) return
+
+    const obs = new IntersectionObserver(
+      (entries) => {
+        const hit = entries.some((e) => e.isIntersecting)
+        if (hit) fetchNextPage()
+      },
+      { root, rootMargin: "120px", threshold: 0 },
+    )
+    obs.observe(sentinel)
+    return () => obs.disconnect()
+  }, [hasNextPage, fetchNextPage, locations.length])
+
+  useEffect(() => {
+    if (pendingScrollToId == null) return
+    const id = pendingScrollToId
+    const idx = rows.findIndex(
+      (r) => r.kind === "location" && r.location.id === id,
+    )
+    if (idx >= 0) {
+      virtualizer.scrollToIndex(idx, { align: "center" })
+      setPendingScrollToId(null)
+      return
+    }
+    if (!locations.some((l) => l.id === id)) {
+      setPendingScrollToId(null)
+    }
+  }, [pendingScrollToId, rows, virtualizer, locations])
+
+  const toggleGroup = (groupKey: string) => {
+    setCollapsedGroups((prev) => {
+      const next = new Set(prev)
+      if (next.has(groupKey)) next.delete(groupKey)
+      else next.add(groupKey)
+      return next
+    })
+  }
+
+  const toggleTreeNode = (nodeId: number) => {
+    setCollapsedTreeNodes((prev) => {
+      const next = new Set(prev)
+      if (next.has(nodeId)) next.delete(nodeId)
+      else next.add(nodeId)
+      return next
+    })
+  }
 
   if (isLoading) {
     return (
-      <div className="space-y-3">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Skeleton key={i} className="h-[72px] w-full rounded-lg" />
+      <div className="space-y-2 rounded-md border p-2">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <Skeleton key={i} className="h-10 w-full" />
         ))}
       </div>
     )
@@ -230,11 +564,132 @@ export function LocationTree({
     )
   }
 
+  const loaded = locations.length
+  const total = totalCount ?? loaded
+
   return (
     <div className="space-y-2">
-      {locations.map((loc) => (
-        <LocationItem key={loc.id} location={loc} onEdit={onEdit} />
-      ))}
+      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+        <span>
+          {t("locations.list.loadedSummary", { loaded, total })}
+        </span>
+        <span className="hidden sm:inline">
+          {t("locations.list.hintScroll")}
+        </span>
+      </div>
+
+      <div
+        ref={scrollRef}
+        className="max-h-[min(70vh,560px)] overflow-auto rounded-md border"
+      >
+        <div className="sticky top-0 z-10 grid w-full grid-cols-[2rem_minmax(0,1fr)_auto_auto_4.5rem] items-center gap-2 border-b bg-muted/95 px-2 py-2 text-xs font-medium backdrop-blur-sm sm:grid-cols-[2rem_minmax(0,1fr)_5.5rem_4.5rem_4.5rem]">
+          <span className="sr-only">{t("locations.list.colExpand")}</span>
+          <span>{t("locations.list.colLocation")}</span>
+          <span className="hidden text-right sm:block">
+            {t("locations.list.colUtilization")}
+          </span>
+          <span className="sm:hidden" />
+          <span className="text-right">{t("locations.list.colActions")}</span>
+        </div>
+
+        <div
+          className="relative w-full"
+          style={{
+            height: `${virtualizer.getTotalSize() + (hasNextPage ? 40 : 0)}px`,
+          }}
+        >
+          {virtualizer.getVirtualItems().map((virtualRow) => {
+            const row = rows[virtualRow.index]
+            if (!row) return null
+
+            if (row.kind === "group") {
+              const collapsed = collapsedGroups.has(row.groupKey)
+              return (
+                <div
+                  key={virtualRow.key}
+                  data-index={virtualRow.index}
+                  ref={virtualizer.measureElement}
+                  className="absolute left-0 top-0 w-full border-b bg-muted/30"
+                  style={{
+                    transform: `translateY(${virtualRow.start}px)`,
+                  }}
+                >
+                  <button
+                    type="button"
+                    className="flex w-full items-center gap-2 px-2 py-2 text-left text-sm font-medium hover:bg-muted/50"
+                    onClick={() => toggleGroup(row.groupKey)}
+                    aria-expanded={!collapsed}
+                    aria-label={
+                      collapsed
+                        ? t("locations.list.expandSite", { name: row.title })
+                        : t("locations.list.collapseSite", { name: row.title })
+                    }
+                  >
+                    <ChevronRightIcon
+                      className={cn(
+                        "size-4 shrink-0 transition-transform",
+                        !collapsed && "rotate-90",
+                      )}
+                    />
+                    <span className="truncate">{row.title}</span>
+                    <span className="ml-auto shrink-0 tabular-nums text-xs font-normal text-muted-foreground">
+                      {t("locations.list.groupLocationCount", {
+                        count: row.count,
+                      })}
+                    </span>
+                  </button>
+                </div>
+              )
+            }
+
+            const loc = row.location
+            const stockOpen = stockExpandedId === loc.id
+            const treeCollapsed = collapsedTreeNodes.has(loc.id)
+
+            return (
+              <div
+                key={virtualRow.key}
+                data-index={virtualRow.index}
+                data-location-id={loc.id}
+                ref={virtualizer.measureElement}
+                className="absolute left-0 top-0 w-full"
+                style={{
+                  transform: `translateY(${virtualRow.start}px)`,
+                }}
+              >
+                <CompactLocationRow
+                  location={loc}
+                  onEdit={onEdit}
+                  stockOpen={stockOpen}
+                  onToggleStock={() =>
+                    setStockExpandedId((cur) =>
+                      cur === loc.id ? null : loc.id,
+                    )
+                  }
+                  depthIndent={row.depthIndent}
+                  hasChildren={row.hasChildren}
+                  treeCollapsed={treeCollapsed}
+                  onToggleTree={() => toggleTreeNode(loc.id)}
+                />
+              </div>
+            )
+          })}
+
+          {hasNextPage ? (
+            <div
+              ref={sentinelRef}
+              className="absolute left-0 flex w-full items-center justify-center py-2 text-xs text-muted-foreground"
+              style={{ transform: `translateY(${virtualizer.getTotalSize()}px)` }}
+            >
+              {isFetchingNextPage ? t("locations.list.loadingMore") : null}
+            </div>
+          ) : null}
+        </div>
+      </div>
     </div>
   )
 }
+
+)
+
+LocationTree.displayName = "LocationTree"

@@ -9,6 +9,7 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.filters import OrderingFilter
 from rest_framework.response import Response
 
+from api.filters.cycle_reservation import StockReservationFilter
 from api.mixins import TranslatableAPIReadMixin
 from api.permissions import ReadOnlyOrStaff
 from api.schema_i18n import OPENAPI_LANGUAGE_QUERY_PARAMETER
@@ -24,6 +25,7 @@ from inventory.exceptions import (
 from inventory.models import StockRecord, StockReservation
 from inventory.models.reservation import ReservationStatus
 from inventory.services.reservation import ReservationService
+from inventory.utils.localized_attributes import attribute_in_display_locale
 from tenants.context import get_current_tenant
 from tenants.middleware import resolve_tenant_for_request
 from tenants.permissions import get_membership
@@ -45,12 +47,15 @@ class StockReservationViewSet(TranslatableAPIReadMixin,
 
     queryset = (
         StockReservation.objects
-        .select_related("product", "location", "sales_order", "reserved_by")
+        .select_related(
+            "product", "location", "location__warehouse",
+            "sales_order", "reserved_by",
+        )
         .all()
     )
     permission_classes = [ReadOnlyOrStaff]
     filter_backends = [DjangoFilterBackend, OrderingFilter]
-    filterset_fields = ["status", "product", "location"]
+    filterset_class = StockReservationFilter
     ordering_fields = ["created_at", "expires_at", "quantity"]
     ordering = ["-created_at"]
 
@@ -168,6 +173,7 @@ def product_availability_action(self, request, pk=None, product=None):
         .select_related("location")
     )
 
+    display_loc = getattr(self, "_api_display_locale", None)
     result = []
     for record in records:
         reserved = (
@@ -183,7 +189,9 @@ def product_availability_action(self, request, pk=None, product=None):
 
         result.append({
             "location": record.location.pk,
-            "location_name": record.location.name,
+            "location_name": attribute_in_display_locale(
+                record.location, "name", display_loc,
+            ),
             "quantity": record.quantity,
             "reserved": reserved,
             "available": max(record.quantity - reserved, 0),

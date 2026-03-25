@@ -30,6 +30,7 @@ from api.views import (
     StockRecordViewSet,
     StockReservationViewSet,
     SupplierViewSet,
+    WarehouseViewSet,
 )
 from api.views.auth import (
     AuthConfigView,
@@ -99,6 +100,7 @@ platform_router.register("invitations", PlatformInvitationViewSet, basename="pla
 router.register("categories", CategoryViewSet, basename="category")
 router.register("products", ProductViewSet, basename="product")
 router.register("stock-locations", StockLocationViewSet, basename="stocklocation")
+router.register("warehouses", WarehouseViewSet, basename="warehouse")
 router.register("stock-records", StockRecordViewSet, basename="stockrecord")
 router.register("stock-movements", StockMovementViewSet, basename="stockmovement")
 router.register("stock-lots", StockLotViewSet, basename="stocklot")

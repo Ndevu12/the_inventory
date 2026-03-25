@@ -21,6 +21,12 @@ class Command(BaseCommand):
             action="store_true",
             help="Report how many reservations would expire without modifying data.",
         )
+        parser.add_argument(
+            "--tenant-id",
+            type=int,
+            default=None,
+            help="Only expire reservations for this tenant (default: all tenants).",
+        )
 
     def handle(self, *args, **options):
         service = ReservationService()
@@ -30,14 +36,19 @@ class Command(BaseCommand):
 
             from inventory.models.reservation import ReservationStatus, StockReservation
 
-            count = StockReservation.objects.filter(
+            qs = StockReservation.objects.filter(
                 status__in=[ReservationStatus.PENDING, ReservationStatus.CONFIRMED],
                 expires_at__lte=timezone.now(),
-            ).count()
+            )
+            if options["tenant_id"] is not None:
+                qs = qs.filter(tenant_id=options["tenant_id"])
+            count = qs.count()
             self.stdout.write(f"Would expire {count} reservation(s). (dry run)")
             return
 
-        count = service.expire_stale_reservations()
+        count = service.expire_stale_reservations(
+            tenant_id=options["tenant_id"],
+        )
         self.stdout.write(
             self.style.SUCCESS(f"Expired {count} reservation(s).")
         )

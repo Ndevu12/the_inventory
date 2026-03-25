@@ -145,7 +145,10 @@ def process_bulk_operation(
         JSON-serialisable keyword arguments forwarded to the appropriate
         :class:`BulkStockService` method.  Foreign-key fields must be
         passed as integer IDs (``from_location_id``, ``to_location_id``,
-        ``created_by_id``).
+        ``created_by_id``). Optional ``warehouse_id`` (int or null for
+        retail-only) and ``retail_locations_only`` (bool) constrain
+        resolved locations to the matching :class:`~inventory.models.stock.StockLocation`
+        tree partition before the service runs.
     """
     def _do():
         from django.contrib.auth import get_user_model
@@ -159,12 +162,44 @@ def process_bulk_operation(
         if user_id:
             kw["created_by"] = get_user_model().objects.get(pk=user_id)
 
+        from inventory.utils.warehouse_scope import (
+            WAREHOUSE_SCOPE_UNSPECIFIED,
+            parse_report_warehouse_scope,
+        )
+
+        wh_key = kw.pop("warehouse_id", WAREHOUSE_SCOPE_UNSPECIFIED)
+        retail_flag = bool(kw.pop("retail_locations_only", False))
+
+        def _enforce_bulk_warehouse_scope(*locations):
+            try:
+                scope, wid = parse_report_warehouse_scope(
+                    warehouse_id=wh_key,
+                    retail_locations_only=retail_flag,
+                )
+            except ValueError as exc:
+                raise ValueError(str(exc)) from exc
+            if scope == "all":
+                return
+            for loc in locations:
+                if loc is None:
+                    continue
+                if scope == "retail" and loc.warehouse_id is not None:
+                    raise ValueError(
+                        "Bulk operation location is not in the retail-only warehouse scope."
+                    )
+                if scope == "facility" and loc.warehouse_id != wid:
+                    raise ValueError(
+                        "Bulk operation location does not match the requested warehouse scope."
+                    )
+
         if operation_type == "transfer":
             kw["from_location"] = StockLocation.objects.get(pk=kw.pop("from_location_id"))
             kw["to_location"] = StockLocation.objects.get(pk=kw.pop("to_location_id"))
+            _enforce_bulk_warehouse_scope(kw["from_location"], kw["to_location"])
             result = svc.bulk_transfer(**kw)
         elif operation_type == "adjustment":
             kw["location"] = StockLocation.objects.get(pk=kw.pop("location_id"))
+            _enforce_bulk_warehouse_scope(kw["location"])
             result = svc.bulk_adjustment(**kw)
         elif operation_type == "revalue":
             result = svc.bulk_revalue(**kw)
@@ -191,27 +226,35 @@ def generate_report(self, report_type, report_kwargs=None, _job_id=None):
         One of ``"stock_valuation"``, ``"movement_summary"``,
         ``"low_stock"``, ``"overstock"``.
     report_kwargs : dict | None
-        Keyword arguments forwarded to the report method.
+        Keyword arguments forwarded to the report method. May include
+        ``warehouse_id`` (int or JSON null for retail-only sites) and
+        ``retail_locations_only`` (bool) for scope-aware inventory reports.
     """
     def _do():
         from reports.services.inventory_reports import InventoryReportService
         svc = InventoryReportService()
-        kw = dict(report_kwargs or {})
+        raw_kw = dict(report_kwargs or {})
+        scope_kw = {
+            k: raw_kw[k]
+            for k in ("warehouse_id", "retail_locations_only")
+            if k in raw_kw
+        }
+        if "retail_locations_only" in scope_kw:
+            scope_kw["retail_locations_only"] = bool(scope_kw["retail_locations_only"])
 
         if report_type == "stock_valuation":
-            data = svc.get_valuation_summary(**kw)
+            data = svc.get_valuation_summary(**scope_kw)
             data["total_value"] = str(data["total_value"])
             return data
-        elif report_type == "movement_summary":
-            return svc.get_movement_summary(**kw)
-        elif report_type == "low_stock":
-            qs = svc.get_low_stock_products()
+        if report_type == "movement_summary":
+            return svc.get_movement_summary(**scope_kw)
+        if report_type == "low_stock":
+            qs = svc.get_low_stock_products(**scope_kw)
             return {"count": qs.count(), "skus": list(qs.values_list("sku", flat=True)[:100])}
-        elif report_type == "overstock":
-            qs = svc.get_overstock_products(**kw)
+        if report_type == "overstock":
+            qs = svc.get_overstock_products(**scope_kw)
             return {"count": qs.count(), "skus": list(qs.values_list("sku", flat=True)[:100])}
-        else:
-            raise ValueError(f"Unknown report type: {report_type}")
+        raise ValueError(f"Unknown report type: {report_type}")
 
     return _run_with_job(_job_id, _do)
 

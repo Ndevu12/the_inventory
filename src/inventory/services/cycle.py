@@ -14,6 +14,7 @@ import logging
 from typing import Any
 
 from django.db import transaction
+from django.db.models import Q, QuerySet
 from django.utils import timezone
 
 from inventory.models.audit import AuditAction
@@ -27,7 +28,7 @@ from inventory.models.cycle import (
 )
 from inventory.models.stock import MovementType, StockRecord
 from inventory.services.audit import AuditService
-from inventory.services.stock import StockService
+from inventory.services.stock import StockService, filter_stock_records_by_warehouse_scope
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +39,74 @@ _VALID_TRANSITIONS: dict[str, str] = {
 }
 
 
+def filter_inventory_cycles_by_warehouse_scope(
+    queryset: QuerySet,
+    *,
+    tenant_id: int,
+    warehouse_id: int | None,
+) -> QuerySet:
+    """Narrow :class:`~inventory.models.cycle.InventoryCycle` rows to one location tree partition.
+
+    Aligns with :class:`~inventory.models.stock.StockLocation` scope
+    ``(tenant_id, warehouse_id)`` where ``warehouse_id`` of ``None`` is the
+    retail-only forest (no facility FK on the location).
+
+    Cycles with a set ``location`` are filtered on ``location.warehouse_id``.
+    Location-wide cycles (``location`` null) match if any count line sits in
+    the given partition.
+    """
+    qs = queryset.filter(tenant_id=tenant_id)
+    if warehouse_id is None:
+        return qs.filter(
+            Q(location__warehouse_id__isnull=True)
+            | Q(
+                location__isnull=True,
+                lines__location__warehouse_id__isnull=True,
+            ),
+        ).distinct()
+    return qs.filter(
+        Q(location__warehouse_id=warehouse_id)
+        | Q(location__isnull=True, lines__location__warehouse_id=warehouse_id),
+    ).distinct()
+
+
+def filter_cycle_count_lines_by_warehouse_scope(
+    queryset: QuerySet,
+    *,
+    tenant_id: int,
+    warehouse_id: int | None,
+) -> QuerySet:
+    """Narrow :class:`~inventory.models.cycle.CycleCountLine` rows by stock location partition."""
+    qs = queryset.filter(tenant_id=tenant_id, cycle__tenant_id=tenant_id)
+    if warehouse_id is None:
+        return qs.filter(location__warehouse_id__isnull=True)
+    return qs.filter(location__warehouse_id=warehouse_id)
+
+
+def _warehouse_scope_id_for_snapshot(*, location, warehouse) -> int | None:
+    """Return ``location.warehouse_id`` partition for the stock records snapshot.
+
+    When ``location`` is set, an optional ``warehouse`` must match that
+    location's facility (both nullable for retail-only locations).
+
+    When ``location`` is ``None``, ``warehouse`` selects the facility
+    (``None`` means the retail-only partition for this tenant).
+    """
+    if location is not None:
+        lw_id = location.warehouse_id
+        if warehouse is not None:
+            wh_id = warehouse.pk
+            if lw_id != wh_id:
+                raise ValueError(
+                    "When both location and warehouse are set, the warehouse "
+                    "must match the location's facility (or omit warehouse)."
+                )
+        return lw_id
+    if warehouse is not None:
+        return warehouse.pk
+    return None
+
+
 class CycleCountService:
     """Manages the full lifecycle of physical inventory count cycles.
 
@@ -46,11 +115,13 @@ class CycleCountService:
         service = CycleCountService()
         cycle = service.start_cycle(
             name="Q1 2026 Full Count",
+            tenant=my_tenant,
             scheduled_date=date.today(),
             started_by=user,
+            warehouse=my_dc,  # or location=single_bin, or both null for retail-wide
         )
         service.record_count(
-            cycle, product=widget, location=warehouse,
+            cycle, product=widget, location=bin_location,
             counted_quantity=98, counted_by=user,
         )
         service.complete_cycle(cycle)
@@ -80,34 +151,67 @@ class CycleCountService:
         self,
         *,
         name: str,
-        location=None,
+        tenant,
         scheduled_date,
         started_by,
+        location=None,
+        warehouse=None,
     ) -> InventoryCycle:
         """Create a cycle and pre-populate CycleCountLines with system quantities.
 
         Snapshots the current ``StockRecord.quantity`` for every
-        product at the target location (or all locations when
-        ``location`` is ``None``).
+        product in scope: either a single ``location``, or all locations
+        in one warehouse partition when ``location`` is ``None``.
+
+        Stock is always limited to ``tenant`` and to the tree partition
+        ``(tenant, warehouse_id)``: either a facility (``warehouse`` FK
+        on locations) or the retail-only forest (``warehouse_id`` null).
 
         Parameters
         ----------
         name : str
             Descriptive name for the cycle (e.g. "Q1 2026 Full Count").
-        location : StockLocation | None
-            Scope to a specific location.  ``None`` counts all locations.
+        tenant : tenants.Tenant
+            Owner of the cycle and stock snapshot.
         scheduled_date : date
             The planned date for the count.
         started_by : User
             The user initiating the cycle.
+        location : StockLocation | None
+            Scope to a specific location. When set, snapshot uses only that
+            node; ``warehouse``, if also passed, must match
+            ``location.warehouse``.
+        warehouse : Warehouse | None
+            When ``location`` is ``None``, selects the partition: a facility
+            row counts all stock at locations linked to it; omit (``None``)
+            for a tenant-wide retail-only partition (locations with no
+            warehouse FK).
 
         Returns
         -------
         InventoryCycle
             The persisted cycle in ``IN_PROGRESS`` status.
+
+        Raises
+        ------
+        ValueError
+            If ``location`` / ``warehouse`` tenants disagree with ``tenant``,
+            or ``warehouse`` disagrees with ``location.warehouse``.
         """
+        if location is not None and location.tenant_id != tenant.pk:
+            raise ValueError(
+                "Cycle location must belong to the same tenant as the cycle."
+            )
+        if warehouse is not None and warehouse.tenant_id != tenant.pk:
+            raise ValueError(
+                "Cycle warehouse must belong to the same tenant as the cycle."
+            )
+
+        scope_id = _warehouse_scope_id_for_snapshot(location=location, warehouse=warehouse)
+
         with transaction.atomic():
             cycle = InventoryCycle.objects.create(
+                tenant=tenant,
                 name=name,
                 location=location,
                 scheduled_date=scheduled_date,
@@ -117,12 +221,18 @@ class CycleCountService:
             )
 
             stock_qs = StockRecord.objects.select_related("product", "location")
+            stock_qs = filter_stock_records_by_warehouse_scope(
+                stock_qs,
+                tenant_id=tenant.pk,
+                warehouse_id=scope_id,
+            )
             if location is not None:
                 stock_qs = stock_qs.filter(location=location)
             stock_qs = stock_qs.filter(quantity__gt=0)
 
             lines = [
                 CycleCountLine(
+                    tenant=cycle.tenant,
                     cycle=cycle,
                     product=record.product,
                     location=record.location,
@@ -186,6 +296,15 @@ class CycleCountService:
                 f"Cycle must be IN_PROGRESS."
             )
 
+        if product.tenant_id != cycle.tenant_id or location.tenant_id != cycle.tenant_id:
+            raise ValueError(
+                "Product and location must belong to the same tenant as the cycle."
+            )
+        if cycle.location_id and location.pk != cycle.location_id:
+            raise ValueError(
+                "Count location must match the cycle's scoped location."
+            )
+
         try:
             line = CycleCountLine.objects.get(
                 cycle=cycle,
@@ -197,6 +316,18 @@ class CycleCountService:
                 f"No count line for {product} at {location} in cycle "
                 f"'{cycle.name}'."
             )
+
+        if not cycle.location_id:
+            peer_wh = set(
+                cycle.lines.exclude(pk=line.pk).values_list(
+                    "location__warehouse_id", flat=True,
+                ),
+            )
+            if peer_wh and location.warehouse_id not in peer_wh:
+                raise ValueError(
+                    "Count location is not in the same warehouse scope as "
+                    "other lines in this cycle."
+                )
 
         line.counted_quantity = counted_quantity
         line.counted_by = counted_by
@@ -313,6 +444,7 @@ class CycleCountService:
                     )
 
                 variance = InventoryVariance.objects.create(
+                    tenant=cycle.tenant,
                     cycle=cycle,
                     count_line=line,
                     product=line.product,
@@ -454,6 +586,9 @@ class CycleCountService:
         details["cycle_name"] = cycle.name
         if cycle.location:
             details["location"] = cycle.location.name
+        wh_id = getattr(cycle.location, "warehouse_id", None) if cycle.location else None
+        if wh_id:
+            details["warehouse_id"] = wh_id
 
         self._audit_service.log(
             tenant=tenant,

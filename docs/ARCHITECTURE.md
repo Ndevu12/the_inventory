@@ -113,6 +113,21 @@ The project uses **object-oriented programming (OOP) as its standard paradigm**.
 
 ---
 
+## Facility vs stock location (contributor governance)
+
+Operators distinguish **what** they hold (**inventory / stock** quantities) from **where** it sits. In this codebase that split is modeled, not only worded in the UI:
+
+- **`Warehouse`** — Tenant-scoped **facility or site** (e.g. distribution center, named building) when the business needs that level of identity (address, timezone, site-level reporting, inter-facility logic).
+- **`StockLocation`** — **Granular place** (aisle, bin, zone, “stockroom”). It may link to a warehouse via an optional `warehouse` FK. When `warehouse` is **null**, the tenant is in **location-only / retail-style** mode: stock is “at location L,” not “at warehouse W → L.” **Do not invent a fake `Warehouse` row** to satisfy copy or dashboards in that mode; use neutral labels (e.g. store / tenant name) instead.
+
+**Full-stack rule:** Treating this as a **locale-only rename**, **dashboard-only label**, or **Next.js-only** workaround is **not sufficient**. New or changed behavior should respect the same semantics across **models and migrations**, **domain services** (stock, reservations, cycles, transfers), **API serializers and filters**, **reports and tasks**, **seeders**, **tests**, and **frontend types** that mirror the API.
+
+**Tree scope:** `StockLocation` trees (**treebeard**) are partitioned by **`(tenant, warehouse_id)`**, including **`warehouse_id IS NULL`** as its own forest, so retail location hierarchies do not collide with paths per facility.
+
+For day-to-day stack conventions, see [Contributing](../CONTRIBUTING.md).
+
+---
+
 ## Project Structure
 
 ```

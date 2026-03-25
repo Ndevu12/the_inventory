@@ -1,0 +1,7 @@
+---
+alwaysApply: true
+---
+
+## Core guidelines
+
+- Avoid running multiple commands at the same time! you have to wait for the first to complete or terminate/kill it first

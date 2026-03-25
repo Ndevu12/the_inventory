@@ -7,6 +7,16 @@ import { useLocale, useTranslations } from "next-intl"
 import { PlusIcon } from "lucide-react"
 import { toast } from "sonner"
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/layout/page-header"
 import type { ApiError } from "@/types/api-common"
@@ -22,6 +32,10 @@ import {
 import { DISPATCH_PROCESSED_FILTER_VALUES } from "../helpers/dispatch-constants"
 import type { Dispatch, DispatchListParams } from "../types/dispatch.types"
 
+type DispatchListDialog =
+  | { kind: "process"; dispatch: Dispatch }
+  | { kind: "delete"; dispatch: Dispatch }
+
 export function DispatchListPage() {
   const router = useRouter()
   const locale = useLocale()
@@ -30,9 +44,14 @@ export function DispatchListPage() {
   const tAct = useTranslations("Sales.dispatches.actions")
   const tProc = useTranslations("Sales.dispatchProcessed")
   const tShared = useTranslations("Sales.shared")
+  const tCommon = useTranslations("Common.actions")
+  const tCommonStates = useTranslations("Common.states")
 
   const processMutation = useProcessDispatch()
   const deleteMutation = useDeleteDispatch()
+
+  const [actionDialog, setActionDialog] =
+    React.useState<DispatchListDialog | null>(null)
 
   const [pagination, setPagination] = React.useState<PaginationState>({
     pageIndex: 0,
@@ -74,60 +93,72 @@ export function DispatchListPage() {
     [router],
   )
 
-  const handleProcess = React.useCallback(
-    (dispatch: Dispatch) => {
-      if (
-        !confirm(
-          t("processPrompt", { dispatchNumber: dispatch.dispatch_number }),
-        )
-      )
-        return
-      processMutation.mutate(
-        { id: dispatch.id },
-        {
-          onSuccess: () =>
-            toast.success(
-              t("toastProcessed", {
-                dispatchNumber: dispatch.dispatch_number,
-              }),
-            ),
-          onError: (error: unknown) => {
-            const e = error as unknown as ApiError
-            toast.error(e.message || t("processFailed"))
-            if (e.status === 400) {
-              setFulfillmentDialog({
-                dispatch,
-                intro: e.message,
-              })
-            }
-          },
+  const handleProcess = React.useCallback((dispatch: Dispatch) => {
+    setActionDialog({ kind: "process", dispatch })
+  }, [])
+
+  const runProcessFromDialog = React.useCallback(() => {
+    if (!actionDialog || actionDialog.kind !== "process") return
+    const dispatch = actionDialog.dispatch
+    processMutation.mutate(
+      { id: dispatch.id },
+      {
+        onSuccess: () => {
+          toast.success(
+            t("toastProcessed", {
+              dispatchNumber: dispatch.dispatch_number,
+            }),
+          )
+          setActionDialog(null)
         },
-      )
-    },
-    [processMutation, t],
-  )
+        onError: (error: unknown) => {
+          const e = error as unknown as ApiError
+          toast.error(e.message || t("processFailed"))
+          if (e.status === 400) {
+            setFulfillmentDialog({
+              dispatch,
+              intro: e.message,
+            })
+            setActionDialog(null)
+          }
+        },
+      },
+    )
+  }, [actionDialog, processMutation, t])
 
   const handleReviewStock = React.useCallback((dispatch: Dispatch) => {
     setFulfillmentDialog({ dispatch })
   }, [])
 
-  const handleDelete = React.useCallback(
-    (dispatch: Dispatch) => {
-      if (!confirm(t("deletePrompt", { dispatchNumber: dispatch.dispatch_number })))
-        return
-      deleteMutation.mutate(dispatch.id, {
-        onSuccess: () =>
-          toast.success(
-            t("toastDeleted", { dispatchNumber: dispatch.dispatch_number }),
-          ),
-        onError: (error: unknown) => {
-          const e = error as unknown as ApiError
-          toast.error(e.message || t("deleteFailed"))
-        },
-      })
-    },
-    [deleteMutation, t],
-  )
+  const handleDelete = React.useCallback((dispatch: Dispatch) => {
+    setActionDialog({ kind: "delete", dispatch })
+  }, [])
+
+  const runDeleteFromDialog = React.useCallback(() => {
+    if (!actionDialog || actionDialog.kind !== "delete") return
+    const dispatch = actionDialog.dispatch
+    deleteMutation.mutate(dispatch.id, {
+      onSuccess: () => {
+        toast.success(
+          t("toastDeleted", { dispatchNumber: dispatch.dispatch_number }),
+        )
+        setActionDialog(null)
+      },
+      onError: (error: unknown) => {
+        const e = error as unknown as ApiError
+        toast.error(e.message || t("deleteFailed"))
+      },
+    })
+  }, [actionDialog, deleteMutation, t])
+
+  const dialogPending =
+    (actionDialog?.kind === "process" && processMutation.isPending) ||
+    (actionDialog?.kind === "delete" && deleteMutation.isPending)
+
+  const runDialogAction = React.useCallback(() => {
+    if (actionDialog?.kind === "process") runProcessFromDialog()
+    else if (actionDialog?.kind === "delete") runDeleteFromDialog()
+  }, [actionDialog, runProcessFromDialog, runDeleteFromDialog])
 
   const columnLabels = React.useMemo(
     () => ({
@@ -219,6 +250,56 @@ export function DispatchListPage() {
         dispatch={fulfillmentDialog?.dispatch ?? null}
         introText={fulfillmentDialog?.intro}
       />
+
+      <AlertDialog
+        open={actionDialog != null}
+        onOpenChange={(open) => {
+          if (!open) setActionDialog(null)
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {actionDialog?.kind === "process"
+                ? tAct("processDispatch")
+                : actionDialog?.kind === "delete"
+                  ? tAct("delete")
+                  : ""}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {actionDialog?.kind === "process"
+                ? t("processPrompt", {
+                    dispatchNumber: actionDialog.dispatch.dispatch_number,
+                  })
+                : actionDialog?.kind === "delete"
+                  ? t("deletePrompt", {
+                      dispatchNumber: actionDialog.dispatch.dispatch_number,
+                    })
+                  : null}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={dialogPending}>
+              {tCommon("cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              variant={
+                actionDialog?.kind === "delete" ? "destructive" : "default"
+              }
+              onClick={runDialogAction}
+              disabled={dialogPending}
+            >
+              {dialogPending
+                ? tCommonStates("loading")
+                : actionDialog?.kind === "process"
+                  ? tAct("processDispatch")
+                  : actionDialog?.kind === "delete"
+                    ? tAct("delete")
+                    : ""}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

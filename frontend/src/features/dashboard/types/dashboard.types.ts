@@ -1,6 +1,9 @@
 export interface DashboardSummary {
   total_products: number;
   total_locations: number;
+  active_warehouses: number;
+  locations_with_warehouse: number;
+  locations_retail_site: number;
   low_stock_count: number;
   total_stock_records: number;
   total_reserved: number;
@@ -10,11 +13,22 @@ export interface DashboardSummary {
   reserved_stock_value: string;
 }
 
+/** Rolled-up stock for a warehouse or a single neutral “retail site” bucket. */
+export interface StockBySiteRow {
+  warehouse_id: number | null;
+  label: string;
+  kind: "warehouse" | "retail_site";
+  total_quantity: number;
+  reserved: number;
+  available: number;
+}
+
 export interface StockByLocationData {
   labels: string[];
   data: number[];
   reserved: number[];
   available: number[];
+  by_site: StockBySiteRow[];
 }
 
 export interface ChartDataset {

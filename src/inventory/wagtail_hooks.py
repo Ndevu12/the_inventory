@@ -1,9 +1,8 @@
 """Wagtail hooks for the inventory app.
 
-All inventory management features (menu items, dashboard panels, custom URLs)
-have been removed from the Wagtail admin as part of the SaaS redesign.
-Tenant companies access inventory features through the REST API.
-
-The underlying views, panels, and templates remain in the codebase for
-reference and potential future use.
+Tenant-facing day-to-day ops use the REST API and Next.js app. Staff still get
+tenant-scoped **Warehouses & locations** snippets (see :mod:`inventory.snippets`)
+plus hooks used elsewhere (e.g. dashboard panels if re-enabled).
 """
+
+import inventory.snippets  # noqa: F401 — registers Warehouse + StockLocation snippet group

@@ -8,6 +8,16 @@ import { useLocale, useTranslations } from "next-intl"
 import { PlusIcon } from "lucide-react"
 import { toast } from "sonner"
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/layout/page-header"
 import { DataTableFacetedFilter } from "@/components/data-table/data-table-faceted-filter"
@@ -23,6 +33,11 @@ import { SO_STATUS_FILTER_VALUES } from "../helpers/sales-constants"
 import type { ApiError } from "@/types/api-common"
 import type { SalesOrder, SalesOrderListParams } from "../types/sales.types"
 
+type SOListDialog =
+  | { kind: "confirm"; so: SalesOrder }
+  | { kind: "cancel"; so: SalesOrder }
+  | { kind: "delete"; so: SalesOrder }
+
 export function SOListPage() {
   const router = useRouter()
   const locale = useLocale()
@@ -31,10 +46,16 @@ export function SOListPage() {
   const tAct = useTranslations("Sales.salesOrders.actions")
   const tSoStatus = useTranslations("Sales.soStatus")
   const tShared = useTranslations("Sales.shared")
+  const tCommon = useTranslations("Common.actions")
+  const tCommonStates = useTranslations("Common.states")
 
   const confirmMutation = useConfirmSalesOrder()
   const cancelMutation = useCancelSalesOrder()
   const deleteMutation = useDeleteSalesOrder()
+
+  const [actionDialog, setActionDialog] = React.useState<SOListDialog | null>(
+    null,
+  )
 
   const [pagination, setPagination] = React.useState<PaginationState>({
     pageIndex: 0,
@@ -77,50 +98,73 @@ export function SOListPage() {
     [router],
   )
 
-  const handleConfirm = React.useCallback(
-    (so: SalesOrder) => {
-      if (!confirm(t("confirmPrompt", { orderNumber: so.order_number }))) return
+  const handleConfirm = React.useCallback((so: SalesOrder) => {
+    setActionDialog({ kind: "confirm", so })
+  }, [])
+
+  const handleCancel = React.useCallback((so: SalesOrder) => {
+    setActionDialog({ kind: "cancel", so })
+  }, [])
+
+  const handleDelete = React.useCallback((so: SalesOrder) => {
+    setActionDialog({ kind: "delete", so })
+  }, [])
+
+  const runDialogAction = React.useCallback(() => {
+    if (!actionDialog) return
+    const { kind, so } = actionDialog
+    if (kind === "confirm") {
       confirmMutation.mutate(so.id, {
-        onSuccess: () =>
-          toast.success(t("toastConfirmed", { orderNumber: so.order_number })),
+        onSuccess: () => {
+          toast.success(
+            t("toastConfirmed", { orderNumber: so.order_number }),
+          )
+          setActionDialog(null)
+        },
         onError: (error: unknown) => {
           const e = error as unknown as ApiError
           toast.error(e.message || t("confirmFailed"))
         },
       })
-    },
-    [confirmMutation, t],
-  )
-
-  const handleCancel = React.useCallback(
-    (so: SalesOrder) => {
-      if (!confirm(t("cancelPrompt", { orderNumber: so.order_number }))) return
+      return
+    }
+    if (kind === "cancel") {
       cancelMutation.mutate(so.id, {
-        onSuccess: () =>
-          toast.success(t("toastCancelled", { orderNumber: so.order_number })),
+        onSuccess: () => {
+          toast.success(
+            t("toastCancelled", { orderNumber: so.order_number }),
+          )
+          setActionDialog(null)
+        },
         onError: (error: unknown) => {
           const e = error as unknown as ApiError
           toast.error(e.message || t("cancelFailed"))
         },
       })
-    },
-    [cancelMutation, t],
-  )
+      return
+    }
+    deleteMutation.mutate(so.id, {
+      onSuccess: () => {
+        toast.success(t("toastDeleted", { orderNumber: so.order_number }))
+        setActionDialog(null)
+      },
+      onError: (error: unknown) => {
+        const e = error as unknown as ApiError
+        toast.error(e.message || t("deleteFailed"))
+      },
+    })
+  }, [
+    actionDialog,
+    confirmMutation,
+    cancelMutation,
+    deleteMutation,
+    t,
+  ])
 
-  const handleDelete = React.useCallback(
-    (so: SalesOrder) => {
-      if (!confirm(t("deletePrompt", { orderNumber: so.order_number }))) return
-      deleteMutation.mutate(so.id, {
-        onSuccess: () =>
-          toast.success(t("toastDeleted", { orderNumber: so.order_number })),
-        onError: (error: unknown) => {
-          const e = error as unknown as ApiError
-          toast.error(e.message || t("deleteFailed"))
-        },
-      })
-    },
-    [deleteMutation, t],
-  )
+  const dialogPending =
+    (actionDialog?.kind === "confirm" && confirmMutation.isPending) ||
+    (actionDialog?.kind === "cancel" && cancelMutation.isPending) ||
+    (actionDialog?.kind === "delete" && deleteMutation.isPending)
 
   const columnLabels = React.useMemo(
     () => ({
@@ -203,6 +247,64 @@ export function SOListPage() {
           />
         }
       />
+
+      <AlertDialog
+        open={actionDialog != null}
+        onOpenChange={(open) => {
+          if (!open) setActionDialog(null)
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {actionDialog?.kind === "confirm"
+                ? tAct("confirm")
+                : actionDialog?.kind === "cancel"
+                  ? tAct("cancel")
+                  : actionDialog?.kind === "delete"
+                    ? tAct("delete")
+                    : ""}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {actionDialog?.kind === "confirm"
+                ? t("confirmPrompt", {
+                    orderNumber: actionDialog.so.order_number,
+                  })
+                : actionDialog?.kind === "cancel"
+                  ? t("cancelPrompt", {
+                      orderNumber: actionDialog.so.order_number,
+                    })
+                  : actionDialog?.kind === "delete"
+                    ? t("deletePrompt", {
+                        orderNumber: actionDialog.so.order_number,
+                      })
+                    : null}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={dialogPending}>
+              {tCommon("cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              variant={
+                actionDialog?.kind === "confirm" ? "default" : "destructive"
+              }
+              onClick={runDialogAction}
+              disabled={dialogPending}
+            >
+              {dialogPending
+                ? tCommonStates("loading")
+                : actionDialog?.kind === "confirm"
+                  ? tAct("confirm")
+                  : actionDialog?.kind === "cancel"
+                    ? tAct("cancel")
+                    : actionDialog?.kind === "delete"
+                      ? tAct("delete")
+                      : ""}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

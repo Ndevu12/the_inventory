@@ -7,7 +7,7 @@
         <input type="text"
                name="q"
                value="{{ search_query }}"
-               placeholder="Search products, categories, locations…"
+               placeholder="{% trans 'Search products, categories, warehouses, locations…' %}"
                style="flex: 1;"
                autofocus>
         <button type="submit" class="button">Search</button>
@@ -78,9 +78,38 @@
     {% endif %}
 </section>
 
+{# ── Warehouses ── #}
+<section class="w-mb-8">
+    <h2>{% trans "Warehouses" %} ({{ warehouse_results|length }})</h2>
+    {% if warehouse_results %}
+    <table class="listing">
+        <thead>
+            <tr>
+                <th>{% trans "Name" %}</th>
+                <th>{% trans "Address" %}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for wh in warehouse_results %}
+            <tr>
+                <td>
+                    <a href="{% url 'wagtailsnippets_inventory_warehouse:edit' wh.pk %}">
+                        {{ wh.name }}
+                    </a>
+                </td>
+                <td>{{ wh.address|default:"—"|truncatewords:12 }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>{% trans "No matching warehouses." %}</p>
+    {% endif %}
+</section>
+
 {# ── Stock Locations ── #}
 <section class="w-mb-8">
-    <h2>Locations ({{ location_results|length }})</h2>
+    <h2>{% trans "Stock locations" %} ({{ location_results|length }})</h2>
     {% if location_results %}
     <table class="listing">
         <thead>
@@ -108,6 +137,6 @@
 </section>
 
 {% elif not search_query %}
-<p>{% trans "Enter a search term above to find products, categories, and stock locations." %}</p>
+<p>{% trans "Enter a search term above to find products, categories, warehouses, and stock locations." %}</p>
 {% endif %}
 {% endblock %}

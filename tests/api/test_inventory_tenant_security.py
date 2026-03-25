@@ -5,9 +5,10 @@ from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase
 
-from inventory.models import MovementType
+from inventory.models import MovementType, Warehouse
 from inventory.services.stock import StockService
 from tenants.context import set_current_tenant
+from tenants.models import TenantMembership, TenantRole
 from tests.fixtures.factories import (
     create_category,
     create_location,
@@ -207,8 +208,54 @@ class StockLocationTenantSecurityTests(TenantSecurityTestCase):
         self.client.credentials(HTTP_AUTHORIZATION=f"Token {self.token1.key}")
         response = self.client.get(f"/api/v1/stock-locations/{self.loc1.pk}/stock/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["count"], 1)
+        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(response.data["results"][0]["quantity"], 100)
+
+
+class WarehouseTenantSecurityTests(TenantSecurityTestCase):
+    """Test tenant isolation for WarehouseViewSet."""
+
+    def setUp(self):
+        super().setUp()
+        set_current_tenant(self.tenant1)
+        self.wh1 = Warehouse.objects.create(tenant=self.tenant1, name="Warehouse 1")
+        set_current_tenant(self.tenant2)
+        self.wh2 = Warehouse.objects.create(tenant=self.tenant2, name="Warehouse 2")
+
+    def test_user_can_list_own_tenant_warehouses(self):
+        set_current_tenant(self.tenant1)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {self.token1.key}")
+        response = self.client.get("/api/v1/warehouses/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["count"], 1)
+        self.assertEqual(response.data["results"][0]["name"], "Warehouse 1")
+
+    def test_user_cannot_see_other_tenant_warehouses(self):
+        set_current_tenant(self.tenant1)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {self.token1.key}")
+        response = self.client.get("/api/v1/warehouses/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        names = [w["name"] for w in response.data["results"]]
+        self.assertNotIn("Warehouse 2", names)
+
+    def test_user_cannot_retrieve_other_tenant_warehouse(self):
+        set_current_tenant(self.tenant1)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {self.token1.key}")
+        response = self.client.get(f"/api/v1/warehouses/{self.wh2.pk}/")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_quick_stats_only_lists_own_tenant_warehouses(self):
+        set_current_tenant(self.tenant1)
+        loc = create_location(name="T1 bin", tenant=self.tenant1, warehouse=self.wh1)
+        p = create_product(sku="WQS-T1", tenant=self.tenant1)
+        create_stock_record(product=p, location=loc, quantity=99)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {self.token1.key}")
+        response = self.client.get("/api/v1/warehouses/quick-stats/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]["quantity"], 100)
+        self.assertEqual(response.data[0]["id"], self.wh1.pk)
+        self.assertEqual(response.data[0]["total_on_hand"], 99)
 
 
 class StockRecordTenantSecurityTests(TenantSecurityTestCase):
@@ -254,6 +301,10 @@ class StockMovementTenantSecurityTests(TenantSecurityTestCase):
 
     def setUp(self):
         super().setUp()
+        # Create and update stock movements requires manager (not viewer).
+        TenantMembership.objects.filter(
+            user=self.user1, tenant=self.tenant1,
+        ).update(role=TenantRole.MANAGER)
         # Create movements for each tenant
         set_current_tenant(self.tenant1)
         self.movement1 = StockService().process_movement(
@@ -292,6 +343,40 @@ class StockMovementTenantSecurityTests(TenantSecurityTestCase):
         self.client.credentials(HTTP_AUTHORIZATION=f"Token {self.token1.key}")
         response = self.client.get(f"/api/v1/stock-movements/{self.movement2.pk}/")
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_create_transfer_rejects_other_tenant_location(self):
+        set_current_tenant(self.tenant1)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {self.token1.key}")
+        response = self.client.post("/api/v1/stock-movements/", {
+            "product": self.prod1.pk,
+            "movement_type": "transfer",
+            "quantity": 5,
+            "from_location": self.loc1.pk,
+            "to_location": self.loc2.pk,
+        })
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+
+class BulkTransferTenantSecurityTests(TenantSecurityTestCase):
+    """Bulk transfer stays within the active tenant's location queryset."""
+
+    URL = "/api/v1/bulk-operations/transfer/"
+
+    def setUp(self):
+        super().setUp()
+        TenantMembership.objects.filter(
+            user=self.user1, tenant=self.tenant1,
+        ).update(role=TenantRole.MANAGER)
+
+    def test_bulk_transfer_rejects_other_tenant_to_location_pk(self):
+        set_current_tenant(self.tenant1)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {self.token1.key}")
+        response = self.client.post(self.URL, {
+            "items": [{"product_id": self.prod1.pk, "quantity": 10}],
+            "from_location": self.loc1.pk,
+            "to_location": self.loc2.pk,
+        }, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
 class StockLotTenantSecurityTests(TenantSecurityTestCase):
@@ -340,6 +425,14 @@ class NoTenantContextTests(APITestCase):
 
     def test_no_tenant_context_on_locations(self):
         response = self.client.get("/api/v1/stock-locations/")
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_no_tenant_context_on_warehouses(self):
+        response = self.client.get("/api/v1/warehouses/")
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_no_tenant_context_on_warehouses_quick_stats(self):
+        response = self.client.get("/api/v1/warehouses/quick-stats/")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_no_tenant_context_on_stock_records(self):

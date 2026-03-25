@@ -5,7 +5,7 @@ from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase
 
-from inventory.models import ReservationStatus
+from inventory.models import ReservationStatus, Warehouse
 from inventory.services.reservation import ReservationService
 from tenants.context import set_current_tenant
 from tenants.models import TenantRole
@@ -195,6 +195,48 @@ class ListRetrieveReservationTests(APISetupMixin, APITestCase):
             "/api/v1/reservations/", {"location": self.location.pk},
         )
         self.assertEqual(response.data["count"], 1)
+
+    def test_list_includes_warehouse_fields_when_linked(self):
+        wh = Warehouse.objects.create(tenant=self.tenant, name="DC List")
+        loc_wh = create_location(name="Loc WH", tenant=self.tenant)
+        loc_wh.warehouse = wh
+        loc_wh.save(update_fields=["warehouse"])
+        create_reservation(product=self.product, location=loc_wh, quantity=2)
+        response = self.client.get("/api/v1/reservations/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        row = response.data["results"][0]
+        self.assertEqual(row["warehouse_id"], wh.pk)
+        self.assertEqual(row["warehouse_name"], "DC List")
+
+    def test_filter_by_location_warehouse(self):
+        wh = Warehouse.objects.create(tenant=self.tenant, name="DC Filter")
+        loc_wh = create_location(name="Bin 1", tenant=self.tenant)
+        loc_wh.warehouse = wh
+        loc_wh.save(update_fields=["warehouse"])
+        create_reservation(product=self.product, location=self.location, quantity=1)
+        create_reservation(product=self.product, location=loc_wh, quantity=1)
+        response = self.client.get(
+            "/api/v1/reservations/",
+            {"location__warehouse": wh.pk},
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["count"], 1)
+        self.assertEqual(response.data["results"][0]["location"], loc_wh.pk)
+
+    def test_filter_retail_partition_reservations(self):
+        wh = Warehouse.objects.create(tenant=self.tenant, name="DC Only")
+        loc_wh = create_location(name="Wh loc", tenant=self.tenant)
+        loc_wh.warehouse = wh
+        loc_wh.save(update_fields=["warehouse"])
+        create_reservation(product=self.product, location=self.location, quantity=1)
+        create_reservation(product=self.product, location=loc_wh, quantity=1)
+        response = self.client.get(
+            "/api/v1/reservations/",
+            {"location__warehouse__isnull": "true"},
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["count"], 1)
+        self.assertEqual(response.data["results"][0]["location"], self.location.pk)
 
     def test_viewer_can_list_reservations(self):
         create_reservation(product=self.product, location=self.location)

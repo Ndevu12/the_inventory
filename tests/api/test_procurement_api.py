@@ -8,7 +8,7 @@ from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase
 
-from inventory.models import StockRecord
+from inventory.models import StockRecord, Warehouse
 from procurement.models import PurchaseOrderStatus
 from tenants.context import set_current_tenant
 from tenants.models import TenantRole
@@ -224,6 +224,44 @@ class GoodsReceivedNoteAPITests(APISetupMixin, APITestCase):
         response = self.client.get("/api/v1/goods-received-notes/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["count"], 1)
+
+    def test_grn_includes_null_warehouse_for_retail_location(self):
+        po = create_purchase_order(
+            order_number="PO-GRN-RETAIL",
+            supplier=self.supplier,
+            status=PurchaseOrderStatus.CONFIRMED,
+        )
+        grn = create_goods_received_note(
+            grn_number="GRN-RETAIL",
+            purchase_order=po,
+            location=self.warehouse,
+        )
+        response = self.client.get(f"/api/v1/goods-received-notes/{grn.pk}/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIsNone(response.data.get("warehouse_id"))
+        self.assertIsNone(response.data.get("warehouse_name"))
+
+    def test_grn_includes_warehouse_when_location_facility_linked(self):
+        facility = Warehouse.objects.create(tenant=self.tenant, name="DC Procurement")
+        recv_loc = create_location(
+            name="Receiving Dock",
+            tenant=self.tenant,
+            warehouse=facility,
+        )
+        po = create_purchase_order(
+            order_number="PO-GRN-WH",
+            supplier=self.supplier,
+            status=PurchaseOrderStatus.CONFIRMED,
+        )
+        grn = create_goods_received_note(
+            grn_number="GRN-WH",
+            purchase_order=po,
+            location=recv_loc,
+        )
+        response = self.client.get(f"/api/v1/goods-received-notes/{grn.pk}/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["warehouse_id"], facility.pk)
+        self.assertEqual(response.data["warehouse_name"], "DC Procurement")
 
     def test_receive_action_creates_stock(self):
         po = create_purchase_order(

@@ -71,6 +71,7 @@ class SeederManager:
             StockLocation,
             StockRecord,
             StockMovement,
+            Warehouse,
         )
 
         if self.verbose:
@@ -92,6 +93,10 @@ class SeederManager:
         StockLocation.objects.all().delete()
         if self.verbose:
             print("  ✓ Deleted all StockLocations")
+
+        Warehouse.objects.all().delete()
+        if self.verbose:
+            print("  ✓ Deleted all Warehouses")
 
         Category.objects.all().delete()
         if self.verbose:
@@ -184,12 +189,14 @@ class SeederManager:
                 StockLocation,
                 StockRecord,
                 StockMovement,
+                Warehouse,
             )
 
             StockMovement.objects.all().delete()
             StockRecord.objects.all().delete()
             Product.objects.all().delete()
             StockLocation.objects.all().delete()
+            Warehouse.objects.all().delete()
             Category.objects.all().delete()
 
         if self.verbose:

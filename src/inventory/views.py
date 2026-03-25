@@ -10,7 +10,7 @@ from wagtail.admin.views.generic.base import WagtailAdminTemplateMixin
 from wagtail.search.backends import get_search_backend
 
 from inventory.filters import ProductFilterSet
-from inventory.models import Category, Product, StockLocation
+from inventory.models import Category, Product, StockLocation, Warehouse
 from tenants.context import get_current_tenant
 from tenants.permissions import get_membership
 
@@ -62,11 +62,11 @@ class LowStockAlertView(WagtailAdminTemplateMixin, ListView):
 
 
 class InventorySearchView(WagtailAdminTemplateMixin, TemplateView):
-    """Unified search across all inventory models (admin-only).
+    """Unified search across inventory catalog and site models (admin-only).
 
-    Searches Products, Categories, and StockLocations using the Wagtail
-    search backend.  Only active items are returned.  Results are grouped
-    by model type for clarity.
+    Searches products, categories, warehouses, and stock locations via the
+    Wagtail search backend. Only active rows are considered for catalog and
+    location hits; warehouses use the same active filter where indexed.
     """
 
     template_name = "inventory/search.html"
@@ -100,6 +100,10 @@ class InventorySearchView(WagtailAdminTemplateMixin, TemplateView):
                 query,
                 Category.objects.filter(tenant=tenant, is_active=True),
             )
+            context["warehouse_results"] = backend.search(
+                query,
+                Warehouse.objects.filter(tenant=tenant, is_active=True),
+            )
             context["location_results"] = backend.search(
                 query,
                 StockLocation.objects.filter(tenant=tenant, is_active=True),
@@ -107,6 +111,7 @@ class InventorySearchView(WagtailAdminTemplateMixin, TemplateView):
         else:
             context["product_results"] = Product.objects.none()
             context["category_results"] = Category.objects.none()
+            context["warehouse_results"] = Warehouse.objects.none()
             context["location_results"] = StockLocation.objects.none()
 
         return context

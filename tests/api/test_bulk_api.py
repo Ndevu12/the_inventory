@@ -15,9 +15,10 @@ from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase
 
-from inventory.models import StockRecord
+from inventory.models import StockRecord, Warehouse
 from tenants.context import set_current_tenant
 from tenants.models import Tenant, TenantMembership, TenantRole
+from tests.fixtures.factories import create_tenant
 from tests.fixtures.factories import (
     create_location,
     create_product,
@@ -219,6 +220,114 @@ class BulkTransferAPITests(BulkAPISetupMixin, APITestCase):
         }, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_transfer_rejects_other_tenant_location_pk(self):
+        """Primary-key fields only accept stock locations for the request tenant."""
+        other = create_tenant(name="Other Bulk Tenant", slug="other-bulk")
+        set_current_tenant(other)
+        foreign_loc = create_location(name="Foreign Loc", tenant=other)
+        set_current_tenant(self.tenant)
+        create_stock_record(product=self.product_a, location=self.warehouse, quantity=100)
+        self._auth_manager()
+
+        response = self.client.post(self.URL, {
+            "items": [{"product_id": self.product_a.pk, "quantity": 10}],
+            "from_location": self.warehouse.pk,
+            "to_location": foreign_loc.pk,
+        }, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class BulkTransferWarehouseScopeAPITests(BulkAPISetupMixin, APITestCase):
+    """Bulk transfer across facilities, retail-only trees, and invalid scope mixes."""
+
+    URL = "/api/v1/bulk-operations/transfer/"
+
+    def test_transfer_cross_warehouse_succeeds(self):
+        wh_a = Warehouse.objects.create(tenant=self.tenant, name="Bulk DC East")
+        wh_b = Warehouse.objects.create(tenant=self.tenant, name="Bulk DC West")
+        loc_a = create_location(name="BULK-A", tenant=self.tenant, warehouse=wh_a)
+        loc_b = create_location(name="BULK-B", tenant=self.tenant, warehouse=wh_b)
+        create_stock_record(product=self.product_a, location=loc_a, quantity=60)
+        self._auth_manager()
+
+        response = self.client.post(self.URL, {
+            "items": [{"product_id": self.product_a.pk, "quantity": 22}],
+            "from_location": loc_a.pk,
+            "to_location": loc_b.pk,
+        }, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["success_count"], 1)
+        self.assertEqual(
+            StockRecord.objects.get(product=self.product_a, location=loc_a).quantity,
+            38,
+        )
+        self.assertEqual(
+            StockRecord.objects.get(product=self.product_a, location=loc_b).quantity,
+            22,
+        )
+
+    def test_transfer_retail_only_succeeds(self):
+        loc_back = create_location(name="Bulk retail back", tenant=self.tenant)
+        loc_front = create_location(name="Bulk retail front", tenant=self.tenant)
+        create_stock_record(product=self.product_a, location=loc_back, quantity=30)
+        self._auth_manager()
+
+        response = self.client.post(self.URL, {
+            "items": [{"product_id": self.product_a.pk, "quantity": 9}],
+            "from_location": loc_back.pk,
+            "to_location": loc_front.pk,
+        }, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            StockRecord.objects.get(product=self.product_a, location=loc_back).quantity,
+            21,
+        )
+        self.assertEqual(
+            StockRecord.objects.get(product=self.product_a, location=loc_front).quantity,
+            9,
+        )
+
+    def test_transfer_mixed_retail_and_facility_conflict_fail_fast(self):
+        wh = Warehouse.objects.create(tenant=self.tenant, name="Bulk Mixed WH")
+        loc_dc = create_location(name="Bulk mixed dock", tenant=self.tenant, warehouse=wh)
+        loc_shop = create_location(name="Bulk mixed shop", tenant=self.tenant)
+        create_stock_record(product=self.product_a, location=loc_dc, quantity=50)
+        self._auth_manager()
+
+        response = self.client.post(self.URL, {
+            "items": [{"product_id": self.product_a.pk, "quantity": 3}],
+            "from_location": loc_dc.pk,
+            "to_location": loc_shop.pk,
+            "fail_fast": True,
+        }, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
+
+    def test_transfer_mixed_retail_and_facility_partial_failure_without_fail_fast(self):
+        wh = Warehouse.objects.create(tenant=self.tenant, name="Bulk Mixed B")
+        loc_dc = create_location(name="Bulk mixed dock B", tenant=self.tenant, warehouse=wh)
+        loc_shop = create_location(name="Bulk mixed shop B", tenant=self.tenant)
+        create_stock_record(product=self.product_a, location=loc_dc, quantity=50)
+        create_stock_record(product=self.product_b, location=loc_dc, quantity=50)
+        self._auth_manager()
+
+        response = self.client.post(self.URL, {
+            "items": [
+                {"product_id": self.product_a.pk, "quantity": 3},
+                {"product_id": self.product_b.pk, "quantity": 2},
+            ],
+            "from_location": loc_dc.pk,
+            "to_location": loc_shop.pk,
+            "fail_fast": False,
+        }, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_207_MULTI_STATUS)
+        self.assertEqual(response.data["failure_count"], 2)
+        self.assertEqual(response.data["success_count"], 0)
 
 
 # =====================================================================

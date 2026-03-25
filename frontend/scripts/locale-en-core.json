@@ -168,10 +168,19 @@
     },
     "stockByLocation": {
       "title": "Stock by location",
-      "description": "Available and reserved quantities by location",
+      "description": "Per-location totals show “facility › location” when a warehouse is set; store-only rows use the location name alone. The table groups stock by facility vs neutral retail site.",
       "empty": "No stock data",
       "legendReserved": "Reserved",
-      "legendAvailable": "Available"
+      "legendAvailable": "Available",
+      "bySiteTitle": "By site",
+      "bySiteHint": "Warehouse rows are named facilities; the retail row uses your tenant name when locations are not linked to a facility.",
+      "colSite": "Site",
+      "colKind": "Type",
+      "colTotal": "Total qty",
+      "colReserved": "Reserved",
+      "colAvailable": "Available",
+      "kindWarehouse": "Facility",
+      "kindRetail": "Store / retail"
     },
     "movementTrends": {
       "title": "Movement trends",

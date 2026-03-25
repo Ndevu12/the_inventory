@@ -12,6 +12,10 @@ from typing import TYPE_CHECKING
 from django.db.models import Count, DecimalField, F, Sum
 from django.db.models.functions import Coalesce, TruncDay, TruncMonth, TruncWeek
 
+from inventory.utils.warehouse_scope import (
+    WAREHOUSE_SCOPE_UNSPECIFIED,
+    parse_report_warehouse_scope,
+)
 from procurement.models import PurchaseOrder, PurchaseOrderLine, PurchaseOrderStatus
 from sales.models import SalesOrder, SalesOrderLine, SalesOrderStatus
 from tenants.context import get_current_tenant
@@ -34,8 +38,42 @@ class OrderReportService:
 
         service = OrderReportService()
         purchase_data = service.get_purchase_summary(period="monthly")
-        sales_data = service.get_sales_summary(period="monthly")
+        sales_data =         service.get_sales_summary(period="monthly")
     """
+
+    @staticmethod
+    def _scoped_purchase_orders(
+        qs,
+        *,
+        scope: str,
+        warehouse_id: int | None,
+    ):
+        if scope == "all":
+            return qs
+        if scope == "retail":
+            return qs.filter(
+                goods_received_notes__location__warehouse_id__isnull=True,
+            ).distinct()
+        return qs.filter(
+            goods_received_notes__location__warehouse_id=warehouse_id,
+        ).distinct()
+
+    @staticmethod
+    def _scoped_sales_orders(
+        qs,
+        *,
+        scope: str,
+        warehouse_id: int | None,
+    ):
+        if scope == "all":
+            return qs
+        if scope == "retail":
+            return qs.filter(
+                dispatches__from_location__warehouse_id__isnull=True,
+            ).distinct()
+        return qs.filter(
+            dispatches__from_location__warehouse_id=warehouse_id,
+        ).distinct()
 
     # ------------------------------------------------------------------
     # Purchase Order Reports
@@ -48,6 +86,8 @@ class OrderReportService:
         period: str = "monthly",
         date_from: date | None = None,
         date_to: date | None = None,
+        warehouse_id: int | None | object = WAREHOUSE_SCOPE_UNSPECIFIED,
+        retail_locations_only: bool = False,
     ) -> list[dict]:
         """Aggregate purchase orders by time period.
 
@@ -68,11 +108,16 @@ class OrderReportService:
             raise ValueError("No tenant provided or found in context")
 
         trunc_fn = self._get_trunc_function(period)
+        scope, wid = parse_report_warehouse_scope(
+            warehouse_id=warehouse_id,
+            retail_locations_only=retail_locations_only,
+        )
 
         qs = PurchaseOrder.objects.filter(tenant=tenant).exclude(
             status=PurchaseOrderStatus.CANCELLED,
         )
         qs = self._apply_date_filter(qs, "order_date", date_from, date_to)
+        qs = self._scoped_purchase_orders(qs, scope=scope, warehouse_id=wid)
 
         return list(
             qs
@@ -98,6 +143,8 @@ class OrderReportService:
         tenant: Tenant | None = None,
         date_from: date | None = None,
         date_to: date | None = None,
+        warehouse_id: int | None | object = WAREHOUSE_SCOPE_UNSPECIFIED,
+        retail_locations_only: bool = False,
     ) -> dict:
         """Aggregate totals for purchase orders (non-cancelled).
 
@@ -107,11 +154,16 @@ class OrderReportService:
         tenant = tenant or get_current_tenant()
         if not tenant:
             raise ValueError("No tenant provided or found in context")
+        scope, wid = parse_report_warehouse_scope(
+            warehouse_id=warehouse_id,
+            retail_locations_only=retail_locations_only,
+        )
 
         qs = PurchaseOrder.objects.filter(tenant=tenant).exclude(
             status=PurchaseOrderStatus.CANCELLED,
         )
         qs = self._apply_date_filter(qs, "order_date", date_from, date_to)
+        qs = self._scoped_purchase_orders(qs, scope=scope, warehouse_id=wid)
 
         order_count = qs.count()
 
@@ -153,6 +205,8 @@ class OrderReportService:
         period: str = "monthly",
         date_from: date | None = None,
         date_to: date | None = None,
+        warehouse_id: int | None | object = WAREHOUSE_SCOPE_UNSPECIFIED,
+        retail_locations_only: bool = False,
     ) -> list[dict]:
         """Aggregate sales orders by time period.
 
@@ -164,11 +218,16 @@ class OrderReportService:
             raise ValueError("No tenant provided or found in context")
 
         trunc_fn = self._get_trunc_function(period)
+        scope, wid = parse_report_warehouse_scope(
+            warehouse_id=warehouse_id,
+            retail_locations_only=retail_locations_only,
+        )
 
         qs = SalesOrder.objects.filter(tenant=tenant).exclude(
             status=SalesOrderStatus.CANCELLED,
         )
         qs = self._apply_date_filter(qs, "order_date", date_from, date_to)
+        qs = self._scoped_sales_orders(qs, scope=scope, warehouse_id=wid)
 
         return list(
             qs
@@ -194,6 +253,8 @@ class OrderReportService:
         tenant: Tenant | None = None,
         date_from: date | None = None,
         date_to: date | None = None,
+        warehouse_id: int | None | object = WAREHOUSE_SCOPE_UNSPECIFIED,
+        retail_locations_only: bool = False,
     ) -> dict:
         """Aggregate totals for sales orders (non-cancelled).
 
@@ -203,11 +264,16 @@ class OrderReportService:
         tenant = tenant or get_current_tenant()
         if not tenant:
             raise ValueError("No tenant provided or found in context")
+        scope, wid = parse_report_warehouse_scope(
+            warehouse_id=warehouse_id,
+            retail_locations_only=retail_locations_only,
+        )
 
         qs = SalesOrder.objects.filter(tenant=tenant).exclude(
             status=SalesOrderStatus.CANCELLED,
         )
         qs = self._apply_date_filter(qs, "order_date", date_from, date_to)
+        qs = self._scoped_sales_orders(qs, scope=scope, warehouse_id=wid)
 
         order_count = qs.count()
 

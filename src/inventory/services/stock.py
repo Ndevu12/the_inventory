@@ -16,12 +16,15 @@ from __future__ import annotations
 import logging
 from datetime import date
 
+from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.db.models import Q, QuerySet
 
 from inventory.exceptions import (
     InsufficientStockError,
     LocationCapacityExceededError,
     LotTrackingRequiredError,
+    MovementWarehouseScopeError,
 )
 from inventory.models.audit import AuditAction
 from inventory.models.lot import StockLot, StockMovementLot
@@ -29,6 +32,12 @@ from inventory.models.product import TrackingMode
 from inventory.models.stock import MovementType, StockMovement, StockRecord
 from inventory.services.audit import AuditService
 from inventory.services.cache import invalidate_dashboard, invalidate_stock_record
+from inventory.utils.warehouse_scope import (
+    WAREHOUSE_SCOPE_UNSPECIFIED,
+    movement_to_location_scope_q,
+    parse_report_warehouse_scope,
+    stock_record_location_scope_q,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +47,120 @@ _MOVEMENT_AUDIT_ACTIONS: dict[str, str] = {
     MovementType.TRANSFER: AuditAction.STOCK_TRANSFERRED,
     MovementType.ADJUSTMENT: AuditAction.STOCK_ADJUSTED,
 }
+
+
+def filter_stock_locations_by_warehouse_scope(
+    queryset: QuerySet,
+    *,
+    tenant_id: int,
+    warehouse_id: int | None,
+) -> QuerySet:
+    """Narrow a :class:`~inventory.models.stock.StockLocation` queryset to one tree partition.
+
+    Partitions match :class:`~inventory.models.stock.StockLocation` tree scope:
+    ``(tenant_id, warehouse_id)`` where ``warehouse_id`` of ``None`` is the
+    retail-only forest (``warehouse`` unset).
+    """
+    return queryset.filter(tenant_id=tenant_id, warehouse_id=warehouse_id)
+
+
+def filter_stock_records_by_warehouse_scope(
+    queryset: QuerySet,
+    *,
+    tenant_id: int,
+    warehouse_id: int | None,
+) -> QuerySet:
+    """Filter :class:`~inventory.models.stock.StockRecord` rows by location warehouse scope."""
+    return queryset.filter(
+        tenant_id=tenant_id,
+        location__warehouse_id=warehouse_id,
+    )
+
+
+def filter_stock_movements_by_warehouse_scope(
+    queryset: QuerySet,
+    *,
+    tenant_id: int,
+    warehouse_id: int | None,
+) -> QuerySet:
+    """Stock movements whose source or destination lies in the given warehouse scope.
+
+    Useful for dashboards and exports scoped to one facility or to retail-only
+    locations (``warehouse_id=None``).
+    """
+    if warehouse_id is None:
+        leg = Q(from_location__warehouse_id__isnull=True) | Q(
+            to_location__warehouse_id__isnull=True,
+        )
+    else:
+        leg = Q(from_location__warehouse_id=warehouse_id) | Q(
+            to_location__warehouse_id=warehouse_id,
+        )
+    return queryset.filter(tenant_id=tenant_id).filter(leg)
+
+
+def validate_movement_location_scope(
+    *,
+    product,
+    movement_type: str,
+    from_location=None,
+    to_location=None,
+) -> None:
+    """Validate tenant alignment and warehouse scope rules before persisting a movement.
+
+    * Every involved location must belong to the same tenant as ``product``.
+    * **Transfer** and two-sided **adjustment**: facility-linked locations
+      (``warehouse`` set) cannot be paired with retail-only locations
+      (``warehouse`` null). Pure retail–retail and facility–facility (including
+      **cross-warehouse** between two facilities) are allowed.
+
+    Raises
+    ------
+    django.core.exceptions.ValidationError
+        Tenant mismatch on a location field.
+    MovementWarehouseScopeError
+        Mixed retail vs facility-linked scope on transfer / two-sided adjustment.
+    """
+    tenant_id = product.tenant_id
+
+    def _ensure_location_tenant(field: str, loc) -> None:
+        if loc is None:
+            return
+        if loc.tenant_id != tenant_id:
+            raise ValidationError(
+                {field: "Location must belong to the same tenant as the product."}
+            )
+
+    mt = movement_type
+
+    if mt == MovementType.RECEIVE:
+        _ensure_location_tenant("to_location", to_location)
+    elif mt == MovementType.ISSUE:
+        _ensure_location_tenant("from_location", from_location)
+    elif mt == MovementType.TRANSFER:
+        _ensure_location_tenant("from_location", from_location)
+        _ensure_location_tenant("to_location", to_location)
+        _assert_no_mixed_warehouse_scope(from_location, to_location)
+    elif mt == MovementType.ADJUSTMENT:
+        _ensure_location_tenant("from_location", from_location)
+        _ensure_location_tenant("to_location", to_location)
+        if from_location is not None and to_location is not None:
+            _assert_no_mixed_warehouse_scope(from_location, to_location)
+    else:
+        raise ValueError(f"Unknown movement type: {movement_type}")
+
+
+def _assert_no_mixed_warehouse_scope(from_location, to_location) -> None:
+    """Reject one facility-linked leg and one retail-only leg."""
+    if from_location is None or to_location is None:
+        return
+    from_wh = from_location.warehouse_id
+    to_wh = to_location.warehouse_id
+    if (from_wh is None) != (to_wh is None):
+        raise MovementWarehouseScopeError(
+            "Cannot move stock between a warehouse-linked location and a "
+            "retail-only location; use locations in the same warehouse scope."
+        )
 
 
 class StockService:
@@ -124,7 +247,15 @@ class StockService:
             If location rules are violated (from model-level clean).
         ValueError
             If the movement type is unknown.
+        MovementWarehouseScopeError
+            If a transfer mixes facility-linked and retail-only locations.
         """
+        validate_movement_location_scope(
+            product=product,
+            movement_type=movement_type,
+            from_location=from_location,
+            to_location=to_location,
+        )
         movement = StockMovement(
             product=product,
             movement_type=movement_type,
@@ -227,6 +358,12 @@ class StockService:
                 f"but no lot information was provided."
             )
 
+        validate_movement_location_scope(
+            product=product,
+            movement_type=movement_type,
+            from_location=from_location,
+            to_location=to_location,
+        )
         movement = StockMovement(
             product=product,
             movement_type=movement_type,

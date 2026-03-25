@@ -1,25 +1,45 @@
 """Seeder for StockLocation model."""
 
-from inventory.models import StockLocation
+from inventory.models import StockLocation, Warehouse
 from .base import BaseSeeder
 
 
 class StockLocationSeeder(BaseSeeder):
-    """Create sample warehouse and storage locations."""
+    """Create sample DC-linked and retail-only (``warehouse=NULL``) location trees."""
 
     def seed(self):
-        """Create a hierarchical warehouse structure."""
+        """Create hierarchical structures: DC facilities + optional retail-only tree."""
         self.log("Creating stock locations...")
 
-        # Main warehouse
+        warehouse_main, _ = Warehouse.objects.get_or_create(
+            tenant=self.tenant,
+            name="Chicago Main DC",
+            defaults={
+                "description": "Primary distribution center",
+                "is_active": True,
+                "timezone_name": "America/Chicago",
+            },
+        )
+        warehouse_secondary, _ = Warehouse.objects.get_or_create(
+            tenant=self.tenant,
+            name="Phoenix Secondary DC",
+            defaults={
+                "description": "Overflow / regional DC",
+                "is_active": True,
+                "timezone_name": "America/Phoenix",
+            },
+        )
+
+        # Main warehouse (linked to facility)
         if not StockLocation.objects.filter(name="Main Warehouse", tenant=self.tenant).exists():
             warehouse = self.add_root_with_tenant(
                 StockLocation,
                 name="Main Warehouse",
                 description="Primary distribution warehouse",
                 is_active=True,
+                warehouse=warehouse_main,
             )
-            self.log(f"Created: {warehouse.name}")
+            self.log(f"Created: {warehouse.name} (DC: {warehouse_main.name})")
         else:
             warehouse = StockLocation.objects.get(name="Main Warehouse", tenant=self.tenant)
 
@@ -174,8 +194,9 @@ class StockLocationSeeder(BaseSeeder):
                 name="Secondary Warehouse",
                 description="Backup and overflow storage",
                 is_active=True,
+                warehouse=warehouse_secondary,
             )
-            self.log(f"Created: {secondary.name}")
+            self.log(f"Created: {secondary.name} (DC: {warehouse_secondary.name})")
         else:
             secondary = StockLocation.objects.get(name="Secondary Warehouse", tenant=self.tenant)
 
@@ -187,5 +208,30 @@ class StockLocationSeeder(BaseSeeder):
                 tenant=self.tenant,
             )
             self.log(f"  Created: {secondary.name} → {secondary_aisle.name}")
+
+        # Retail-only tree: no Warehouse row — locations have warehouse=NULL
+        if not StockLocation.objects.filter(name="Retail — Store", tenant=self.tenant).exists():
+            retail_root = self.add_root_with_tenant(
+                StockLocation,
+                name="Retail — Store",
+                description="Storefront zones (retail-only mode; no facility FK)",
+                is_active=True,
+                warehouse=None,
+            )
+            self.log(f"Created: {retail_root.name} (retail-only, warehouse=NULL)")
+            sales_floor = retail_root.add_child(
+                name="Retail — Sales Floor",
+                description="Customer-facing sales area",
+                is_active=True,
+                tenant=self.tenant,
+            )
+            self.log(f"  Created: {retail_root.name} → {sales_floor.name}")
+            stockroom = retail_root.add_child(
+                name="Retail — Stockroom",
+                description="Back-of-house retail storage",
+                is_active=True,
+                tenant=self.tenant,
+            )
+            self.log(f"  Created: {retail_root.name} → {stockroom.name}")
 
         self.log(f"Total locations created: {StockLocation.objects.filter(tenant=self.tenant).count()}")

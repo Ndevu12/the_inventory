@@ -3,7 +3,10 @@ import userEvent from "@testing-library/user-event"
 import { afterEach, describe, expect, it, vi, beforeEach } from "vitest"
 
 import { LanguageSwitcher } from "@/components/LanguageSwitcher"
-import { DJANGO_LANGUAGE_COOKIE } from "@/lib/locale-preference"
+import {
+  DJANGO_LANGUAGE_COOKIE,
+  LOCALE_USER_EXPLICIT_STORAGE_KEY,
+} from "@/lib/locale-preference"
 import { routing } from "@/i18n/routing"
 
 const routerReplace = vi.fn()
@@ -62,7 +65,7 @@ describe("LanguageSwitcher", () => {
 
     await waitFor(() => {
       expect(document.cookie).toContain(`${DJANGO_LANGUAGE_COOKIE}=es`)
-      expect(localStorage.getItem("the-inventory.locale")).toBe("es")
+      expect(localStorage.getItem(LOCALE_USER_EXPLICIT_STORAGE_KEY)).toBe("es")
       expect(routerReplace).toHaveBeenCalledWith("/en/dashboard", { locale: "es" })
       expect(routerRefresh).toHaveBeenCalled()
     })

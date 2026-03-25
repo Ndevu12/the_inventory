@@ -37,3 +37,7 @@ class LocationCapacityExceededError(InventoryError):
 
 class LotTrackingRequiredError(InventoryError):
     """Raised when a product requires lot info but none was provided."""
+
+
+class MovementWarehouseScopeError(InventoryError):
+    """Raised when a movement mixes facility-linked and retail-only locations."""

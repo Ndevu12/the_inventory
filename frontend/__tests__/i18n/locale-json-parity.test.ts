@@ -4,10 +4,13 @@ import { describe, expect, it } from "vitest";
 
 /** I18N feature namespaces that must stay in sync across all UI locales (I18N-04, I18N-09). */
 const FEATURE_NAMESPACES = [
+  "Nav",
+  "Breadcrumbs",
   "Reservations",
   "Reports",
   "CycleCounts",
   "BulkOperations",
+  "Procurement",
   "Sales",
   "Auth",
   "Audit",
@@ -41,7 +44,7 @@ function featureKeyPaths(data: unknown): Set<string> {
   return new Set(paths);
 }
 
-describe("public/locales feature namespace parity (Reservations, Reports, CycleCounts, BulkOperations, Sales, Auth, Audit, SettingsTenant, SettingsPlatform)", () => {
+describe("public/locales feature namespace parity (Nav, Breadcrumbs, Reservations, Reports, CycleCounts, BulkOperations, Procurement, Sales, Auth, Audit, SettingsTenant, SettingsPlatform)", () => {
   const localesDir = join(process.cwd(), "public", "locales");
   const files = readdirSync(localesDir).filter((f) => f.endsWith(".json"));
 

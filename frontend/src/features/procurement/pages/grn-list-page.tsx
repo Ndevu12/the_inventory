@@ -7,6 +7,16 @@ import { PlusIcon } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
 import { toast } from "sonner"
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/layout/page-header"
 import {
@@ -19,6 +29,10 @@ import { getGRNColumns } from "../components/grn-columns"
 import { GRN_IS_PROCESSED_FILTER_VALUES } from "../helpers/grn-constants"
 import type { GoodsReceivedNote, GRNListParams } from "../types/grn.types"
 
+type GrnListDialog =
+  | { kind: "receive"; grn: GoodsReceivedNote }
+  | { kind: "delete"; grn: GoodsReceivedNote }
+
 export function GRNListPage() {
   const locale = useLocale()
   const t = useTranslations("Procurement.grn.list")
@@ -27,6 +41,8 @@ export function GRNListPage() {
   const tProc = useTranslations("Procurement.grnProcessStatus")
   const tShared = useTranslations("Procurement.shared")
   const tTable = useTranslations("Inventory.tableActions")
+  const tCommon = useTranslations("Common.actions")
+  const tCommonStates = useTranslations("Common.states")
 
   const [pagination, setPagination] = React.useState<PaginationState>({
     pageIndex: 0,
@@ -61,36 +77,58 @@ export function GRNListPage() {
   const receiveMutation = useReceiveGRN()
   const deleteMutation = useDeleteGRN()
 
+  const [actionDialog, setActionDialog] = React.useState<GrnListDialog | null>(
+    null,
+  )
+
   const handleView = React.useCallback(() => {
     // detail view can be added later
   }, [])
 
-  const handleReceive = React.useCallback(
-    (grn: GoodsReceivedNote) => {
-      if (!confirm(t("processConfirm", { grnNumber: grn.grn_number }))) return
-      receiveMutation.mutate(grn.id, {
-        onSuccess: () =>
-          toast.success(t("toastProcessed", { grnNumber: grn.grn_number })),
-        onError: (error) => {
-          const message =
-            (error as { message?: string }).message ?? t("toastProcessFailed")
-          toast.error(message)
-        },
-      })
-    },
-    [receiveMutation, t],
-  )
+  const handleReceive = React.useCallback((grn: GoodsReceivedNote) => {
+    setActionDialog({ kind: "receive", grn })
+  }, [])
 
-  const handleDelete = React.useCallback(
-    (grn: GoodsReceivedNote) => {
-      if (!confirm(t("deleteConfirm", { grnNumber: grn.grn_number }))) return
-      deleteMutation.mutate(grn.id, {
-        onSuccess: () => toast.success(t("toastDeleted", { grnNumber: grn.grn_number })),
-        onError: () => toast.error(t("toastDeleteFailed")),
-      })
-    },
-    [deleteMutation, t],
-  )
+  const handleDelete = React.useCallback((grn: GoodsReceivedNote) => {
+    setActionDialog({ kind: "delete", grn })
+  }, [])
+
+  const runReceiveFromDialog = React.useCallback(() => {
+    if (!actionDialog || actionDialog.kind !== "receive") return
+    const grn = actionDialog.grn
+    receiveMutation.mutate(grn.id, {
+      onSuccess: () => {
+        toast.success(t("toastProcessed", { grnNumber: grn.grn_number }))
+        setActionDialog(null)
+      },
+      onError: (error) => {
+        const message =
+          (error as { message?: string }).message ?? t("toastProcessFailed")
+        toast.error(message)
+      },
+    })
+  }, [actionDialog, receiveMutation, t])
+
+  const runDeleteFromDialog = React.useCallback(() => {
+    if (!actionDialog || actionDialog.kind !== "delete") return
+    const grn = actionDialog.grn
+    deleteMutation.mutate(grn.id, {
+      onSuccess: () => {
+        toast.success(t("toastDeleted", { grnNumber: grn.grn_number }))
+        setActionDialog(null)
+      },
+      onError: () => toast.error(t("toastDeleteFailed")),
+    })
+  }, [actionDialog, deleteMutation, t])
+
+  const dialogPending =
+    (actionDialog?.kind === "receive" && receiveMutation.isPending) ||
+    (actionDialog?.kind === "delete" && deleteMutation.isPending)
+
+  const runDialogAction = React.useCallback(() => {
+    if (actionDialog?.kind === "receive") runReceiveFromDialog()
+    else if (actionDialog?.kind === "delete") runDeleteFromDialog()
+  }, [actionDialog, runReceiveFromDialog, runDeleteFromDialog])
 
   const columns = React.useMemo(
     () =>
@@ -169,6 +207,56 @@ export function GRNListPage() {
         isLoading={isLoading}
         filterContent={filterContent}
       />
+
+      <AlertDialog
+        open={actionDialog != null}
+        onOpenChange={(open) => {
+          if (!open) setActionDialog(null)
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {actionDialog?.kind === "receive"
+                ? tAct("receiveGoods")
+                : actionDialog?.kind === "delete"
+                  ? tTable("delete")
+                  : ""}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {actionDialog?.kind === "receive"
+                ? t("processConfirm", {
+                    grnNumber: actionDialog.grn.grn_number,
+                  })
+                : actionDialog?.kind === "delete"
+                  ? t("deleteConfirm", {
+                      grnNumber: actionDialog.grn.grn_number,
+                    })
+                  : null}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={dialogPending}>
+              {tCommon("cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              variant={
+                actionDialog?.kind === "delete" ? "destructive" : "default"
+              }
+              onClick={runDialogAction}
+              disabled={dialogPending}
+            >
+              {dialogPending
+                ? tCommonStates("loading")
+                : actionDialog?.kind === "receive"
+                  ? tAct("receiveGoods")
+                  : actionDialog?.kind === "delete"
+                    ? tTable("delete")
+                    : ""}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

@@ -22,6 +22,7 @@ from inventory.models import (
     StockLocation,
     StockRecord,
     StockMovement,
+    Warehouse,
 )
 
 
@@ -335,15 +336,48 @@ class StockLocationSeederTenantTestCase(TransactionTestCase):
         seeder = StockLocationSeeder(verbose=False)
         seeder.execute(tenant=self.tenant)
 
-        # Get root location (depth=1 for treebeard MP_Node)
-        root = StockLocation.objects.filter(tenant=self.tenant, depth=1).first()
-        self.assertIsNotNone(root)
-        self.assertEqual(root.tenant_id, self.tenant.id)
+        roots = StockLocation.objects.filter(tenant=self.tenant, depth=1)
+        self.assertGreaterEqual(roots.count(), 1)
+        for root in roots:
+            self.assertEqual(root.tenant_id, self.tenant.id)
+            for child in root.get_children():
+                self.assertEqual(child.tenant_id, self.tenant.id)
 
-        # Verify children also have the same tenant
-        children = root.get_children()
-        for child in children:
-            self.assertEqual(child.tenant_id, self.tenant.id)
+    def test_stock_location_seeder_dc_roots_link_warehouse(self):
+        """DC roots are tied to Warehouse rows; descendants share the same warehouse_id."""
+        from seeders.stock_location_seeder import StockLocationSeeder
+
+        seeder = StockLocationSeeder(verbose=False)
+        seeder.execute(tenant=self.tenant)
+
+        main = StockLocation.objects.get(name="Main Warehouse", tenant=self.tenant)
+        secondary = StockLocation.objects.get(name="Secondary Warehouse", tenant=self.tenant)
+        self.assertIsNotNone(main.warehouse_id)
+        self.assertIsNotNone(secondary.warehouse_id)
+        self.assertNotEqual(main.warehouse_id, secondary.warehouse_id)
+
+        aisle_a = StockLocation.objects.get(name="Aisle A", tenant=self.tenant)
+        self.assertEqual(aisle_a.warehouse_id, main.warehouse_id)
+
+        self.assertEqual(
+            Warehouse.objects.filter(tenant=self.tenant).count(),
+            2,
+        )
+
+    def test_stock_location_seeder_retail_tree_has_null_warehouse(self):
+        """Retail-only seeded tree keeps ``warehouse`` NULL on all nodes in the branch."""
+        from seeders.stock_location_seeder import StockLocationSeeder
+
+        seeder = StockLocationSeeder(verbose=False)
+        seeder.execute(tenant=self.tenant)
+
+        retail_root = StockLocation.objects.get(name="Retail — Store", tenant=self.tenant)
+        self.assertIsNone(retail_root.warehouse_id)
+        for node in retail_root.get_descendants():
+            self.assertIsNone(
+                node.warehouse_id,
+                f"{node.name} should inherit NULL warehouse in retail tree",
+            )
 
 
 class StockRecordSeederTenantTestCase(TransactionTestCase):

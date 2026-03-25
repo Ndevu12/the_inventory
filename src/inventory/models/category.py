@@ -1,8 +1,9 @@
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import UniqueConstraint
 from treebeard.mp_tree import MP_Node
 from wagtail.admin.panels import FieldPanel, FieldRowPanel, MultiFieldPanel, TabbedInterface
-from wagtail.models import TranslatableMixin
+from wagtail.models import Locale, TranslatableMixin
 from wagtail.search import index
 
 from .base import TimeStampedModel
@@ -10,6 +11,9 @@ from .base import TimeStampedModel
 
 class Category(TranslatableMixin, TimeStampedModel, MP_Node):
     """Hierarchical product category using treebeard materialised path."""
+
+    # wagtail-localize + TranslatableMixin copy must not duplicate treebeard paths.
+    default_exclude_fields_in_copy = ["path", "depth", "numchild"]
 
     name = models.CharField(
         max_length=255,
@@ -68,11 +72,43 @@ class Category(TranslatableMixin, TimeStampedModel, MP_Node):
 
         When a new node is created via admin/form (no depth set yet),
         use add_root() to properly initialize treebeard fields.
+
+        For locale copies (wagtail-localize admin **Translate** or API helpers), the
+        clone has no tree fields yet but must mirror the source node's depth: root
+        rows become roots; children attach under the translated parent.
         """
-        if not self.depth:
+        if self.depth:
+            super().save(*args, **kwargs)
+            return
+
+        siblings = (
+            type(self)
+            .objects.filter(
+                translation_key=self.translation_key,
+                tenant_id=self.tenant_id,
+            )
+            .exclude(locale_id=self.locale_id)
+        )
+        if self.pk:
+            siblings = siblings.exclude(pk=self.pk)
+
+        if not siblings.exists():
             type(self).add_root(instance=self)
             return
-        super().save(*args, **kwargs)
+
+        default = Locale.get_default()
+        source = siblings.filter(locale_id=default.id).first() or siblings.first()
+        if source.depth == 1:
+            type(self).add_root(instance=self)
+            return
+
+        parent = source.get_parent()
+        parent_t = parent.get_translation_or_none(self.locale)
+        if parent_t is None:
+            raise ValidationError(
+                "Translate the parent category into this locale first, then translate this category."
+            )
+        parent_t.add_child(instance=self)
 
     class Meta:
         verbose_name_plural = "categories"

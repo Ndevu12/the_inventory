@@ -52,6 +52,13 @@ class CacheKeyTests(TestCase):
         key = dashboard_key("summary")
         self.assertIn("dashboard:", key)
         self.assertIn(":summary", key)
+        self.assertTrue(key.endswith(":default"))
+
+    def test_dashboard_key_scoped_by_language(self):
+        self.assertNotEqual(
+            dashboard_key("summary", "en"),
+            dashboard_key("summary", "fr"),
+        )
 
     def test_different_products_get_different_keys(self):
         k1 = stock_record_key(1, 10)
@@ -91,6 +98,18 @@ class CacheGetSetTests(TestCase):
         set_cached_dashboard("summary", data)
         cached = get_cached_dashboard("summary")
         self.assertEqual(cached, data)
+
+    def test_dashboard_helpers_per_language(self):
+        set_cached_dashboard("summary", {"lang": "en"}, language_code="en")
+        set_cached_dashboard("summary", {"lang": "fr"}, language_code="fr")
+        self.assertEqual(
+            get_cached_dashboard("summary", language_code="en"),
+            {"lang": "en"},
+        )
+        self.assertEqual(
+            get_cached_dashboard("summary", language_code="fr"),
+            {"lang": "fr"},
+        )
 
 
 @override_settings(CACHES=LOCMEM_CACHES)

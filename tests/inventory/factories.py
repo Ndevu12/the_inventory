@@ -22,6 +22,7 @@ from inventory.models import (
     StockRecord,
     StockReservation,
     UnitOfMeasure,
+    Warehouse,
 )
 from tenants.models import Tenant
 
@@ -110,8 +111,25 @@ def create_product(*, sku=None, name="Test Product", category=None, tenant=None,
     return Product.objects.create(**defaults)
 
 
+def create_warehouse(*, name="Chicago DC", tenant=None, **kwargs):
+    """Create a tenant-scoped Warehouse. Pair with :func:`create_location` for DC trees."""
+    if tenant is None:
+        tenant = create_tenant()
+    defaults = {
+        "name": name,
+        "description": "",
+        "is_active": True,
+        "tenant": tenant,
+    }
+    defaults.update(kwargs)
+    return Warehouse.objects.create(**defaults)
+
+
 def create_location(*, name="Main Warehouse", tenant=None, **kwargs):
-    """Create and return a root StockLocation node."""
+    """Create and return a root StockLocation node.
+
+    Pass ``warehouse=`` for a DC-linked root, or ``warehouse=None`` for retail-only.
+    """
     defaults = {
         "name": name,
         "is_active": True,
@@ -119,7 +137,20 @@ def create_location(*, name="Main Warehouse", tenant=None, **kwargs):
     if tenant:
         defaults["tenant"] = tenant
     defaults.update(kwargs)
+    if defaults.get("tenant") is None:
+        defaults["tenant"] = create_tenant()
     return StockLocation.add_root(**defaults)
+
+
+def create_child_location(parent, *, name, **kwargs):
+    """Add a StockLocation child under *parent*; warehouse is inherited from the parent."""
+    defaults = {
+        "name": name,
+        "is_active": True,
+        "tenant": parent.tenant,
+    }
+    defaults.update(kwargs)
+    return parent.add_child(**defaults)
 
 
 def create_stock_record(*, product, location, quantity=0, **kwargs):
@@ -180,6 +211,10 @@ def create_reservation(
         "stock_lot": stock_lot,
     }
     defaults.update(kwargs)
+    if defaults.get("tenant") is None:
+        defaults["tenant"] = getattr(product, "tenant", None) or getattr(
+            location, "tenant", None,
+        )
     return StockReservation.objects.create(**defaults)
 
 
@@ -214,6 +249,10 @@ def create_inventory_cycle(
         "location": location,
     }
     defaults.update(kwargs)
+    if defaults.get("tenant") is None and location is not None:
+        defaults["tenant"] = location.tenant
+    if defaults.get("tenant") is None:
+        defaults["tenant"] = create_tenant()
     return InventoryCycle.objects.create(**defaults)
 
 

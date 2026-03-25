@@ -5,7 +5,7 @@ from decimal import Decimal
 
 from django.test import TestCase
 
-from inventory.models import MovementType, ReservationStatus
+from inventory.models import MovementType, ReservationStatus, Warehouse
 from inventory.services.stock import StockService
 from tenants.context import clear_current_tenant, set_current_tenant
 from tests.fixtures.factories import (
@@ -124,6 +124,29 @@ class StockValuationTests(InventoryReportServiceSetupMixin, TestCase):
     def test_unknown_method_raises_error(self):
         with self.assertRaises(ValueError):
             self.service.get_stock_valuation(method="fifo")
+
+    def test_valuation_scoped_to_facility_warehouse(self):
+        dc_a = Warehouse.objects.create(tenant=self.tenant, name="DC A")
+        dc_b = Warehouse.objects.create(tenant=self.tenant, name="DC B")
+        loc_a = create_location(
+            name="Bin A", tenant=self.tenant, warehouse=dc_a,
+        )
+        loc_b = create_location(
+            name="Bin B", tenant=self.tenant, warehouse=dc_b,
+        )
+        create_stock_record(
+            product=self.product_a, location=loc_a, quantity=100,
+        )
+        create_stock_record(
+            product=self.product_a, location=loc_b, quantity=50,
+        )
+        vals = self.service.get_stock_valuation(
+            method="latest_cost",
+            tenant=self.tenant,
+            warehouse_id=dc_a.pk,
+        )
+        self.assertEqual(len(vals), 1)
+        self.assertEqual(vals[0].total_quantity, 100)
 
     def test_weighted_average_fallback_to_product_cost(self):
         """If no receive movements, fall back to product.unit_cost."""

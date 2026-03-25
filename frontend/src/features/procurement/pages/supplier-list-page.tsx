@@ -8,6 +8,16 @@ import { PlusIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/layout/page-header"
 import { useSuppliers, useDeleteSupplier } from "../hooks/use-suppliers"
@@ -23,6 +33,8 @@ export function SupplierListPage() {
   const tShared = useTranslations("Procurement.shared")
   const tInv = useTranslations("Inventory.shared")
   const tTable = useTranslations("Inventory.tableActions")
+  const tCommon = useTranslations("Common.actions")
+  const tCommonStates = useTranslations("Common.states")
 
   const [pagination, setPagination] = React.useState<PaginationState>({
     pageIndex: 0,
@@ -39,6 +51,9 @@ export function SupplierListPage() {
 
   const deleteMutation = useDeleteSupplier()
 
+  const [supplierToDelete, setSupplierToDelete] =
+    React.useState<Supplier | null>(null)
+
   const handleEdit = React.useCallback(
     (supplier: Supplier) => {
       router.push(`/procurement/suppliers/${supplier.id}/edit`)
@@ -46,16 +61,22 @@ export function SupplierListPage() {
     [router],
   )
 
-  const handleDelete = React.useCallback(
-    (supplier: Supplier) => {
-      if (!confirm(t("deleteConfirm", { name: supplier.name }))) return
-      deleteMutation.mutate(supplier.id, {
-        onSuccess: () => toast.success(t("toastDeleted", { name: supplier.name })),
-        onError: () => toast.error(t("toastDeleteFailed")),
-      })
-    },
-    [deleteMutation, t],
-  )
+  const handleDelete = React.useCallback((supplier: Supplier) => {
+    setSupplierToDelete(supplier)
+  }, [])
+
+  const confirmDeleteSupplier = React.useCallback(() => {
+    if (!supplierToDelete) return
+    deleteMutation.mutate(supplierToDelete.id, {
+      onSuccess: () => {
+        toast.success(
+          t("toastDeleted", { name: supplierToDelete.name }),
+        )
+        setSupplierToDelete(null)
+      },
+      onError: () => toast.error(t("toastDeleteFailed")),
+    })
+  }, [supplierToDelete, deleteMutation, t])
 
   const columns = React.useMemo(
     () =>
@@ -108,6 +129,38 @@ export function SupplierListPage() {
         onSearchChange={setSearch}
         isLoading={isLoading}
       />
+
+      <AlertDialog
+        open={supplierToDelete != null}
+        onOpenChange={(open) => {
+          if (!open) setSupplierToDelete(null)
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{tCommon("delete")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {supplierToDelete
+                ? t("deleteConfirm", { name: supplierToDelete.name })
+                : null}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteMutation.isPending}>
+              {tCommon("cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={confirmDeleteSupplier}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending
+                ? tCommonStates("loading")
+                : tCommon("delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

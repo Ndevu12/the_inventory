@@ -29,7 +29,10 @@ export const locationsApi = {
     return apiClient.delete(`${BASE}/${id}/`);
   },
 
-  stockAt(id: number) {
-    return apiClient.get<StockRecordAtLocation[]>(`${BASE}/${id}/stock/`);
+  stockAt(id: number, params?: Record<string, string>) {
+    return apiClient.get<PaginatedResponse<StockRecordAtLocation>>(
+      `${BASE}/${id}/stock/`,
+      params,
+    );
   },
 };

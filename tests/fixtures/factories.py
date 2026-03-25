@@ -9,7 +9,7 @@ from inventory.models import (
     Category, Product, StockLocation, StockRecord, StockMovement, StockLot,
     StockReservation, ReservationRule, InventoryCycle, CycleCountLine,
     InventoryVariance, MovementType, UnitOfMeasure, AllocationStrategy,
-    CycleStatus, ReservationStatus,
+    CycleStatus, ReservationStatus, Warehouse,
 )
 from tenants.models import Tenant, TenantMembership, TenantRole
 from tenants.context import get_current_tenant, set_current_tenant
@@ -124,14 +124,42 @@ def create_product(sku=None, name="Test Product", category=None, tenant=None, lo
     return Product.objects.create(**defaults)
 
 
+def create_warehouse(name="Chicago DC", tenant=None, **kwargs):
+    """Create a tenant-scoped :class:`~inventory.models.Warehouse` (facility row).
+
+    Use with :func:`create_location` passing ``warehouse=…`` for DC mode trees.
+    For retail-only fixtures, omit ``warehouse`` on locations (``NULL``).
+    """
+    resolved = _resolve_tenant(tenant)
+    defaults = {"name": name, "description": "", "is_active": True}
+    if resolved:
+        defaults["tenant"] = resolved
+    defaults.update(kwargs)
+    return Warehouse.objects.create(**defaults)
+
+
 def create_location(name="Main Warehouse", tenant=None, **kwargs):
-    """Create a root stock location."""
+    """Create a root stock location.
+
+    Keyword ``warehouse`` may be a :class:`~inventory.models.Warehouse` instance
+    or ``None`` for a retail-only root tree.
+    """
     resolved = _resolve_tenant(tenant)
     defaults = {"name": name, "is_active": True}
     if resolved:
         defaults["tenant"] = resolved
     defaults.update(kwargs)
     return StockLocation.add_root(**defaults)
+
+
+def create_child_location(parent, name, **kwargs):
+    """Add a :class:`~inventory.models.StockLocation` child under *parent* (treebeard).
+
+    ``warehouse`` is usually omitted: the model inherits it from the parent on save.
+    """
+    defaults = {"name": name, "is_active": True, "tenant": parent.tenant}
+    defaults.update(kwargs)
+    return parent.add_child(**defaults)
 
 
 def create_stock_record(product, location, quantity=0, **kwargs):

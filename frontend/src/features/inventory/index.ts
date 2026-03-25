@@ -17,12 +17,14 @@ export type {
 
 export { LocationListPage } from "./pages/location-list-page"
 export { LocationTree } from "./components/locations/location-tree"
+export type { LocationTreeHandle } from "./components/locations/location-tree"
 export { LocationFormDialog } from "./components/locations/location-form-dialog"
 export { CapacityBar } from "./components/locations/capacity-bar"
 export {
   useLocations,
   useLocation,
-  useLocationStock,
+  useLocationsByIds,
+  useLocationStockPage,
   useCreateLocation,
   useUpdateLocation,
   useDeleteLocation,
@@ -32,6 +34,9 @@ export type {
   StockLocationFormData,
   StockRecordAtLocation,
 } from "./types/location.types"
+export type { Warehouse, WarehouseFormData } from "./types/warehouse.types"
+export { warehousesApi } from "./api/warehouses-api"
+export { useWarehousesForSelect } from "./hooks/use-warehouses"
 
 export { MovementListPage } from "./pages/movement-list-page"
 export { MovementDetailPage } from "./pages/movement-detail-page"

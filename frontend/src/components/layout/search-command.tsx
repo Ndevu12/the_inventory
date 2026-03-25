@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "@/i18n/navigation";
+import { usePathname, useRouter } from "@/i18n/navigation";
+import { useAllLocations } from "@/features/inventory/hooks/use-locations";
 import {
   PackageIcon,
   TagsIcon,
@@ -129,8 +130,12 @@ export function useSearchCommand() {
 
 export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const tNav = useTranslations("Nav");
   const tCommon = useTranslations("Common");
+  const tInv = useTranslations("Inventory");
+
+  const { data: jumpLocations = [] } = useAllLocations({ enabled: open });
 
   const navigate = useCallback(
     (href: string) => {
@@ -138,6 +143,20 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
       router.push(href);
     },
     [router, onOpenChange],
+  );
+
+  const navigateToLocation = useCallback(
+    (locationId: number) => {
+      onOpenChange?.(false);
+      if (pathname.includes("/stock/locations")) {
+        const q = new URLSearchParams();
+        q.set("focus", String(locationId));
+        router.push(`${pathname}?${q.toString()}`);
+      } else {
+        router.push(`/stock/locations?focus=${locationId}`);
+      }
+    },
+    [onOpenChange, pathname, router],
   );
 
   return (
@@ -162,6 +181,30 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
               </CommandGroup>
             </div>
           ))}
+          {jumpLocations.length > 0 ? (
+            <>
+              <CommandSeparator />
+              <CommandGroup
+                heading={tInv("locations.commandPalette.groupHeading")}
+              >
+                {jumpLocations.map((loc) => (
+                  <CommandItem
+                    key={loc.id}
+                    value={`${loc.name} ${loc.id} ${loc.materialized_path ?? ""} ${loc.warehouse?.name ?? ""}`}
+                    onSelect={() => navigateToLocation(loc.id)}
+                  >
+                    <WarehouseIcon className="mr-2 size-4" />
+                    <span className="truncate">{loc.name}</span>
+                    {loc.warehouse?.name ? (
+                      <span className="ml-1 truncate text-xs text-muted-foreground">
+                        {loc.warehouse.name}
+                      </span>
+                    ) : null}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </>
+          ) : null}
         </CommandList>
       </Command>
     </CommandDialog>

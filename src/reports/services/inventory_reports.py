@@ -17,6 +17,19 @@ from django.db.models.functions import Coalesce
 
 from tenants.context import get_current_tenant
 
+from inventory.services.cycle import filter_inventory_cycles_by_warehouse_scope
+from inventory.services.reservation import filter_stock_reservations_by_warehouse_scope
+from inventory.services.stock import (
+    filter_stock_movements_by_warehouse_scope,
+)
+from inventory.utils.localized_attributes import attribute_in_display_locale
+from inventory.utils.warehouse_scope import (
+    WAREHOUSE_SCOPE_UNSPECIFIED,
+    movement_to_location_scope_q,
+    parse_report_warehouse_scope,
+    stock_record_location_scope_q,
+)
+
 from inventory.models import (
     InventoryCycle,
     InventoryVariance,
@@ -29,9 +42,6 @@ from inventory.models import (
     StockReservation,
     VarianceType,
 )
-
-if TYPE_CHECKING:
-    from tenants.models import Tenant
 
 if TYPE_CHECKING:
     from tenants.models import Tenant
@@ -77,7 +87,12 @@ class InventoryReportService:
         return resolved
 
     def get_stock_valuation(
-        self, *, method: str = "weighted_average", tenant: Tenant | None = None,
+        self,
+        *,
+        method: str = "weighted_average",
+        tenant: Tenant | None = None,
+        warehouse_id: int | None | object = WAREHOUSE_SCOPE_UNSPECIFIED,
+        retail_locations_only: bool = False,
     ) -> list[ProductValuation]:
         """Calculate the total stock value for every active product.
 
@@ -97,15 +112,20 @@ class InventoryReportService:
             )
 
         tenant = self._resolve_tenant(tenant)
-
+        scope, wid = parse_report_warehouse_scope(
+            warehouse_id=warehouse_id,
+            retail_locations_only=retail_locations_only,
+        )
+        stock_q = stock_record_location_scope_q(scope, wid, product_aggregate=True)
+        total_ann = (
+            Coalesce(Sum("stock_records__quantity", filter=stock_q), 0)
+            if stock_q is not None
+            else Coalesce(Sum("stock_records__quantity"), 0)
+        )
         products = (
             Product.objects
             .filter(tenant=tenant, is_active=True)
-            .annotate(
-                total_stock=Coalesce(
-                    Sum("stock_records__quantity"), 0,
-                ),
-            )
+            .annotate(total_stock=total_ann)
             .filter(total_stock__gt=0)
             .select_related("category")
             .order_by("sku")
@@ -113,7 +133,9 @@ class InventoryReportService:
 
         results = []
         for product in products:
-            unit_cost = self._calculate_unit_cost(product, method, tenant)
+            unit_cost = self._calculate_unit_cost(
+                product, method, tenant, scope=scope, warehouse_id=wid,
+            )
             total_qty = product.total_stock
             results.append(ProductValuation(
                 product=product,
@@ -125,14 +147,24 @@ class InventoryReportService:
         return results
 
     def get_valuation_summary(
-        self, *, method: str = "weighted_average", tenant: Tenant | None = None,
+        self,
+        *,
+        method: str = "weighted_average",
+        tenant: Tenant | None = None,
+        warehouse_id: int | None | object = WAREHOUSE_SCOPE_UNSPECIFIED,
+        retail_locations_only: bool = False,
     ) -> dict:
         """Aggregate stock valuation across all products.
 
         Returns a dict with ``total_products``, ``total_quantity``,
         and ``total_value``.
         """
-        valuations = self.get_stock_valuation(method=method, tenant=tenant)
+        valuations = self.get_stock_valuation(
+            method=method,
+            tenant=tenant,
+            warehouse_id=warehouse_id,
+            retail_locations_only=retail_locations_only,
+        )
         return {
             "total_products": len(valuations),
             "total_quantity": sum(v.total_quantity for v in valuations),
@@ -141,24 +173,30 @@ class InventoryReportService:
         }
 
     def _calculate_unit_cost(
-        self, product: Product, method: str, tenant,
+        self,
+        product: Product,
+        method: str,
+        tenant,
+        *,
+        scope: str = "all",
+        warehouse_id: int | None = None,
     ) -> Decimal:
         if method == "latest_cost":
             return product.unit_cost or Decimal("0.00")
 
         # weighted_average: total cost / total received quantity
-        agg = (
-            StockMovement.objects
-            .filter(
-                tenant=tenant,
-                product=product,
-                movement_type=MovementType.RECEIVE,
-                unit_cost__isnull=False,
-            )
-            .aggregate(
-                total_cost=Sum(F("quantity") * F("unit_cost")),
-                total_qty=Sum("quantity"),
-            )
+        mv_qs = StockMovement.objects.filter(
+            tenant=tenant,
+            product=product,
+            movement_type=MovementType.RECEIVE,
+            unit_cost__isnull=False,
+        )
+        mq = movement_to_location_scope_q(scope, warehouse_id)
+        if mq is not None:
+            mv_qs = mv_qs.filter(mq)
+        agg = mv_qs.aggregate(
+            total_cost=Sum(F("quantity") * F("unit_cost")),
+            total_qty=Sum("quantity"),
         )
         total_cost = agg["total_cost"]
         total_qty = agg["total_qty"]
@@ -172,37 +210,66 @@ class InventoryReportService:
     # Stock Level Reports
     # ------------------------------------------------------------------
 
-    def get_low_stock_products(self, *, tenant: Tenant | None = None):
+    def get_low_stock_products(
+        self,
+        *,
+        tenant: Tenant | None = None,
+        warehouse_id: int | None | object = WAREHOUSE_SCOPE_UNSPECIFIED,
+        retail_locations_only: bool = False,
+    ):
         """Return active products where any location's available quantity is at or below reorder point.
 
         Available quantity accounts for active reservations (pending/confirmed).
         Excludes products with ``reorder_point = 0`` (no alert configured).
         """
         tenant = self._resolve_tenant(tenant)
+        scope, wid = parse_report_warehouse_scope(
+            warehouse_id=warehouse_id,
+            retail_locations_only=retail_locations_only,
+        )
+        if scope == "all":
+            wh_arg: int | None | object = WAREHOUSE_SCOPE_UNSPECIFIED
+        elif scope == "retail":
+            wh_arg = None
+        else:
+            wh_arg = wid
         return (
             Product.objects
             .filter(tenant=tenant, is_active=True)
-            .low_stock()
+            .low_stock(warehouse_id=wh_arg)
             .select_related("category")
             .prefetch_related("stock_records", "stock_records__location")
             .order_by("sku")
         )
 
-    def get_overstock_products(self, *, threshold_multiplier: int = 3, tenant: Tenant | None = None):
+    def get_overstock_products(
+        self,
+        *,
+        threshold_multiplier: int = 3,
+        tenant: Tenant | None = None,
+        warehouse_id: int | None | object = WAREHOUSE_SCOPE_UNSPECIFIED,
+        retail_locations_only: bool = False,
+    ):
         """Return products where total stock exceeds reorder_point * multiplier.
 
         Useful for identifying overstocked items that tie up capital.
         Only includes products with a configured reorder point > 0.
         """
         tenant = self._resolve_tenant(tenant)
+        scope, wid = parse_report_warehouse_scope(
+            warehouse_id=warehouse_id,
+            retail_locations_only=retail_locations_only,
+        )
+        stock_q = stock_record_location_scope_q(scope, wid, product_aggregate=True)
+        total_ann = (
+            Coalesce(Sum("stock_records__quantity", filter=stock_q), 0)
+            if stock_q is not None
+            else Coalesce(Sum("stock_records__quantity"), 0)
+        )
         return (
             Product.objects
             .filter(tenant=tenant, is_active=True, reorder_point__gt=0)
-            .annotate(
-                total_stock=Coalesce(
-                    Sum("stock_records__quantity"), 0,
-                ),
-            )
+            .annotate(total_stock=total_ann)
             .filter(
                 total_stock__gt=F("reorder_point") * threshold_multiplier,
             )
@@ -223,12 +290,18 @@ class InventoryReportService:
         movement_type: str | None = None,
         location=None,
         tenant: Tenant | None = None,
+        warehouse_id: int | None | object = WAREHOUSE_SCOPE_UNSPECIFIED,
+        retail_locations_only: bool = False,
     ):
         """Return a filtered queryset of stock movements.
 
         All parameters are optional — omit to get the full history.
         """
         tenant = self._resolve_tenant(tenant)
+        scope, wid = parse_report_warehouse_scope(
+            warehouse_id=warehouse_id,
+            retail_locations_only=retail_locations_only,
+        )
 
         qs = (
             StockMovement.objects
@@ -238,6 +311,13 @@ class InventoryReportService:
             )
             .order_by("-created_at")
         )
+        if scope != "all":
+            partition = None if scope == "retail" else wid
+            qs = filter_stock_movements_by_warehouse_scope(
+                qs,
+                tenant_id=tenant.pk,
+                warehouse_id=partition,
+            )
 
         if date_from:
             qs = qs.filter(created_at__date__gte=date_from)
@@ -259,6 +339,8 @@ class InventoryReportService:
         date_from: date | None = None,
         date_to: date | None = None,
         tenant: Tenant | None = None,
+        warehouse_id: int | None | object = WAREHOUSE_SCOPE_UNSPECIFIED,
+        retail_locations_only: bool = False,
     ) -> dict:
         """Aggregate movement counts and quantities by type.
 
@@ -266,7 +348,18 @@ class InventoryReportService:
         ``total_quantity`` for each.
         """
         tenant = self._resolve_tenant(tenant)
+        scope, wid = parse_report_warehouse_scope(
+            warehouse_id=warehouse_id,
+            retail_locations_only=retail_locations_only,
+        )
         qs = StockMovement.objects.filter(tenant=tenant)
+        if scope != "all":
+            partition = None if scope == "retail" else wid
+            qs = filter_stock_movements_by_warehouse_scope(
+                qs,
+                tenant_id=tenant.pk,
+                warehouse_id=partition,
+            )
         if date_from:
             qs = qs.filter(created_at__date__gte=date_from)
         if date_to:
@@ -294,16 +387,33 @@ class InventoryReportService:
         ReservationStatus.CONFIRMED,
     ]
 
-    def get_reservation_summary(self, *, tenant: Tenant | None = None) -> dict:
+    def get_reservation_summary(
+        self,
+        *,
+        tenant: Tenant | None = None,
+        warehouse_id: int | None | object = WAREHOUSE_SCOPE_UNSPECIFIED,
+        retail_locations_only: bool = False,
+    ) -> dict:
         """Aggregate reservation counts and quantities by status.
 
         Returns a dict with ``by_status`` breakdown and top-level
         ``total_active_reservations`` / ``total_reserved_quantity``.
         """
         tenant = self._resolve_tenant(tenant)
+        scope, wid = parse_report_warehouse_scope(
+            warehouse_id=warehouse_id,
+            retail_locations_only=retail_locations_only,
+        )
+        res_qs = StockReservation.objects.filter(tenant=tenant)
+        if scope != "all":
+            partition = None if scope == "retail" else wid
+            res_qs = filter_stock_reservations_by_warehouse_scope(
+                res_qs,
+                tenant_id=tenant.pk,
+                warehouse_id=partition,
+            )
         by_status = (
-            StockReservation.objects
-            .filter(tenant=tenant)
+            res_qs
             .values("status")
             .annotate(
                 count=Count("id"),
@@ -340,6 +450,9 @@ class InventoryReportService:
         category_id: int | None = None,
         product_id: int | None = None,
         tenant: Tenant | None = None,
+        wagtail_display_locale=None,
+        warehouse_id: int | None | object = WAREHOUSE_SCOPE_UNSPECIFIED,
+        retail_locations_only: bool = False,
     ) -> list[dict]:
         """Per-product availability: total qty, reserved, available.
 
@@ -347,14 +460,20 @@ class InventoryReportService:
         Returns a list of dicts sorted by product SKU.
         """
         tenant = self._resolve_tenant(tenant)
+        scope, wid = parse_report_warehouse_scope(
+            warehouse_id=warehouse_id,
+            retail_locations_only=retail_locations_only,
+        )
+        stock_q = stock_record_location_scope_q(scope, wid, product_aggregate=True)
+        total_ann = (
+            Coalesce(Sum("stock_records__quantity", filter=stock_q), 0)
+            if stock_q is not None
+            else Coalesce(Sum("stock_records__quantity"), 0)
+        )
         qs = (
             Product.objects
             .filter(tenant=tenant, is_active=True)
-            .annotate(
-                total_quantity=Coalesce(
-                    Sum("stock_records__quantity"), 0,
-                ),
-            )
+            .annotate(total_quantity=total_ann)
             .select_related("category")
             .order_by("sku")
         )
@@ -364,9 +483,19 @@ class InventoryReportService:
         if product_id is not None:
             qs = qs.filter(pk=product_id)
 
+        res_base = StockReservation.objects.filter(
+            tenant=tenant,
+            status__in=self.ACTIVE_RESERVATION_STATUSES,
+        )
+        if scope != "all":
+            partition = None if scope == "retail" else wid
+            res_base = filter_stock_reservations_by_warehouse_scope(
+                res_base,
+                tenant_id=tenant.pk,
+                warehouse_id=partition,
+            )
         reserved_qs = (
-            StockReservation.objects
-            .filter(tenant=tenant, status__in=self.ACTIVE_RESERVATION_STATUSES)
+            res_base
             .values("product_id")
             .annotate(reserved=Coalesce(Sum("quantity"), 0))
         )
@@ -382,8 +511,16 @@ class InventoryReportService:
             results.append({
                 "product_id": product.pk,
                 "sku": product.sku,
-                "product_name": product.name,
-                "category": str(product.category) if product.category else None,
+                "product_name": attribute_in_display_locale(
+                    product, "name", wagtail_display_locale,
+                ),
+                "category": (
+                    attribute_in_display_locale(
+                        product.category, "name", wagtail_display_locale,
+                    )
+                    if product.category
+                    else None
+                ),
                 "total_quantity": total_qty,
                 "reserved_quantity": reserved,
                 "available_quantity": available,
@@ -392,12 +529,22 @@ class InventoryReportService:
             })
         return results
 
-    def get_reserved_stock_value(self, *, tenant: Tenant | None = None) -> Decimal:
+    def get_reserved_stock_value(
+        self,
+        *,
+        tenant: Tenant | None = None,
+        warehouse_id: int | None | object = WAREHOUSE_SCOPE_UNSPECIFIED,
+        retail_locations_only: bool = False,
+    ) -> Decimal:
         """Total value of actively reserved stock across all products.
 
         Used as a dashboard KPI: ``reserved_qty * unit_cost`` per product.
         """
-        availability = self.get_availability_report(tenant=tenant)
+        availability = self.get_availability_report(
+            tenant=tenant,
+            warehouse_id=warehouse_id,
+            retail_locations_only=retail_locations_only,
+        )
         return sum(
             (item["reserved_value"] for item in availability),
             Decimal("0.00"),
@@ -414,6 +561,8 @@ class InventoryReportService:
         product_id: int | None = None,
         variance_type: str | None = None,
         tenant: Tenant | None = None,
+        warehouse_id: int | None | object = WAREHOUSE_SCOPE_UNSPECIFIED,
+        retail_locations_only: bool = False,
     ):
         """Return a filtered queryset of inventory variances.
 
@@ -432,6 +581,10 @@ class InventoryReportService:
         QuerySet[InventoryVariance]
         """
         tenant = self._resolve_tenant(tenant)
+        scope, wid = parse_report_warehouse_scope(
+            warehouse_id=warehouse_id,
+            retail_locations_only=retail_locations_only,
+        )
         qs = (
             InventoryVariance.objects
             .filter(tenant=tenant)
@@ -441,6 +594,11 @@ class InventoryReportService:
             )
             .order_by("-created_at")
         )
+        if scope != "all":
+            if scope == "retail":
+                qs = qs.filter(location__warehouse_id__isnull=True)
+            else:
+                qs = qs.filter(location__warehouse_id=wid)
 
         if cycle_id is not None:
             qs = qs.filter(cycle_id=cycle_id)
@@ -456,6 +614,8 @@ class InventoryReportService:
         *,
         cycle_id: int | None = None,
         tenant: Tenant | None = None,
+        warehouse_id: int | None | object = WAREHOUSE_SCOPE_UNSPECIFIED,
+        retail_locations_only: bool = False,
     ) -> dict:
         """Aggregate variance counts and net quantity by type.
 
@@ -463,7 +623,16 @@ class InventoryReportService:
         and ``net_variance`` (sum of all variance quantities).
         """
         tenant = self._resolve_tenant(tenant)
+        scope, wid = parse_report_warehouse_scope(
+            warehouse_id=warehouse_id,
+            retail_locations_only=retail_locations_only,
+        )
         qs = InventoryVariance.objects.filter(tenant=tenant)
+        if scope != "all":
+            if scope == "retail":
+                qs = qs.filter(location__warehouse_id__isnull=True)
+            else:
+                qs = qs.filter(location__warehouse_id=wid)
         if cycle_id is not None:
             qs = qs.filter(cycle_id=cycle_id)
 
@@ -495,16 +664,33 @@ class InventoryReportService:
             "net_variance": net,
         }
 
-    def get_cycle_history(self, *, tenant: Tenant | None = None) -> list[dict]:
+    def get_cycle_history(
+        self,
+        *,
+        tenant: Tenant | None = None,
+        warehouse_id: int | None | object = WAREHOUSE_SCOPE_UNSPECIFIED,
+        retail_locations_only: bool = False,
+    ) -> list[dict]:
         """Summary of past inventory cycles and their reconciliation status.
 
         Returns a list of dicts ordered by scheduled date (most recent
         first), each containing cycle metadata plus variance statistics.
         """
         tenant = self._resolve_tenant(tenant)
+        scope, wid = parse_report_warehouse_scope(
+            warehouse_id=warehouse_id,
+            retail_locations_only=retail_locations_only,
+        )
+        cycle_qs = InventoryCycle.objects.filter(tenant=tenant)
+        if scope != "all":
+            partition = None if scope == "retail" else wid
+            cycle_qs = filter_inventory_cycles_by_warehouse_scope(
+                cycle_qs,
+                tenant_id=tenant.pk,
+                warehouse_id=partition,
+            )
         cycles = (
-            InventoryCycle.objects
-            .filter(tenant=tenant)
+            cycle_qs
             .annotate(
                 total_lines=Count("lines", distinct=True),
                 total_variances=Count("variances", distinct=True),
@@ -563,6 +749,8 @@ class InventoryReportService:
         product: Product | None = None,
         location=None,
         tenant: Tenant | None = None,
+        warehouse_id: int | None | object = WAREHOUSE_SCOPE_UNSPECIFIED,
+        retail_locations_only: bool = False,
     ):
         """Return active lots expiring within *days_ahead* days.
 
@@ -581,6 +769,10 @@ class InventoryReportService:
             Tenant to filter by. Defaults to current tenant from context.
         """
         tenant = self._resolve_tenant(tenant)
+        scope, wid = parse_report_warehouse_scope(
+            warehouse_id=warehouse_id,
+            retail_locations_only=retail_locations_only,
+        )
 
         cutoff = date.today() + timedelta(days=days_ahead)
         qs = (
@@ -601,6 +793,15 @@ class InventoryReportService:
             qs = qs.filter(product=product)
         if location is not None:
             qs = qs.filter(product__stock_records__location=location).distinct()
+        if scope != "all":
+            if scope == "retail":
+                qs = qs.filter(
+                    product__stock_records__location__warehouse_id__isnull=True,
+                ).distinct()
+            else:
+                qs = qs.filter(
+                    product__stock_records__location__warehouse_id=wid,
+                ).distinct()
 
         return qs
 
@@ -611,6 +812,8 @@ class InventoryReportService:
         location=None,
         include_depleted: bool = False,
         tenant: Tenant | None = None,
+        warehouse_id: int | None | object = WAREHOUSE_SCOPE_UNSPECIFIED,
+        retail_locations_only: bool = False,
     ):
         """Return lots that have passed their expiry date.
 
@@ -629,6 +832,10 @@ class InventoryReportService:
             Tenant to filter by. Defaults to current tenant from context.
         """
         tenant = self._resolve_tenant(tenant)
+        scope, wid = parse_report_warehouse_scope(
+            warehouse_id=warehouse_id,
+            retail_locations_only=retail_locations_only,
+        )
 
         qs = (
             StockLot.objects
@@ -648,11 +855,26 @@ class InventoryReportService:
             qs = qs.filter(product=product)
         if location is not None:
             qs = qs.filter(product__stock_records__location=location).distinct()
+        if scope != "all":
+            if scope == "retail":
+                qs = qs.filter(
+                    product__stock_records__location__warehouse_id__isnull=True,
+                ).distinct()
+            else:
+                qs = qs.filter(
+                    product__stock_records__location__warehouse_id=wid,
+                ).distinct()
 
         return qs
 
     def get_lot_history(
-        self, product: Product, lot_number: str, *, tenant: Tenant | None = None,
+        self,
+        product: Product,
+        lot_number: str,
+        *,
+        tenant: Tenant | None = None,
+        warehouse_id: int | None | object = WAREHOUSE_SCOPE_UNSPECIFIED,
+        retail_locations_only: bool = False,
     ):
         """Return the full movement chain for a specific lot.
 
@@ -661,6 +883,10 @@ class InventoryReportService:
         chronologically (newest first).
         """
         tenant = self._resolve_tenant(tenant)
+        scope, wid = parse_report_warehouse_scope(
+            warehouse_id=warehouse_id,
+            retail_locations_only=retail_locations_only,
+        )
         movement_ids = (
             StockMovementLot.objects
             .filter(
@@ -671,7 +897,7 @@ class InventoryReportService:
             .values_list("stock_movement_id", flat=True)
         )
 
-        return (
+        mv_qs = (
             StockMovement.objects
             .filter(tenant=tenant, pk__in=movement_ids)
             .select_related(
@@ -680,6 +906,14 @@ class InventoryReportService:
             .prefetch_related("lot_allocations", "lot_allocations__stock_lot")
             .order_by("-created_at")
         )
+        if scope != "all":
+            partition = None if scope == "retail" else wid
+            mv_qs = filter_stock_movements_by_warehouse_scope(
+                mv_qs,
+                tenant_id=tenant.pk,
+                warehouse_id=partition,
+            )
+        return mv_qs
 
     # ------------------------------------------------------------------
     # Product Traceability (GS1)
@@ -698,6 +932,7 @@ class InventoryReportService:
         sku: str,
         lot_number: str,
         tenant: Tenant | None = None,
+        wagtail_display_locale=None,
     ) -> dict | None:
         """Build a full movement chain for a product + lot combination.
 
@@ -736,8 +971,17 @@ class InventoryReportService:
             entry = self._build_chain_entry(mv, alloc.quantity)
             chain.append(entry)
 
+        disp_name = attribute_in_display_locale(
+            product, "name", wagtail_display_locale,
+        )
+        product_label = f"{product.sku} — {disp_name}"
+        supplier_label = None
+        if lot.supplier:
+            supplier_label = attribute_in_display_locale(
+                lot.supplier, "name", wagtail_display_locale,
+            )
         return {
-            "product": str(product),
+            "product": product_label,
             "lot": {
                 "lot_number": lot.lot_number,
                 "manufacturing_date": (
@@ -748,7 +992,7 @@ class InventoryReportService:
                 "expiry_date": (
                     lot.expiry_date.isoformat() if lot.expiry_date else None
                 ),
-                "supplier": str(lot.supplier) if lot.supplier else None,
+                "supplier": supplier_label,
             },
             "chain": chain,
         }

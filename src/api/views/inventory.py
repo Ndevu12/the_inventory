@@ -10,16 +10,26 @@ from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import OpenApiResponse, extend_schema
 
 from inventory.exceptions import InventoryError, InsufficientStockError, MovementImmutableError
-from inventory.models import Category, Product, StockLocation, StockLot, StockMovement, StockRecord
+from inventory.models import (
+    Category,
+    Product,
+    StockLocation,
+    StockLot,
+    StockMovement,
+    StockRecord,
+    Warehouse,
+)
 from inventory.services.cache import (
     cache_get,
     cache_set,
     stock_record_serialized_cache_key,
 )
 from inventory.services.stock import StockService
+from inventory.services.warehouse_stats import warehouses_with_quick_stats
+from inventory.utils.stock_location_tree import stock_location_parent_id_map
 from tenants.context import get_current_tenant
 from tenants.middleware import resolve_tenant_for_request
 from tenants.permissions import TenantReadOnlyOrManager, get_membership
@@ -34,6 +44,8 @@ from api.serializers.inventory import (
     StockMovementCreateSerializer,
     StockMovementSerializer,
     StockRecordSerializer,
+    WarehouseQuickStatsSerializer,
+    WarehouseSerializer,
 )
 from api.views.reservation import product_availability_action
 
@@ -214,11 +226,12 @@ class ProductViewSet(TranslatableAPIReadMixin, TenantScopedInventoryMixin, views
 
         qs = qs.order_by("received_date")
         page = self.paginate_queryset(qs)
+        ctx = self.get_serializer_context()
         if page is not None:
-            serializer = StockLotSerializer(page, many=True)
+            serializer = StockLotSerializer(page, many=True, context=ctx)
             return self.get_paginated_response(serializer.data)
 
-        serializer = StockLotSerializer(qs, many=True)
+        serializer = StockLotSerializer(qs, many=True, context=ctx)
         return Response(serializer.data)
 
 
@@ -228,31 +241,86 @@ class StockLocationViewSet(
     TenantScopedInventoryMixin,
     viewsets.ModelViewSet,
 ):
-    queryset = StockLocation.objects.all()
+    queryset = StockLocation.objects.select_related("warehouse").all()
     serializer_class = StockLocationSerializer
-    filter_backends = [SearchFilter, OrderingFilter]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = {
+        "warehouse": ["exact", "isnull"],
+        "id": ["in"],
+    }
     search_fields = ["name"]
-    ordering_fields = ["name", "created_at"]
-    ordering = ["name"]
+    ordering_fields = ["name", "created_at", "warehouse__name", "path", "depth"]
+    ordering = ["path"]
 
     def get_queryset(self):
         tenant = self._get_current_tenant()
         return super().get_queryset().filter(tenant=tenant)
 
+    def get_serializer_context(self):
+        ctx = super().get_serializer_context()
+        if getattr(self, "action", None) == "retrieve":
+            ctx["with_ancestor_ids"] = True
+        return ctx
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        ctx = self.get_serializer_context()
+        if page is not None:
+            page_list = list(page)
+            parent_map = stock_location_parent_id_map(page_list)
+            serializer = self.get_serializer(
+                page_list,
+                many=True,
+                context={**ctx, "parent_id_map": parent_map},
+            )
+            return self.get_paginated_response(serializer.data)
+        locations = list(queryset)
+        parent_map = stock_location_parent_id_map(locations)
+        serializer = self.get_serializer(
+            locations,
+            many=True,
+            context={**ctx, "parent_id_map": parent_map},
+        )
+        return Response(serializer.data)
+
     @action(detail=True, methods=["get"])
     def stock(self, request, pk=None):
-        """Return stock records at this location."""
+        """Return paginated stock records at this location.
+
+        Uses standard ``?page=`` and ``?page_size=`` (max 100). Results are ordered by
+        product SKU for stable pages.
+        """
         tenant = self._get_current_tenant()
         location = get_object_or_404(StockLocation.objects.all(), pk=pk)
         self._verify_tenant_ownership(location)
-        records = StockRecord.objects.filter(
-            location=location,
-            tenant=tenant,
-        ).select_related("product")
+        records_qs = (
+            StockRecord.objects.filter(
+                location=location,
+                tenant=tenant,
+            )
+            .select_related("product")
+            .order_by("product__sku", "pk")
+        )
+        page = self.paginate_queryset(records_qs)
         ctx = self.get_serializer_context()
         lang = ctx.get("language")
+        if page is not None:
+            data = []
+            for record in page:
+                key = stock_record_serialized_cache_key(
+                    record.product_id, location.pk, lang,
+                )
+                cached = cache_get(key)
+                if cached is not None:
+                    data.append(cached)
+                else:
+                    serialized = StockRecordSerializer(record, context=ctx).data
+                    cache_set(key, serialized)
+                    data.append(serialized)
+            return self.get_paginated_response(data)
         data = []
-        for record in records:
+        for record in records_qs:
             key = stock_record_serialized_cache_key(
                 record.product_id, location.pk, lang,
             )
@@ -264,6 +332,39 @@ class StockLocationViewSet(
                 cache_set(key, serialized)
                 data.append(serialized)
         return Response(data)
+
+
+@extend_schema(parameters=[OPENAPI_LANGUAGE_QUERY_PARAMETER])
+class WarehouseViewSet(TenantScopedInventoryMixin, viewsets.ModelViewSet):
+    """CRUD for tenant-scoped :class:`~inventory.models.Warehouse` records."""
+
+    queryset = Warehouse.objects.all()
+    serializer_class = WarehouseSerializer
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ["is_active"]
+    search_fields = ["name", "address"]
+    ordering_fields = ["name", "created_at"]
+    ordering = ["name"]
+
+    def get_queryset(self):
+        tenant = self._get_current_tenant()
+        return super().get_queryset().filter(tenant=tenant)
+
+    @extend_schema(
+        summary="Warehouse quick stats",
+        description=(
+            "Tenant-scoped aggregates per facility: active location count, on-hand units, "
+            "reserved units, capacity utilization (when max_capacity is set on locations), "
+            "and reservation-aware low-stock line count."
+        ),
+        responses={200: OpenApiResponse(response=WarehouseQuickStatsSerializer(many=True))},
+    )
+    @action(detail=False, methods=["get"], url_path="quick-stats")
+    def quick_stats(self, request):
+        tenant = self._get_current_tenant()
+        qs = warehouses_with_quick_stats(tenant=tenant)
+        serializer = WarehouseQuickStatsSerializer(qs, many=True)
+        return Response(serializer.data)
 
 
 class StockRecordViewSet(TranslatableAPIReadMixin, TenantScopedInventoryMixin, viewsets.ReadOnlyModelViewSet):
@@ -386,7 +487,12 @@ class StockMovementViewSet(TranslatableAPIReadMixin,
         return Response(output.data, status=status.HTTP_201_CREATED)
 
 
-class StockLotViewSet(TenantScopedInventoryMixin, viewsets.ReadOnlyModelViewSet):
+@extend_schema(parameters=[OPENAPI_LANGUAGE_QUERY_PARAMETER])
+class StockLotViewSet(
+    TranslatableAPIReadMixin,
+    TenantScopedInventoryMixin,
+    viewsets.ReadOnlyModelViewSet,
+):
     """Read-only — lots are created via stock movements, not directly."""
 
     queryset = (

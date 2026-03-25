@@ -20,6 +20,7 @@ from typing import Any
 
 from django.conf import settings
 from django.core.cache import cache
+from django.utils import translation
 
 from tenants.context import get_current_tenant
 
@@ -59,8 +60,10 @@ def stock_product_pattern(product_id: int) -> str:
     return f"{STOCK_RECORD_PREFIX}:{_tenant_id()}:{product_id}:"
 
 
-def dashboard_key(name: str) -> str:
-    return f"{DASHBOARD_PREFIX}:{_tenant_id()}:{name}"
+def dashboard_key(name: str, language_code: str | None = None) -> str:
+    """Dashboard cache key scoped by tenant, slice name, and display language."""
+    lang = (language_code or "").strip() or "default"
+    return f"{DASHBOARD_PREFIX}:{_tenant_id()}:{name}:{lang}"
 
 
 # ------------------------------------------------------------------
@@ -126,7 +129,25 @@ def invalidate_product_stock(product_id: int, location_ids: list[int] | None = N
         logger.debug("Cache INVALIDATE (no pattern support, skipped): %s", pattern)
 
 
-_KNOWN_DASHBOARD_NAMES = ("summary", "stock_by_location")
+_KNOWN_DASHBOARD_NAMES = (
+    "summary",
+    "stock_by_location",
+    "reservations",
+    "expiring_lots",
+)
+
+
+def _dashboard_language_key_suffixes() -> set[str]:
+    """Language segments used in dashboard keys (for non-pattern cache invalidation)."""
+    codes: set[str] = {"default"}
+    for code, _ in getattr(settings, "LANGUAGES", ()):
+        try:
+            codes.add(translation.get_supported_language_variant(code))
+        except LookupError:
+            short = str(code).split("-")[0]
+            if short:
+                codes.add(short)
+    return codes
 
 
 def invalidate_dashboard() -> None:
@@ -137,7 +158,11 @@ def invalidate_dashboard() -> None:
         delete_pattern(pattern)
         logger.debug("Cache INVALIDATE pattern: %s", pattern)
     else:
-        keys = [dashboard_key(name) for name in _KNOWN_DASHBOARD_NAMES]
+        keys = [
+            dashboard_key(name, lang)
+            for name in _KNOWN_DASHBOARD_NAMES
+            for lang in _dashboard_language_key_suffixes()
+        ]
         cache.delete_many(keys)
         logger.debug("Cache INVALIDATE dashboard keys: %s", keys)
 
@@ -155,9 +180,9 @@ def set_cached_stock_record(product_id: int, location_id: int, data: dict) -> No
     cache_set(stock_record_key(product_id, location_id), data)
 
 
-def get_cached_dashboard(name: str):
-    return cache_get(dashboard_key(name))
+def get_cached_dashboard(name: str, *, language_code: str | None = None):
+    return cache_get(dashboard_key(name, language_code))
 
 
-def set_cached_dashboard(name: str, data) -> None:
-    cache_set(dashboard_key(name), data, kind="dashboard")
+def set_cached_dashboard(name: str, data, *, language_code: str | None = None) -> None:
+    cache_set(dashboard_key(name, language_code), data, kind="dashboard")

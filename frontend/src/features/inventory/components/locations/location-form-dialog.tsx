@@ -17,7 +17,16 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Label } from "@/components/ui/label"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { useCreateLocation, useUpdateLocation } from "../../hooks/use-locations"
+import { useWarehousesForSelect } from "../../hooks/use-warehouses"
 import {
   createLocationSchema,
   type LocationFormValues,
@@ -36,6 +45,7 @@ export function LocationFormDialog({
   location,
 }: LocationFormDialogProps) {
   const t = useTranslations("Inventory")
+  const tCommon = useTranslations("Common.actions")
   const isEditing = !!location
   const createMutation = useCreateLocation()
   const updateMutation = useUpdateLocation()
@@ -63,8 +73,20 @@ export function LocationFormDialog({
       description: "",
       is_active: true,
       max_capacity: "",
+      warehouse_id: null,
     },
   })
+
+  const { data: warehouses = [], isLoading: warehousesLoading } =
+    useWarehousesForSelect()
+
+  const warehouseSelectItems = useMemo(
+    () => [
+      { value: "__none__", label: t("locations.form.noWarehouse") },
+      ...warehouses.map((w) => ({ value: String(w.id), label: w.name })),
+    ],
+    [warehouses, t],
+  )
 
   useEffect(() => {
     if (open) {
@@ -73,6 +95,7 @@ export function LocationFormDialog({
         description: location?.description ?? "",
         is_active: location?.is_active ?? true,
         max_capacity: location?.max_capacity?.toString() ?? "",
+        warehouse_id: location?.warehouse_id ?? null,
       })
     }
   }, [open, location, reset])
@@ -85,6 +108,7 @@ export function LocationFormDialog({
       description: data.description,
       is_active: data.is_active,
       max_capacity: data.max_capacity ? Number(data.max_capacity) : null,
+      warehouse_id: data.warehouse_id,
     }
 
     if (isEditing && location) {
@@ -131,6 +155,47 @@ export function LocationFormDialog({
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="loc-warehouse">
+                {t("locations.form.warehouse")}
+              </Label>
+              <Select
+                items={warehouseSelectItems}
+                value={
+                  watch("warehouse_id") != null
+                    ? String(watch("warehouse_id")!)
+                    : "__none__"
+                }
+                onValueChange={(val) =>
+                  setValue(
+                    "warehouse_id",
+                    val === "__none__" ? null : Number(val),
+                    { shouldValidate: true },
+                  )
+                }
+                disabled={warehousesLoading}
+              >
+                <SelectTrigger id="loc-warehouse" className="w-full">
+                  <SelectValue
+                    placeholder={t("locations.form.warehousePlaceholder")}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">
+                    {t("locations.form.noWarehouse")}
+                  </SelectItem>
+                  {warehouses.map((w) => (
+                    <SelectItem key={w.id} value={String(w.id)}>
+                      {w.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                {t("locations.form.warehouseHint")}
+              </p>
+            </div>
+
             <div className="space-y-2">
               <label htmlFor="loc-name" className="text-sm font-medium">
                 {t("locations.form.name")}{" "}
@@ -194,7 +259,15 @@ export function LocationFormDialog({
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isPending}
+              onClick={() => onOpenChange(false)}
+            >
+              {tCommon("cancel")}
+            </Button>
             <Button type="submit" disabled={isPending}>
               {isPending
                 ? t("locations.form.saving")

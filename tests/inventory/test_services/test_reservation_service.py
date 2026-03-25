@@ -8,22 +8,40 @@ and available-quantity calculations.  Race-condition coverage uses
 from datetime import timedelta
 from decimal import Decimal
 
-from django.test import TestCase, TransactionTestCase
+from django.core.exceptions import ValidationError
+from django.test import TestCase
 from django.utils import timezone
 
 from inventory.exceptions import InsufficientStockError, ReservationConflictError
-from inventory.models import MovementType, ReservationStatus, StockRecord, StockReservation
-from inventory.services.reservation import ReservationService
+from inventory.models import (
+    MovementType,
+    ReservationStatus,
+    StockLocation,
+    StockRecord,
+    StockReservation,
+    Warehouse,
+)
+from inventory.services.reservation import (
+    ReservationService,
+    filter_stock_reservations_by_warehouse_scope,
+)
 
-from ..factories import create_location, create_product, create_reservation, create_stock_record, create_user
+from tests.fixtures.factories import create_tenant
+
+from ..factories import (
+    create_location,
+    create_product,
+    create_reservation,
+    create_stock_record,
+    create_tenant as create_tenant_without_context,
+    create_user,
+)
 
 
 class ReservationServiceSetupMixin:
     """Shared setUp for ReservationService tests."""
 
     def setUp(self):
-        from tests.fixtures.factories import create_tenant
-        
         self.service = ReservationService()
         self.tenant = create_tenant()
         self.product = create_product(sku="RSV-001", unit_cost=Decimal("10.00"), tenant=self.tenant)
@@ -109,6 +127,16 @@ class CreateReservationTests(ReservationServiceSetupMixin, TestCase):
                 product=self.product,
                 location=self.warehouse,
                 quantity=-5,
+            )
+
+    def test_create_rejects_mismatched_tenant_location(self):
+        other_tenant = create_tenant_without_context()
+        other_location = create_location(name="Foreign bin", tenant=other_tenant)
+        with self.assertRaises(ValidationError):
+            self.service.create_reservation(
+                product=self.product,
+                location=other_location,
+                quantity=1,
             )
 
     def test_create_accounts_for_existing_reservations(self):
@@ -618,28 +646,157 @@ class GetAvailableQuantityTests(ReservationServiceSetupMixin, TestCase):
 
 
 # =====================================================================
+# Warehouse scope queries (nullable location.warehouse)
+# =====================================================================
+
+
+class FilterReservationsByWarehouseScopeTests(TestCase):
+    """Tests for :func:`filter_stock_reservations_by_warehouse_scope`."""
+
+    def setUp(self):
+        self.tenant = create_tenant()
+        self.product = create_product(sku="WH-RSV-001", tenant=self.tenant)
+        self.wh = Warehouse.objects.create(tenant=self.tenant, name="DC North")
+        self.loc_dc = StockLocation.add_root(
+            name="Pick face",
+            tenant=self.tenant,
+            warehouse=self.wh,
+        )
+        self.loc_retail = StockLocation.add_root(
+            name="Shop floor",
+            tenant=self.tenant,
+        )
+
+    def test_facility_partition_excludes_retail_locations(self):
+        create_reservation(
+            product=self.product,
+            location=self.loc_dc,
+            quantity=1,
+            tenant=self.tenant,
+        )
+        create_reservation(
+            product=self.product,
+            location=self.loc_retail,
+            quantity=1,
+            tenant=self.tenant,
+        )
+        qs = filter_stock_reservations_by_warehouse_scope(
+            StockReservation.objects.all(),
+            tenant_id=self.tenant.pk,
+            warehouse_id=self.wh.pk,
+        )
+        self.assertEqual(qs.count(), 1)
+        self.assertEqual(qs.get().location_id, self.loc_dc.pk)
+
+    def test_retail_partition_excludes_facility_locations(self):
+        create_reservation(
+            product=self.product,
+            location=self.loc_dc,
+            quantity=1,
+            tenant=self.tenant,
+        )
+        r_shop = create_reservation(
+            product=self.product,
+            location=self.loc_retail,
+            quantity=1,
+            tenant=self.tenant,
+        )
+        qs = filter_stock_reservations_by_warehouse_scope(
+            StockReservation.objects.all(),
+            tenant_id=self.tenant.pk,
+            warehouse_id=None,
+        )
+        self.assertEqual(qs.count(), 1)
+        self.assertEqual(qs.get().pk, r_shop.pk)
+
+    def test_other_tenant_excluded_from_scope(self):
+        other = create_tenant_without_context()
+        other_product = create_product(sku="WH-OTHER", tenant=other)
+        other_loc = StockLocation.add_root(name="Their bin", tenant=other)
+        create_reservation(
+            product=other_product,
+            location=other_loc,
+            quantity=1,
+            tenant=other,
+        )
+        create_reservation(
+            product=self.product,
+            location=self.loc_retail,
+            quantity=1,
+            tenant=self.tenant,
+        )
+        qs = filter_stock_reservations_by_warehouse_scope(
+            StockReservation.objects.all(),
+            tenant_id=self.tenant.pk,
+            warehouse_id=None,
+        )
+        self.assertEqual(qs.count(), 1)
+
+
+# =====================================================================
+# Expire stale — optional tenant
+# =====================================================================
+
+
+class ExpireStaleReservationsTenantScopedTests(TestCase):
+    def test_expire_only_named_tenant(self):
+        t1 = create_tenant_without_context()
+        t2 = create_tenant_without_context()
+        p1 = create_product(sku="EXP-T1", tenant=t1)
+        p2 = create_product(sku="EXP-T2", tenant=t2)
+        l1 = create_location(name="Loc-T1", tenant=t1)
+        l2 = create_location(name="Loc-T2", tenant=t2)
+        past = timezone.now() - timedelta(hours=1)
+        create_reservation(
+            product=p1,
+            location=l1,
+            expires_at=past,
+            status=ReservationStatus.PENDING,
+        )
+        create_reservation(
+            product=p2,
+            location=l2,
+            expires_at=past,
+            status=ReservationStatus.PENDING,
+        )
+        service = ReservationService()
+        count = service.expire_stale_reservations(tenant_id=t1.pk)
+        self.assertEqual(count, 1)
+        self.assertEqual(
+            StockReservation.objects.filter(
+                tenant=t1,
+                status=ReservationStatus.EXPIRED,
+            ).count(),
+            1,
+        )
+        self.assertEqual(
+            StockReservation.objects.filter(
+                tenant=t2,
+                status=ReservationStatus.EXPIRED,
+            ).count(),
+            0,
+        )
+        self.assertEqual(
+            StockReservation.objects.filter(
+                tenant=t2,
+                status=ReservationStatus.PENDING,
+            ).count(),
+            1,
+        )
+
+
+# =====================================================================
 # Concurrent / Race condition coverage
 # =====================================================================
 
 
-class ConcurrentReservationTests(ReservationServiceSetupMixin, TransactionTestCase):
+class ConcurrentReservationTests(ReservationServiceSetupMixin, TestCase):
     """Test that select_for_update prevents over-reservation.
 
-    Uses TransactionTestCase to allow real DB transactions, which is
-    required for ``select_for_update`` to have meaningful semantics.
+    Uses :class:`~django.test.TestCase` (not :class:`~django.test.TransactionTestCase`)
+    so Wagtail ``Locale`` rows seeded by migrations are not truncated between
+    tests; ``select_for_update`` remains meaningful within each test's transaction.
     """
-
-    def setUp(self):
-        from tests.fixtures.factories import create_tenant
-        
-        super().setUp()
-        self.service = ReservationService()
-        self.tenant = create_tenant()
-        self.product = create_product(sku="RACE-001", unit_cost=Decimal("10.00"), tenant=self.tenant)
-        self.warehouse = create_location(name="Race Warehouse", tenant=self.tenant)
-        create_stock_record(
-            product=self.product, location=self.warehouse, quantity=100,
-        )
 
     def test_sequential_reservations_dont_over_reserve(self):
         """Two sequential reservations totalling more than stock fail correctly."""

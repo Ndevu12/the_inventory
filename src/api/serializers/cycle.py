@@ -2,7 +2,12 @@
 
 from rest_framework import serializers
 
-from inventory.models import Product, StockLocation
+from api.serializers.localized_strings import (
+    attribute_in_display_locale,
+    display_locale_from_context,
+)
+from inventory.models import Product, StockLocation, Warehouse
+from tenants.middleware import get_effective_tenant
 from inventory.models.cycle import (
     CycleCountLine,
     InventoryCycle,
@@ -13,8 +18,12 @@ from inventory.models.cycle import (
 
 class CycleCountLineSerializer(serializers.ModelSerializer):
     product_sku = serializers.CharField(source="product.sku", read_only=True)
-    product_name = serializers.CharField(source="product.name", read_only=True)
-    location_name = serializers.CharField(source="location.name", read_only=True)
+    product_name = serializers.SerializerMethodField()
+    location_name = serializers.SerializerMethodField()
+    warehouse_id = serializers.IntegerField(
+        source="location.warehouse_id", read_only=True, allow_null=True,
+    )
+    warehouse_name = serializers.SerializerMethodField()
     counted_by_username = serializers.CharField(
         source="counted_by.username", read_only=True, default=None,
     )
@@ -27,6 +36,7 @@ class CycleCountLineSerializer(serializers.ModelSerializer):
             "cycle",
             "product", "product_sku", "product_name",
             "location", "location_name",
+            "warehouse_id", "warehouse_name",
             "system_quantity", "counted_quantity",
             "counted_by", "counted_by_username", "counted_at",
             "variance",
@@ -35,11 +45,27 @@ class CycleCountLineSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = fields
 
+    def get_product_name(self, obj):
+        return attribute_in_display_locale(
+            obj.product, "name", display_locale_from_context(self.context),
+        )
+
+    def get_location_name(self, obj):
+        return attribute_in_display_locale(
+            obj.location, "name", display_locale_from_context(self.context),
+        )
+
+    def get_warehouse_name(self, obj):
+        loc = obj.location
+        if loc is None or not loc.warehouse_id:
+            return None
+        return loc.warehouse.name
+
 
 class InventoryVarianceSerializer(serializers.ModelSerializer):
     product_sku = serializers.CharField(source="product.sku", read_only=True)
-    product_name = serializers.CharField(source="product.name", read_only=True)
-    location_name = serializers.CharField(source="location.name", read_only=True)
+    product_name = serializers.SerializerMethodField()
+    location_name = serializers.SerializerMethodField()
     variance_type_display = serializers.CharField(
         source="get_variance_type_display", read_only=True,
     )
@@ -49,6 +75,10 @@ class InventoryVarianceSerializer(serializers.ModelSerializer):
     resolved_by_username = serializers.CharField(
         source="resolved_by.username", read_only=True, default=None,
     )
+    warehouse_id = serializers.IntegerField(
+        source="location.warehouse_id", read_only=True, allow_null=True,
+    )
+    warehouse_name = serializers.SerializerMethodField()
 
     class Meta:
         model = InventoryVariance
@@ -57,6 +87,7 @@ class InventoryVarianceSerializer(serializers.ModelSerializer):
             "cycle", "count_line",
             "product", "product_sku", "product_name",
             "location", "location_name",
+            "warehouse_id", "warehouse_name",
             "variance_type", "variance_type_display",
             "system_quantity", "physical_quantity", "variance_quantity",
             "resolution", "resolution_display",
@@ -67,11 +98,27 @@ class InventoryVarianceSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = fields
 
+    def get_product_name(self, obj):
+        return attribute_in_display_locale(
+            obj.product, "name", display_locale_from_context(self.context),
+        )
+
+    def get_location_name(self, obj):
+        return attribute_in_display_locale(
+            obj.location, "name", display_locale_from_context(self.context),
+        )
+
+    def get_warehouse_name(self, obj):
+        loc = obj.location
+        if loc is None or not loc.warehouse_id:
+            return None
+        return loc.warehouse.name
+
 
 class InventoryCycleSerializer(serializers.ModelSerializer):
-    location_name = serializers.CharField(
-        source="location.name", read_only=True, default=None,
-    )
+    location_name = serializers.SerializerMethodField()
+    warehouse_id = serializers.SerializerMethodField()
+    warehouse_name = serializers.SerializerMethodField()
     status_display = serializers.CharField(
         source="get_status_display", read_only=True,
     )
@@ -87,6 +134,7 @@ class InventoryCycleSerializer(serializers.ModelSerializer):
             "id",
             "name",
             "location", "location_name",
+            "warehouse_id", "warehouse_name",
             "status", "status_display",
             "scheduled_date",
             "started_at", "completed_at",
@@ -96,6 +144,24 @@ class InventoryCycleSerializer(serializers.ModelSerializer):
             "created_at", "updated_at",
         ]
         read_only_fields = fields
+
+    def get_location_name(self, obj: InventoryCycle):
+        loc = obj.location
+        if loc is None:
+            return None
+        return attribute_in_display_locale(
+            loc, "name", display_locale_from_context(self.context),
+        )
+
+    def get_warehouse_id(self, obj: InventoryCycle):
+        if obj.location_id:
+            return obj.location.warehouse_id
+        return None
+
+    def get_warehouse_name(self, obj: InventoryCycle):
+        if obj.location_id and obj.location.warehouse_id:
+            return obj.location.warehouse.name
+        return None
 
     def get_total_lines(self, obj: InventoryCycle) -> int:
         return obj.lines.count()
@@ -127,8 +193,38 @@ class CycleCreateSerializer(serializers.Serializer):
         allow_null=True,
         default=None,
     )
+    warehouse = serializers.PrimaryKeyRelatedField(
+        queryset=Warehouse.objects.all(),
+        required=False,
+        allow_null=True,
+        default=None,
+    )
     scheduled_date = serializers.DateField()
     notes = serializers.CharField(required=False, allow_blank=True, default="")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        request = self.context.get("request")
+        tenant = get_effective_tenant(request) if request else None
+        if tenant:
+            self.fields["location"].queryset = StockLocation.objects.filter(tenant=tenant)
+            self.fields["warehouse"].queryset = Warehouse.objects.filter(tenant=tenant)
+
+    def validate(self, attrs):
+        location = attrs.get("location")
+        warehouse = attrs.get("warehouse")
+        if location is not None and warehouse is not None:
+            lw = location.warehouse_id
+            if lw != warehouse.pk:
+                raise serializers.ValidationError(
+                    {
+                        "warehouse": (
+                            "Must match the selected location's warehouse "
+                            "(or omit warehouse when using location)."
+                        ),
+                    },
+                )
+        return attrs
 
 
 class RecordCountSerializer(serializers.Serializer):
@@ -136,6 +232,14 @@ class RecordCountSerializer(serializers.Serializer):
     location = serializers.PrimaryKeyRelatedField(queryset=StockLocation.objects.all())
     counted_quantity = serializers.IntegerField(min_value=0)
     notes = serializers.CharField(required=False, allow_blank=True, default="")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        request = self.context.get("request")
+        tenant = get_effective_tenant(request) if request else None
+        if tenant:
+            self.fields["product"].queryset = Product.objects.filter(tenant=tenant)
+            self.fields["location"].queryset = StockLocation.objects.filter(tenant=tenant)
 
 
 class LineResolutionSerializer(serializers.Serializer):

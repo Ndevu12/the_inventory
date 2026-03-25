@@ -123,6 +123,10 @@ New Django apps live under **`src/`** next to the other apps. The **`seeders`** 
 - Keep imports organized: stdlib → third-party → Django → Wagtail → local apps.
 - Write **docstrings** for models, views, and non-trivial functions.
 
+### Facility vs stock location
+
+**Warehouse** (facility/site) and **stock location** (granular place) are separate concepts in the data model. When you change how “where stock lives” behaves, align **backend schema, services, API, reports, and frontend types** — do not rely on UI copy or i18n alone to paper over ambiguity. See [Facility vs stock location (contributor governance)](docs/ARCHITECTURE.md#facility-vs-stock-location-contributor-governance) in [Architecture](docs/ARCHITECTURE.md).
+
 ## Running Tests & Checks
 
 From **`src/`** (after `cd src`):
@@ -188,7 +192,7 @@ See [README — Docker](README.md#docker) for `docker run` examples and environm
 
 ## Related Documentation
 
-- High-level technical overview: see [Architecture](docs/ARCHITECTURE.md).
+- High-level technical overview: see [Architecture](docs/ARCHITECTURE.md) — including [facility vs stock location](docs/ARCHITECTURE.md#facility-vs-stock-location-contributor-governance).
 - Roadmap and planned phases: see [Roadmap](docs/ROADMAP.md).
 - Release history and notable changes: see [Changelog](CHANGELOG.md).
 

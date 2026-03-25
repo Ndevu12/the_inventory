@@ -22,6 +22,35 @@ from api.serializers.translatable_representation import TranslatableRepresentati
 from api.serializers.translatable_writable import TranslatableWritableMixin
 
 
+def _derived_warehouse_from_sales_order(sales_order):
+    """Derive facility warehouse from dispatches when unambiguous.
+
+    Returns ``(warehouse_pk, warehouse_name)``. ``SalesOrder`` has no direct
+    location FK; dispatches carry ``from_location``. If there are no
+    dispatches, or locations span more than one facility warehouse, or mix
+    retail-only locations with a facility, returns ``(None, None)``.
+    """
+    warehouse_ids = []
+    for dispatch in sales_order.dispatches.all():
+        loc = dispatch.from_location
+        if loc is None:
+            continue
+        warehouse_ids.append(loc.warehouse_id)
+    if not warehouse_ids:
+        return None, None
+    distinct = set(warehouse_ids)
+    if distinct == {None}:
+        return None, None
+    if None in distinct or len(distinct) > 1:
+        return None, None
+    wid = distinct.pop()
+    for dispatch in sales_order.dispatches.all():
+        loc = dispatch.from_location
+        if loc is not None and loc.warehouse_id == wid:
+            return wid, loc.warehouse.name
+    return None, None
+
+
 class CustomerSerializer(
     TranslatableWritableMixin,
     TranslatableRepresentationMixin,
@@ -132,6 +161,20 @@ class SalesOrderSerializer(serializers.ModelSerializer):
         max_digits=12, decimal_places=2, read_only=True,
     )
     can_fulfill = serializers.SerializerMethodField()
+    warehouse_id = serializers.SerializerMethodField()
+    warehouse_name = serializers.SerializerMethodField()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._sales_order_warehouse_cache = {}
+
+    def _cached_derived_warehouse(self, obj):
+        key = obj.pk if obj.pk is not None else id(obj)
+        if key not in self._sales_order_warehouse_cache:
+            self._sales_order_warehouse_cache[key] = _derived_warehouse_from_sales_order(
+                obj,
+            )
+        return self._sales_order_warehouse_cache[key]
 
     class Meta:
         model = SalesOrder
@@ -139,6 +182,7 @@ class SalesOrderSerializer(serializers.ModelSerializer):
             "id", "order_number", "customer", "customer_name",
             "status", "status_display", "order_date", "notes",
             "lines", "total_price", "can_fulfill",
+            "warehouse_id", "warehouse_name",
             "created_at", "updated_at",
         ]
         read_only_fields = ["status", "created_at", "updated_at"]
@@ -161,6 +205,14 @@ class SalesOrderSerializer(serializers.ModelSerializer):
             if total_available < line.quantity:
                 return False
         return True
+
+    def get_warehouse_id(self, obj):
+        wid, _ = self._cached_derived_warehouse(obj)
+        return wid
+
+    def get_warehouse_name(self, obj):
+        _, name = self._cached_derived_warehouse(obj)
+        return name
 
     def create(self, validated_data):
         lines_data = self.initial_data.get("lines", [])
@@ -190,6 +242,10 @@ class DispatchSerializer(serializers.ModelSerializer):
     from_location_name = serializers.CharField(
         source="from_location.name", read_only=True,
     )
+    warehouse_id = serializers.IntegerField(
+        source="from_location.warehouse_id", read_only=True, allow_null=True,
+    )
+    warehouse_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Dispatch
@@ -197,6 +253,7 @@ class DispatchSerializer(serializers.ModelSerializer):
             "id", "dispatch_number", "sales_order",
             "sales_order_number", "dispatch_date",
             "from_location", "from_location_name",
+            "warehouse_id", "warehouse_name",
             "notes", "is_processed",
             "created_at", "updated_at",
         ]
@@ -204,6 +261,12 @@ class DispatchSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             "dispatch_number": {"required": False, "allow_blank": True},
         }
+
+    def get_warehouse_name(self, obj):
+        loc = obj.from_location
+        if loc is None or not loc.warehouse_id:
+            return None
+        return loc.warehouse.name
 
     def validate(self, attrs):
         attrs = super().validate(attrs)

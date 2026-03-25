@@ -1,4 +1,6 @@
 from django.db import models
+
+from inventory.utils.warehouse_scope import WAREHOUSE_SCOPE_UNSPECIFIED
 from django.utils.translation import gettext_lazy as _
 from django.db.models import F, OuterRef, Subquery, UniqueConstraint
 from django.db.models.functions import Coalesce
@@ -47,12 +49,17 @@ class ProductQuerySet(models.QuerySet):
             return self.none()
         return self.filter(tenant=current_tenant)
 
-    def low_stock(self):
+    def low_stock(self, *, warehouse_id: int | None | object = WAREHOUSE_SCOPE_UNSPECIFIED):
         """Return products where any location's available quantity <= reorder_point.
 
         Available quantity = physical quantity minus active reservations
         (pending + confirmed).  Products with ``reorder_point = 0`` are
         excluded (no alert configured).
+
+        When *warehouse_id* is :data:`inventory.services.stock.WAREHOUSE_SCOPE_UNSPECIFIED`
+        (default), all locations are considered. ``None`` limits to retail-only
+        locations (no facility on ``StockLocation``). A positive int limits to
+        that facility's locations.
         """
         from inventory.models.reservation import StockReservation
 
@@ -75,6 +82,11 @@ class ProductQuerySet(models.QuerySet):
             _available__lte=F("product__reorder_point"),
             product__reorder_point__gt=0,
         )
+        if warehouse_id is not WAREHOUSE_SCOPE_UNSPECIFIED:
+            if warehouse_id is None:
+                low_records = low_records.filter(location__warehouse_id__isnull=True)
+            else:
+                low_records = low_records.filter(location__warehouse_id=warehouse_id)
 
         return self.filter(
             reorder_point__gt=0,

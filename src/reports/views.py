@@ -15,6 +15,7 @@ from reports.exports import CSVExportMixin
 from reports.filters import ExpiryReportFilter, MovementHistoryFilter
 from reports.services.inventory_reports import InventoryReportService
 from reports.services.order_reports import OrderReportService
+from inventory.utils.warehouse_scope import report_scope_params_from_query
 
 
 # =====================================================================
@@ -56,8 +57,13 @@ class StockValuationView(
         if method not in service.VALUATION_METHODS:
             method = "weighted_average"
 
-        valuations = service.get_stock_valuation(method=method, tenant=tenant)
-        summary = service.get_valuation_summary(method=method, tenant=tenant)
+        scope_kw = report_scope_params_from_query(self.request.GET)
+        valuations = service.get_stock_valuation(
+            method=method, tenant=tenant, **scope_kw,
+        )
+        summary = service.get_valuation_summary(
+            method=method, tenant=tenant, **scope_kw,
+        )
 
         context["valuations"] = valuations
         context["summary"] = summary
@@ -71,7 +77,10 @@ class StockValuationView(
         method = self.request.GET.get("method", "weighted_average")
         if method not in service.VALUATION_METHODS:
             method = "weighted_average"
-        valuations = service.get_stock_valuation(method=method, tenant=tenant)
+        scope_kw = report_scope_params_from_query(self.request.GET)
+        valuations = service.get_stock_valuation(
+            method=method, tenant=tenant, **scope_kw,
+        )
         headers = ["SKU", "Product", "Category", "Quantity", "Unit Cost", "Total Value", "Method"]
         rows = [
             [
@@ -128,7 +137,11 @@ class MovementHistoryView(
             )
             .order_by("-created_at")
         )
-        self.filterset = MovementHistoryFilter(self.request.GET, queryset=qs)
+        self.filterset = MovementHistoryFilter(
+            self.request.GET,
+            queryset=qs,
+            tenant=tenant,
+        )
         return self.filterset.qs
 
     def get_context_data(self, **kwargs):
@@ -195,14 +208,16 @@ class LowStockReportView(
         context = super().get_context_data(**kwargs)
         tenant = self._get_current_tenant()
         service = InventoryReportService()
-        context["products"] = service.get_low_stock_products(tenant=tenant)
+        scope_kw = report_scope_params_from_query(self.request.GET)
+        context["products"] = service.get_low_stock_products(tenant=tenant, **scope_kw)
         context["total_count"] = context["products"].count()
         return context
 
     def _get_export_data(self):
         tenant = self._get_current_tenant()
         service = InventoryReportService()
-        products = service.get_low_stock_products(tenant=tenant)
+        scope_kw = report_scope_params_from_query(self.request.GET)
+        products = service.get_low_stock_products(tenant=tenant, **scope_kw)
         headers = ["SKU", "Product", "Category", "Reorder Point", "Locations & Stock"]
         rows = [
             [
@@ -254,8 +269,9 @@ class OverstockReportView(
         except (ValueError, TypeError):
             multiplier = 3
 
+        scope_kw = report_scope_params_from_query(self.request.GET)
         products = service.get_overstock_products(
-            threshold_multiplier=multiplier, tenant=tenant,
+            threshold_multiplier=multiplier, tenant=tenant, **scope_kw,
         )
         context["products"] = products
         context["total_count"] = products.count()
@@ -270,8 +286,9 @@ class OverstockReportView(
             multiplier = int(multiplier)
         except (ValueError, TypeError):
             multiplier = 3
+        scope_kw = report_scope_params_from_query(self.request.GET)
         products = service.get_overstock_products(
-            threshold_multiplier=multiplier, tenant=tenant,
+            threshold_multiplier=multiplier, tenant=tenant, **scope_kw,
         )
         headers = ["SKU", "Product", "Category", "Reorder Point", "Total Stock", "Threshold"]
         rows = [
@@ -349,12 +366,20 @@ class ExpiryReportView(
         tenant = self._get_current_tenant()
         service = InventoryReportService()
         days_ahead, product, location, _ = self._get_params()
+        scope_kw = report_scope_params_from_query(self.request.GET)
 
         expiring = service.get_expiring_lots(
-            days_ahead=days_ahead, product=product, location=location, tenant=tenant,
+            days_ahead=days_ahead,
+            product=product,
+            location=location,
+            tenant=tenant,
+            **scope_kw,
         )
         expired = service.get_expired_lots(
-            product=product, location=location, tenant=tenant,
+            product=product,
+            location=location,
+            tenant=tenant,
+            **scope_kw,
         )
 
         self.filterset = ExpiryReportFilter(self.request.GET, queryset=expiring)
@@ -370,11 +395,19 @@ class ExpiryReportView(
     def _get_export_data(self):
         service = InventoryReportService()
         days_ahead, product, location, tenant = self._get_params()
+        scope_kw = report_scope_params_from_query(self.request.GET)
         expiring = service.get_expiring_lots(
-            days_ahead=days_ahead, product=product, location=location, tenant=tenant,
+            days_ahead=days_ahead,
+            product=product,
+            location=location,
+            tenant=tenant,
+            **scope_kw,
         )
         expired = service.get_expired_lots(
-            product=product, location=location, tenant=tenant,
+            product=product,
+            location=location,
+            tenant=tenant,
+            **scope_kw,
         )
         headers = [
             "Status", "SKU", "Product", "Lot Number", "Expiry Date",
@@ -451,11 +484,19 @@ class PurchaseSummaryView(
         service = OrderReportService()
         period, date_from, date_to = self._get_params()
 
+        scope_kw = report_scope_params_from_query(self.request.GET)
         context["summary"] = service.get_purchase_summary(
-            tenant=tenant, period=period, date_from=date_from, date_to=date_to,
+            tenant=tenant,
+            period=period,
+            date_from=date_from,
+            date_to=date_to,
+            **scope_kw,
         )
         context["totals"] = service.get_purchase_totals(
-            tenant=tenant, date_from=date_from, date_to=date_to,
+            tenant=tenant,
+            date_from=date_from,
+            date_to=date_to,
+            **scope_kw,
         )
         context["current_period"] = period
         context["date_from"] = date_from
@@ -466,8 +507,13 @@ class PurchaseSummaryView(
         tenant = self._get_current_tenant()
         service = OrderReportService()
         period, date_from, date_to = self._get_params()
+        scope_kw = report_scope_params_from_query(self.request.GET)
         data = service.get_purchase_summary(
-            tenant=tenant, period=period, date_from=date_from, date_to=date_to,
+            tenant=tenant,
+            period=period,
+            date_from=date_from,
+            date_to=date_to,
+            **scope_kw,
         )
         headers = ["Period", "Order Count", "Total Cost"]
         rows = [
@@ -530,11 +576,19 @@ class SalesSummaryView(
         service = OrderReportService()
         period, date_from, date_to = self._get_params()
 
+        scope_kw = report_scope_params_from_query(self.request.GET)
         context["summary"] = service.get_sales_summary(
-            tenant=tenant, period=period, date_from=date_from, date_to=date_to,
+            tenant=tenant,
+            period=period,
+            date_from=date_from,
+            date_to=date_to,
+            **scope_kw,
         )
         context["totals"] = service.get_sales_totals(
-            tenant=tenant, date_from=date_from, date_to=date_to,
+            tenant=tenant,
+            date_from=date_from,
+            date_to=date_to,
+            **scope_kw,
         )
         context["current_period"] = period
         context["date_from"] = date_from
@@ -545,8 +599,13 @@ class SalesSummaryView(
         tenant = self._get_current_tenant()
         service = OrderReportService()
         period, date_from, date_to = self._get_params()
+        scope_kw = report_scope_params_from_query(self.request.GET)
         data = service.get_sales_summary(
-            tenant=tenant, period=period, date_from=date_from, date_to=date_to,
+            tenant=tenant,
+            period=period,
+            date_from=date_from,
+            date_to=date_to,
+            **scope_kw,
         )
         headers = ["Period", "Order Count", "Total Revenue"]
         rows = [
