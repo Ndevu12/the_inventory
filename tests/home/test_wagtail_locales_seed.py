@@ -9,6 +9,10 @@ from wagtail.models import Locale
 
 
 class WagtailLocalesSeedTests(TestCase):
+    def setUp(self):
+        for code in ("fr", "sw", "rw", "es", "ar"):
+            Locale.objects.get_or_create(language_code=code)
+
     def test_wagtail_locale_display_name_fallback_for_rw(self):
         class _Loc:
             language_code = "rw"

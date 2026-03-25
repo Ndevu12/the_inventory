@@ -123,6 +123,44 @@ class AuthLoginTests(TestCase):
         self.assertIs(response.data["user"]["is_superuser"], True)
         self.assertNotIn("is_staff", response.data["user"])
 
+    def test_login_sets_access_token_cookie(self):
+        """Verify that login response sets HttpOnly access_token cookie."""
+        response = self.client.post(
+            reverse("api-login"),
+            {"username": "testuser", "password": "testpass123"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("access_token", response.cookies)
+        cookie = response.cookies["access_token"]
+        self.assertTrue(cookie["httponly"])
+        self.assertEqual(cookie["samesite"], "Lax")
+
+    def test_login_sets_refresh_token_cookie(self):
+        """Verify that login response sets HttpOnly refresh_token cookie."""
+        response = self.client.post(
+            reverse("api-login"),
+            {"username": "testuser", "password": "testpass123"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("refresh_token", response.cookies)
+        cookie = response.cookies["refresh_token"]
+        self.assertTrue(cookie["httponly"])
+        self.assertEqual(cookie["samesite"], "Lax")
+
+    def test_login_keeps_tokens_in_response_body(self):
+        """Verify backward compatibility: tokens still in JSON response."""
+        response = self.client.post(
+            reverse("api-login"),
+            {"username": "testuser", "password": "testpass123"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Tokens must still be in response body for mobile/API clients
+        self.assertIn("access", response.data)
+        self.assertIn("refresh", response.data)
+
 
 class AuthRefreshTests(TestCase):
     def setUp(self):
@@ -177,6 +215,137 @@ class AuthRefreshTests(TestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.data["code"], "no_tenant_membership")
+
+    def test_refresh_accepts_refresh_token_from_cookie(self):
+        """Verify that refresh endpoint accepts refresh token from cookie."""
+        # Login to get both tokens
+        login_response = self.client.post(
+            reverse("api-login"),
+            {"username": "testuser", "password": "testpass123"},
+            format="json",
+        )
+        self.assertEqual(login_response.status_code, status.HTTP_200_OK)
+        
+        # Extract token from cookie instead of body
+        self.assertIn("refresh_token", login_response.cookies)
+        
+        # Create a new client and set the cookie
+        new_client = APIClient()
+        new_client.cookies["refresh_token"] = login_response.cookies["refresh_token"].value
+        
+        # Call refresh without providing refresh token in body
+        response = new_client.post(
+            reverse("api-token-refresh"),
+            {},  # Empty body
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("access", response.data)
+
+    def test_refresh_sets_access_token_cookie(self):
+        """Verify that refresh endpoint returns new access token in cookie."""
+        login_response = self.client.post(
+            reverse("api-login"),
+            {"username": "testuser", "password": "testpass123"},
+            format="json",
+        )
+        self.assertEqual(login_response.status_code, status.HTTP_200_OK)
+        refresh_token = login_response.data["refresh"]
+
+        response = self.client.post(
+            reverse("api-token-refresh"),
+            {"refresh": refresh_token},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Verify new access token is in cookie
+        self.assertIn("access_token", response.cookies)
+        cookie = response.cookies["access_token"]
+        self.assertTrue(cookie["httponly"])
+        self.assertEqual(cookie["samesite"], "Lax")
+
+    def test_refresh_keeps_token_in_response_body(self):
+        """Verify backward compatibility: access token still in JSON response."""
+        login_response = self.client.post(
+            reverse("api-login"),
+            {"username": "testuser", "password": "testpass123"},
+            format="json",
+        )
+        self.assertEqual(login_response.status_code, status.HTTP_200_OK)
+        refresh_token = login_response.data["refresh"]
+
+        response = self.client.post(
+            reverse("api-token-refresh"),
+            {"refresh": refresh_token},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Token must still be in response body for mobile/API clients
+        self.assertIn("access", response.data)
+
+
+class LogoutTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(
+            username="testuser",
+            password="testpass123",
+            email="test@test.com",
+            is_staff=True,
+        )
+        self.tenant = create_tenant(name="Logout Org", slug="logout-org")
+        TenantMembership.objects.create(
+            tenant=self.tenant,
+            user=self.user,
+            role=TenantRole.COORDINATOR,
+            is_active=True,
+            is_default=True,
+        )
+
+    def test_logout_clears_access_token_cookie(self):
+        """Verify that logout clears the access_token cookie."""
+        # Login first
+        login_response = self.client.post(
+            reverse("api-login"),
+            {"username": "testuser", "password": "testpass123"},
+            format="json",
+        )
+        self.assertEqual(login_response.status_code, status.HTTP_200_OK)
+        self.assertIn("access_token", login_response.cookies)
+        
+        # Call logout
+        response = self.client.post(reverse("api-logout"))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        # Verify cookie is cleared (max_age or expires should be set to immediate deletion)
+        self.assertIn("access_token", response.cookies)
+        self.assertEqual(response.cookies["access_token"].value, "")
+
+    def test_logout_clears_refresh_token_cookie(self):
+        """Verify that logout clears the refresh_token cookie."""
+        # Login first
+        login_response = self.client.post(
+            reverse("api-login"),
+            {"username": "testuser", "password": "testpass123"},
+            format="json",
+        )
+        self.assertEqual(login_response.status_code, status.HTTP_200_OK)
+        self.assertIn("refresh_token", login_response.cookies)
+        
+        # Call logout
+        response = self.client.post(reverse("api-logout"))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        # Verify cookie is cleared
+        self.assertIn("refresh_token", response.cookies)
+        self.assertEqual(response.cookies["refresh_token"].value, "")
+
+    def test_logout_returns_success_message(self):
+        """Verify that logout returns a success response."""
+        response = self.client.post(reverse("api-logout"))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("detail", response.data)
+        self.assertEqual(response.data["detail"], "Successfully logged out.")
 
 
 class MeEndpointTests(TestCase):
@@ -526,3 +695,84 @@ class ApiImpersonationTests(TestCase):
         )
         self.assertEqual(end.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(end.data.get("code"), "impersonation_invalid_operator")
+
+class CookieAuthenticationMiddlewareTests(TestCase):
+    """Test that middleware correctly authenticates requests with cookies (COOKIE-02)."""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(
+            username="middlewareuser",
+            password="testpass123",
+            email="middleware@test.com",
+            is_staff=True,
+        )
+        self.tenant = create_tenant(name="Middleware Org", slug="middleware-org")
+        TenantMembership.objects.create(
+            tenant=self.tenant,
+            user=self.user,
+            role=TenantRole.COORDINATOR,
+            is_active=True,
+            is_default=True,
+        )
+
+    def _get_tokens(self):
+        """Helper to get access and refresh tokens from login."""
+        response = self.client.post(
+            reverse("api-login"),
+            {"username": "middlewareuser", "password": "testpass123"},
+            format="json",
+        )
+        return response.data["access"], response.data["refresh"]
+
+    def test_middleware_authenticates_request_with_cookie(self):
+        """Verify middleware correctly sets request.user from access_token cookie."""
+        access_token, _ = self._get_tokens()
+        
+        # Create new client with cookie set
+        cookie_client = APIClient(enforce_csrf_checks=False)
+        cookie_client.cookies.load({"access_token": access_token})
+        
+        # Make request to protected endpoint  
+        response = cookie_client.get(reverse("api-me"))
+        
+        # Should be authenticated via middleware cookie handling
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["user"]["username"], "middlewareuser")
+
+    def test_middleware_header_takes_precedence_over_cookie(self):
+        """Verify middleware prefers header auth over cookie auth."""
+        # Create second user
+        user2 = User.objects.create_user(
+            username="headeruser",
+            password="testpass123",
+            email="header@test.com",
+            is_staff=True,
+        )
+        TenantMembership.objects.create(
+            tenant=self.tenant,
+            user=user2,
+            role=TenantRole.COORDINATOR,
+            is_active=True,
+            is_default=True,
+        )
+        
+        # Get tokens for both users
+        token1, _ = self._get_tokens()
+        
+        response2 = self.client.post(
+            reverse("api-login"),
+            {"username": "headeruser", "password": "testpass123"},
+            format="json",
+        )
+        token2 = response2.data["access"]
+        
+        # Set cookie to token1 and header to token2
+        cookie_client = APIClient(enforce_csrf_checks=False)
+        cookie_client.cookies.load({"access_token": token1})
+        cookie_client.credentials(HTTP_AUTHORIZATION=f"Bearer {token2}")
+        
+        # Should use header token (token2 = headeruser)
+        response = cookie_client.get(reverse("api-me"))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["user"]["username"], "headeruser")

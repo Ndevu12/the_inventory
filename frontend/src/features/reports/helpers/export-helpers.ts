@@ -24,13 +24,12 @@ export async function triggerDownload(
   params?: Record<string, string>,
 ): Promise<void> {
   const url = buildExportUrl(reportPath, format, params)
-  const { accessToken, tenantSlug } = useAuthStore.getState()
+  const { tenantSlug } = useAuthStore.getState()
 
   const headers: HeadersInit = {}
-  if (accessToken) headers["Authorization"] = `Bearer ${accessToken}`
   if (tenantSlug) headers["X-Tenant"] = tenantSlug
 
-  const res = await fetch(url, { headers })
+  const res = await fetch(url, { headers, credentials: "include" })
   if (!res.ok) throw new Error(`Export failed: ${res.status}`)
 
   const blob = await res.blob()

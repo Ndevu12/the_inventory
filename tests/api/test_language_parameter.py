@@ -25,6 +25,7 @@ from tests.fixtures.factories import (
     create_user,
 )
 from tenants.models import TenantRole
+from tenants.context import set_current_tenant
 
 User = get_user_model()
 
@@ -174,6 +175,7 @@ class ProductSerializerLanguageContextTests(TestCase):
 
     def setUp(self):
         self.tenant = create_tenant(name="Serializer I18N Tenant")
+        set_current_tenant(self.tenant)
         fr_locale = Locale.objects.get(language_code="fr")
         self.p_en = create_product(sku="SER-I18N", name="English line", tenant=self.tenant)
         p_fr = self.p_en.copy_for_translation(fr_locale)
@@ -267,6 +269,7 @@ class TenantPreferredLanguageAPITests(APITestCase):
         self.tenant_es = create_tenant(
             name="Tenant ES", slug="tenant-es-pref", preferred_language="es",
         )
+        set_current_tenant(self.tenant_fr)
         fr_loc = Locale.objects.get(language_code="fr")
         es_loc = Locale.objects.get(language_code="es")
 
@@ -288,6 +291,7 @@ class TenantPreferredLanguageAPITests(APITestCase):
         p_fr_en.name = "French name in English row"
         p_fr_en.save()
 
+        set_current_tenant(self.tenant_es)
         self.p_es = create_product(
             sku="DUAL-SKU-ES",
             name="Nombre español",

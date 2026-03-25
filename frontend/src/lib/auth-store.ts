@@ -38,13 +38,9 @@ export interface Membership {
 
 export interface ImpersonationState {
   real_user: User;
-  real_access_token: string;
-  real_refresh_token: string;
 }
 
 interface AuthState {
-  accessToken: string | null;
-  refreshToken: string | null;
   user: User | null;
   tenantSlug: string | null;
   memberships: Membership[];
@@ -55,7 +51,6 @@ interface AuthState {
 }
 
 interface AuthActions {
-  setTokens: (access: string, refresh: string) => void;
   setUser: (user: User) => void;
   setTenant: (slug: string) => void;
   setMemberships: (memberships: Membership[]) => void;
@@ -67,8 +62,6 @@ interface AuthActions {
 }
 
 const initialState: AuthState = {
-  accessToken: null,
-  refreshToken: null,
   user: null,
   tenantSlug: null,
   memberships: [],
@@ -80,9 +73,6 @@ export const useAuthStore = create<AuthState & AuthActions>()(
   persist(
     (set, get) => ({
       ...initialState,
-
-      setTokens: (access, refresh) =>
-        set({ accessToken: access, refreshToken: refresh }),
 
       setUser: (user) => set({ user }),
 
@@ -102,14 +92,13 @@ export const useAuthStore = create<AuthState & AuthActions>()(
         const imp = get().impersonation;
         if (imp) {
           set({
-            accessToken: imp.real_access_token,
-            refreshToken: imp.real_refresh_token,
+            user: imp.real_user,
             impersonation: null,
           });
         }
       },
 
-      isAuthenticated: () => get().accessToken !== null,
+      isAuthenticated: () => get().user !== null,
       isImpersonating: () => get().impersonation !== null,
     }),
     {
@@ -118,8 +107,6 @@ export const useAuthStore = create<AuthState & AuthActions>()(
         typeof window !== "undefined" ? localStorage : noopStorage,
       ),
       partialize: (state) => ({
-        accessToken: state.accessToken,
-        refreshToken: state.refreshToken,
         user: state.user,
         tenantSlug: state.tenantSlug,
         memberships: state.memberships,

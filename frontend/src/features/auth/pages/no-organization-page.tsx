@@ -14,18 +14,11 @@ export function NoOrganizationPage() {
   const router = useRouter();
   const t = useTranslations("Auth.noOrganization");
   const queryClient = useQueryClient();
-  const { isReady, accessToken, memberships } = useAuth();
-  const refreshToken = useAuthStore((s) => s.refreshToken);
+  const { isReady, memberships } = useAuth();
   const meQuery = useBootstrapAuth();
-
-  const hasToken = !!(accessToken || refreshToken);
 
   useEffect(() => {
     if (!isReady) return;
-    if (!hasToken) {
-      router.replace("/login");
-      return;
-    }
     if (!meQuery.isFetched) return;
     if (meQuery.isError) {
       useAuthStore.getState().logout();
@@ -38,7 +31,6 @@ export function NoOrganizationPage() {
     }
   }, [
     isReady,
-    hasToken,
     meQuery.isFetched,
     meQuery.isError,
     memberships.length,
@@ -46,7 +38,7 @@ export function NoOrganizationPage() {
     queryClient,
   ]);
 
-  if (!isReady || !hasToken) {
+  if (!isReady) {
     return (
       <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-muted border-t-primary" />

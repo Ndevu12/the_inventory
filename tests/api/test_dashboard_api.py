@@ -20,6 +20,7 @@ from tests.fixtures.factories import (
 )
 from tenants.models import TenantRole
 from tests.fixtures.factories import create_membership, create_tenant
+from tenants.context import set_current_tenant
 
 User = get_user_model()
 
@@ -36,6 +37,7 @@ class DashboardAPITests(TestCase):
             is_staff=True,
         )
         self.tenant = create_tenant()
+        set_current_tenant(self.tenant)
         create_membership(
             tenant=self.tenant,
             user=self.user,
@@ -187,6 +189,7 @@ class DashboardAPITests(TestCase):
 
     def test_unauthenticated(self):
         self.client.credentials()
+        self.client.cookies.clear()
         for url_name in [
             "api-dashboard-summary",
             "api-dashboard-reservations",
@@ -212,6 +215,7 @@ class PendingReservationsAPITests(TestCase):
             is_staff=True,
         )
         self.tenant = create_tenant(name="Reservation Corp", slug="reservation-corp")
+        set_current_tenant(self.tenant)
         create_membership(
             tenant=self.tenant,
             user=self.user,
@@ -288,6 +292,7 @@ class ExpiringLotsAPITests(TestCase):
             is_staff=True,
         )
         self.tenant = create_tenant(name="Lot Corp", slug="lot-corp")
+        set_current_tenant(self.tenant)
         create_membership(
             tenant=self.tenant,
             user=self.user,

@@ -7,6 +7,7 @@ from wagtail.models import Locale
 from inventory.models import Category, Product
 from inventory.services.localization import copy_catalog_row_for_locale
 from tests.fixtures.factories import create_category, create_product, create_tenant
+from tenants.context import set_current_tenant
 
 
 class ProductTranslationIntegrationTests(TestCase):
@@ -18,6 +19,7 @@ class ProductTranslationIntegrationTests(TestCase):
 
     def setUp(self):
         self.tenant = create_tenant(name="I18N Integration Tenant")
+        set_current_tenant(self.tenant)
         self.fr_locale = Locale.objects.get(language_code="fr")
 
     def test_copy_for_translation_links_and_get_translation_or_none(self):
@@ -54,6 +56,7 @@ class CategoryTranslationIntegrationTests(TestCase):
 
     def setUp(self):
         self.tenant = create_tenant(name="I18N Category Tenant")
+        set_current_tenant(self.tenant)
         self.fr_locale = Locale.objects.get(language_code="fr")
 
     def test_category_translation_shares_translation_key(self):

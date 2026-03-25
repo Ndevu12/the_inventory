@@ -16,31 +16,18 @@ interface AuthGuardProps {
  * Protects dashboard routes. Only renders children when authenticated.
  * AuthProvider handles hydration gating; this only runs when isReady.
  *
- * Waits for GET /auth/me/ (bootstrap) when tokens exist, then requires at least
- * one organization membership for dashboard routes. Otherwise redirects to
- * `/no-organization` or `/login` when session verification fails.
+ * Waits for GET /auth/me/ bootstrap, then requires at least one organization
+ * membership for dashboard routes. Otherwise redirects to `/no-organization`
+ * or `/login` when cookie session verification fails.
  */
 export function AuthGuard({ children }: AuthGuardProps) {
   const router = useRouter();
   const t = useTranslations("Auth.guard");
-  const { isReady, isAuthenticated, accessToken, memberships } = useAuth();
-  const refreshToken = useAuthStore((s) => s.refreshToken);
-  const hasToken = !!(accessToken || refreshToken);
+  const { isReady, memberships } = useAuth();
   const meQuery = useBootstrapAuth();
 
   useEffect(() => {
     if (!isReady) return;
-    if (!hasToken) {
-      router.replace("/login");
-      return;
-    }
-    if (!isAuthenticated && !refreshToken) {
-      router.replace("/login");
-    }
-  }, [isReady, hasToken, isAuthenticated, refreshToken, router]);
-
-  useEffect(() => {
-    if (!isReady || !hasToken) return;
     if (!meQuery.isFetched) return;
     if (meQuery.isError) {
       useAuthStore.getState().logout();
@@ -51,24 +38,14 @@ export function AuthGuard({ children }: AuthGuardProps) {
       router.replace("/no-organization");
     }
   }, [
-    isReady,
-    hasToken,
-    meQuery.isFetched,
-    meQuery.isError,
-    memberships.length,
-    router,
-  ]);
+    isReady, meQuery.isFetched, meQuery.isError, memberships.length, router]);
 
-  const awaitingBootstrap = hasToken && !meQuery.isFetched;
+  const awaitingBootstrap = !meQuery.isFetched;
   const sessionBlocked =
-    hasToken &&
-    meQuery.isFetched &&
-    !meQuery.isError &&
-    memberships.length === 0;
+    meQuery.isFetched && !meQuery.isError && memberships.length === 0;
 
   if (
     !isReady ||
-    !hasToken ||
     awaitingBootstrap ||
     sessionBlocked ||
     (meQuery.isFetched && meQuery.isError)

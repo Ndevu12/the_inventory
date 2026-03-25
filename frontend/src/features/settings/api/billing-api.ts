@@ -15,11 +15,7 @@ export async function exportTenantData(
   if (params?.date_from) url.searchParams.set("date_from", params.date_from)
   if (params?.date_to) url.searchParams.set("date_to", params.date_to)
 
-  const { accessToken } = useAuthStore.getState()
-  const headers: HeadersInit = {}
-  if (accessToken) headers["Authorization"] = `Bearer ${accessToken}`
-
-  const res = await fetch(url.toString(), { headers })
+  const res = await fetch(url.toString(), { credentials: "include" })
   if (!res.ok) throw new Error(`Export failed: ${res.status}`)
 
   const blob = await res.blob()

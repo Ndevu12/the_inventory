@@ -267,7 +267,7 @@ WAGTAILDOCS_EXTENSIONS = ['csv', 'docx', 'key', 'odt', 'pdf', 'pptx', 'rtf', 'tx
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "api.authentication.CookieJWTAuthentication",
         "rest_framework.authentication.TokenAuthentication",
         "rest_framework.authentication.SessionAuthentication",
     ],
@@ -286,7 +286,7 @@ REST_FRAMEWORK = {
 # SimpleJWT
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": False,
@@ -341,11 +341,17 @@ elif CORS_ALLOW_ALL_ORIGINS:
 else:
     CSRF_TRUSTED_ORIGINS = list(CORS_ALLOWED_ORIGINS)
 
-# Cookie / CSRF flags for cross-site frontends (e.g. SPA on another domain over HTTPS).
-SESSION_COOKIE_SAMESITE = env_str("SESSION_COOKIE_SAMESITE", "Lax") or "Lax"
-SESSION_COOKIE_SECURE = env_bool("SESSION_COOKIE_SECURE", False)
-CSRF_COOKIE_SAMESITE = env_str("CSRF_COOKIE_SAMESITE", "Lax") or "Lax"
-CSRF_COOKIE_SECURE = env_bool("CSRF_COOKIE_SECURE", False)
+# JWT cookie configuration for browser auth flows.
+JWT_COOKIE_SAMESITE = env_str("JWT_COOKIE_SAMESITE", "Lax") or "Lax"
+JWT_COOKIE_SECURE = env_bool("JWT_COOKIE_SECURE", False)
+JWT_ACCESS_TOKEN_COOKIE_MAX_AGE = env_int(
+    "JWT_ACCESS_TOKEN_COOKIE_MAX_AGE",
+    int(SIMPLE_JWT["ACCESS_TOKEN_LIFETIME"].total_seconds()),
+)
+JWT_REFRESH_TOKEN_COOKIE_MAX_AGE = env_int(
+    "JWT_REFRESH_TOKEN_COOKIE_MAX_AGE",
+    int(SIMPLE_JWT["REFRESH_TOKEN_LIFETIME"].total_seconds()),
+)
 
 
 # drf-spectacular (OpenAPI)

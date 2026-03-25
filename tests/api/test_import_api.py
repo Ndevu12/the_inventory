@@ -119,6 +119,7 @@ IMP-001,Imported Widget,5.99
             content_type="text/csv",
         )
         self.client.credentials()
+        self.client.cookies.clear()
         response = self.client.post(
             self.url,
             {"data_type": "products", "file": file_obj},

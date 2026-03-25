@@ -3,11 +3,13 @@
 from django.test import TestCase
 from rest_framework import status
 from rest_framework.test import APIClient
+from wagtail.models import Locale
 
 
 class WagtailLocalesApiTests(TestCase):
     def setUp(self):
         self.client = APIClient()
+        Locale.objects.get_or_create(language_code="fr")
 
     def test_list_locales_public(self):
         response = self.client.get("/api/v1/locales/")
