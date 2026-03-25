@@ -1958,21 +1958,6 @@
     "guard": {
       "loading": "Inapakia…"
     },
-    "noOrganization": {
-      "loading": "Inapakia…",
-      "title": "Hakuna ufikiaji wa taasisi",
-      "description": "Umeingia, lakini huna utaasisi wowote katika programu hii. Data ya hesabu inapatikana tu unapo kuwa mwanachama wa taasisi.",
-      "platformHint": "Ukisimamia jukwaa, ingia Wagtail (msimamizi wa Django) kusimamia watumiaji, mialiko, malipo, na zana za miingiliano ya taasisi.",
-      "signOut": "Toka"
-    },
-    "platformWagtail": {
-      "title": "Zana hii iko Wagtail",
-      "description": "Usimamizi wa jukwaa—watumiaji, mialiko, malipo, na ukaguzi wa jukwaa—unafanywa katika admin ya Wagtail (/admin/), si dashibodi hii.",
-      "openPlatformAuditLog": "Fungua kumbukumbu ya ukaguzi wa jukwaa katika Wagtail",
-      "wagtailLinkNote": "Hufungua Wagtail katika kichupo kipya. Ingia kwa akaunti ya wafanyakazi ikiwa itatakiwa.",
-      "backHome": "Rudi kwenye dashibodi",
-      "signInDifferent": "Ingia kwa akaunti nyingine"
-    },
     "invitation": {
       "invalidTitle": "Invalid Invitation",
       "invalidDescription": "This invitation link is invalid, expired, or has already been used.",

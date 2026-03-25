@@ -1958,21 +1958,6 @@
     "guard": {
       "loading": "Loading…"
     },
-    "noOrganization": {
-      "loading": "Loading…",
-      "title": "No organization access",
-      "description": "You are signed in, but you do not belong to any organization in this app. Inventory data is only available when you are a member of an organization.",
-      "platformHint": "If you manage the platform, sign in to Wagtail (Django admin) to manage users, invitations, billing, and multi-organization tools.",
-      "signOut": "Sign out"
-    },
-    "platformWagtail": {
-      "title": "This feature lives in Wagtail",
-      "description": "Platform work—including users, invitations, billing, and the full cross-tenant compliance audit log—is done in Wagtail admin (/admin/), not in this dashboard.",
-      "openPlatformAuditLog": "Open platform audit log in Wagtail",
-      "wagtailLinkNote": "Opens Wagtail in a new browser tab. Sign in with staff credentials if asked.",
-      "backHome": "Back to dashboard",
-      "signInDifferent": "Sign in with a different account"
-    },
     "invitation": {
       "invalidTitle": "Invalid invitation",
       "invalidDescription": "This invitation link is invalid, expired, or has already been used.",

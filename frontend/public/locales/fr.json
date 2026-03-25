@@ -1958,21 +1958,6 @@
     "guard": {
       "loading": "Chargement…"
     },
-    "noOrganization": {
-      "loading": "Chargement…",
-      "title": "Aucun accès à une organisation",
-      "description": "Vous êtes connecté, mais vous n'appartenez à aucune organisation dans cette application. Les données d'inventaire ne sont disponibles que si vous êtes membre d'une organisation.",
-      "platformHint": "Si vous gérez la plateforme, connectez-vous à Wagtail (admin Django) pour gérer les utilisateurs, les invitations, la facturation et les outils multi-organisations.",
-      "signOut": "Se déconnecter"
-    },
-    "platformWagtail": {
-      "title": "Cet outil se trouve dans Wagtail",
-      "description": "L'administration de la plateforme (utilisateurs, invitations, facturation et audit global) se fait dans l'admin Wagtail (/admin/), pas dans ce tableau de bord.",
-      "openPlatformAuditLog": "Ouvrir le journal d'audit plateforme dans Wagtail",
-      "wagtailLinkNote": "Ouvre Wagtail dans un nouvel onglet. Connectez-vous avec un compte staff si nécessaire.",
-      "backHome": "Retour au tableau de bord",
-      "signInDifferent": "Se connecter avec un autre compte"
-    },
     "invitation": {
       "invalidTitle": "Invitation invalide",
       "invalidDescription": "Ce lien d'invitation est invalide, expiré ou a déjà été utilisé.",
