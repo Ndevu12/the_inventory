@@ -1756,7 +1756,8 @@
       "alertsTitle": "Alertes intelligentes",
       "alertsDescription": "Définissez des points de réapprovisionnement et recevez des notifications lorsque le stock est bas",
       "searchTitle": "Recherche avancée",
-      "searchDescription": "Trouvez produits, catégories et emplacements grâce à la recherche plein texte"
+      "searchDescription": "Trouvez produits, catégories et emplacements grâce à la recherche plein texte",
+      "disclosureTrigger": "Pourquoi The Inventory ?"
     },
     "register": {
       "title": "Créer votre organisation",
@@ -1785,6 +1786,10 @@
       "loadError": "Impossible de charger votre compte. Essayez de vous reconnecter.",
       "pageTitle": "Compte",
       "pageDescription": "Votre profil et votre mot de passe s'appliquent à tous les locataires auxquels vous appartenez.",
+      "tabs": {
+        "profile": "Profil",
+        "security": "Sécurité"
+      },
       "profileTitle": "Profil",
       "profileDescription": "Votre nom et votre e-mail s'appliquent à chaque organisation dont vous faites partie.",
       "username": "Nom d'utilisateur",

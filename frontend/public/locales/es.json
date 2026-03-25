@@ -1756,7 +1756,8 @@
       "alertsTitle": "Alertas inteligentes",
       "alertsDescription": "Defina puntos de pedido y reciba notificaciones cuando el stock sea bajo",
       "searchTitle": "Búsqueda avanzada",
-      "searchDescription": "Encuentre productos, categorías y ubicaciones con búsqueda de texto completo"
+      "searchDescription": "Encuentre productos, categorías y ubicaciones con búsqueda de texto completo",
+      "disclosureTrigger": "¿Por qué The Inventory?"
     },
     "register": {
       "title": "Cree su organización",
@@ -1785,6 +1786,10 @@
       "loadError": "No se pudo cargar su cuenta. Intente iniciar sesión de nuevo.",
       "pageTitle": "Cuenta",
       "pageDescription": "Su perfil y contraseña se aplican a su usuario en todas las organizaciones.",
+      "tabs": {
+        "profile": "Perfil",
+        "security": "Seguridad"
+      },
       "profileTitle": "Perfil",
       "profileDescription": "Su nombre y correo se aplican a cada organización a la que pertenece.",
       "username": "Usuario",
