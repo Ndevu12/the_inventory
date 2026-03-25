@@ -195,7 +195,9 @@ class BulkAdjustmentSerializer(serializers.Serializer):
                 retail_locations_only=retail,
             )
         except ValueError as exc:
-            raise serializers.ValidationError(str(exc)) from exc
+            raise serializers.ValidationError(
+                "Invalid warehouse scope parameters."
+            ) from exc
         loc = attrs["location"]
         if scope != "all":
             if scope == "retail" and loc.warehouse_id is not None:
