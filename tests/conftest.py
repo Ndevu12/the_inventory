@@ -29,19 +29,19 @@ def tenant():
 
 
 @pytest.fixture
-def admin_user(tenant):
-    """Create an admin user for the test tenant."""
+def tenant_coordinator_member(tenant):
+    """Tenant governance (coordinator); naming avoids ``admin`` (platform term in docs)."""
     user = User.objects.create_user(
-        username="admin",
-        email="admin@test.com",
-        password="admin123",
-        is_staff=True,
-        is_superuser=True,
+        username="pytest_coordinator",
+        email="coordinator.fixture@org.seed.local",
+        password="pytest_coord_123",
+        is_staff=False,
+        is_superuser=False,
     )
     TenantMembership.objects.create(
         tenant=tenant,
         user=user,
-        role=TenantRole.ADMIN,
+        role=TenantRole.COORDINATOR,
         is_active=True,
         is_default=True,
     )
@@ -49,30 +49,42 @@ def admin_user(tenant):
 
 
 @pytest.fixture
-def staff_user(tenant):
-    """Create a staff user for the test tenant."""
+def admin_user(tenant_coordinator_member):
+    """Backward-compatible alias for :func:`tenant_coordinator_member`."""
+    return tenant_coordinator_member
+
+
+@pytest.fixture
+def tenant_manager_member(tenant):
+    """Tenant member with manager role (not Django ``is_staff``)."""
     user = User.objects.create_user(
-        username="staff",
-        email="staff@test.com",
-        password="staff123",
-        is_staff=True,
+        username="pytest_manager",
+        email="manager.fixture@org.seed.local",
+        password="pytest_mgr_123",
+        is_staff=False,
     )
     TenantMembership.objects.create(
         tenant=tenant,
         user=user,
-        role=TenantRole.EDITOR,
+        role=TenantRole.MANAGER,
         is_active=True,
     )
     return user
 
 
 @pytest.fixture
-def regular_user(tenant):
-    """Create a regular user for the test tenant."""
+def staff_user(tenant_manager_member):
+    """Backward-compatible alias for :func:`tenant_manager_member`."""
+    return tenant_manager_member
+
+
+@pytest.fixture
+def tenant_viewer_member(tenant):
+    """Tenant member with viewer role."""
     user = User.objects.create_user(
-        username="user",
-        email="user@test.com",
-        password="user123",
+        username="pytest_viewer",
+        email="viewer.fixture@org.seed.local",
+        password="pytest_view_123",
         is_staff=False,
     )
     TenantMembership.objects.create(
@@ -82,6 +94,12 @@ def regular_user(tenant):
         is_active=True,
     )
     return user
+
+
+@pytest.fixture
+def regular_user(tenant_viewer_member):
+    """Backward-compatible alias for :func:`tenant_viewer_member`."""
+    return tenant_viewer_member
 
 
 @pytest.fixture

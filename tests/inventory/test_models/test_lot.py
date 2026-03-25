@@ -217,6 +217,7 @@ class StockLotValidationTests(TestCase):
     def test_quantity_remaining_cannot_exceed_received(self):
         lot = StockLot(
             product=self.product,
+            tenant=self.product.tenant,
             lot_number="VAL-QTY",
             quantity_received=50,
             quantity_remaining=100,
@@ -229,6 +230,7 @@ class StockLotValidationTests(TestCase):
     def test_expiry_date_must_be_after_manufacturing_date(self):
         lot = StockLot(
             product=self.product,
+            tenant=self.product.tenant,
             lot_number="VAL-DATE",
             quantity_received=50,
             quantity_remaining=50,
@@ -243,6 +245,7 @@ class StockLotValidationTests(TestCase):
     def test_expiry_date_equal_to_manufacturing_date_invalid(self):
         lot = StockLot(
             product=self.product,
+            tenant=self.product.tenant,
             lot_number="VAL-EQ",
             quantity_received=50,
             quantity_remaining=50,
@@ -257,6 +260,7 @@ class StockLotValidationTests(TestCase):
     def test_valid_lot_passes_clean(self):
         lot = StockLot(
             product=self.product,
+            tenant=self.product.tenant,
             lot_number="VAL-OK",
             quantity_received=100,
             quantity_remaining=80,

@@ -1,5 +1,4 @@
 export { AuditLogPage } from "./pages/audit-log-page"
-export { PlatformAuditLogPage } from "./pages/platform-audit-log-page"
 export { AuditTable } from "./components/audit-table"
 export { AuditDetailDialog } from "./components/audit-detail-dialog"
 export { useAuditLog, useAuditEntry } from "./hooks/use-audit"

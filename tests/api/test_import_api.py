@@ -24,7 +24,7 @@ class ImportAPITests(TestCase):
             is_staff=True,
         )
         self.tenant = create_tenant(slug="import-tenant", name="Import Tenant")
-        create_membership(tenant=self.tenant, user=self.user, role=TenantRole.ADMIN)
+        create_membership(tenant=self.tenant, user=self.user, role=TenantRole.COORDINATOR)
 
         login_response = self.client.post(
             reverse("api-login"),

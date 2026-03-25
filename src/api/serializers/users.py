@@ -4,9 +4,11 @@ Used for managing all users across tenants. Only superusers can access.
 """
 
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
 
 from tenants.models import Tenant, TenantMembership, TenantRole
+from tenants.role_validation import ensure_valid_tenant_role
 
 User = get_user_model()
 
@@ -93,11 +95,18 @@ class PlatformUserCreateSerializer(serializers.Serializer):
         required=False,
         default=list,
     )
-    default_role = serializers.ChoiceField(
-        choices=[r.value for r in TenantRole],
+    default_role = serializers.CharField(
+        max_length=20,
         default=TenantRole.VIEWER,
         required=False,
     )
+
+    def validate_default_role(self, value):
+        try:
+            ensure_valid_tenant_role(value)
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError(list(exc.messages)) from exc
+        return value
 
     def validate_username(self, value):
         value = (value or "").strip()
@@ -153,8 +162,15 @@ class TenantMembershipAssignSerializer(serializers.Serializer):
     """Add a user to a tenant."""
 
     tenant_id = serializers.IntegerField()
-    role = serializers.ChoiceField(choices=[r.value for r in TenantRole], default=TenantRole.VIEWER)
+    role = serializers.CharField(max_length=20, default=TenantRole.VIEWER)
     is_default = serializers.BooleanField(default=False)
+
+    def validate_role(self, value):
+        try:
+            ensure_valid_tenant_role(value)
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError(list(exc.messages)) from exc
+        return value
 
     def validate_tenant_id(self, value):
         if not Tenant.objects.filter(pk=value, is_active=True).exists():

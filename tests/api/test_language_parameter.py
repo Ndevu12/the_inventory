@@ -272,7 +272,7 @@ class TenantPreferredLanguageAPITests(APITestCase):
 
         self.user = create_user(username="i18n-two-tenant-user")
         create_membership(
-            tenant=self.tenant_fr, user=self.user, role=TenantRole.ADMIN, is_default=True,
+            tenant=self.tenant_fr, user=self.user, role=TenantRole.COORDINATOR, is_default=True,
         )
         create_membership(
             tenant=self.tenant_es, user=self.user, role=TenantRole.MANAGER, is_default=False,

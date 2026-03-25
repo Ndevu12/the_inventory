@@ -1,13 +1,23 @@
 """Authentication and user profile serializers."""
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import update_last_login
 from rest_framework import serializers
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
+from rest_framework.exceptions import AuthenticationFailed, PermissionDenied
 from rest_framework_simplejwt.exceptions import InvalidToken
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
+from rest_framework_simplejwt.settings import api_settings
 
 from tenants.models import TenantMembership
 
 User = get_user_model()
+
+NO_ACTIVE_TENANT_MEMBERSHIP_DETAIL = {
+    "code": "no_tenant_membership",
+    "message": (
+        "No active organization membership. Platform operators should sign in via Wagtail."
+    ),
+}
 
 
 def memberships_payload_for_user(user):
@@ -31,7 +41,15 @@ class InventoryTokenObtainPairSerializer(TokenObtainPairSerializer):
     """Extends the default JWT login response with user, tenant, and all memberships."""
 
     def validate(self, attrs):
-        data = super().validate(attrs)
+        data = super(TokenObtainPairSerializer, self).validate(attrs)
+        if not TenantMembership.objects.filter(user=self.user, is_active=True).exists():
+            raise PermissionDenied(detail=NO_ACTIVE_TENANT_MEMBERSHIP_DETAIL)
+        refresh = self.get_token(self.user)
+        data["refresh"] = str(refresh)
+        data["access"] = str(refresh.access_token)
+        if api_settings.UPDATE_LAST_LOGIN:
+            update_last_login(None, self.user)
+
         data["user"] = UserSerializer(self.user).data
 
         membership = (
@@ -60,6 +78,22 @@ class InventoryTokenRefreshSerializer(TokenRefreshSerializer):
     """Handle token refresh with graceful user deletion handling."""
 
     def validate(self, attrs):
+        refresh = self.token_class(attrs["refresh"])
+
+        user_id = refresh.payload.get(api_settings.USER_ID_CLAIM, None)
+        if user_id:
+            try:
+                user = User.objects.get(**{api_settings.USER_ID_FIELD: user_id})
+            except User.DoesNotExist:
+                raise InvalidToken("User associated with token no longer exists.")
+            if not api_settings.USER_AUTHENTICATION_RULE(user):
+                raise AuthenticationFailed(
+                    self.error_messages["no_active_account"],
+                    "no_active_account",
+                )
+            if not TenantMembership.objects.filter(user=user, is_active=True).exists():
+                raise PermissionDenied(detail=NO_ACTIVE_TENANT_MEMBERSHIP_DETAIL)
+
         try:
             return super().validate(attrs)
         except User.DoesNotExist:
@@ -67,10 +101,12 @@ class InventoryTokenRefreshSerializer(TokenRefreshSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
+    """Tenant-app user summary (no platform flags — use Wagtail for staff/superuser)."""
+
     class Meta:
         model = User
-        fields = ("id", "username", "email", "first_name", "last_name", "is_staff", "is_superuser")
-        read_only_fields = ("id", "username", "is_staff", "is_superuser")
+        fields = ("id", "username", "email", "first_name", "last_name")
+        read_only_fields = ("id", "username")
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -78,8 +114,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ("id", "username", "email", "first_name", "last_name", "is_staff", "is_superuser")
-        read_only_fields = ("id", "username", "is_staff", "is_superuser")
+        fields = ("id", "username", "email", "first_name", "last_name")
+        read_only_fields = ("id", "username")
 
 
 class MeResponseSerializer(serializers.Serializer):

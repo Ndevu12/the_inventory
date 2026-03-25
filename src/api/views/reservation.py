@@ -7,11 +7,11 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.filters import OrderingFilter
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from api.filters.cycle_reservation import StockReservationFilter
 from api.mixins import TranslatableAPIReadMixin
-from api.permissions import ReadOnlyOrStaff
 from api.schema_i18n import OPENAPI_LANGUAGE_QUERY_PARAMETER
 from api.serializers.reservation import (
     StockReservationCreateSerializer,
@@ -28,7 +28,7 @@ from inventory.services.reservation import ReservationService
 from inventory.utils.localized_attributes import attribute_in_display_locale
 from tenants.context import get_current_tenant
 from tenants.middleware import resolve_tenant_for_request
-from tenants.permissions import get_membership
+from tenants.permissions import TenantReadOnlyOrManager, get_membership
 
 _ACTIVE_STATUSES = [ReservationStatus.PENDING, ReservationStatus.CONFIRMED]
 
@@ -41,8 +41,8 @@ class StockReservationViewSet(TranslatableAPIReadMixin,
                               viewsets.mixins.CreateModelMixin):
     """Manage stock reservations.
 
-    Staff users can create, fulfill, and cancel reservations.
-    Authenticated users can list and retrieve.
+    Owners, admins, and managers can create, fulfill, and cancel reservations.
+    All tenant members can list and retrieve.
     """
 
     queryset = (
@@ -53,7 +53,7 @@ class StockReservationViewSet(TranslatableAPIReadMixin,
         )
         .all()
     )
-    permission_classes = [ReadOnlyOrStaff]
+    permission_classes = [IsAuthenticated, TenantReadOnlyOrManager]
     filter_backends = [DjangoFilterBackend, OrderingFilter]
     filterset_class = StockReservationFilter
     ordering_fields = ["created_at", "expires_at", "quantity"]

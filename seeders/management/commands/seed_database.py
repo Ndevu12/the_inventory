@@ -16,14 +16,18 @@ class Command(BaseCommand):
         parser.add_argument(
             "--clear",
             action="store_true",
-            help="Clear all existing inventory data before seeding",
+            help=(
+                "Clear all existing inventory data before seeding. "
+                "When seeding into the implicit Default tenant (--tenant not set), "
+                "creates that tenant if it is missing (same as --create-default)."
+            ),
         )
         parser.add_argument(
             "--models",
             type=str,
             help=(
                 "Comma-separated list of models to seed. "
-                "Options: categories, products, locations, records, movements"
+                "Options: users, categories, products, locations, records, movements"
             ),
         )
         parser.add_argument(
@@ -50,6 +54,9 @@ class Command(BaseCommand):
             clear_data = options.get("clear", False)
             tenant_slug = options.get("tenant")
             create_default = options.get("create_default", False)
+            # Full reset expects a target tenant; avoid extra flags on fresh DBs.
+            if clear_data and not tenant_slug:
+                create_default = True
 
             # Resolve the tenant
             tenant = self._resolve_tenant(tenant_slug, create_default, verbose)
@@ -65,6 +72,7 @@ class Command(BaseCommand):
                     # Seed specific models
                     models = [m.strip().lower() for m in models_to_seed.split(",")]
                     available_models = {
+                        "users": manager.seed_users_only,
                         "categories": manager.seed_categories_only,
                         "products": manager.seed_products_only,
                         "locations": manager.seed_locations_only,

@@ -1,14 +1,24 @@
 """Tests for TimeStampedModel tenant field enforcement."""
 
+from datetime import date
+
+from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.test import TestCase
-from django.core.exceptions import ValidationError
 from tenants.models import Tenant
 from tenants.context import set_current_tenant, get_current_tenant, clear_current_tenant
 from inventory.models import (
-    Category, Product, StockLocation, StockRecord, 
-    StockMovement, StockLot, InventoryCycle, 
-    ReservationRule, StockReservation
+    Category,
+    CycleStatus,
+    MovementType,
+    Product,
+    StockLocation,
+    StockRecord,
+    StockMovement,
+    StockLot,
+    InventoryCycle,
+    ReservationRule,
+    StockReservation,
 )
 
 
@@ -82,18 +92,16 @@ class TimeStampedModelNonNullableTenantTestCase(TestCase):
     
     def test_stock_location_requires_tenant(self):
         """Test that StockLocation cannot be created without tenant."""
-        with self.assertRaises(IntegrityError):
-            StockLocation.objects.add_root(
+        with self.assertRaises(ValidationError):
+            StockLocation.add_root(
                 name="Test Location",
-                slug="test-location",
                 # Intentionally omitting tenant
             )
     
     def test_stock_location_with_tenant_succeeds(self):
         """Test that StockLocation creation succeeds with tenant."""
-        location = StockLocation.objects.add_root(
+        location = StockLocation.add_root(
             name="Test Location",
-            slug="test-location",
             tenant=self.default_tenant,
         )
         self.assertEqual(location.tenant, self.default_tenant)
@@ -105,17 +113,16 @@ class TimeStampedModelNonNullableTenantTestCase(TestCase):
             sku="TEST-002",
             tenant=self.default_tenant,
         )
-        location = StockLocation.objects.add_root(
+        location = StockLocation.add_root(
             name="Test Location",
-            slug="test-location-sr",
             tenant=self.default_tenant,
         )
         
-        with self.assertRaises(IntegrityError):
+        with self.assertRaises(ValidationError):
             StockRecord.objects.create(
                 product=product,
                 location=location,
-                quantity_on_hand=0,
+                quantity=0,
                 # Intentionally omitting tenant
             )
     
@@ -126,16 +133,15 @@ class TimeStampedModelNonNullableTenantTestCase(TestCase):
             sku="TEST-003",
             tenant=self.default_tenant,
         )
-        location = StockLocation.objects.add_root(
+        location = StockLocation.add_root(
             name="Test Location",
-            slug="test-location-sr2",
             tenant=self.default_tenant,
         )
         
         record = StockRecord.objects.create(
             product=product,
             location=location,
-            quantity_on_hand=100,
+            quantity=100,
             tenant=self.default_tenant,
         )
         self.assertEqual(record.tenant, self.default_tenant)
@@ -147,18 +153,17 @@ class TimeStampedModelNonNullableTenantTestCase(TestCase):
             sku="TEST-004",
             tenant=self.default_tenant,
         )
-        location = StockLocation.objects.add_root(
+        location = StockLocation.add_root(
             name="Test Location",
-            slug="test-location-sm",
             tenant=self.default_tenant,
         )
         
-        with self.assertRaises(IntegrityError):
+        with self.assertRaises(ValidationError):
             StockMovement.objects.create(
                 product=product,
-                location=location,
-                movement_type="adjustment",
+                movement_type=MovementType.ADJUSTMENT,
                 quantity=10,
+                to_location=location,
                 # Intentionally omitting tenant
             )
     
@@ -169,27 +174,27 @@ class TimeStampedModelNonNullableTenantTestCase(TestCase):
             sku="TEST-005",
             tenant=self.default_tenant,
         )
-        location = StockLocation.objects.add_root(
+        location = StockLocation.add_root(
             name="Test Location",
-            slug="test-location-sm2",
             tenant=self.default_tenant,
         )
         
         movement = StockMovement.objects.create(
             product=product,
-            location=location,
-            movement_type="adjustment",
+            movement_type=MovementType.ADJUSTMENT,
             quantity=10,
+            to_location=location,
             tenant=self.default_tenant,
         )
         self.assertEqual(movement.tenant, self.default_tenant)
     
     def test_inventory_cycle_requires_tenant(self):
         """Test that InventoryCycle cannot be created without tenant."""
-        with self.assertRaises(IntegrityError):
+        with self.assertRaises(ValidationError):
             InventoryCycle.objects.create(
                 name="Test Cycle",
-                status="open",
+                status=CycleStatus.SCHEDULED,
+                scheduled_date=date.today(),
                 # Intentionally omitting tenant
             )
     
@@ -197,7 +202,8 @@ class TimeStampedModelNonNullableTenantTestCase(TestCase):
         """Test that InventoryCycle creation succeeds with tenant."""
         cycle = InventoryCycle.objects.create(
             name="Test Cycle",
-            status="open",
+            status=CycleStatus.SCHEDULED,
+            scheduled_date=date.today(),
             tenant=self.default_tenant,
         )
         self.assertEqual(cycle.tenant, self.default_tenant)

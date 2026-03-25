@@ -63,6 +63,18 @@ class JobStatusAPITests(JobAPISetupMixin, APITestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
+    def test_other_users_job_returns_404(self):
+        other = User.objects.create_user(
+            username="other-status", password="pass123", is_staff=True,
+        )
+        job = AsyncJob.objects.create(
+            task_name="inventory.tasks.expire_reservations",
+            status=JobStatus.PENDING,
+            created_by=other,
+        )
+        response = self.client.get(f"/api/v1/jobs/{job.id}/status/")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
     def test_unauthenticated_returns_401(self):
         job = AsyncJob.objects.create(
             task_name="test", status=JobStatus.PENDING,
@@ -95,20 +107,23 @@ class JobListAPITests(JobAPISetupMixin, APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data["results"]), 2)
 
-    def test_superuser_sees_all_jobs(self):
-        admin = User.objects.create_superuser(
-            username="admin", password="admin123", email="a@b.com",
+    def test_superuser_only_sees_own_jobs(self):
+        platform_super = User.objects.create_superuser(
+            username="platform_super",
+            password="platform_super123",
+            email="platform.super@system.local",
         )
-        admin_token = Token.objects.create(user=admin)
-        self.client.credentials(HTTP_AUTHORIZATION=f"Token {admin_token.key}")
+        super_token = Token.objects.create(user=platform_super)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {super_token.key}")
 
         AsyncJob.objects.create(
             task_name="task-a", status=JobStatus.SUCCESS, created_by=self.user,
         )
         AsyncJob.objects.create(
-            task_name="task-b", status=JobStatus.SUCCESS, created_by=admin,
+            task_name="task-b", status=JobStatus.SUCCESS, created_by=platform_super,
         )
 
         response = self.client.get("/api/v1/jobs/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data["results"]), 2)
+        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(response.data["results"][0]["task_name"], "task-b")

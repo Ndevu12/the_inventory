@@ -30,7 +30,7 @@ class CurrentTenantTests(TestCase):
         TenantMembership.objects.create(
             tenant=self.tenant,
             user=self.user,
-            role=TenantRole.ADMIN,
+            role=TenantRole.COORDINATOR,
             is_active=True,
             is_default=True,
         )
@@ -185,26 +185,26 @@ class CurrentTenantTests(TestCase):
 class TenantMemberTests(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.admin_user = User.objects.create_user(
-            username="adminuser",
+        self.coordinator_member = User.objects.create_user(
+            username="tenant_api_coordinator",
             password="testpass123",
-            email="admin@test.com",
-            is_staff=True,
+            email="coordinator@org.seed.local",
+            is_staff=False,
         )
         self.tenant = create_tenant(name="Test Org", slug="test-org")
         set_current_tenant(self.tenant)
         TenantMembership.objects.create(
             tenant=self.tenant,
-            user=self.admin_user,
-            role=TenantRole.ADMIN,
+            user=self.coordinator_member,
+            role=TenantRole.COORDINATOR,
             is_active=True,
             is_default=True,
         )
 
-    def _get_admin_token(self):
+    def _get_coordinator_token(self):
         response = self.client.post(
             reverse("api-login"),
-            {"username": "adminuser", "password": "testpass123"},
+            {"username": "tenant_api_coordinator", "password": "testpass123"},
             format="json",
         )
         return response.data["access"]
@@ -212,18 +212,18 @@ class TenantMemberTests(TestCase):
     def _login_as_viewer(self):
         membership = TenantMembership.objects.get(
             tenant=self.tenant,
-            user=self.admin_user,
+            user=self.coordinator_member,
         )
         membership.role = TenantRole.VIEWER
         membership.save()
-        return self._get_admin_token()
+        return self._get_coordinator_token()
 
     def test_list_members(self):
         member2 = User.objects.create_user(
             username="member2",
             password="testpass123",
-            email="member2@test.com",
-            is_staff=True,
+            email="member2@org.seed.local",
+            is_staff=False,
         )
         TenantMembership.objects.create(
             tenant=self.tenant,
@@ -232,7 +232,7 @@ class TenantMemberTests(TestCase):
             is_active=True,
         )
 
-        token = self._get_admin_token()
+        token = self._get_coordinator_token()
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
 
         response = self.client.get(
@@ -257,7 +257,7 @@ class TenantMemberTests(TestCase):
             is_active=True,
         )
 
-        token = self._get_admin_token()
+        token = self._get_coordinator_token()
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
 
         response = self.client.patch(
@@ -271,6 +271,45 @@ class TenantMemberTests(TestCase):
 
         membership.refresh_from_db()
         self.assertEqual(membership.role, TenantRole.MANAGER)
+
+    def test_create_invitation_rejects_legacy_admin_role(self):
+        token = self._get_coordinator_token()
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
+
+        response = self.client.post(
+            reverse("api-tenant-invitations"),
+            {"email": "legacy-admin@example.com", "role": "admin"},
+            format="json",
+            HTTP_X_TENANT=self.tenant.slug,
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("coordinator", str(response.data).lower())
+
+    def test_patch_member_rejects_legacy_admin_role(self):
+        member2 = User.objects.create_user(
+            username="member2",
+            password="testpass123",
+            email="member2@test.com",
+            is_staff=True,
+        )
+        membership = TenantMembership.objects.create(
+            tenant=self.tenant,
+            user=member2,
+            role=TenantRole.VIEWER,
+            is_active=True,
+        )
+
+        token = self._get_coordinator_token()
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
+
+        response = self.client.patch(
+            reverse("api-tenant-member-detail", kwargs={"pk": membership.pk}),
+            {"role": "admin"},
+            format="json",
+            HTTP_X_TENANT=self.tenant.slug,
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("coordinator", str(response.data).lower())
 
     def test_delete_member(self):
         member2 = User.objects.create_user(
@@ -286,7 +325,7 @@ class TenantMemberTests(TestCase):
             is_active=True,
         )
 
-        token = self._get_admin_token()
+        token = self._get_coordinator_token()
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
 
         response = self.client.delete(

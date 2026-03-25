@@ -18,7 +18,7 @@ from inventory.models import AuditAction
 from inventory.services.audit import AuditService
 from tenants.middleware import get_effective_tenant
 from tenants.models import Tenant, TenantMembership
-from tenants.permissions import IsTenantAdmin, IsTenantManager, IsTenantMember
+from tenants.permissions import IsTenantGovernanceMember, IsTenantManager, IsTenantMember
 from tenants.services import TenantExportService
 
 
@@ -90,7 +90,7 @@ class TenantMemberDetailView(TranslatableAPIReadMixin, RetrieveUpdateDestroyAPIV
     """
 
     serializer_class = TenantMemberSerializer
-    permission_classes = (IsAuthenticated, IsTenantAdmin)
+    permission_classes = (IsAuthenticated, IsTenantGovernanceMember)
 
     def _get_current_tenant(self):
         return get_effective_tenant(self.request)

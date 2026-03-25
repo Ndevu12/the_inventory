@@ -14,7 +14,8 @@ export interface User {
   email: string;
   first_name: string;
   last_name: string;
-  is_staff: boolean;
+  /** Tenant `/auth/*` responses omit this; platform APIs may include it. */
+  is_staff?: boolean;
   is_superuser?: boolean;
 }
 

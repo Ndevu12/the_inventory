@@ -16,18 +16,17 @@ interface AuthGuardProps {
  * Protects dashboard routes. Only renders children when authenticated.
  * AuthProvider handles hydration gating; this only runs when isReady.
  *
- * We do NOT redirect on useBootstrapAuth isError: after login we have user/tenant
- * from the response, so bootstrap is skipped. On reload, if /me fails with 401,
- * api-client logs out and we redirect via the "no tokens" effect.
+ * Waits for GET /auth/me/ (bootstrap) when tokens exist, then requires at least
+ * one organization membership for dashboard routes. Otherwise redirects to
+ * `/no-organization` or `/login` when session verification fails.
  */
 export function AuthGuard({ children }: AuthGuardProps) {
   const router = useRouter();
   const t = useTranslations("Auth.guard");
-  const { isReady, isAuthenticated, accessToken } = useAuth();
-  const { refreshToken } = useAuthStore();
-  const hasToken = !!accessToken;
-
-  useBootstrapAuth();
+  const { isReady, isAuthenticated, accessToken, memberships } = useAuth();
+  const refreshToken = useAuthStore((s) => s.refreshToken);
+  const hasToken = !!(accessToken || refreshToken);
+  const meQuery = useBootstrapAuth();
 
   useEffect(() => {
     if (!isReady) return;
@@ -40,7 +39,40 @@ export function AuthGuard({ children }: AuthGuardProps) {
     }
   }, [isReady, hasToken, isAuthenticated, refreshToken, router]);
 
-  if (!isReady || !hasToken) {
+  useEffect(() => {
+    if (!isReady || !hasToken) return;
+    if (!meQuery.isFetched) return;
+    if (meQuery.isError) {
+      useAuthStore.getState().logout();
+      router.replace("/login");
+      return;
+    }
+    if (memberships.length === 0) {
+      router.replace("/no-organization");
+    }
+  }, [
+    isReady,
+    hasToken,
+    meQuery.isFetched,
+    meQuery.isError,
+    memberships.length,
+    router,
+  ]);
+
+  const awaitingBootstrap = hasToken && !meQuery.isFetched;
+  const sessionBlocked =
+    hasToken &&
+    meQuery.isFetched &&
+    !meQuery.isError &&
+    memberships.length === 0;
+
+  if (
+    !isReady ||
+    !hasToken ||
+    awaitingBootstrap ||
+    sessionBlocked ||
+    (meQuery.isFetched && meQuery.isError)
+  ) {
     return (
       <div className="flex h-screen w-screen items-center justify-center">
         <div className="flex flex-col items-center gap-3">

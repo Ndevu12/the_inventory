@@ -4,7 +4,7 @@ from datetime import date
 from decimal import Decimal
 import uuid
 
-from tests.fixtures.factories import create_location, create_product
+from tests.inventory.factories import create_location, create_product, create_tenant
 
 from sales.models import (
     Customer,
@@ -19,7 +19,9 @@ def create_customer(*, code=None, name="Test Customer", tenant=None, **kwargs):
     """Create and return a Customer with sensible defaults."""
     if code is None:
         code = f"CUST-{str(uuid.uuid4())[:8]}"
-    
+    if tenant is None:
+        tenant = create_tenant()
+
     defaults = {
         "code": code,
         "name": name,
@@ -27,9 +29,8 @@ def create_customer(*, code=None, name="Test Customer", tenant=None, **kwargs):
         "email": "jane@customer.com",
         "phone": "+9876543210",
         "is_active": True,
+        "tenant": tenant,
     }
-    if tenant:
-        defaults["tenant"] = tenant
     defaults.update(kwargs)
     return Customer.objects.create(**defaults)
 
@@ -45,17 +46,21 @@ def create_sales_order(
     """Create and return a SalesOrder with sensible defaults."""
     if order_number is None:
         order_number = f"SO-{str(uuid.uuid4())[:8]}"
-    
+
     if customer is None:
+        if tenant is None:
+            tenant = create_tenant()
         customer = create_customer(tenant=tenant)
+    elif tenant is None:
+        tenant = customer.tenant
+
     defaults = {
         "order_number": order_number,
         "customer": customer,
         "status": status,
         "order_date": date.today(),
+        "tenant": tenant,
     }
-    if tenant:
-        defaults["tenant"] = tenant
     defaults.update(kwargs)
     return SalesOrder.objects.create(**defaults)
 
@@ -98,16 +103,21 @@ def create_dispatch(
         dispatch_number = f"DSP-{str(uuid.uuid4())[:8]}"
     
     if sales_order is None:
+        if tenant is None:
+            tenant = create_tenant()
         sales_order = create_sales_order(status=SalesOrderStatus.CONFIRMED, tenant=tenant)
+    elif tenant is None:
+        tenant = sales_order.tenant
+
     if from_location is None:
         from_location = create_location(name="Shipping Dock", tenant=tenant)
+
     defaults = {
         "dispatch_number": dispatch_number,
         "sales_order": sales_order,
         "dispatch_date": date.today(),
         "from_location": from_location,
+        "tenant": tenant,
     }
-    if tenant:
-        defaults["tenant"] = tenant
     defaults.update(kwargs)
     return Dispatch.objects.create(**defaults)

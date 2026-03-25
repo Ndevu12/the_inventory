@@ -58,7 +58,7 @@ class CategoryTreeTests(TestCase):
 
     def test_add_child_category(self):
         parent = create_category(name="Electronics", slug="electronics")
-        child = parent.add_child(name="Phones", slug="phones")
+        child = parent.add_child(name="Phones", slug="phones", tenant=parent.tenant)
         self.assertEqual(child.get_parent().pk, parent.pk)
 
     def test_root_has_no_parent(self):
@@ -67,14 +67,16 @@ class CategoryTreeTests(TestCase):
 
     def test_get_children(self):
         parent = create_category(name="Clothing", slug="clothing")
-        parent.add_child(name="Shirts", slug="shirts")
-        parent.add_child(name="Pants", slug="pants")
+        parent.add_child(name="Shirts", slug="shirts", tenant=parent.tenant)
+        parent.add_child(name="Pants", slug="pants", tenant=parent.tenant)
         self.assertEqual(parent.get_children().count(), 2)
 
     def test_nested_depth(self):
         root = create_category(name="Root", slug="root")
-        child = root.add_child(name="Child", slug="child")
-        grandchild = child.add_child(name="Grandchild", slug="grandchild")
+        child = root.add_child(name="Child", slug="child", tenant=root.tenant)
+        grandchild = child.add_child(
+            name="Grandchild", slug="grandchild", tenant=root.tenant,
+        )
         self.assertEqual(grandchild.get_depth(), 3)
 
 
@@ -96,9 +98,14 @@ class CategoryMetaTests(TestCase):
 class CategorySaveOverrideTests(TestCase):
     """Test save() override for treebeard MP_Node creation."""
 
+    def setUp(self):
+        self.tenant = create_tenant()
+
     def test_save_creates_root_node_with_depth(self):
         """Direct save() on new instance should create a root node via add_root()."""
-        category = Category(name="Direct Save", slug="direct-save")
+        category = Category(
+            name="Direct Save", slug="direct-save", tenant=self.tenant,
+        )
         category.save()
         self.assertEqual(category.depth, 1)
         self.assertIsNotNone(category.path)
@@ -106,9 +113,9 @@ class CategorySaveOverrideTests(TestCase):
 
     def test_save_multiple_root_nodes(self):
         """Multiple save() calls should create distinct root nodes, not duplicates."""
-        cat1 = Category(name="Root One", slug="root-one")
+        cat1 = Category(name="Root One", slug="root-one", tenant=self.tenant)
         cat1.save()
-        cat2 = Category(name="Root Two", slug="root-two")
+        cat2 = Category(name="Root Two", slug="root-two", tenant=self.tenant)
         cat2.save()
         self.assertEqual(cat1.depth, 1)
         self.assertEqual(cat2.depth, 1)

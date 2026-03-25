@@ -188,6 +188,7 @@ class StockReservationFKTests(TestCase):
         location = create_location(name="Warehouse")
         movement = StockMovement(
             product=product,
+            tenant=product.tenant,
             movement_type=MovementType.ISSUE,
             quantity=10,
             from_location=location,

@@ -1,6 +1,7 @@
 """Serializers for the tenant invitation flow."""
 
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.utils import timezone
 from rest_framework import serializers
 
@@ -10,16 +11,17 @@ from tenants.models import (
     TenantMembership,
     TenantRole,
 )
+from tenants.role_validation import ensure_valid_tenant_role
 
 User = get_user_model()
 
 
 class InvitationCreateSerializer(serializers.Serializer):
-    """Validate a new invitation request from a tenant admin/owner."""
+    """Validate a new invitation request from an owner or coordinator."""
 
     email = serializers.EmailField()
-    role = serializers.ChoiceField(
-        choices=TenantRole.choices,
+    role = serializers.CharField(
+        max_length=20,
         default=TenantRole.VIEWER,
     )
 
@@ -47,6 +49,10 @@ class InvitationCreateSerializer(serializers.Serializer):
         return value
 
     def validate_role(self, value):
+        try:
+            ensure_valid_tenant_role(value)
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError(list(exc.messages)) from exc
         request = self.context.get("request")
         if not request:
             return value

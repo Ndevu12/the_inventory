@@ -71,13 +71,9 @@
       "dispatches": "Dispatches",
       "reports": "Reports",
       "auditLog": "Audit Log",
-      "platformAuditLog": "Platform Audit Log",
       "account": "Account",
       "tenant": "Tenant",
-      "teamMembers": "Team Members",
-      "platformUsers": "Users",
-      "invitations": "Invitations",
-      "billing": "Billing"
+      "teamMembers": "Team Members"
     }
   },
   "Shell": {
@@ -1325,7 +1321,7 @@
     },
     "roles": {
       "owner": "Owner",
-      "admin": "Admin",
+      "coordinator": "Coordinator",
       "manager": "Manager",
       "viewer": "Viewer"
     },
@@ -1960,6 +1956,19 @@
     },
     "guard": {
       "loading": "Loading…"
+    },
+    "noOrganization": {
+      "loading": "Loading…",
+      "title": "No organization access",
+      "description": "You are signed in, but you are not a member of any organization in this application. Inventory data is available only when you belong to an organization.",
+      "platformHint": "If you operate the platform, sign in to Wagtail (Django admin) to manage users, invitations, billing, and cross-tenant tools.",
+      "signOut": "Sign out"
+    },
+    "platformWagtail": {
+      "title": "This tool lives in Wagtail",
+      "description": "Platform administration—users, invitations, billing, and platform-wide audit—is done in the Wagtail admin site, not in this dashboard.",
+      "backHome": "Back to dashboard",
+      "signInDifferent": "Sign in with another account"
     },
     "invitation": {
       "invalidTitle": "Invalid invitation",

@@ -19,7 +19,9 @@ class JobStatusView(generics.RetrieveAPIView):
     permission_classes = (IsAuthenticated,)
     lookup_field = "pk"
     lookup_url_kwarg = "job_id"
-    queryset = AsyncJob.objects.all()
+
+    def get_queryset(self):
+        return AsyncJob.objects.filter(created_by=self.request.user)
 
 
 class JobListView(generics.ListAPIView):
@@ -32,7 +34,4 @@ class JobListView(generics.ListAPIView):
     permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
-        qs = AsyncJob.objects.all()
-        if not self.request.user.is_superuser:
-            qs = qs.filter(created_by=self.request.user)
-        return qs
+        return AsyncJob.objects.filter(created_by=self.request.user)

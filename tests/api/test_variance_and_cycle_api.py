@@ -73,6 +73,7 @@ class VarianceAPISetupMixin:
 
         now = timezone.now()
         InventoryVariance.objects.create(
+            tenant=self.tenant,
             cycle=self.cycle,
             count_line=line_a,
             product=self.product_a,
@@ -86,6 +87,7 @@ class VarianceAPISetupMixin:
             resolved_at=now,
         )
         InventoryVariance.objects.create(
+            tenant=self.tenant,
             cycle=self.cycle,
             count_line=line_b,
             product=self.product_b,

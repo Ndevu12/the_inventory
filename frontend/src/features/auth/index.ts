@@ -1,4 +1,5 @@
 export { LoginPage } from "./pages/login-page";
+export { NoOrganizationPage } from "./pages/no-organization-page";
 export { AccountSettingsPage } from "./pages/account-settings-page";
 export { AuthGuard } from "./components/auth-guard";
 export { LoginForm } from "./components/login-form";

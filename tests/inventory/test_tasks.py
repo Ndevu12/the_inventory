@@ -25,6 +25,7 @@ from .factories import (
     create_product,
     create_reservation,
     create_stock_record,
+    create_tenant,
     create_user,
 )
 
@@ -33,8 +34,9 @@ class ExpireReservationsTaskTests(TestCase):
     """Test the expire_reservations Celery task."""
 
     def setUp(self):
-        self.product = create_product(sku="TASK-001")
-        self.warehouse = create_location(name="Task Warehouse")
+        self.tenant = create_tenant()
+        self.product = create_product(sku="TASK-001", tenant=self.tenant)
+        self.warehouse = create_location(name="Task Warehouse", tenant=self.tenant)
         create_stock_record(product=self.product, location=self.warehouse, quantity=200)
         self.user = create_user(username="task_user")
 
@@ -92,9 +94,10 @@ class ProcessBulkOperationTaskTests(TestCase):
     """Test the process_bulk_operation Celery task."""
 
     def setUp(self):
-        self.product = create_product(sku="BULK-001")
-        self.from_loc = create_location(name="Src Warehouse")
-        self.to_loc = create_location(name="Dst Warehouse")
+        self.tenant = create_tenant()
+        self.product = create_product(sku="BULK-001", tenant=self.tenant)
+        self.from_loc = create_location(name="Src Warehouse", tenant=self.tenant)
+        self.to_loc = create_location(name="Dst Warehouse", tenant=self.tenant)
         create_stock_record(product=self.product, location=self.from_loc, quantity=100)
         self.user = create_user(username="bulk_user")
 

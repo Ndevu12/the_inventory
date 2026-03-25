@@ -18,6 +18,8 @@ from sales.models import Customer, Dispatch, SalesOrder, SalesOrderLine
 
 User = get_user_model()
 
+_DEFAULT_PRODUCT_CATEGORY = object()
+
 
 def _resolve_tenant(tenant):
     """Return given tenant, or fall back to thread-local tenant context."""
@@ -42,26 +44,74 @@ def create_tenant(name=None, slug=None, **kwargs):
 
 
 def create_user(username="testuser", password="testpass123", **kwargs):
-    """Create a test user."""
+    """Create a test user (tenant tests rely on membership RBAC, not ``is_staff``)."""
     defaults = {
         "username": username,
         "email": f"{username}@test.com",
-        "is_staff": True,
+        "is_staff": False,
     }
     defaults.update(kwargs)
     user = User.objects.create_user(password=password, **defaults)
     return user
 
 
-def create_admin_user(username="admin", password="admin123", **kwargs):
-    """Create a test superuser."""
-    defaults = {
-        "username": username,
-        "email": f"{username}@test.com",
-    }
-    defaults.update(kwargs)
-    user = User.objects.create_superuser(password=password, **defaults)
+def create_platform_superuser(username="platform_super", password="platform_super123", **kwargs):
+    """Create a Django superuser for platform / Wagtail tests (no ``TenantMembership``)."""
+    email = kwargs.pop("email", f"{username}@platform.test")
+    return User.objects.create_superuser(
+        username=username,
+        email=email,
+        password=password,
+        **kwargs,
+    )
+
+
+def create_platform_staff_user(username="platform_staff", password="platform_staff123", **kwargs):
+    """Create ``is_staff`` user without superuser (no ``TenantMembership``)."""
+    email = kwargs.pop("email", f"{username}@platform.test")
+    kwargs.setdefault("is_staff", True)
+    kwargs.setdefault("is_superuser", False)
+    return User.objects.create_user(
+        username=username,
+        email=email,
+        password=password,
+        **kwargs,
+    )
+
+
+def create_tenant_user(
+    tenant,
+    *,
+    username=None,
+    password="tenant_user123",
+    role=TenantRole.VIEWER,
+    is_default=False,
+    **kwargs,
+):
+    """Create a tenant-plane user with an active ``TenantMembership``."""
+    if username is None:
+        username = f"tenant-user-{str(uuid.uuid4())[:8]}"
+    kwargs.setdefault("is_staff", False)
+    kwargs.setdefault("is_superuser", False)
+    kwargs.setdefault("email", f"{username}@tenant.test")
+    user = User.objects.create_user(username=username, password=password, **kwargs)
+    create_tenant_membership(
+        tenant,
+        user,
+        role=role,
+        is_default=is_default,
+    )
     return user
+
+
+def create_admin_user(username="platform_super", password="platform_super123", **kwargs):
+    """Create a test superuser (platform-plane; use :func:`create_tenant_user` for SPA/JWT)."""
+    kwargs.setdefault("email", f"{username}@system.local")
+    return create_platform_superuser(
+        username=username,
+        password=password,
+        **kwargs,
+    )
 
 
 def create_tenant_membership(tenant, user, role=TenantRole.VIEWER, **kwargs):
@@ -85,16 +135,23 @@ def create_category(name="Test Category", slug=None, tenant=None, **kwargs):
     """Create a root category."""
     if slug is None:
         slug = f"cat-{str(uuid.uuid4())[:8]}"
-    
+
     resolved = _resolve_tenant(tenant)
-    defaults = {"name": name, "slug": slug, "is_active": True}
-    if resolved:
-        defaults["tenant"] = resolved
+    if resolved is None:
+        resolved = create_tenant()
+    defaults = {"name": name, "slug": slug, "is_active": True, "tenant": resolved}
     defaults.update(kwargs)
     return Category.add_root(**defaults)
 
 
-def create_product(sku=None, name="Test Product", category=None, tenant=None, locale=None, **kwargs):
+def create_product(
+    sku=None,
+    name="Test Product",
+    category=_DEFAULT_PRODUCT_CATEGORY,
+    tenant=None,
+    locale=None,
+    **kwargs,
+):
     """Create a product.
 
     Pass ``locale`` (a :class:`wagtail.models.Locale`) when the tenant’s
@@ -102,11 +159,15 @@ def create_product(sku=None, name="Test Product", category=None, tenant=None, lo
     """
     if sku is None:
         sku = f"SKU-{str(uuid.uuid4())[:8]}"
-    
+
     resolved = _resolve_tenant(tenant)
-    if category is None and resolved:
+    if category is _DEFAULT_PRODUCT_CATEGORY:
+        if resolved is None:
+            resolved = create_tenant()
         category = create_category(tenant=resolved)
-    
+    elif resolved is None:
+        resolved = category.tenant if category is not None else create_tenant()
+
     defaults = {
         "sku": sku,
         "name": name,
@@ -115,9 +176,8 @@ def create_product(sku=None, name="Test Product", category=None, tenant=None, lo
         "unit_cost": Decimal("10.00"),
         "reorder_point": 5,
         "is_active": True,
+        "tenant": resolved,
     }
-    if resolved:
-        defaults["tenant"] = resolved
     if locale is not None:
         defaults["locale"] = locale
     defaults.update(kwargs)
@@ -131,9 +191,14 @@ def create_warehouse(name="Chicago DC", tenant=None, **kwargs):
     For retail-only fixtures, omit ``warehouse`` on locations (``NULL``).
     """
     resolved = _resolve_tenant(tenant)
-    defaults = {"name": name, "description": "", "is_active": True}
-    if resolved:
-        defaults["tenant"] = resolved
+    if resolved is None:
+        resolved = create_tenant()
+    defaults = {
+        "name": name,
+        "description": "",
+        "is_active": True,
+        "tenant": resolved,
+    }
     defaults.update(kwargs)
     return Warehouse.objects.create(**defaults)
 
@@ -145,9 +210,9 @@ def create_location(name="Main Warehouse", tenant=None, **kwargs):
     or ``None`` for a retail-only root tree.
     """
     resolved = _resolve_tenant(tenant)
-    defaults = {"name": name, "is_active": True}
-    if resolved:
-        defaults["tenant"] = resolved
+    if resolved is None:
+        resolved = create_tenant()
+    defaults = {"name": name, "is_active": True, "tenant": resolved}
     defaults.update(kwargs)
     return StockLocation.add_root(**defaults)
 
@@ -229,15 +294,16 @@ def create_reservation(product, location, quantity=10, status=ReservationStatus.
 def create_reservation_rule(name="Default Rule", tenant=None, **kwargs):
     """Create a reservation rule."""
     resolved = _resolve_tenant(tenant)
+    if resolved is None:
+        resolved = create_tenant()
     defaults = {
         "name": name,
         "auto_reserve_on_order": False,
         "reservation_expiry_hours": 72,
         "allocation_strategy": AllocationStrategy.FIFO,
         "is_active": True,
+        "tenant": resolved,
     }
-    if resolved:
-        defaults["tenant"] = resolved
     defaults.update(kwargs)
     return ReservationRule.objects.create(**defaults)
 
@@ -246,14 +312,17 @@ def create_inventory_cycle(name="Q1 Cycle Count", scheduled_date=None,
                           status=CycleStatus.SCHEDULED, location=None, tenant=None, **kwargs):
     """Create an inventory cycle."""
     resolved = _resolve_tenant(tenant)
+    if resolved is None and location is not None:
+        resolved = getattr(location, "tenant", None)
+    if resolved is None:
+        resolved = create_tenant()
     defaults = {
         "name": name,
         "scheduled_date": scheduled_date or date.today(),
         "status": status,
         "location": location,
+        "tenant": resolved,
     }
-    if resolved:
-        defaults["tenant"] = resolved
     defaults.update(kwargs)
     return InventoryCycle.objects.create(**defaults)
 
@@ -268,8 +337,9 @@ def create_cycle_count_line(cycle, product, location, system_quantity=100,
         "system_quantity": system_quantity,
         "counted_quantity": counted_quantity,
     }
-    if hasattr(cycle, 'tenant'):
-        defaults["tenant"] = cycle.tenant
+    t = getattr(cycle, "tenant", None) or getattr(product, "tenant", None)
+    t = t or getattr(location, "tenant", None)
+    defaults["tenant"] = t
     defaults.update(kwargs)
     return CycleCountLine.objects.create(**defaults)
 
@@ -291,8 +361,7 @@ def create_inventory_variance(cycle, count_line, product, location, system_quant
         "variance_type": variance_type,
         "variance_quantity": physical_quantity - system_quantity,
     }
-    if hasattr(cycle, 'tenant'):
-        defaults["tenant"] = cycle.tenant
+    defaults["tenant"] = getattr(cycle, "tenant", None)
     defaults.update(kwargs)
     return InventoryVariance.objects.create(**defaults)
 
@@ -303,9 +372,9 @@ def create_supplier(name="Test Supplier", code=None, tenant=None, **kwargs):
         code = f"SUP-{str(uuid.uuid4())[:8]}"
     
     resolved = _resolve_tenant(tenant)
-    defaults = {"name": name, "code": code, "is_active": True}
-    if resolved:
-        defaults["tenant"] = resolved
+    if resolved is None:
+        resolved = create_tenant()
+    defaults = {"name": name, "code": code, "is_active": True, "tenant": resolved}
     defaults.update(kwargs)
     return Supplier.objects.create(**defaults)
 

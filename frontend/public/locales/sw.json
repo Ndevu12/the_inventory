@@ -71,13 +71,9 @@
       "dispatches": "Usafirishaji",
       "reports": "Ripoti",
       "auditLog": "Kumbukumbu ya ukaguzi",
-      "platformAuditLog": "Ukaguzi wa jukwaa",
       "account": "Akaunti",
       "tenant": "Mpangishaji",
-      "teamMembers": "Wanachama wa timu",
-      "platformUsers": "Watumiaji",
-      "invitations": "Mialiko",
-      "billing": "Malipo"
+      "teamMembers": "Wanachama wa timu"
     }
   },
   "Shell": {
@@ -1325,7 +1321,7 @@
     },
     "roles": {
       "owner": "Owner",
-      "admin": "Admin",
+      "coordinator": "Mratibu",
       "manager": "Manager",
       "viewer": "Viewer"
     },
@@ -1960,6 +1956,19 @@
     },
     "guard": {
       "loading": "Inapakia…"
+    },
+    "noOrganization": {
+      "loading": "Inapakia…",
+      "title": "Hakuna ufikiaji wa taasisi",
+      "description": "Umeingia, lakini huna utaasisi wowote katika programu hii. Data ya hesabu inapatikana tu unapo kuwa mwanachama wa taasisi.",
+      "platformHint": "Ukisimamia jukwaa, ingia Wagtail (msimamizi wa Django) kusimamia watumiaji, mialiko, malipo, na zana za miingiliano ya taasisi.",
+      "signOut": "Toka"
+    },
+    "platformWagtail": {
+      "title": "Zana hii iko Wagtail",
+      "description": "Usimamizi wa jukwaa—watumiaji, mialiko, malipo, na ukaguzi wa jukwaa—unafanywa katika tovuti ya usimamizi wa Wagtail, si dashibodi hii.",
+      "backHome": "Rudi kwenye dashibodi",
+      "signInDifferent": "Ingia kwa akaunti nyingine"
     },
     "invitation": {
       "invalidTitle": "Invalid Invitation",

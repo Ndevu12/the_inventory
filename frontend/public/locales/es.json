@@ -71,13 +71,9 @@
       "dispatches": "Envíos",
       "reports": "Informes",
       "auditLog": "Registro de auditoría",
-      "platformAuditLog": "Auditoría de plataforma",
       "account": "Cuenta",
       "tenant": "Inquilino",
-      "teamMembers": "Miembros del equipo",
-      "platformUsers": "Usuarios",
-      "invitations": "Invitaciones",
-      "billing": "Facturación"
+      "teamMembers": "Miembros del equipo"
     }
   },
   "Shell": {
@@ -1325,7 +1321,7 @@
     },
     "roles": {
       "owner": "Propietario",
-      "admin": "Administrador",
+      "coordinator": "Coordinador",
       "manager": "Gestor",
       "viewer": "Lector"
     },
@@ -1960,6 +1956,19 @@
     },
     "guard": {
       "loading": "Cargando…"
+    },
+    "noOrganization": {
+      "loading": "Cargando…",
+      "title": "Sin acceso a una organización",
+      "description": "Ha iniciado sesión, pero no es miembro de ninguna organización en esta aplicación. El inventario solo está disponible cuando pertenece a una organización.",
+      "platformHint": "Si administra la plataforma, inicie sesión en Wagtail (admin de Django) para gestionar usuarios, invitaciones, facturación y herramientas entre organizaciones.",
+      "signOut": "Cerrar sesión"
+    },
+    "platformWagtail": {
+      "title": "Esta función está en Wagtail",
+      "description": "La administración de la plataforma (usuarios, invitaciones, facturación y auditoría global) se realiza en el sitio de administración de Wagtail, no en este panel.",
+      "backHome": "Volver al panel",
+      "signInDifferent": "Iniciar sesión con otra cuenta"
     },
     "invitation": {
       "invalidTitle": "Invitación no válida",

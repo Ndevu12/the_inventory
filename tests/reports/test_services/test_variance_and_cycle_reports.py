@@ -12,6 +12,7 @@ from tests.fixtures.factories import (
     create_inventory_cycle,
     create_location,
     create_product,
+    create_tenant,
     create_user,
 )
 from reports.services.inventory_reports import InventoryReportService
@@ -22,23 +23,27 @@ class VarianceReportSetupMixin:
 
     def setUp(self):
         self.service = InventoryReportService()
-        self.warehouse = create_location(name="Warehouse")
-        self.store = create_location(name="Store")
+        self.tenant = create_tenant()
+        self.warehouse = create_location(name="Warehouse", tenant=self.tenant)
+        self.store = create_location(name="Store", tenant=self.tenant)
         self.user = create_user(username="counter")
 
         self.product_a = create_product(
             sku="VAR-A", name="Widget A",
             unit_cost=Decimal("10.00"),
+            tenant=self.tenant,
         )
         self.product_b = create_product(
             sku="VAR-B", name="Widget B",
             unit_cost=Decimal("25.00"),
+            tenant=self.tenant,
         )
 
         self.cycle = create_inventory_cycle(
             name="Q1 Count",
             status=CycleStatus.RECONCILED,
             scheduled_date=date(2026, 1, 15),
+            tenant=self.tenant,
         )
 
         line_a = create_cycle_count_line(
@@ -65,6 +70,7 @@ class VarianceReportSetupMixin:
 
         now = timezone.now()
         self.var_shortage = InventoryVariance.objects.create(
+            tenant=self.tenant,
             cycle=self.cycle,
             count_line=line_a,
             product=self.product_a,
@@ -78,6 +84,7 @@ class VarianceReportSetupMixin:
             resolved_at=now,
         )
         self.var_surplus = InventoryVariance.objects.create(
+            tenant=self.tenant,
             cycle=self.cycle,
             count_line=line_b,
             product=self.product_b,
@@ -91,6 +98,7 @@ class VarianceReportSetupMixin:
             resolved_at=now,
         )
         self.var_match = InventoryVariance.objects.create(
+            tenant=self.tenant,
             cycle=self.cycle,
             count_line=line_c,
             product=self.product_a,

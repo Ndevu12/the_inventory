@@ -24,7 +24,7 @@ class TenantMiddlewareTest(TestCase):
         create_membership(
             tenant=self.tenant,
             user=self.user,
-            role=TenantRole.ADMIN,
+            role=TenantRole.COORDINATOR,
             is_default=True,
         )
 
@@ -90,7 +90,7 @@ class TenantMiddlewareTest(TestCase):
         create_membership(
             tenant=self.tenant,
             user=user2,
-            role=TenantRole.ADMIN,
+            role=TenantRole.COORDINATOR,
             is_active=False,
         )
         request = self._make_request(user=user2)
@@ -162,7 +162,7 @@ class TenantMiddlewareLocaleTest(TestCase):
         tenant = create_tenant(slug="acme-fr", preferred_language="fr")
         user = create_user()
         create_membership(
-            tenant=tenant, user=user, role=TenantRole.ADMIN, is_default=True,
+            tenant=tenant, user=user, role=TenantRole.COORDINATOR, is_default=True,
         )
 
         def inner(request):
@@ -180,7 +180,7 @@ class TenantMiddlewareLocaleTest(TestCase):
         t_fr = create_tenant(slug="locale-fr", preferred_language="fr")
         user = create_user()
         create_membership(
-            tenant=t_en, user=user, role=TenantRole.ADMIN, is_default=True,
+            tenant=t_en, user=user, role=TenantRole.COORDINATOR, is_default=True,
         )
         create_membership(tenant=t_fr, user=user, role=TenantRole.VIEWER)
 
@@ -205,7 +205,7 @@ class TenantMiddlewareLocaleTest(TestCase):
         tenant = create_tenant(slug="acme-bogus", preferred_language="zz")
         user = create_user()
         create_membership(
-            tenant=tenant, user=user, role=TenantRole.ADMIN, is_default=True,
+            tenant=tenant, user=user, role=TenantRole.COORDINATOR, is_default=True,
         )
 
         def inner(request):
@@ -231,7 +231,7 @@ class TenantAccessAuditTest(TestCase):
         self.user = create_user()
         create_membership(
             tenant=self.tenant, user=self.user,
-            role=TenantRole.ADMIN, is_default=True,
+            role=TenantRole.COORDINATOR, is_default=True,
         )
         create_membership(
             tenant=self.tenant2, user=self.user,

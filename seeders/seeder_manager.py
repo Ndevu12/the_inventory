@@ -1,6 +1,7 @@
 """Orchestrator for running all seeders in the correct order."""
 
 from .tenant_seeder import TenantSeeder
+from .platform_user_seeder import PlatformUserSeeder
 from .user_seeder import UserSeeder
 from .category_seeder import CategorySeeder
 from .product_seeder import ProductSeeder
@@ -15,13 +16,14 @@ class SeederManager:
 
     Seeders are executed in a specific order to ensure dependencies are met:
     0. Tenant (creates or retrieves default tenant) — **runs first, always**
-    1. Users (creates test users and assigns to tenant)
-    2. Categories (needed by Products)
-    3. Products (needed by StockRecords and StockMovements)
-    4. StockLocations (needed by StockRecords and StockMovements)
-    5. StockRecords (depends on Products and StockLocations)
-    6. StockMovements (depends on Products and StockLocations)
-    7. LowStockRecords (creates critical/low-stock scenarios for alerts)
+    1. Platform operators (Wagtail / staff; **no** TenantMembership)
+    2. Tenant users (``is_staff=False`` + memberships for SPA / tenant JWT)
+    3. Categories (needed by Products)
+    4. Products (needed by StockRecords and StockMovements)
+    5. StockLocations (needed by StockRecords and StockMovements)
+    6. StockRecords (depends on Products and StockLocations)
+    7. StockMovements (depends on Products and StockLocations)
+    8. LowStockRecords (creates critical/low-stock scenarios for alerts)
 
     **Tenant-Scoped Seeding:**
     All seeders receive the tenant instance and scope created data to it. TenantSeeder
@@ -39,7 +41,8 @@ class SeederManager:
         self.verbose = verbose
         self.clear_data = clear_data
         self.seeders = [
-            ("Users", UserSeeder(verbose=verbose)),
+            ("Platform operators", PlatformUserSeeder(verbose=verbose)),
+            ("Tenant users", UserSeeder(verbose=verbose)),
             ("Categories", CategorySeeder(verbose=verbose)),
             ("Products", ProductSeeder(verbose=verbose)),
             ("Stock Locations", StockLocationSeeder(verbose=verbose)),
@@ -163,21 +166,16 @@ class SeederManager:
             "objects_created": objects_created,
         }
 
-    def seed_users_only(self):
-        """Seed only users (requires tenant to exist)."""
-        from tenants.models import Tenant
-
-        tenant = Tenant.objects.filter(slug="default").first()
-        if not tenant:
-            raise ValueError(
-                "Default tenant does not exist. Run seed() first."
-            )
+    def seed_users_only(self, tenant=None):
+        """Seed platform operators and tenant users (requires tenant context)."""
+        tenant = self._tenant_for_partial_seed(tenant)
 
         if self.verbose:
-            print("🌱 Seeding Users...\n")
+            print("🌱 Seeding platform + tenant users...\n")
         self.seeders[0][1].execute(tenant=tenant)
+        self.seeders[1][1].execute(tenant=tenant)
         if self.verbose:
-            print("\n✅ Users seeding complete!")
+            print("\n✅ User seeding complete!")
 
     def seed_categories_only(self, tenant=None):
         """Seed only categories."""
@@ -201,7 +199,7 @@ class SeederManager:
 
         if self.verbose:
             print("🌱 Seeding Categories...\n")
-        self.seeders[1][1].execute(tenant=tenant)
+        self.seeders[2][1].execute(tenant=tenant)
         if self.verbose:
             print("\n✅ Categories seeding complete!")
 
@@ -210,7 +208,7 @@ class SeederManager:
         tenant = self._tenant_for_partial_seed(tenant)
         if self.verbose:
             print("🌱 Seeding Products...\n")
-        self.seeders[2][1].execute(tenant=tenant)
+        self.seeders[3][1].execute(tenant=tenant)
         if self.verbose:
             print("\n✅ Products seeding complete!")
 
@@ -219,7 +217,7 @@ class SeederManager:
         tenant = self._tenant_for_partial_seed(tenant)
         if self.verbose:
             print("🌱 Seeding Stock Locations...\n")
-        self.seeders[3][1].execute(tenant=tenant)
+        self.seeders[4][1].execute(tenant=tenant)
         if self.verbose:
             print("\n✅ Stock Locations seeding complete!")
 
@@ -228,7 +226,7 @@ class SeederManager:
         tenant = self._tenant_for_partial_seed(tenant)
         if self.verbose:
             print("🌱 Seeding Stock Records...\n")
-        self.seeders[4][1].execute(tenant=tenant)
+        self.seeders[5][1].execute(tenant=tenant)
         if self.verbose:
             print("\n✅ Stock Records seeding complete!")
 
@@ -237,6 +235,6 @@ class SeederManager:
         tenant = self._tenant_for_partial_seed(tenant)
         if self.verbose:
             print("🌱 Seeding Stock Movements...\n")
-        self.seeders[5][1].execute(tenant=tenant)
+        self.seeders[6][1].execute(tenant=tenant)
         if self.verbose:
             print("\n✅ Stock Movements seeding complete!")

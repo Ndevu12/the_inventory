@@ -235,8 +235,14 @@ class StockMovementAuditIntegrationTests(TestCase):
             tenant=self.tenant,
             unit_cost=Decimal("9.99"),
         )
-        self.warehouse = create_location(name="Integration Warehouse")
-        self.store = create_location(name="Integration Store")
+        self.warehouse = create_location(
+            name="Integration Warehouse",
+            tenant=self.tenant,
+        )
+        self.store = create_location(
+            name="Integration Store",
+            tenant=self.tenant,
+        )
         self.service = StockService()
 
     def test_receive_creates_audit_log(self):
@@ -323,17 +329,6 @@ class StockMovementAuditIntegrationTests(TestCase):
         ).first()
         self.assertIsNotNone(log)
         self.assertEqual(log.details["quantity"], 15)
-
-    def test_no_audit_log_without_tenant(self):
-        """Products without a tenant skip audit logging gracefully."""
-        product_no_tenant = create_product(sku="NO-TENANT-001", tenant=None)
-        self.service.process_movement(
-            product=product_no_tenant,
-            movement_type=MovementType.RECEIVE,
-            quantity=10,
-            to_location=self.warehouse,
-        )
-        self.assertEqual(ComplianceAuditLog.objects.count(), 0)
 
     def test_movement_sequence_creates_multiple_logs(self):
         """Each movement in a sequence gets its own audit log entry."""

@@ -42,11 +42,11 @@ class TenantScopingSetupMixin:
             username="apiuser", password="testpass123", is_staff=True,
         )
         TenantMembership.objects.create(
-            user=self.user, tenant=self.tenant_a, role=TenantRole.ADMIN,
+            user=self.user, tenant=self.tenant_a, role=TenantRole.COORDINATOR,
             is_active=True, is_default=True,
         )
         TenantMembership.objects.create(
-            user=self.user, tenant=self.tenant_b, role=TenantRole.ADMIN,
+            user=self.user, tenant=self.tenant_b, role=TenantRole.COORDINATOR,
             is_active=True, is_default=False,
         )
 

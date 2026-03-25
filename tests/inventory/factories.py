@@ -24,17 +24,33 @@ from inventory.models import (
     UnitOfMeasure,
     Warehouse,
 )
+from tenants.context import get_current_tenant, set_current_tenant
 from tenants.models import Tenant
 
 User = get_user_model()
 
 
+def _ensure_tenant(tenant):
+    """Honor explicit *tenant*, else thread-local from a prior factory call, else a new tenant."""
+    if tenant is not None:
+        return tenant
+    current = get_current_tenant()
+    if current is not None:
+        return current
+    created = create_tenant()
+    set_current_tenant(created)
+    return created
+
+# Used so ``create_product(category=None)`` can omit a category; default is to auto-create one.
+_DEFAULT_PRODUCT_CATEGORY = object()
+
+
 def create_user(*, username="testuser", password="testpass123", **kwargs):
-    """Create and return a Django user."""
+    """Create and return a Django user (prefer tenant membership for API access)."""
     defaults = {
         "username": username,
         "password": password,
-        "is_staff": True,
+        "is_staff": False,
     }
     defaults.update(kwargs)
     password = defaults.pop("password")
@@ -42,12 +58,12 @@ def create_user(*, username="testuser", password="testpass123", **kwargs):
     return user
 
 
-def create_admin_user(*, username="admin", password="adminpass123", **kwargs):
-    """Create and return a Django superuser."""
+def create_admin_user(*, username="platform_super", password="platform_super123", **kwargs):
+    """Create and return a Django superuser (platform plane; not a tenant role)."""
     defaults = {
         "username": username,
         "password": password,
-        "email": "admin@example.com",
+        "email": "platform.super@system.local",
     }
     defaults.update(kwargs)
     password = defaults.pop("password")
@@ -76,26 +92,37 @@ def create_category(*, name="Test Category", slug=None, tenant=None, **kwargs):
     """Create and return a root Category node."""
     if slug is None:
         slug = f"cat-{str(uuid.uuid4())[:8]}"
-    
+    tenant = _ensure_tenant(tenant)
+
     defaults = {
         "name": name,
         "slug": slug,
         "is_active": True,
+        "tenant": tenant,
     }
-    if tenant:
-        defaults["tenant"] = tenant
     defaults.update(kwargs)
     return Category.add_root(**defaults)
 
 
-def create_product(*, sku=None, name="Test Product", category=None, tenant=None, **kwargs):
+def create_product(
+    *,
+    sku=None,
+    name="Test Product",
+    category=_DEFAULT_PRODUCT_CATEGORY,
+    tenant=None,
+    **kwargs,
+):
     """Create and return a Product with sensible defaults."""
     if sku is None:
         sku = f"SKU-{str(uuid.uuid4())[:8]}"
-    
-    if category is None and tenant:
+
+    if category is _DEFAULT_PRODUCT_CATEGORY:
+        tenant = _ensure_tenant(tenant)
         category = create_category(tenant=tenant)
-    
+    else:
+        if tenant is None:
+            tenant = category.tenant if category is not None else _ensure_tenant(None)
+
     defaults = {
         "sku": sku,
         "name": name,
@@ -104,17 +131,15 @@ def create_product(*, sku=None, name="Test Product", category=None, tenant=None,
         "unit_cost": Decimal("10.00"),
         "reorder_point": 5,
         "is_active": True,
+        "tenant": tenant,
     }
-    if tenant:
-        defaults["tenant"] = tenant
     defaults.update(kwargs)
     return Product.objects.create(**defaults)
 
 
 def create_warehouse(*, name="Chicago DC", tenant=None, **kwargs):
     """Create a tenant-scoped Warehouse. Pair with :func:`create_location` for DC trees."""
-    if tenant is None:
-        tenant = create_tenant()
+    tenant = _ensure_tenant(tenant)
     defaults = {
         "name": name,
         "description": "",
@@ -130,15 +155,13 @@ def create_location(*, name="Main Warehouse", tenant=None, **kwargs):
 
     Pass ``warehouse=`` for a DC-linked root, or ``warehouse=None`` for retail-only.
     """
+    tenant = _ensure_tenant(tenant)
     defaults = {
         "name": name,
         "is_active": True,
+        "tenant": tenant,
     }
-    if tenant:
-        defaults["tenant"] = tenant
     defaults.update(kwargs)
-    if defaults.get("tenant") is None:
-        defaults["tenant"] = create_tenant()
     return StockLocation.add_root(**defaults)
 
 
@@ -212,20 +235,24 @@ def create_reservation(
     }
     defaults.update(kwargs)
     if defaults.get("tenant") is None:
-        defaults["tenant"] = getattr(product, "tenant", None) or getattr(
-            location, "tenant", None,
+        defaults["tenant"] = (
+            getattr(product, "tenant", None) or getattr(location, "tenant", None)
         )
+    if defaults.get("tenant") is None:
+        defaults["tenant"] = _ensure_tenant(None)
     return StockReservation.objects.create(**defaults)
 
 
-def create_reservation_rule(*, name="Default Rule", **kwargs):
+def create_reservation_rule(*, name="Default Rule", tenant=None, **kwargs):
     """Create and return a ReservationRule with sensible defaults."""
+    tenant = _ensure_tenant(tenant)
     defaults = {
         "name": name,
         "auto_reserve_on_order": False,
         "reservation_expiry_hours": 72,
         "allocation_strategy": AllocationStrategy.FIFO,
         "is_active": True,
+        "tenant": tenant,
     }
     defaults.update(kwargs)
     return ReservationRule.objects.create(**defaults)
@@ -252,7 +279,7 @@ def create_inventory_cycle(
     if defaults.get("tenant") is None and location is not None:
         defaults["tenant"] = location.tenant
     if defaults.get("tenant") is None:
-        defaults["tenant"] = create_tenant()
+        defaults["tenant"] = _ensure_tenant(None)
     return InventoryCycle.objects.create(**defaults)
 
 
@@ -274,6 +301,10 @@ def create_cycle_count_line(
         "counted_quantity": counted_quantity,
     }
     defaults.update(kwargs)
+    if defaults.get("tenant") is None:
+        t = getattr(cycle, "tenant", None) or getattr(product, "tenant", None)
+        t = t or getattr(location, "tenant", None)
+        defaults["tenant"] = t or _ensure_tenant(None)
     return CycleCountLine.objects.create(**defaults)
 
 
@@ -295,6 +326,10 @@ def create_stock_movement(
         "to_location": to_location,
     }
     defaults.update(kwargs)
+    if defaults.get("tenant") is None:
+        defaults["tenant"] = getattr(product, "tenant", None) or _ensure_tenant(
+            None,
+        )
     return StockMovement.objects.create(**defaults)
 
 
@@ -325,4 +360,8 @@ def create_inventory_variance(
         "variance_quantity": physical_quantity - system_quantity,
     }
     defaults.update(kwargs)
+    if defaults.get("tenant") is None:
+        defaults["tenant"] = getattr(cycle, "tenant", None) or _ensure_tenant(
+            None,
+        )
     return InventoryVariance.objects.create(**defaults)

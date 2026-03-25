@@ -1,11 +1,13 @@
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.test import TestCase
+from django.utils import timezone
 
 from tenants.models import (
     SubscriptionPlan,
     SubscriptionStatus,
     Tenant,
+    TenantInvitation,
     TenantMembership,
     TenantRole,
 )
@@ -44,7 +46,7 @@ class TenantModelTest(TestCase):
         t = create_tenant()
         self.assertEqual(t.user_count(), 0)
         user = create_user()
-        create_membership(tenant=t, user=user, role=TenantRole.ADMIN)
+        create_membership(tenant=t, user=user, role=TenantRole.COORDINATOR)
         self.assertEqual(t.user_count(), 1)
 
     def test_is_within_user_limit(self):
@@ -73,21 +75,23 @@ class TenantMembershipModelTest(TestCase):
         self.user = create_user()
 
     def test_create_membership(self):
-        m = create_membership(tenant=self.tenant, user=self.user, role=TenantRole.ADMIN)
-        self.assertEqual(str(m), f"{self.user} → {self.tenant.name} (Admin)")
+        m = create_membership(tenant=self.tenant, user=self.user, role=TenantRole.COORDINATOR)
+        self.assertEqual(str(m), f"{self.user} → {self.tenant.name} (Coordinator)")
         self.assertTrue(m.is_active)
 
     def test_unique_together(self):
         create_membership(tenant=self.tenant, user=self.user)
-        with self.assertRaises(IntegrityError):
+        # save() runs full_clean(), so duplicate membership raises ValidationError
+        # before the database UNIQUE constraint.
+        with self.assertRaises(ValidationError):
             create_membership(tenant=self.tenant, user=self.user)
 
     def test_can_manage_owner(self):
         m = create_membership(tenant=self.tenant, user=self.user, role=TenantRole.OWNER)
         self.assertTrue(m.can_manage)
 
-    def test_can_manage_admin(self):
-        m = create_membership(tenant=self.tenant, user=self.user, role=TenantRole.ADMIN)
+    def test_can_manage_coordinator(self):
+        m = create_membership(tenant=self.tenant, user=self.user, role=TenantRole.COORDINATOR)
         self.assertTrue(m.can_manage)
 
     def test_can_manage_manager(self):
@@ -98,25 +102,35 @@ class TenantMembershipModelTest(TestCase):
         m = create_membership(tenant=self.tenant, user=self.user, role=TenantRole.VIEWER)
         self.assertFalse(m.can_manage)
 
-    def test_can_admin_owner(self):
+    def test_can_manage_organization_owner(self):
         m = create_membership(tenant=self.tenant, user=self.user, role=TenantRole.OWNER)
-        self.assertTrue(m.can_admin)
+        self.assertTrue(m.can_manage_organization)
 
-    def test_can_admin_admin(self):
-        m = create_membership(tenant=self.tenant, user=self.user, role=TenantRole.ADMIN)
-        self.assertTrue(m.can_admin)
+    def test_can_manage_organization_coordinator(self):
+        m = create_membership(tenant=self.tenant, user=self.user, role=TenantRole.COORDINATOR)
+        self.assertTrue(m.can_manage_organization)
 
-    def test_cannot_admin_manager(self):
+    def test_cannot_manage_organization_manager(self):
         m = create_membership(tenant=self.tenant, user=self.user, role=TenantRole.MANAGER)
-        self.assertFalse(m.can_admin)
+        self.assertFalse(m.can_manage_organization)
 
     def test_is_owner(self):
         m = create_membership(tenant=self.tenant, user=self.user, role=TenantRole.OWNER)
         self.assertTrue(m.is_owner)
 
     def test_is_not_owner(self):
-        m = create_membership(tenant=self.tenant, user=self.user, role=TenantRole.ADMIN)
+        m = create_membership(tenant=self.tenant, user=self.user, role=TenantRole.COORDINATOR)
         self.assertFalse(m.is_owner)
+
+    def test_save_rejects_legacy_admin_role(self):
+        m = TenantMembership(
+            tenant=self.tenant,
+            user=self.user,
+            role="admin",
+            is_active=True,
+        )
+        with self.assertRaises(ValidationError):
+            m.save()
 
     def test_user_multiple_tenants(self):
         t2 = create_tenant()
@@ -130,3 +144,18 @@ class TenantMembershipModelTest(TestCase):
         self.assertEqual(memberships.count(), 2)
         self.assertTrue(m1.can_manage)
         self.assertFalse(m2.can_manage)
+
+
+class TenantInvitationModelTest(TestCase):
+    def setUp(self):
+        self.tenant = create_tenant()
+
+    def test_save_rejects_legacy_admin_role(self):
+        inv = TenantInvitation(
+            tenant=self.tenant,
+            email="x@example.com",
+            role="admin",
+            expires_at=timezone.now() + timezone.timedelta(days=7),
+        )
+        with self.assertRaises(ValidationError):
+            inv.save()

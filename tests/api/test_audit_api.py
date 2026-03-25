@@ -20,25 +20,28 @@ AUDIT_LOG_URL = "/api/v1/audit-log/"
 
 
 class AuditLogSetupMixin:
-    """Shared setUp: tenant, admin user with membership, and auth token."""
+    """Shared setUp: tenant, coordinator member, and auth token."""
 
     def setUp(self):
         self.tenant = create_tenant(slug="audit-test")
-        self.admin_user = User.objects.create_user(
-            username="audit_admin", password="testpass123", is_staff=True,
+        self.coordinator_user = User.objects.create_user(
+            username="audit_coordinator",
+            password="testpass123",
+            email="coordinator@org.seed.local",
+            is_staff=False,
         )
         create_membership(
-            tenant=self.tenant, user=self.admin_user,
-            role=TenantRole.ADMIN, is_default=True,
+            tenant=self.tenant, user=self.coordinator_user,
+            role=TenantRole.COORDINATOR, is_default=True,
         )
-        self.token = Token.objects.create(user=self.admin_user)
+        self.token = Token.objects.create(user=self.coordinator_user)
         self.client.credentials(HTTP_AUTHORIZATION=f"Token {self.token.key}")
 
     def _create_log(self, **kwargs):
         defaults = {
             "tenant": self.tenant,
             "action": AuditAction.STOCK_RECEIVED,
-            "user": self.admin_user,
+            "user": self.coordinator_user,
             "ip_address": "127.0.0.1",
             "details": {"quantity": 100},
         }
@@ -72,7 +75,7 @@ class AuditLogListTests(AuditLogSetupMixin, APITestCase):
         self.assertIn("ip_address", entry)
         self.assertIn("details", entry)
         self.assertEqual(entry["product_sku"], "AUD-001")
-        self.assertEqual(entry["username"], "audit_admin")
+        self.assertEqual(entry["username"], "audit_coordinator")
 
     def test_retrieve_single_entry(self):
         log = self._create_log()
@@ -110,11 +113,11 @@ class AuditLogFilterTests(AuditLogSetupMixin, APITestCase):
 
     def test_filter_by_user(self):
         other_user = User.objects.create_user(
-            username="other", password="pass", is_staff=True,
+            username="audit_other", password="pass", is_staff=False,
         )
-        self._create_log(user=self.admin_user)
+        self._create_log(user=self.coordinator_user)
         self._create_log(user=other_user)
-        response = self.client.get(AUDIT_LOG_URL, {"user": self.admin_user.pk})
+        response = self.client.get(AUDIT_LOG_URL, {"user": self.coordinator_user.pk})
         self.assertEqual(response.data["count"], 1)
 
     def test_filter_by_date_range(self):
@@ -244,6 +247,35 @@ class AuditLogPermissionTests(AuditLogSetupMixin, APITestCase):
             role=TenantRole.OWNER, is_default=True,
         )
         token = Token.objects.create(user=owner)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {token.key}")
+        self._create_log()
+        response = self.client.get(AUDIT_LOG_URL)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["count"], 1)
+
+    def test_superuser_without_membership_rejected(self):
+        su = User.objects.create_superuser(
+            username="platform_su",
+            email="su@example.com",
+            password="pass",
+        )
+        token = Token.objects.create(user=su)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {token.key}")
+        self._create_log()
+        response = self.client.get(AUDIT_LOG_URL)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_superuser_with_admin_membership_allowed(self):
+        su = User.objects.create_superuser(
+            username="platform_su_member",
+            email="su2@example.com",
+            password="pass",
+        )
+        create_membership(
+            tenant=self.tenant, user=su,
+            role=TenantRole.COORDINATOR, is_default=True,
+        )
+        token = Token.objects.create(user=su)
         self.client.credentials(HTTP_AUTHORIZATION=f"Token {token.key}")
         self._create_log()
         response = self.client.get(AUDIT_LOG_URL)

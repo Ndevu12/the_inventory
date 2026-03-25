@@ -52,7 +52,7 @@ describe("DashboardPage rendering", () => {
           tenant__name: "Demo Org",
           tenant__slug: "demo-tenant",
           tenant__preferred_language: "en",
-          role: "admin",
+          role: "coordinator",
           is_default: true,
         },
       ],
