@@ -6,6 +6,9 @@ import { toast } from "sonner";
 
 import { useAuthStore } from "@/lib/auth-store";
 import * as authApi from "../api/auth-api";
+import { useAuth } from "../context/auth-context";
+import { authKeys } from "../auth-query-keys";
+import { syncMeResponseToStore } from "../lib/sync-me-to-store";
 import type {
   LoginRequest,
   ChangePasswordRequest,
@@ -15,20 +18,7 @@ import type {
 } from "../types/auth.types";
 import type { ApiError } from "@/types/api-common";
 
-export const authKeys = {
-  me: ["auth", "me"] as const,
-  config: ["auth", "config"] as const,
-};
-
-/** Keep Zustand in sync with GET /auth/me/ (shared by all observers on `authKeys.me`). */
-function syncMeResponseToStore(data: MeResponse): void {
-  const { setUser, setTenant, setMemberships } = useAuthStore.getState();
-  setUser(data.user);
-  if (data.tenant) {
-    setTenant(data.tenant.slug);
-  }
-  setMemberships(data.memberships ?? []);
-}
+export { authKeys };
 
 async function fetchMeAndSyncStore(): Promise<MeResponse> {
   const data = await authApi.fetchMe();
@@ -37,9 +27,9 @@ async function fetchMeAndSyncStore(): Promise<MeResponse> {
 }
 
 export function useLogin() {
+  const { invalidate } = useAuth();
   const { setUser, setTenant, setMemberships } = useAuthStore();
   const router = useRouter();
-  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (credentials: LoginRequest) => authApi.login(credentials),
@@ -49,8 +39,8 @@ export function useLogin() {
         setTenant(data.tenant.slug);
       }
       setMemberships(data.memberships ?? []);
-      // Clear any stale auth/me error from previous session before navigating.
-      queryClient.removeQueries({ queryKey: authKeys.me });
+      // Refetch `/auth/me/` so React Query drops stale errors and matches cookies + store.
+      invalidate();
       // Defer navigation so store updates fully propagate before dashboard mounts.
       // Prevents race where AuthGuard reads stale/empty state and redirects back to login.
       setTimeout(() => router.replace("/"), 100);
@@ -109,14 +99,14 @@ export function useChangePassword() {
 }
 
 export function useUpdateProfile() {
+  const { invalidate } = useAuth();
   const { setUser } = useAuthStore();
-  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (data: UpdateProfileRequest) => authApi.updateProfile(data),
     onSuccess: (user) => {
       setUser(user);
-      void queryClient.invalidateQueries({ queryKey: authKeys.me });
+      invalidate();
       toast.success("Profile updated");
     },
     onError: (error: unknown) => {
@@ -190,9 +180,9 @@ export function useExitImpersonation() {
 }
 
 export function useRegister() {
+  const { invalidate } = useAuth();
   const { setUser, setTenant, setMemberships } = useAuthStore();
   const router = useRouter();
-  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (payload: RegisterRequest) => authApi.register(payload),
@@ -200,7 +190,7 @@ export function useRegister() {
       setUser(data.user);
       setTenant(data.tenant.slug);
       setMemberships(data.memberships);
-      queryClient.removeQueries({ queryKey: authKeys.me });
+      invalidate();
       toast.success(`Welcome! Your organization ${data.tenant.name} has been created.`);
       router.replace("/");
     },

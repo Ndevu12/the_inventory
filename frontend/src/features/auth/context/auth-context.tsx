@@ -1,18 +1,25 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import {
   createContext,
   useCallback,
   useContext,
   useEffect,
+  useMemo,
+  useRef,
   useState,
 } from "react";
 
 import { useAuthStore } from "@/lib/auth-store";
 import type { User, Membership } from "@/lib/auth-store";
 
+import { authKeys } from "../auth-query-keys";
+import type { MeResponse } from "../types/auth.types";
+import { syncMeResponseToStore } from "../lib/sync-me-to-store";
+
 interface AuthContextValue {
-  /** True only after client mount + persist rehydration. Gates all auth-dependent UI. */
+  /** True after Zustand persist rehydration and optional RSC `/auth/me/` merge. */
   isReady: boolean;
   user: User | null;
   tenantSlug: string | null;
@@ -23,7 +30,7 @@ interface AuthContextValue {
   isImpersonating: boolean;
   /** Call to log out and redirect to login. Clears store + query cache. */
   logout: () => void;
-  /** Force a re-check of auth state (used after login/register). */
+  /** Refetch `/auth/me/` (credentials + automatic refresh on 401 via apiClient). */
   invalidate: () => void;
 }
 
@@ -39,15 +46,37 @@ export function useAuth(): AuthContextValue {
 
 interface AuthProviderProps {
   children: React.ReactNode;
+  /**
+   * RSC bootstrap from GET /auth/me/ (cookies forwarded). `undefined` = skip server snapshot (e.g. tests).
+   * `null` = no session or failed verify — overrides stale persisted user after rehydrate.
+   */
+  serverBootstrap?: MeResponse | null;
 }
 
 /**
- * AuthProvider gates rendering until auth state is ready (client-mounted + Zustand persist rehydrated).
- * This prevents hydration mismatches and redirect loops by never rendering auth-dependent UI
- * until we know the true auth state from localStorage.
+ * AuthProvider gates UI until Zustand persist has rehydrated, then applies the optional RSC
+ * `serverBootstrap` so HttpOnly-cookie truth wins over short-lived persisted user snapshot.
  */
-export function AuthProvider({ children }: AuthProviderProps) {
-  const [isReady, setIsReady] = useState(false);
+export function AuthProvider({
+  children,
+  serverBootstrap,
+}: AuthProviderProps) {
+  /** Bumped after rehydration + optional RSC merge so `isReady` does not flicker. */
+  const [readyNonce, setReadyNonce] = useState(0);
+  const queryClient = useQueryClient();
+  const serverBootstrapRef = useRef(serverBootstrap);
+  serverBootstrapRef.current = serverBootstrap;
+
+  const serverBootstrapDigest = useMemo(() => {
+    if (serverBootstrap === undefined) {
+      return "__omit__";
+    }
+    if (serverBootstrap === null) {
+      return "__null__";
+    }
+    return JSON.stringify(serverBootstrap);
+  }, [serverBootstrap]);
+
   const hasHydrated = useAuthStore((s) => s._hasHydrated);
   const user = useAuthStore((s) => s.user);
   const tenantSlug = useAuthStore((s) => s.tenantSlug);
@@ -62,33 +91,29 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [storeLogout]);
 
   const invalidate = useCallback(() => {
-    // No-op for now; store updates are synchronous. Kept for API consistency.
-  }, []);
+    void queryClient.invalidateQueries({ queryKey: authKeys.me });
+  }, [queryClient]);
 
-  // Wait for client mount + Zustand persist rehydration. Never render auth UI until ready.
   useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    if (hasHydrated) {
-      setIsReady(true);
+    if (typeof window === "undefined" || !hasHydrated) {
       return;
     }
 
-    // Persist rehydration is async. Poll until _hasHydrated or max 1s.
-    const id = setInterval(() => {
-      if (useAuthStore.getState()._hasHydrated) {
-        setIsReady(true);
+    const b = serverBootstrapRef.current;
+    if (b !== undefined) {
+      if (b) {
+        syncMeResponseToStore(b);
+      } else {
+        useAuthStore.getState().logout();
       }
-    }, 50);
-    const timeout = setTimeout(() => {
-      clearInterval(id);
-      setIsReady(true);
-    }, 1000);
-    return () => {
-      clearInterval(id);
-      clearTimeout(timeout);
-    };
-  }, [hasHydrated]);
+    }
+
+    queueMicrotask(() => {
+      setReadyNonce((n) => n + 1);
+    });
+  }, [hasHydrated, serverBootstrapDigest]);
+
+  const isReady = hasHydrated && readyNonce > 0;
 
   const value: AuthContextValue = {
     isReady,
