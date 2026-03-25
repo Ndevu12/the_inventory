@@ -134,9 +134,8 @@ else:
 if env_bool("USE_X_FORWARDED_PROTO", True):
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
-# Secure cookies by default in production; set SESSION_COOKIE_SECURE=false to disable.
-SESSION_COOKIE_SECURE = env_bool("SESSION_COOKIE_SECURE", True)
-CSRF_COOKIE_SECURE = env_bool("CSRF_COOKIE_SECURE", True)
+# JWT cookies should be secure by default in production.
+JWT_COOKIE_SECURE = env_bool("JWT_COOKIE_SECURE", True)
 
 try:
     from .local import *  # noqa: F403,F401

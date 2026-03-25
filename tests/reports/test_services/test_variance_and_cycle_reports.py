@@ -16,6 +16,7 @@ from tests.fixtures.factories import (
     create_user,
 )
 from reports.services.inventory_reports import InventoryReportService
+from tenants.context import set_current_tenant
 
 
 class VarianceReportSetupMixin:
@@ -24,6 +25,7 @@ class VarianceReportSetupMixin:
     def setUp(self):
         self.service = InventoryReportService()
         self.tenant = create_tenant()
+        set_current_tenant(self.tenant)
         self.warehouse = create_location(name="Warehouse", tenant=self.tenant)
         self.store = create_location(name="Store", tenant=self.tenant)
         self.user = create_user(username="counter")

@@ -9,7 +9,6 @@ import {
 } from "react";
 
 import { useAuthStore } from "@/lib/auth-store";
-import { isTokenExpired } from "../helpers/auth-utils";
 import type { User, Membership } from "@/lib/auth-store";
 
 interface AuthContextValue {
@@ -18,8 +17,7 @@ interface AuthContextValue {
   user: User | null;
   tenantSlug: string | null;
   memberships: Membership[];
-  accessToken: string | null;
-  /** True when we have a valid (non-expired) access token. */
+  /** True when we have an authenticated user from server bootstrap. */
   isAuthenticated: boolean;
   /** True when viewing as another user (superuser impersonation). */
   isImpersonating: boolean;
@@ -51,15 +49,13 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   const [isReady, setIsReady] = useState(false);
   const hasHydrated = useAuthStore((s) => s._hasHydrated);
-  const accessToken = useAuthStore((s) => s.accessToken);
   const user = useAuthStore((s) => s.user);
   const tenantSlug = useAuthStore((s) => s.tenantSlug);
   const memberships = useAuthStore((s) => s.memberships);
   const isImpersonating = useAuthStore((s) => s.isImpersonating());
   const storeLogout = useAuthStore((s) => s.logout);
 
-  const isAuthenticated =
-    !!accessToken && !isTokenExpired(accessToken);
+  const isAuthenticated = !!user;
 
   const logout = useCallback(() => {
     storeLogout();
@@ -99,7 +95,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     user,
     tenantSlug,
     memberships,
-    accessToken,
     isAuthenticated,
     isImpersonating,
     logout,

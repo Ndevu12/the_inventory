@@ -27,6 +27,10 @@ export function register(payload: RegisterRequest): Promise<RegisterResponse> {
   return apiClient.post<RegisterResponse>(`${AUTH_BASE}/register/`, payload);
 }
 
+export function logout(): Promise<{ detail: string }> {
+  return apiClient.post<{ detail: string }>(`${AUTH_BASE}/logout/`);
+}
+
 export function fetchMe(): Promise<MeResponse> {
   return apiClient.get<MeResponse>(`${AUTH_BASE}/me/`);
 }

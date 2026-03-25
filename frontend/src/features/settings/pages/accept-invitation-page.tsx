@@ -32,7 +32,7 @@ export function AcceptInvitationPage({ token }: AcceptInvitationPageProps) {
   const router = useRouter()
   const t = useTranslations("Auth")
   const tInv = useTranslations("Auth.invitation")
-  const { setTokens, setUser, setTenant, setMemberships } = useAuthStore()
+  const { setUser, setTenant, setMemberships } = useAuthStore()
 
   const { data: info, isLoading, isError } = useInvitationInfo(token)
   const acceptMutation = useAcceptInvitation(token)
@@ -79,7 +79,6 @@ export function AcceptInvitationPage({ token }: AcceptInvitationPageProps) {
 
     acceptMutation.mutate(payload, {
       onSuccess: (data) => {
-        setTokens(data.access, data.refresh)
         setUser(data.user)
         setTenant(data.tenant.slug)
         setMemberships(

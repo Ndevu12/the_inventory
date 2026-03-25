@@ -21,6 +21,7 @@ from tests.fixtures.factories import create_purchase_order, create_supplier
 from tests.fixtures.factories import create_customer, create_sales_order
 from tenants.models import TenantRole
 from tests.fixtures.factories import create_membership, create_tenant
+from tenants.context import set_current_tenant
 
 User = get_user_model()
 
@@ -36,6 +37,7 @@ class ReportsAPITests(TestCase):
             is_staff=True,
         )
         self.tenant = create_tenant()
+        set_current_tenant(self.tenant)
         create_membership(
             tenant=self.tenant,
             user=self.user,
@@ -118,6 +120,7 @@ class ReportsAPITests(TestCase):
 
     def test_unauthenticated_returns_401(self):
         self.client.credentials()
+        self.client.cookies.clear()
         url = reverse("api-stock-valuation")
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -236,6 +239,7 @@ class ProductTraceabilityAPITests(TestCase):
             is_staff=True,
         )
         self.tenant = create_tenant()
+        set_current_tenant(self.tenant)
         create_membership(
             tenant=self.tenant,
             user=self.user,
@@ -383,6 +387,7 @@ class ProductTraceabilityAPITests(TestCase):
 
     def test_unauthenticated_returns_401(self):
         self.client.credentials()
+        self.client.cookies.clear()
         response = self.client.get(self.url, {"product": "X", "lot": "Y"})
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 

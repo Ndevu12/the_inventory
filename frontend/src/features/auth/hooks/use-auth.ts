@@ -6,7 +6,6 @@ import { toast } from "sonner";
 
 import { useAuthStore } from "@/lib/auth-store";
 import * as authApi from "../api/auth-api";
-import { isTokenExpired } from "../helpers/auth-utils";
 import type {
   LoginRequest,
   ChangePasswordRequest,
@@ -38,14 +37,13 @@ async function fetchMeAndSyncStore(): Promise<MeResponse> {
 }
 
 export function useLogin() {
-  const { setTokens, setUser, setTenant, setMemberships } = useAuthStore();
+  const { setUser, setTenant, setMemberships } = useAuthStore();
   const router = useRouter();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (credentials: LoginRequest) => authApi.login(credentials),
     onSuccess: (data) => {
-      setTokens(data.access, data.refresh);
       setUser(data.user);
       if (data.tenant) {
         setTenant(data.tenant.slug);
@@ -64,30 +62,22 @@ export function useLogin() {
 }
 
 export function useMe(enabled = true) {
-  const { accessToken } = useAuthStore();
-
   return useQuery({
     queryKey: authKeys.me,
     queryFn: fetchMeAndSyncStore,
-    enabled: enabled && !!accessToken && !isTokenExpired(accessToken),
+    enabled,
     staleTime: 5 * 60 * 1000,
     retry: false,
   });
 }
 
 export function useBootstrapAuth() {
-  const { accessToken, refreshToken } = useAuthStore();
-  // Run whenever we have tokens - refreshes user/tenant/memberships (e.g. after reload).
-  // Must use the same queryFn as useMe() so TenantLocaleSync (mounted earlier) does not
-  // steal the fetch and leave memberships unset in Zustand.
-  const hasToken = !!accessToken || !!refreshToken;
-
   return useQuery({
     queryKey: authKeys.me,
     queryFn: fetchMeAndSyncStore,
-    enabled: hasToken,
+    enabled: true,
     staleTime: 5 * 60 * 1000,
-    retry: 2, // Retry transient failures (network, 5xx) before giving up
+    retry: 1,
   });
 }
 
@@ -97,6 +87,9 @@ export function useLogout() {
   const router = useRouter();
 
   return () => {
+    void authApi.logout().catch(() => {
+      // Always clear client auth state even if logout API fails.
+    });
     logout();
     queryClient.clear();
     router.push("/login");
@@ -150,7 +143,6 @@ export function useAuthConfig() {
 
 export function useImpersonate() {
   const {
-    setTokens,
     setUser,
     setTenant,
     setMemberships,
@@ -162,7 +154,6 @@ export function useImpersonate() {
   return useMutation({
     mutationFn: (userId: number) => authApi.impersonateStart(userId),
     onSuccess: (data) => {
-      setTokens(data.access, data.refresh);
       setUser(data.user);
       if (data.tenant) {
         setTenant(data.tenant.slug);
@@ -170,8 +161,6 @@ export function useImpersonate() {
       setMemberships(data.memberships ?? []);
       setImpersonation({
         real_user: data.impersonation.real_user,
-        real_access_token: data.impersonation.real_access_token,
-        real_refresh_token: data.impersonation.real_refresh_token,
       });
       queryClient.clear();
       router.replace("/");
@@ -201,14 +190,13 @@ export function useExitImpersonation() {
 }
 
 export function useRegister() {
-  const { setTokens, setUser, setTenant, setMemberships } = useAuthStore();
+  const { setUser, setTenant, setMemberships } = useAuthStore();
   const router = useRouter();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (payload: RegisterRequest) => authApi.register(payload),
     onSuccess: (data) => {
-      setTokens(data.access, data.refresh);
       setUser(data.user);
       setTenant(data.tenant.slug);
       setMemberships(data.memberships);
