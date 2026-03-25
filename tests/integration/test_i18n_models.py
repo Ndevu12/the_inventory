@@ -1,5 +1,6 @@
 """Integration tests for Wagtail translatable inventory catalog models (I18N-15)."""
 
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 from wagtail.models import Locale
 
@@ -68,3 +69,28 @@ class CategoryTranslationIntegrationTests(TestCase):
             cat_en.get_translation_or_none(self.fr_locale).name,
             "Livres",
         )
+
+    def test_nested_category_translation_save_uses_translated_parent(self):
+        """Mirrors wagtail-localize snippet translate: copy_for_translation then save()."""
+        cat_en = create_category(name="Root", slug="root-nested-int", tenant=self.tenant)
+        copy_catalog_row_for_locale(cat_en, self.fr_locale)
+        child_en = cat_en.add_child(
+            name="Child",
+            slug="child-nested-int",
+            tenant=self.tenant,
+        )
+        parent_fr = cat_en.get_translation(self.fr_locale)
+        child_fr = child_en.copy_for_translation(self.fr_locale)
+        child_fr.save()
+        self.assertEqual(child_fr.get_parent().pk, parent_fr.pk)
+
+    def test_nested_category_translation_requires_parent_locale_first(self):
+        cat_en = create_category(name="Root", slug="root-req-parent", tenant=self.tenant)
+        child_en = cat_en.add_child(
+            name="Child",
+            slug="child-req-parent",
+            tenant=self.tenant,
+        )
+        child_fr = child_en.copy_for_translation(self.fr_locale)
+        with self.assertRaises(ValidationError):
+            child_fr.save()

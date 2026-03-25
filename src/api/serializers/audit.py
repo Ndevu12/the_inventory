@@ -4,6 +4,11 @@ from rest_framework import serializers
 
 from inventory.models import ComplianceAuditLog
 
+from api.serializers.localized_strings import (
+    attribute_in_display_locale,
+    display_locale_from_context,
+)
+
 
 class ComplianceAuditLogSerializer(serializers.ModelSerializer):
     action_display = serializers.CharField(
@@ -12,9 +17,7 @@ class ComplianceAuditLogSerializer(serializers.ModelSerializer):
     product_sku = serializers.CharField(
         source="product.sku", read_only=True, default=None,
     )
-    product_name = serializers.CharField(
-        source="product.name", read_only=True, default=None,
-    )
+    product_name = serializers.SerializerMethodField()
     username = serializers.CharField(
         source="user.username", read_only=True, default=None,
     )
@@ -36,6 +39,13 @@ class ComplianceAuditLogSerializer(serializers.ModelSerializer):
             "details",
         ]
         read_only_fields = fields
+
+    def get_product_name(self, obj):
+        if not obj.product_id:
+            return None
+        return attribute_in_display_locale(
+            obj.product, "name", display_locale_from_context(self.context),
+        )
 
 
 class PlatformAuditLogSerializer(ComplianceAuditLogSerializer):

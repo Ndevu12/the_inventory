@@ -1,22 +1,25 @@
 """API tests for inventory endpoints."""
 
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase
 
-from inventory.models import MovementType, ReservationStatus, StockRecord
+from inventory.models import MovementType, ReservationStatus, StockRecord, Warehouse
 from inventory.services.stock import StockService
 from tenants.context import set_current_tenant
 from tenants.models import TenantRole
 from tests.fixtures.factories import (
     create_category,
+    create_child_location,
     create_location,
     create_product,
     create_reservation,
     create_stock_record,
     create_tenant,
     create_tenant_membership,
+    create_warehouse,
 )
 
 User = get_user_model()
@@ -26,6 +29,7 @@ class APISetupMixin:
     """Shared setUp: create a staff user with a token and tenant context."""
 
     def setUp(self):
+        cache.clear()
         self.tenant = create_tenant(name="API Test Tenant")
         self.user = User.objects.create_user(
             username="apiuser", password="testpass123", is_staff=True,
@@ -268,6 +272,73 @@ class StockMovementAPITests(APISetupMixin, APITestCase):
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
+class StockMovementWarehouseScopeAPITests(APISetupMixin, APITestCase):
+    """Stock movement API: facility vs retail partitions and cross-facility moves."""
+
+    def test_create_transfer_cross_warehouse_succeeds(self):
+        wh_a = Warehouse.objects.create(tenant=self.tenant, name="DC API A")
+        wh_b = Warehouse.objects.create(tenant=self.tenant, name="DC API B")
+        loc_a = create_location(name="Bin API A", tenant=self.tenant, warehouse=wh_a)
+        loc_b = create_location(name="Bin API B", tenant=self.tenant, warehouse=wh_b)
+        p = create_product(sku="API-XWH")
+        create_stock_record(product=p, location=loc_a, quantity=40)
+        response = self.client.post("/api/v1/stock-movements/", {
+            "product": p.pk,
+            "movement_type": "transfer",
+            "quantity": 15,
+            "from_location": loc_a.pk,
+            "to_location": loc_b.pk,
+        })
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            StockRecord.objects.get(product=p, location=loc_a).quantity,
+            25,
+        )
+        self.assertEqual(
+            StockRecord.objects.get(product=p, location=loc_b).quantity,
+            15,
+        )
+
+    def test_create_transfer_mixed_retail_and_facility_is_unprocessable(self):
+        wh = Warehouse.objects.create(tenant=self.tenant, name="DC API Retail Mix")
+        loc_dc = create_location(name="Dock Mix", tenant=self.tenant, warehouse=wh)
+        loc_shop = create_location(name="Floor Mix", tenant=self.tenant, warehouse=None)
+        p = create_product(sku="API-MIX")
+        create_stock_record(product=p, location=loc_dc, quantity=20)
+        response = self.client.post("/api/v1/stock-movements/", {
+            "product": p.pk,
+            "movement_type": "transfer",
+            "quantity": 5,
+            "from_location": loc_dc.pk,
+            "to_location": loc_shop.pk,
+        })
+        self.assertEqual(response.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY)
+
+    def test_create_transfer_retail_only_succeeds(self):
+        loc_from = create_location(name="Back room API", tenant=self.tenant)
+        loc_to = create_location(name="Till API", tenant=self.tenant)
+        self.assertIsNone(loc_from.warehouse_id)
+        self.assertIsNone(loc_to.warehouse_id)
+        p = create_product(sku="API-RTL")
+        create_stock_record(product=p, location=loc_from, quantity=12)
+        response = self.client.post("/api/v1/stock-movements/", {
+            "product": p.pk,
+            "movement_type": "transfer",
+            "quantity": 4,
+            "from_location": loc_from.pk,
+            "to_location": loc_to.pk,
+        })
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            StockRecord.objects.get(product=p, location=loc_from).quantity,
+            8,
+        )
+        self.assertEqual(
+            StockRecord.objects.get(product=p, location=loc_to).quantity,
+            4,
+        )
+
+
 # =====================================================================
 # Stock Locations
 # =====================================================================
@@ -281,10 +352,169 @@ class StockLocationAPITests(APISetupMixin, APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertGreaterEqual(response.data["count"], 1)
 
+    def test_list_locations_includes_tree_fields(self):
+        root = create_location(name="Root A")
+        child = create_child_location(root, name="Child B")
+        response = self.client.get("/api/v1/stock-locations/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        by_id = {row["id"]: row for row in response.data["results"]}
+        self.assertIsNone(by_id[root.id]["parent_id"])
+        self.assertEqual(by_id[child.id]["parent_id"], root.id)
+        self.assertGreaterEqual(by_id[child.id]["depth"], 2)
+        self.assertTrue(by_id[child.id]["materialized_path"])
+
+    def test_retrieve_location_includes_ancestor_ids(self):
+        root = create_location(name="R")
+        mid = create_child_location(root, name="M")
+        leaf = create_child_location(mid, name="L")
+        response = self.client.get(f"/api/v1/stock-locations/{leaf.pk}/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["ancestor_ids"], [root.pk, mid.pk])
+
+    def test_list_locations_filter_id_in(self):
+        a = create_location(name="Loc A")
+        b = create_location(name="Loc B")
+        response = self.client.get(
+            "/api/v1/stock-locations/",
+            {"id__in": f"{a.pk},{b.pk}"},
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        ids = {row["id"] for row in response.data["results"]}
+        self.assertEqual(ids, {a.pk, b.pk})
+
+    def test_list_and_retrieve_locations_include_stock_line_count(self):
+        loc_empty = create_location(name="Loc Empty")
+        loc_stocked = create_location(name="Loc Stocked")
+        for i in range(3):
+            p = create_product(sku=f"API-SLC-{i}")
+            create_stock_record(product=p, location=loc_stocked, quantity=i + 1)
+        list_resp = self.client.get("/api/v1/stock-locations/")
+        self.assertEqual(list_resp.status_code, status.HTTP_200_OK)
+        by_id = {row["id"]: row for row in list_resp.data["results"]}
+        self.assertEqual(by_id[loc_empty.id]["stock_line_count"], 0)
+        self.assertEqual(by_id[loc_stocked.id]["stock_line_count"], 3)
+        detail = self.client.get(f"/api/v1/stock-locations/{loc_stocked.pk}/")
+        self.assertEqual(detail.status_code, status.HTTP_200_OK)
+        self.assertEqual(detail.data["stock_line_count"], 3)
+
+    def test_list_locations_can_order_by_stock_line_count(self):
+        loc_a = create_location(name="Loc Order A")
+        loc_b = create_location(name="Loc Order B")
+        p = create_product(sku="API-SLO-1")
+        create_stock_record(product=p, location=loc_b, quantity=5)
+        response = self.client.get(
+            "/api/v1/stock-locations/",
+            {"ordering": "stock_line_count"},
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        counts = [row["stock_line_count"] for row in response.data["results"]]
+        self.assertEqual(counts, sorted(counts))
+
     def test_location_stock_action(self):
         loc = create_location(name="Loc Stock")
         p = create_product(sku="API-LS1")
         create_stock_record(product=p, location=loc, quantity=75)
         response = self.client.get(f"/api/v1/stock-locations/{loc.pk}/stock/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data["count"], 1)
+        self.assertEqual(len(response.data["results"]), 1)
+
+    def test_location_stock_action_paginates_by_page_size(self):
+        loc = create_location(name="Loc Stock Page")
+        for i in range(3):
+            p = create_product(sku=f"API-LSP-{i}")
+            create_stock_record(product=p, location=loc, quantity=i + 1)
+        url = f"/api/v1/stock-locations/{loc.pk}/stock/"
+        r1 = self.client.get(url, {"page_size": "2", "page": "1"})
+        self.assertEqual(r1.status_code, status.HTTP_200_OK)
+        self.assertEqual(r1.data["count"], 3)
+        self.assertEqual(len(r1.data["results"]), 2)
+        skus_page1 = [row["product_sku"] for row in r1.data["results"]]
+        self.assertEqual(skus_page1, ["API-LSP-0", "API-LSP-1"])
+        r2 = self.client.get(url, {"page_size": "2", "page": "2"})
+        self.assertEqual(r2.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(r2.data["results"]), 1)
+        self.assertEqual(r2.data["results"][0]["product_sku"], "API-LSP-2")
+
+
+# =====================================================================
+# Warehouse quick stats
+# =====================================================================
+
+
+class WarehouseQuickStatsAPITests(APISetupMixin, APITestCase):
+    """GET /api/v1/warehouses/quick-stats/ — per-facility aggregates."""
+
+    URL = "/api/v1/warehouses/quick-stats/"
+
+    def test_quick_stats_returns_list_ordered_by_name(self):
+        create_warehouse(name="Zebra DC", tenant=self.tenant)
+        create_warehouse(name="Alpha DC", tenant=self.tenant)
+        response = self.client.get(self.URL)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
+        names = [row["name"] for row in response.data]
+        self.assertEqual(names, ["Alpha DC", "Zebra DC"])
+
+    def test_quick_stats_aggregates_locations_stock_reserved_utilization_low_stock(self):
+        wh_full = create_warehouse(name="WH Full", tenant=self.tenant)
+        wh_low = create_warehouse(name="WH Low", tenant=self.tenant)
+        create_warehouse(name="WH Empty", tenant=self.tenant)
+
+        loc_a = create_location(
+            name="Bin A",
+            tenant=self.tenant,
+            warehouse=wh_full,
+            max_capacity=100,
+        )
+        loc_b = create_location(
+            name="Bin B",
+            tenant=self.tenant,
+            warehouse=wh_low,
+        )
+        p_ok = create_product(sku="API-QS-OK", tenant=self.tenant, reorder_point=5)
+        p_low = create_product(sku="API-QS-LOW", tenant=self.tenant, reorder_point=20)
+        create_stock_record(product=p_ok, location=loc_a, quantity=30)
+        create_stock_record(product=p_low, location=loc_b, quantity=8)
+        create_reservation(
+            product=p_ok,
+            location=loc_a,
+            quantity=10,
+            status=ReservationStatus.CONFIRMED,
+        )
+
+        response = self.client.get(self.URL)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        by_name = {row["name"]: row for row in response.data}
+
+        full = by_name["WH Full"]
+        self.assertEqual(full["location_count"], 1)
+        self.assertEqual(full["total_on_hand"], 30)
+        self.assertEqual(full["reserved_quantity"], 10)
+        self.assertEqual(full["available_quantity"], 20)
+        self.assertEqual(full["capacity_total"], 100)
+        self.assertEqual(full["utilization_percent"], 30.0)
+        self.assertEqual(full["low_stock_line_count"], 0)
+
+        low = by_name["WH Low"]
+        self.assertEqual(low["location_count"], 1)
+        self.assertEqual(low["total_on_hand"], 8)
+        self.assertEqual(low["reserved_quantity"], 0)
+        self.assertEqual(low["available_quantity"], 8)
+        self.assertEqual(low["low_stock_line_count"], 1)
+
+        empty = by_name["WH Empty"]
+        self.assertEqual(empty["location_count"], 0)
+        self.assertEqual(empty["total_on_hand"], 0)
+        self.assertIsNone(empty["utilization_percent"])
+
+    def test_quick_stats_low_stock_respects_reservations(self):
+        wh = create_warehouse(name="WH Res", tenant=self.tenant)
+        loc = create_location(name="Shelf", tenant=self.tenant, warehouse=wh)
+        p = create_product(sku="API-QS-RES", tenant=self.tenant, reorder_point=10)
+        create_stock_record(product=p, location=loc, quantity=50)
+        create_reservation(product=p, location=loc, quantity=45)
+        response = self.client.get(self.URL)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        row = next(r for r in response.data if r["id"] == wh.pk)
+        self.assertEqual(row["low_stock_line_count"], 1)

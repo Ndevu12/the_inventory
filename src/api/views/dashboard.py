@@ -5,13 +5,13 @@ from datetime import timedelta
 from django.db import models
 from django.db.models import Count, F, OuterRef, Subquery, Sum
 from django.db.models.functions import Coalesce, TruncDate
-from django.utils import timezone
+from django.utils import timezone, translation
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from tenants.context import clear_current_tenant, set_current_tenant
+from tenants.context import clear_current_tenant, get_current_tenant, set_current_tenant
 from tenants.middleware import resolve_tenant_for_request
 from tenants.permissions import get_membership
 
@@ -22,11 +22,15 @@ from inventory.models import (
     StockMovement,
     StockRecord,
     StockReservation,
+    Warehouse,
 )
 from inventory.services.cache import get_cached_dashboard, set_cached_dashboard
+from inventory.utils.localized_attributes import attribute_in_display_locale
 from procurement.models import PurchaseOrder
 from reports.services.inventory_reports import InventoryReportService
 from sales.models import SalesOrder
+
+from api.language import resolve_display_language_code, wagtail_locale_for_language
 
 
 class DashboardTenantScopedView(APIView):
@@ -49,12 +53,18 @@ class DashboardTenantScopedView(APIView):
             raise PermissionDenied("User does not belong to this tenant.")
         set_current_tenant(tenant)
         request._dashboard_tenant_set = True
+        display_code = resolve_display_language_code(request, tenant)
+        self._dashboard_language_code = display_code
+        self._dashboard_display_locale = wagtail_locale_for_language(display_code)
+        translation.activate(display_code)
 
     def finalize_response(self, request, response, *args, **kwargs):
-        response = super().finalize_response(request, response, *args, **kwargs)
-        if getattr(request, '_dashboard_tenant_set', False):
-            clear_current_tenant()
-        return response
+        try:
+            return super().finalize_response(request, response, *args, **kwargs)
+        finally:
+            translation.deactivate()
+            if getattr(request, "_dashboard_tenant_set", False):
+                clear_current_tenant()
 
 
 class DashboardSummaryView(DashboardTenantScopedView):
@@ -65,7 +75,8 @@ class DashboardSummaryView(DashboardTenantScopedView):
     """
 
     def get(self, request):
-        cached = get_cached_dashboard("summary")
+        lang = self._dashboard_language_code
+        cached = get_cached_dashboard("summary", language_code=lang)
         if cached is not None:
             return Response(cached)
 
@@ -87,6 +98,17 @@ class DashboardSummaryView(DashboardTenantScopedView):
             "total_locations": StockLocation.objects.filter_by_current_tenant().filter(
                 is_active=True,
             ).count(),
+            "active_warehouses": Warehouse.objects.filter_by_current_tenant().filter(
+                is_active=True,
+            ).count(),
+            "locations_with_warehouse": StockLocation.objects.filter_by_current_tenant().filter(
+                is_active=True,
+                warehouse__isnull=False,
+            ).count(),
+            "locations_retail_site": StockLocation.objects.filter_by_current_tenant().filter(
+                is_active=True,
+                warehouse__isnull=True,
+            ).count(),
             "low_stock_count": Product.objects.filter_by_current_tenant().filter(
                 is_active=True,
             ).low_stock().count(),
@@ -97,7 +119,7 @@ class DashboardSummaryView(DashboardTenantScopedView):
             "sales_orders": SalesOrder.objects.filter_by_current_tenant().count(),
             "reserved_stock_value": str(reserved_stock_value),
         }
-        set_cached_dashboard("summary", data)
+        set_cached_dashboard("summary", data, language_code=lang)
         return Response(data)
 
 
@@ -109,42 +131,139 @@ class StockByLocationView(DashboardTenantScopedView):
     """
 
     def get(self, request):
-        cached = get_cached_dashboard("stock_by_location")
+        lang = self._dashboard_language_code
+        cached = get_cached_dashboard("stock_by_location", language_code=lang)
         if cached is not None:
             return Response(cached)
 
         reserved_subquery = (
             StockReservation.objects.filter_by_current_tenant().filter(
-                location=OuterRef("location"),
+                location_id=OuterRef("location_id"),
                 status__in=["pending", "confirmed"],
             )
-            .values("location")
+            .values("location_id")
             .annotate(total=Sum("quantity"))
             .values("total")
         )
 
         qs = (
             StockRecord.objects.filter_by_current_tenant().filter(location__is_active=True)
-            .values("location__name")
+            .values("location_id")
             .annotate(
                 total_quantity=Coalesce(Sum("quantity"), 0),
                 reserved=Coalesce(Subquery(reserved_subquery), 0),
             )
-            .order_by("location__name")
         )
 
-        labels = [entry["location__name"] for entry in qs]
-        totals = [entry["total_quantity"] for entry in qs]
-        reserved = [entry["reserved"] for entry in qs]
+        entries = list(qs)
+        loc_ids = [e["location_id"] for e in entries if e.get("location_id") is not None]
+        display_loc = self._dashboard_display_locale
+        locations_by_id = {
+            loc.pk: loc
+            for loc in StockLocation.objects.filter(pk__in=loc_ids).select_related(
+                "warehouse",
+            )
+        }
+
+        def _location_chart_label(location_id):
+            loc = locations_by_id.get(location_id)
+            if loc is None:
+                return ""
+            name = attribute_in_display_locale(loc, "name", display_loc) or ""
+            if loc.warehouse_id and loc.warehouse:
+                wh_name = (loc.warehouse.name or "").strip()
+                if wh_name:
+                    return f"{wh_name} › {name}"
+            return name
+
+        ordered = sorted(entries, key=lambda e: _location_chart_label(e["location_id"]))
+        labels = [_location_chart_label(e["location_id"]) for e in ordered]
+        totals = [e["total_quantity"] for e in ordered]
+        reserved = [e["reserved"] for e in ordered]
         available = [t - r for t, r in zip(totals, reserved)]
+
+        tenant = get_current_tenant()
+        retail_site_label = (
+            ((tenant.branding_site_name or "").strip() or tenant.name)
+            if tenant
+            else "Store"
+        )
+
+        stock_site_qs = (
+            StockRecord.objects.filter_by_current_tenant()
+            .filter(location__is_active=True)
+            .values("location__warehouse_id", "location__warehouse__name")
+            .annotate(total_quantity=Coalesce(Sum("quantity"), 0))
+        )
+        res_site_qs = (
+            StockReservation.objects.filter_by_current_tenant()
+            .filter(
+                status__in=["pending", "confirmed"],
+                location__is_active=True,
+            )
+            .values("location__warehouse_id", "location__warehouse__name")
+            .annotate(res_site_reserved=Coalesce(Sum("quantity"), 0))
+        )
+
+        site_buckets: dict[int | None, dict] = {}
+        for row in stock_site_qs:
+            wid = row["location__warehouse_id"]
+            site_buckets.setdefault(
+                wid,
+                {
+                    "warehouse_id": wid,
+                    "label": (
+                        row["location__warehouse__name"]
+                        if wid is not None
+                        else retail_site_label
+                    ),
+                    "kind": "warehouse" if wid is not None else "retail_site",
+                    "total_quantity": 0,
+                    "reserved": 0,
+                },
+            )
+            site_buckets[wid]["total_quantity"] = row["total_quantity"]
+
+        for row in res_site_qs:
+            wid = row["location__warehouse_id"]
+            site_buckets.setdefault(
+                wid,
+                {
+                    "warehouse_id": wid,
+                    "label": (
+                        row["location__warehouse__name"]
+                        if wid is not None
+                        else retail_site_label
+                    ),
+                    "kind": "warehouse" if wid is not None else "retail_site",
+                    "total_quantity": 0,
+                    "reserved": 0,
+                },
+            )
+            site_buckets[wid]["reserved"] = row["res_site_reserved"]
+
+        by_site = []
+        for wid in sorted(site_buckets.keys(), key=lambda k: (k is None, site_buckets[k]["label"])):
+            b = site_buckets[wid]
+            tq = b["total_quantity"]
+            rv = b["reserved"]
+            by_site.append({
+                "warehouse_id": wid,
+                "label": b["label"],
+                "kind": b["kind"],
+                "total_quantity": tq,
+                "reserved": rv,
+                "available": tq - rv,
+            })
 
         data = {
             "labels": labels,
             "data": totals,
             "reserved": reserved,
             "available": available,
+            "by_site": by_site,
         }
-        set_cached_dashboard("stock_by_location", data)
+        set_cached_dashboard("stock_by_location", data, language_code=lang)
         return Response(data)
 
 
@@ -204,7 +323,8 @@ class PendingReservationsView(DashboardTenantScopedView):
     """Pending and confirmed reservation summary — count, units, and value."""
 
     def get(self, request):
-        cached = get_cached_dashboard("reservations")
+        lang = self._dashboard_language_code
+        cached = get_cached_dashboard("reservations", language_code=lang)
         if cached is not None:
             return Response(cached)
 
@@ -242,7 +362,7 @@ class PendingReservationsView(DashboardTenantScopedView):
             "pending": breakdown.get("pending", {"count": 0, "units": 0}),
             "confirmed": breakdown.get("confirmed", {"count": 0, "units": 0}),
         }
-        set_cached_dashboard("reservations", data)
+        set_cached_dashboard("reservations", data, language_code=lang)
         return Response(data)
 
 
@@ -256,7 +376,9 @@ class ExpiringLotsView(DashboardTenantScopedView):
     EXPIRY_WINDOW_DAYS = 30
 
     def get(self, request):
-        cached = get_cached_dashboard("expiring_lots")
+        lang = self._dashboard_language_code
+        display_locale = self._dashboard_display_locale
+        cached = get_cached_dashboard("expiring_lots", language_code=lang)
         if cached is not None:
             return Response(cached)
 
@@ -264,7 +386,7 @@ class ExpiringLotsView(DashboardTenantScopedView):
 
         if not has_lot_data:
             data = {"has_lot_data": False, "expiring_lots": []}
-            set_cached_dashboard("expiring_lots", data)
+            set_cached_dashboard("expiring_lots", data, language_code=lang)
             return Response(data)
 
         today = timezone.now().date()
@@ -287,7 +409,9 @@ class ExpiringLotsView(DashboardTenantScopedView):
                 "id": lot.pk,
                 "lot_number": lot.lot_number,
                 "product_sku": lot.product.sku,
-                "product_name": lot.product.name,
+                "product_name": attribute_in_display_locale(
+                    lot.product, "name", display_locale,
+                ),
                 "expiry_date": lot.expiry_date.isoformat(),
                 "days_to_expiry": lot.days_to_expiry(),
                 "quantity_remaining": lot.quantity_remaining,
@@ -296,5 +420,5 @@ class ExpiringLotsView(DashboardTenantScopedView):
         ]
 
         data = {"has_lot_data": True, "expiring_lots": lots_data}
-        set_cached_dashboard("expiring_lots", data)
+        set_cached_dashboard("expiring_lots", data, language_code=lang)
         return Response(data)

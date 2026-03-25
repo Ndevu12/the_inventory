@@ -8,7 +8,7 @@ from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase
 
-from inventory.models import MovementType, StockRecord
+from inventory.models import MovementType, StockRecord, Warehouse
 from inventory.services.stock import StockService
 from sales.models import SalesOrderStatus
 from tenants.context import set_current_tenant
@@ -116,6 +116,53 @@ class SalesOrderAPITests(APISetupMixin, APITestCase):
             Decimal(str(response.data["lines"][0]["line_total"])),
             Decimal("30.00"),
         )
+
+    def test_sales_order_payload_derived_warehouse_when_dispatches_share_facility(self):
+        dc = Warehouse.objects.create(tenant=self.tenant, name="DC Sales Shared")
+        ship_loc = create_location(
+            name="Ship Staging",
+            tenant=self.tenant,
+            warehouse=dc,
+        )
+        so = create_sales_order(
+            order_number="SO-WH-DERIVE",
+            customer=self.customer,
+            status=SalesOrderStatus.CONFIRMED,
+        )
+        create_dispatch(
+            dispatch_number="DSP-WH-1",
+            sales_order=so,
+            from_location=ship_loc,
+        )
+        response = self.client.get(f"/api/v1/sales-orders/{so.pk}/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["warehouse_id"], dc.pk)
+        self.assertEqual(response.data["warehouse_name"], "DC Sales Shared")
+
+    def test_sales_order_payload_null_warehouse_when_dispatch_facilities_differ(self):
+        dc_a = Warehouse.objects.create(tenant=self.tenant, name="DC A")
+        dc_b = Warehouse.objects.create(tenant=self.tenant, name="DC B")
+        loc_a = create_location(name="Loc A", tenant=self.tenant, warehouse=dc_a)
+        loc_b = create_location(name="Loc B", tenant=self.tenant, warehouse=dc_b)
+        so = create_sales_order(
+            order_number="SO-WH-AMBIG",
+            customer=self.customer,
+            status=SalesOrderStatus.CONFIRMED,
+        )
+        create_dispatch(
+            dispatch_number="DSP-M-1",
+            sales_order=so,
+            from_location=loc_a,
+        )
+        create_dispatch(
+            dispatch_number="DSP-M-2",
+            sales_order=so,
+            from_location=loc_b,
+        )
+        response = self.client.get(f"/api/v1/sales-orders/{so.pk}/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIsNone(response.data.get("warehouse_id"))
+        self.assertIsNone(response.data.get("warehouse_name"))
 
     def test_create_sales_order_explicit_order_number(self):
         response = self.client.post(
@@ -232,6 +279,44 @@ class DispatchAPITests(APISetupMixin, APITestCase):
         response = self.client.get("/api/v1/dispatches/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["count"], 1)
+
+    def test_dispatch_includes_null_warehouse_for_retail_from_location(self):
+        so = create_sales_order(
+            order_number="SO-DSP-RETAIL",
+            customer=self.customer,
+            status=SalesOrderStatus.CONFIRMED,
+        )
+        dsp = create_dispatch(
+            dispatch_number="DSP-RETAIL",
+            sales_order=so,
+            from_location=self.warehouse,
+        )
+        response = self.client.get(f"/api/v1/dispatches/{dsp.pk}/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIsNone(response.data.get("warehouse_id"))
+        self.assertIsNone(response.data.get("warehouse_name"))
+
+    def test_dispatch_includes_warehouse_when_from_location_facility_linked(self):
+        dc = Warehouse.objects.create(tenant=self.tenant, name="DC Dispatch")
+        pick_loc = create_location(
+            name="Pick Face",
+            tenant=self.tenant,
+            warehouse=dc,
+        )
+        so = create_sales_order(
+            order_number="SO-DSP-WH",
+            customer=self.customer,
+            status=SalesOrderStatus.CONFIRMED,
+        )
+        dsp = create_dispatch(
+            dispatch_number="DSP-WH-X",
+            sales_order=so,
+            from_location=pick_loc,
+        )
+        response = self.client.get(f"/api/v1/dispatches/{dsp.pk}/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["warehouse_id"], dc.pk)
+        self.assertEqual(response.data["warehouse_name"], "DC Dispatch")
 
     def test_create_dispatch_without_number_auto_generates(self):
         so = create_sales_order(

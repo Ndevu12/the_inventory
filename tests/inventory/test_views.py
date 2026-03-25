@@ -141,6 +141,7 @@ class InventorySearchViewTenantTests(TestCase):
         context = view.get_context_data()
         self.assertEqual(context["product_results"].count(), 0)
         self.assertEqual(context["category_results"].count(), 0)
+        self.assertEqual(context["warehouse_results"].count(), 0)
         self.assertEqual(context["location_results"].count(), 0)
 
     def test_get_context_data_with_query_passes_tenant_filtered_querysets(self):
@@ -167,7 +168,7 @@ class InventorySearchViewTenantTests(TestCase):
             mock_get_backend.return_value = mock_backend
             view.get_context_data()
 
-        self.assertEqual(len(captured_querysets), 3)
+        self.assertEqual(len(captured_querysets), 4)
 
     def test_no_tenant_context_raises_permission_denied(self):
         """Raises PermissionDenied when tenant context is not set."""

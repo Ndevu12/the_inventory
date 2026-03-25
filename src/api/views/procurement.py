@@ -94,9 +94,14 @@ class PurchaseOrderViewSet(
         return Response(self.get_serializer(po).data)
 
 
-class GoodsReceivedNoteViewSet(TenantScopedInventoryMixin, viewsets.ModelViewSet):
+@extend_schema(parameters=[OPENAPI_LANGUAGE_QUERY_PARAMETER])
+class GoodsReceivedNoteViewSet(
+    TranslatableAPIReadMixin,
+    TenantScopedInventoryMixin,
+    viewsets.ModelViewSet,
+):
     queryset = GoodsReceivedNote.objects.select_related(
-        "purchase_order", "location",
+        "purchase_order", "location", "location__warehouse",
     ).all()
     serializer_class = GoodsReceivedNoteSerializer
     filter_backends = [DjangoFilterBackend, OrderingFilter]

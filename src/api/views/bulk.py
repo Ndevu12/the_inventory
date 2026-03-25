@@ -26,7 +26,10 @@ class BulkTransferView(APIView):
     permission_classes = [IsAuthenticated, IsTenantManager]
 
     def post(self, request):
-        serializer = BulkTransferSerializer(data=request.data)
+        serializer = BulkTransferSerializer(
+            data=request.data,
+            context={"request": request},
+        )
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
 
@@ -70,7 +73,10 @@ class BulkAdjustmentView(APIView):
     permission_classes = [IsAuthenticated, IsTenantManager]
 
     def post(self, request):
-        serializer = BulkAdjustmentSerializer(data=request.data)
+        serializer = BulkAdjustmentSerializer(
+            data=request.data,
+            context={"request": request},
+        )
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
 

@@ -8,6 +8,16 @@ import { useTranslations } from "next-intl"
 import { PlusIcon } from "lucide-react"
 import { toast } from "sonner"
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/layout/page-header"
 import { useCustomers, useDeleteCustomer } from "../hooks/use-customers"
@@ -21,6 +31,8 @@ export function CustomerListPage() {
   const tCol = useTranslations("Sales.customers.columns")
   const tCust = useTranslations("Sales.customerStatus")
   const tShared = useTranslations("Sales.shared")
+  const tCommon = useTranslations("Common.actions")
+  const tCommonStates = useTranslations("Common.states")
 
   const [pagination, setPagination] = React.useState<PaginationState>({
     pageIndex: 0,
@@ -44,6 +56,9 @@ export function CustomerListPage() {
 
   const deleteMutation = useDeleteCustomer()
 
+  const [customerToDelete, setCustomerToDelete] =
+    React.useState<Customer | null>(null)
+
   const handleEdit = React.useCallback(
     (customer: Customer) => {
       router.push(`/sales/customers/${customer.id}/edit`)
@@ -51,17 +66,22 @@ export function CustomerListPage() {
     [router],
   )
 
-  const handleDelete = React.useCallback(
-    (customer: Customer) => {
-      if (!confirm(t("deleteConfirm", { name: customer.name }))) return
-      deleteMutation.mutate(customer.id, {
-        onSuccess: () =>
-          toast.success(t("toastDeleted", { name: customer.name })),
-        onError: () => toast.error(t("toastDeleteFailed")),
-      })
-    },
-    [deleteMutation, t],
-  )
+  const handleDelete = React.useCallback((customer: Customer) => {
+    setCustomerToDelete(customer)
+  }, [])
+
+  const confirmDeleteCustomer = React.useCallback(() => {
+    if (!customerToDelete) return
+    deleteMutation.mutate(customerToDelete.id, {
+      onSuccess: () => {
+        toast.success(
+          t("toastDeleted", { name: customerToDelete.name }),
+        )
+        setCustomerToDelete(null)
+      },
+      onError: () => toast.error(t("toastDeleteFailed")),
+    })
+  }, [customerToDelete, deleteMutation, t])
 
   const columnLabels = React.useMemo(
     () => ({
@@ -110,6 +130,38 @@ export function CustomerListPage() {
         onSearchChange={setSearch}
         isLoading={isLoading}
       />
+
+      <AlertDialog
+        open={customerToDelete != null}
+        onOpenChange={(open) => {
+          if (!open) setCustomerToDelete(null)
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{tCommon("delete")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {customerToDelete
+                ? t("deleteConfirm", { name: customerToDelete.name })
+                : null}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteMutation.isPending}>
+              {tCommon("cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={confirmDeleteCustomer}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending
+                ? tCommonStates("loading")
+                : tCommon("delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

@@ -39,6 +39,9 @@ class StockRecordSeeder(BaseSeeder):
             # Paper
             ("PAPER-001", "Shelf C2", 200),
             ("PAPER-002", "Shelf C2", 150),
+            # Retail-only locations (warehouse=NULL on branch)
+            ("PEN-001", "Retail — Sales Floor", 60),
+            ("PAPER-001", "Retail — Stockroom", 100),
         ]
 
         loc = self.canonical_locale

@@ -2,6 +2,7 @@
 
 import pytest
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from tenants.models import TenantMembership, TenantRole
 from tenants.context import set_current_tenant, clear_current_tenant
 from tests.fixtures.factories import create_tenant as factory_create_tenant
@@ -11,10 +12,12 @@ User = get_user_model()
 
 @pytest.fixture(autouse=True)
 def clear_tenant_context():
-    """Clear tenant context before and after each test."""
+    """Clear tenant context and LocMem cache so reused PKs cannot serve stale payloads."""
     clear_current_tenant()
+    cache.clear()
     yield
     clear_current_tenant()
+    cache.clear()
 
 
 @pytest.fixture

@@ -11,6 +11,8 @@ from .inventory import (
     StockMovementCreateSerializer,
     StockMovementSerializer,
     StockRecordSerializer,
+    WarehouseQuickStatsSerializer,
+    WarehouseSerializer,
 )
 from .procurement import (
     GoodsReceivedNoteSerializer,
@@ -44,4 +46,6 @@ __all__ = [
     "StockMovementSerializer",
     "StockRecordSerializer",
     "SupplierSerializer",
+    "WarehouseQuickStatsSerializer",
+    "WarehouseSerializer",
 ]

@@ -8,6 +8,7 @@ from .inventory import (
     StockLotViewSet,
     StockMovementViewSet,
     StockRecordViewSet,
+    WarehouseViewSet,
 )
 from .procurement import (
     GoodsReceivedNoteViewSet,
@@ -40,5 +41,6 @@ __all__ = [
     "StockRecordViewSet",
     "StockReservationViewSet",
     "SupplierViewSet",
+    "WarehouseViewSet",
     "PlatformAuditLogViewSet",
 ]

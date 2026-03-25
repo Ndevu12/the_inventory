@@ -16,6 +16,7 @@ alwaysApply: false
 - Follow existing patterns: `panels`, `ClusterableModel`, Wagtail images/search fields where the codebase already does.
 - **Translatable content:** align with `TranslatableMixin`, `locale`, and `translation_key` patterns already on catalog models; check `tenants/wagtail_locales.py` and Wagtail locale setup before inventing new i18n shapes.
 - **DRF:** serializers in `api/serializers/`; keep OpenAPI (`drf-spectacular`) compatibility in mind for schema consumers.
+- All imports should be at the top of the file, and you should avoid importing modules inside functions or blocks of code except where necessary like test cases which demands it!
 
 ## Tests
 

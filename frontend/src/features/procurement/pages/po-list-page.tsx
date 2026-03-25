@@ -7,6 +7,16 @@ import { PlusIcon } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
 import { toast } from "sonner"
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/layout/page-header"
 import {
@@ -32,6 +42,8 @@ export function POListPage() {
   const tAct = useTranslations("Procurement.purchaseOrders.actions")
   const tPoStatus = useTranslations("Procurement.poStatus")
   const tShared = useTranslations("Procurement.shared")
+  const tCommon = useTranslations("Common.actions")
+  const tCommonStates = useTranslations("Common.states")
 
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
@@ -62,6 +74,8 @@ export function POListPage() {
 
   const confirmMutation = useConfirmPurchaseOrder()
   const cancelMutation = useCancelPurchaseOrder()
+
+  const [poToCancel, setPoToCancel] = useState<PurchaseOrder | null>(null)
 
   const STATUS_FILTER_OPTIONS: FacetedFilterOption[] = useMemo(
     () =>
@@ -94,21 +108,26 @@ export function POListPage() {
     [confirmMutation, t, tShared],
   )
 
-  const handleCancel = useCallback(
-    (po: PurchaseOrder) => {
-      if (!confirm(t("cancelConfirm", { orderNumber: po.order_number }))) return
-      cancelMutation.mutate(po.id, {
-        onSuccess: () =>
-          toast.success(t("toastCancelled", { orderNumber: po.order_number })),
-        onError: (error) => {
-          const message =
-            (error as { message?: string }).message ?? tShared("unknownError")
-          toast.error(t("cancelFailed", { message }))
-        },
-      })
-    },
-    [cancelMutation, t, tShared],
-  )
+  const handleCancel = useCallback((po: PurchaseOrder) => {
+    setPoToCancel(po)
+  }, [])
+
+  const confirmCancelPo = useCallback(() => {
+    if (!poToCancel) return
+    cancelMutation.mutate(poToCancel.id, {
+      onSuccess: () => {
+        toast.success(
+          t("toastCancelled", { orderNumber: poToCancel.order_number }),
+        )
+        setPoToCancel(null)
+      },
+      onError: (error) => {
+        const message =
+          (error as { message?: string }).message ?? tShared("unknownError")
+        toast.error(t("cancelFailed", { message }))
+      },
+    })
+  }, [poToCancel, cancelMutation, t, tShared])
 
   const columns = useMemo(
     () =>
@@ -178,6 +197,38 @@ export function POListPage() {
           />
         }
       />
+
+      <AlertDialog
+        open={poToCancel != null}
+        onOpenChange={(open) => {
+          if (!open) setPoToCancel(null)
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{tAct("cancel")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {poToCancel
+                ? t("cancelConfirm", { orderNumber: poToCancel.order_number })
+                : null}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={cancelMutation.isPending}>
+              {tCommon("cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={confirmCancelPo}
+              disabled={cancelMutation.isPending}
+            >
+              {cancelMutation.isPending
+                ? tCommonStates("loading")
+                : tAct("cancel")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

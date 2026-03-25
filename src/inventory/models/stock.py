@@ -3,7 +3,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.db.models import Sum
 from treebeard.mp_tree import MP_Node
-from wagtail.admin.panels import FieldPanel, MultiFieldPanel, TabbedInterface
+from wagtail.admin.panels import FieldPanel, HelpPanel, MultiFieldPanel, TabbedInterface
 from wagtail.search import index
 
 from inventory.exceptions import MovementImmutableError
@@ -15,6 +15,11 @@ class StockLocation(TimeStampedModel, MP_Node):
     """Hierarchical physical location using treebeard materialised path.
 
     Examples: Main Warehouse → Aisle A → Shelf 3 → Bin 12.
+
+    **Tree scope:** Operations and queries partition the MP tree by
+    ``(tenant, warehouse_id | NULL)``. Child nodes always inherit the parent's
+    ``warehouse``; roots may set ``warehouse`` (linked to a warehouse record)
+    or leave it null for retail-only location trees.
     """
 
     name = models.CharField(
@@ -34,6 +39,14 @@ class StockLocation(TimeStampedModel, MP_Node):
         blank=True,
         help_text="Maximum stock units this location can hold. Null = unlimited.",
     )
+    warehouse = models.ForeignKey(
+        "inventory.Warehouse",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="stock_locations",
+        help_text="Facility for this branch of the tree; leave empty for retail-only trees.",
+    )
 
     # treebeard: alphabetical ordering within each tree level
     node_order_by = ["name"]
@@ -46,14 +59,22 @@ class StockLocation(TimeStampedModel, MP_Node):
                     FieldPanel("description"),
                     FieldPanel("is_active"),
                     FieldPanel("max_capacity"),
+                    FieldPanel("warehouse"),
                 ],
-                heading="Location Details",
+                heading=_("Location details"),
             ),
             MultiFieldPanel(
                 [
-                    FieldPanel("name"),
+                    HelpPanel(
+                        content=_(
+                            "Locations form a tree per tenant, scoped by warehouse: link "
+                            "a warehouse on the root row for a facility, or leave warehouse "
+                            "empty for a retail-only tree. Child rows inherit the root "
+                            "warehouse. Deeper nodes are usually created via the API or imports."
+                        ),
+                        heading=_("Hierarchy & warehouses"),
+                    ),
                 ],
-                heading="Hierarchy Info",
                 classname="collapsed",
             ),
         ])
@@ -61,7 +82,13 @@ class StockLocation(TimeStampedModel, MP_Node):
 
     search_fields = [
         index.SearchField("name"),
+        index.SearchField("description"),
         index.FilterField("is_active"),
+        index.FilterField("warehouse_id"),
+        index.RelatedFields(
+            "warehouse",
+            [index.SearchField("name"), index.SearchField("address")],
+        ),
     ]
 
     @property
@@ -82,6 +109,24 @@ class StockLocation(TimeStampedModel, MP_Node):
             return True
         return self.current_utilization + quantity <= self.max_capacity
 
+    def clean(self):
+        super().clean()
+        if self.warehouse_id and self.tenant_id:
+            if self.warehouse.tenant_id != self.tenant_id:
+                raise ValidationError(
+                    {"warehouse": "Warehouse must belong to the same tenant as the location."}
+                )
+        if self.depth and self.depth > 1:
+            parent = self.get_parent()
+            if parent is None:
+                return
+            if parent.tenant_id != self.tenant_id:
+                raise ValidationError("Location tenant must match its parent.")
+            if parent.warehouse_id != self.warehouse_id:
+                raise ValidationError(
+                    {"warehouse": "Sub-location warehouse must match the parent location."}
+                )
+
     def __str__(self):
         return self.name
 
@@ -94,6 +139,11 @@ class StockLocation(TimeStampedModel, MP_Node):
         if not self.depth:
             type(self).add_root(instance=self)
             return
+        if self.depth > 1:
+            parent = self.get_parent()
+            if parent is not None:
+                self.warehouse_id = parent.warehouse_id
+                self.tenant_id = parent.tenant_id
         super().save(*args, **kwargs)
 
 

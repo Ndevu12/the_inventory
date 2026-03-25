@@ -17,6 +17,7 @@ const BREADCRUMB_SEGMENT_KEYS = new Set([
   "products",
   "categories",
   "stock",
+  "warehouses",
   "locations",
   "records",
   "movements",

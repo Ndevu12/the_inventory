@@ -10,6 +10,7 @@ from inventory.models import (
     ReservationStatus,
     StockLocation,
     StockMovement,
+    Warehouse,
 )
 
 from ..factories import (
@@ -17,6 +18,7 @@ from ..factories import (
     create_product,
     create_reservation,
     create_stock_record,
+    create_tenant,
 )
 
 
@@ -61,6 +63,40 @@ class StockLocationTreeTests(TestCase):
     def test_root_has_no_parent(self):
         root = create_location(name="Root Location")
         self.assertIsNone(root.get_parent())
+
+
+class StockLocationWarehouseScopeTests(TestCase):
+    """Warehouse FK and (tenant, warehouse) tree scope."""
+
+    def setUp(self):
+        self.tenant = create_tenant()
+
+    def test_child_inherits_parent_warehouse_on_save(self):
+        wh = Warehouse.objects.create(tenant=self.tenant, name="DC East")
+        root = StockLocation.add_root(
+            name="Building",
+            tenant=self.tenant,
+            warehouse=wh,
+        )
+        child = root.add_child(name="Aisle 1")
+        child.refresh_from_db()
+        self.assertEqual(child.warehouse_id, wh.pk)
+
+    def test_child_stays_unlinked_when_parent_has_no_warehouse(self):
+        root = StockLocation.add_root(name="Retail Floor", tenant=self.tenant)
+        self.assertIsNone(root.warehouse_id)
+        child = root.add_child(name="Stockroom")
+        child.refresh_from_db()
+        self.assertIsNone(child.warehouse_id)
+
+    def test_full_clean_rejects_warehouse_from_other_tenant(self):
+        other = create_tenant()
+        wh = Warehouse.objects.create(tenant=other, name="Foreign DC")
+        root = StockLocation.add_root(name="Here", tenant=self.tenant)
+        root.warehouse = wh
+        with self.assertRaises(ValidationError) as ctx:
+            root.full_clean()
+        self.assertIn("warehouse", ctx.exception.message_dict)
 
 
 class StockLocationSaveOverrideTests(TestCase):

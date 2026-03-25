@@ -2,10 +2,12 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "@/i18n/navigation";
+import { useAllLocations } from "@/features/inventory/hooks/use-locations";
 import {
   PackageIcon,
   TagsIcon,
-  WarehouseIcon,
+  Building2Icon,
+  MapPinIcon,
   TruckIcon,
   UsersIcon,
   ShoppingCartIcon,
@@ -60,7 +62,13 @@ const SEARCH_NAV_GROUPS: SearchNavGroup[] = [
     items: [
       { itemKey: "products", href: "/products", icon: PackageIcon },
       { itemKey: "categories", href: "/categories", icon: TagsIcon },
-      { itemKey: "stockLocations", href: "/stock/locations", icon: WarehouseIcon },
+    ],
+  },
+  {
+    groupKey: "stock",
+    items: [
+      { itemKey: "warehouses", href: "/stock/warehouses", icon: Building2Icon },
+      { itemKey: "stockLocations", href: "/stock/locations", icon: MapPinIcon },
       { itemKey: "stockRecords", href: "/stock/records", icon: DatabaseIcon },
       { itemKey: "stockMovements", href: "/stock/movements", icon: ArrowRightLeftIcon },
       { itemKey: "stockLots", href: "/stock/lots", icon: BoxesIcon },
@@ -131,6 +139,9 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
   const router = useRouter();
   const tNav = useTranslations("Nav");
   const tCommon = useTranslations("Common");
+  const tInv = useTranslations("Inventory");
+
+  const { data: jumpLocations = [] } = useAllLocations({ enabled: open });
 
   const navigate = useCallback(
     (href: string) => {
@@ -138,6 +149,14 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
       router.push(href);
     },
     [router, onOpenChange],
+  );
+
+  const navigateToLocation = useCallback(
+    (locationId: number) => {
+      onOpenChange?.(false);
+      router.push(`/stock/locations/${locationId}`);
+    },
+    [onOpenChange, router],
   );
 
   return (
@@ -162,6 +181,30 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
               </CommandGroup>
             </div>
           ))}
+          {jumpLocations.length > 0 ? (
+            <>
+              <CommandSeparator />
+              <CommandGroup
+                heading={tInv("locations.commandPalette.groupHeading")}
+              >
+                {jumpLocations.map((loc) => (
+                  <CommandItem
+                    key={loc.id}
+                    value={`${loc.name} ${loc.id} ${loc.materialized_path ?? ""} ${loc.warehouse?.name ?? ""}`}
+                    onSelect={() => navigateToLocation(loc.id)}
+                  >
+                    <MapPinIcon className="mr-2 size-4" />
+                    <span className="truncate">{loc.name}</span>
+                    {loc.warehouse?.name ? (
+                      <span className="ml-1 truncate text-xs text-muted-foreground">
+                        {loc.warehouse.name}
+                      </span>
+                    ) : null}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </>
+          ) : null}
         </CommandList>
       </Command>
     </CommandDialog>

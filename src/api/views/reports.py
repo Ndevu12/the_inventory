@@ -7,6 +7,7 @@ endpoint to download a file instead.
 
 from datetime import date
 
+from django.utils import translation
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -19,11 +20,27 @@ from reports.services.order_reports import OrderReportService
 from tenants.middleware import get_effective_tenant
 from tenants.permissions import get_membership
 
+from api.language import resolve_display_language_code, wagtail_locale_for_language
+from inventory.utils.localized_attributes import attribute_in_display_locale
+from inventory.utils.warehouse_scope import report_scope_params_from_query
+
 
 class _ExportableAPIView(APIView):
     """Base for report views that support CSV/PDF file downloads."""
 
     permission_classes = (IsAuthenticated,)
+
+    def initial(self, request, *args, **kwargs):
+        super().initial(request, *args, **kwargs)
+        tenant = self._get_current_tenant()
+        display_code = resolve_display_language_code(request, tenant)
+        self._api_display_language_code = display_code
+        self._api_display_locale = wagtail_locale_for_language(display_code)
+        translation.activate(display_code)
+
+    def finalize_response(self, request, response, *args, **kwargs):
+        translation.deactivate()
+        return super().finalize_response(request, response, *args, **kwargs)
 
     def _get_current_tenant(self):
         """Resolve tenant (JWT-safe) and verify membership."""
@@ -64,16 +81,26 @@ class StockValuationView(_ExportableAPIView):
 
     def get(self, request):
         tenant = self._get_current_tenant()
+        loc = self._api_display_locale
         method = request.query_params.get("method", "weighted_average")
+        scope_kw = report_scope_params_from_query(request.query_params)
         service = InventoryReportService()
-        valuations = service.get_stock_valuation(method=method, tenant=tenant)
-        summary = service.get_valuation_summary(method=method, tenant=tenant)
+        valuations = service.get_stock_valuation(method=method, tenant=tenant, **scope_kw)
+        summary = service.get_valuation_summary(method=method, tenant=tenant, **scope_kw)
 
         items = [
             {
                 "sku": v.product.sku,
-                "product_name": v.product.name,
-                "category": str(v.product.category) if v.product.category else None,
+                "product_name": attribute_in_display_locale(
+                    v.product, "name", loc,
+                ),
+                "category": (
+                    attribute_in_display_locale(
+                        v.product.category, "name", loc,
+                    )
+                    if v.product.category
+                    else None
+                ),
                 "total_quantity": v.total_quantity,
                 "unit_cost": v.unit_cost,
                 "total_value": v.total_value,
@@ -107,19 +134,24 @@ class MovementHistoryView(_ExportableAPIView):
 
     def get(self, request):
         tenant = self._get_current_tenant()
+        loc = self._api_display_locale
         service = InventoryReportService()
+        scope_kw = report_scope_params_from_query(request.query_params)
         movements = service.get_movement_history(
             date_from=self._parse_date(request.query_params.get("date_from")),
             date_to=self._parse_date(request.query_params.get("date_to")),
             movement_type=request.query_params.get("type"),
             tenant=tenant,
+            **scope_kw,
         )
 
         items = [
             {
                 "id": m.pk,
                 "product_sku": m.product.sku,
-                "product_name": m.product.name,
+                "product_name": attribute_in_display_locale(
+                    m.product, "name", loc,
+                ),
                 "movement_type": m.movement_type,
                 "quantity": m.quantity,
                 "unit_cost": str(m.unit_cost) if m.unit_cost else None,
@@ -148,16 +180,22 @@ class LowStockReportView(_ExportableAPIView):
 
     def get(self, request):
         tenant = self._get_current_tenant()
+        loc = self._api_display_locale
         service = InventoryReportService()
-        products = service.get_low_stock_products(tenant=tenant)
+        scope_kw = report_scope_params_from_query(request.query_params)
+        products = service.get_low_stock_products(tenant=tenant, **scope_kw)
 
         items = []
         for p in products:
             total = sum(sr.quantity for sr in p.stock_records.all())
             items.append({
                 "sku": p.sku,
-                "product_name": p.name,
-                "category": str(p.category) if p.category else None,
+                "product_name": attribute_in_display_locale(p, "name", loc),
+                "category": (
+                    attribute_in_display_locale(p.category, "name", loc)
+                    if p.category
+                    else None
+                ),
                 "reorder_point": p.reorder_point,
                 "total_stock": total,
                 "deficit": p.reorder_point - total,
@@ -182,16 +220,24 @@ class OverstockReportView(_ExportableAPIView):
 
     def get(self, request):
         tenant = self._get_current_tenant()
+        loc = self._api_display_locale
         threshold = int(request.query_params.get("threshold", 3))
         service = InventoryReportService()
-        products = service.get_overstock_products(threshold_multiplier=threshold, tenant=tenant)
+        scope_kw = report_scope_params_from_query(request.query_params)
+        products = service.get_overstock_products(
+            threshold_multiplier=threshold, tenant=tenant, **scope_kw,
+        )
 
         items = []
         for p in products:
             items.append({
                 "sku": p.sku,
-                "product_name": p.name,
-                "category": str(p.category) if p.category else None,
+                "product_name": attribute_in_display_locale(p, "name", loc),
+                "category": (
+                    attribute_in_display_locale(p.category, "name", loc)
+                    if p.category
+                    else None
+                ),
                 "reorder_point": p.reorder_point,
                 "total_stock": p.total_stock,
                 "threshold": p.reorder_point * threshold,
@@ -218,7 +264,8 @@ class ReservationSummaryView(_ExportableAPIView):
     def get(self, request):
         tenant = self._get_current_tenant()
         service = InventoryReportService()
-        summary = service.get_reservation_summary(tenant=tenant)
+        scope_kw = report_scope_params_from_query(request.query_params)
+        summary = service.get_reservation_summary(tenant=tenant, **scope_kw)
 
         fmt = self._wants_export(request)
         if fmt:
@@ -249,10 +296,13 @@ class AvailabilityReportView(_ExportableAPIView):
         product_id = request.query_params.get("product")
 
         service = InventoryReportService()
+        scope_kw = report_scope_params_from_query(request.query_params)
         items = service.get_availability_report(
             category_id=int(category_id) if category_id else None,
             product_id=int(product_id) if product_id else None,
             tenant=tenant,
+            wagtail_display_locale=self._api_display_locale,
+            **scope_kw,
         )
 
         total_reserved_value = sum(
@@ -302,10 +352,15 @@ class PurchaseSummaryView(_ExportableAPIView):
         period = request.query_params.get("period", "monthly")
         date_from = self._parse_date(request.query_params.get("date_from"))
         date_to = self._parse_date(request.query_params.get("date_to"))
+        scope_kw = report_scope_params_from_query(request.query_params)
 
         service = OrderReportService()
-        data = service.get_purchase_summary(period=period, date_from=date_from, date_to=date_to, tenant=tenant)
-        totals = service.get_purchase_totals(date_from=date_from, date_to=date_to, tenant=tenant)
+        data = service.get_purchase_summary(
+            period=period, date_from=date_from, date_to=date_to, tenant=tenant, **scope_kw,
+        )
+        totals = service.get_purchase_totals(
+            date_from=date_from, date_to=date_to, tenant=tenant, **scope_kw,
+        )
 
         items = [
             {"period": str(row["period"]), "order_count": row["order_count"], "total": str(row["total_cost"])}
@@ -334,10 +389,15 @@ class SalesSummaryView(_ExportableAPIView):
         period = request.query_params.get("period", "monthly")
         date_from = self._parse_date(request.query_params.get("date_from"))
         date_to = self._parse_date(request.query_params.get("date_to"))
+        scope_kw = report_scope_params_from_query(request.query_params)
 
         service = OrderReportService()
-        data = service.get_sales_summary(period=period, date_from=date_from, date_to=date_to, tenant=tenant)
-        totals = service.get_sales_totals(date_from=date_from, date_to=date_to, tenant=tenant)
+        data = service.get_sales_summary(
+            period=period, date_from=date_from, date_to=date_to, tenant=tenant, **scope_kw,
+        )
+        totals = service.get_sales_totals(
+            date_from=date_from, date_to=date_to, tenant=tenant, **scope_kw,
+        )
 
         items = [
             {"period": str(row["period"]), "order_count": row["order_count"], "total": str(row["total_revenue"])}
@@ -386,14 +446,23 @@ class ProductExpiryView(_ExportableAPIView):
 
     def get(self, request):
         tenant = self._get_current_tenant()
+        loc = self._api_display_locale
         service = InventoryReportService()
         days_ahead, product, location = self._get_filters(request)
 
+        scope_kw = report_scope_params_from_query(request.query_params)
         expiring = service.get_expiring_lots(
-            days_ahead=days_ahead, product=product, location=location, tenant=tenant,
+            days_ahead=days_ahead,
+            product=product,
+            location=location,
+            tenant=tenant,
+            **scope_kw,
         )
         expired = service.get_expired_lots(
-            product=product, location=location, tenant=tenant,
+            product=product,
+            location=location,
+            tenant=tenant,
+            **scope_kw,
         )
 
         def _lot_dict(lot, status):
@@ -401,13 +470,21 @@ class ProductExpiryView(_ExportableAPIView):
                 "status": status,
                 "product_id": lot.product_id,
                 "sku": lot.product.sku,
-                "product_name": lot.product.name,
+                "product_name": attribute_in_display_locale(
+                    lot.product, "name", loc,
+                ),
                 "lot_number": lot.lot_number,
                 "expiry_date": lot.expiry_date.isoformat(),
                 "days_to_expiry": lot.days_to_expiry(),
                 "quantity_remaining": lot.quantity_remaining,
                 "quantity_received": lot.quantity_received,
-                "supplier": str(lot.supplier) if lot.supplier else None,
+                "supplier": (
+                    attribute_in_display_locale(
+                        lot.supplier, "name", loc,
+                    )
+                    if lot.supplier
+                    else None
+                ),
             }
 
         items = [_lot_dict(lot, "expired") for lot in expired]
@@ -470,7 +547,10 @@ class LotHistoryView(_ExportableAPIView):
             return Response({"detail": "Product not found."}, status=404)
 
         service = InventoryReportService()
-        movements = service.get_lot_history(product=product, lot_number=lot_number, tenant=tenant)
+        scope_kw = report_scope_params_from_query(request.query_params)
+        movements = service.get_lot_history(
+            product=product, lot_number=lot_number, tenant=tenant, **scope_kw,
+        )
 
         items = [
             {
@@ -546,6 +626,7 @@ class VarianceReportView(_ExportableAPIView):
 
     def get(self, request):
         tenant = self._get_current_tenant()
+        loc = self._api_display_locale
         cycle_id = request.query_params.get("cycle_id")
         product_id = request.query_params.get("product_id")
         variance_type = request.query_params.get("variance_type")
@@ -554,13 +635,17 @@ class VarianceReportView(_ExportableAPIView):
         product_id = int(product_id) if product_id else None
 
         service = InventoryReportService()
+        scope_kw = report_scope_params_from_query(request.query_params)
         variances = service.get_variance_report(
             cycle_id=cycle_id,
             product_id=product_id,
             variance_type=variance_type,
             tenant=tenant,
+            **scope_kw,
         )
-        summary = service.get_variance_summary(cycle_id=cycle_id, tenant=tenant)
+        summary = service.get_variance_summary(
+            cycle_id=cycle_id, tenant=tenant, **scope_kw,
+        )
 
         items = [
             {
@@ -568,7 +653,9 @@ class VarianceReportView(_ExportableAPIView):
                 "cycle_id": v.cycle_id,
                 "cycle_name": v.cycle.name,
                 "product_sku": v.product.sku,
-                "product_name": v.product.name,
+                "product_name": attribute_in_display_locale(
+                    v.product, "name", loc,
+                ),
                 "location": str(v.location),
                 "variance_type": v.variance_type,
                 "variance_type_display": v.get_variance_type_display(),
@@ -629,7 +716,8 @@ class CycleHistoryView(_ExportableAPIView):
     def get(self, request):
         tenant = self._get_current_tenant()
         service = InventoryReportService()
-        cycles = service.get_cycle_history(tenant=tenant)
+        scope_kw = report_scope_params_from_query(request.query_params)
+        cycles = service.get_cycle_history(tenant=tenant, **scope_kw)
 
         fmt = self._wants_export(request)
         if fmt:
@@ -677,7 +765,12 @@ class ProductTraceabilityView(_ExportableAPIView):
             )
 
         service = InventoryReportService()
-        result = service.get_product_traceability(sku=sku, lot_number=lot_number, tenant=tenant)
+        result = service.get_product_traceability(
+            sku=sku,
+            lot_number=lot_number,
+            tenant=tenant,
+            wagtail_display_locale=self._api_display_locale,
+        )
 
         if result is None:
             return Response(

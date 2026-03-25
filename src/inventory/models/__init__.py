@@ -14,6 +14,7 @@ from .lot import StockLot, StockMovementLot
 from .product import Product, ProductImage, ProductQuerySet, ProductTag, TrackingMode, UnitOfMeasure
 from .reservation import AllocationStrategy, ReservationRule, ReservationStatus, StockReservation
 from .stock import MovementType, StockLocation, StockMovement, StockRecord
+from .warehouse import Warehouse
 
 __all__ = [
     "AllocationStrategy",
@@ -44,4 +45,5 @@ __all__ = [
     "UnitOfMeasure",
     "VarianceResolution",
     "VarianceType",
+    "Warehouse",
 ]

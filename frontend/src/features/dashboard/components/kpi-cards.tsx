@@ -78,7 +78,11 @@ export function KpiCards({
         title: t("kpi.locations.title"),
         value: formatCompactNumber(data.total_locations, locale),
         icon: MapPin,
-        description: t("kpi.locations.description"),
+        description: t("kpi.locations.description", {
+          facilities: formatCompactNumber(data.active_warehouses, locale),
+          retail: formatCompactNumber(data.locations_retail_site, locale),
+          linked: formatCompactNumber(data.locations_with_warehouse, locale),
+        }),
       },
       {
         id: "lowStock",

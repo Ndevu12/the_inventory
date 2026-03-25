@@ -11,6 +11,7 @@ from inventory.models import (
     StockMovement,
     StockMovementLot,
     StockRecord,
+    Warehouse,
 )
 from inventory.models.reservation import AllocationStrategy
 from tenants.middleware import get_effective_tenant
@@ -125,18 +126,135 @@ class ProductSerializer(
         return value
 
 
+class WarehouseSerializer(serializers.ModelSerializer):
+    """Tenant-scoped storage facility (DC, site)."""
+
+    class Meta:
+        model = Warehouse
+        fields = [
+            "id",
+            "name",
+            "description",
+            "is_active",
+            "timezone_name",
+            "address",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["created_at", "updated_at"]
+
+
+class WarehouseQuickStatsSerializer(serializers.ModelSerializer):
+    """Per-warehouse aggregates for dashboard / location UX (see ``warehouses/quick-stats/``)."""
+
+    location_count = serializers.IntegerField(read_only=True)
+    total_on_hand = serializers.IntegerField(read_only=True)
+    reserved_quantity = serializers.IntegerField(read_only=True)
+    available_quantity = serializers.SerializerMethodField()
+    capacity_total = serializers.IntegerField(read_only=True)
+    utilization_percent = serializers.SerializerMethodField()
+    low_stock_line_count = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = Warehouse
+        fields = [
+            "id",
+            "name",
+            "is_active",
+            "location_count",
+            "total_on_hand",
+            "reserved_quantity",
+            "available_quantity",
+            "capacity_total",
+            "utilization_percent",
+            "low_stock_line_count",
+        ]
+
+    def get_available_quantity(self, obj):
+        return (obj.total_on_hand or 0) - (obj.reserved_quantity or 0)
+
+    def get_utilization_percent(self, obj):
+        cap = obj.capacity_total or 0
+        if cap <= 0:
+            return None
+        on = obj.total_on_hand or 0
+        return round(100.0 * on / cap, 2)
+
+
 class StockLocationSerializer(serializers.ModelSerializer):
+    """Stock locations optionally linked to a :class:`~inventory.models.Warehouse`.
+
+    Reads return nested ``warehouse`` and ``warehouse_id`` (nullable for retail-only trees).
+    Writes accept ``warehouse_id`` (null clears the link on roots where allowed by the model).
+
+    MP tree fields: ``depth``, ``parent_id``, ``materialized_path`` align with treebeard.
+    ``ancestor_ids`` is set only on retrieve (for deep-link / expand-ancestor UX).
+    """
+
+    warehouse = WarehouseSerializer(read_only=True, allow_null=True)
+    warehouse_id = serializers.PrimaryKeyRelatedField(
+        queryset=Warehouse.objects.all(),
+        source="warehouse",
+        allow_null=True,
+        required=False,
+        write_only=True,
+    )
     current_utilization = serializers.IntegerField(read_only=True)
     remaining_capacity = serializers.IntegerField(read_only=True, allow_null=True)
+    stock_line_count = serializers.SerializerMethodField()
+    depth = serializers.IntegerField(read_only=True)
+    parent_id = serializers.SerializerMethodField()
+    materialized_path = serializers.CharField(source="path", read_only=True)
+    ancestor_ids = serializers.SerializerMethodField()
 
     class Meta:
         model = StockLocation
         fields = [
             "id", "name", "description", "is_active",
-            "max_capacity", "current_utilization", "remaining_capacity",
+            "max_capacity", "warehouse", "warehouse_id",
+            "current_utilization", "remaining_capacity", "stock_line_count",
+            "depth", "parent_id", "materialized_path", "ancestor_ids",
             "created_at", "updated_at",
         ]
         read_only_fields = ["created_at", "updated_at"]
+
+    def get_stock_line_count(self, obj):
+        try:
+            return obj.stock_line_count
+        except AttributeError:
+            return obj.stock_records.count()
+
+    def get_parent_id(self, obj):
+        parent_map = self.context.get("parent_id_map")
+        if parent_map is not None:
+            return parent_map.get(obj.pk)
+        if obj.depth <= 1:
+            return None
+        parent = obj.get_parent()
+        return parent.pk if parent else None
+
+    def get_ancestor_ids(self, obj):
+        if not self.context.get("with_ancestor_ids"):
+            return None
+        return [a.pk for a in obj.get_ancestors()]
+
+    def validate_warehouse(self, warehouse):
+        if warehouse is None:
+            return None
+        request = self.context.get("request")
+        tenant = self.context.get("tenant") or (
+            get_effective_tenant(request) if request else None
+        )
+        if tenant is not None and warehouse.tenant_id != tenant.pk:
+            raise serializers.ValidationError(
+                "Warehouse does not belong to the current tenant.",
+            )
+        return warehouse
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data["warehouse_id"] = instance.warehouse_id
+        return data
 
 
 class StockRecordSerializer(serializers.ModelSerializer):
@@ -144,7 +262,7 @@ class StockRecordSerializer(serializers.ModelSerializer):
 
     product_sku = serializers.CharField(source="product.sku", read_only=True)
     product_name = serializers.SerializerMethodField()
-    location_name = serializers.CharField(source="location.name", read_only=True)
+    location_name = serializers.SerializerMethodField()
     reserved_quantity = serializers.IntegerField(read_only=True)
     available_quantity = serializers.IntegerField(read_only=True)
     is_low_stock = serializers.BooleanField(read_only=True)
@@ -167,18 +285,24 @@ class StockRecordSerializer(serializers.ModelSerializer):
             obj.product, "name", display_locale_from_context(self.context),
         )
 
+    def get_location_name(self, obj):
+        return attribute_in_display_locale(
+            obj.location, "name", display_locale_from_context(self.context),
+        )
+
 
 class StockLotSerializer(serializers.ModelSerializer):
     """Read-only serializer for lot/batch records."""
 
     product_sku = serializers.CharField(source="product.sku", read_only=True)
+    product_name = serializers.SerializerMethodField()
     is_expired = serializers.BooleanField(read_only=True)
     days_to_expiry = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = StockLot
         fields = [
-            "id", "product", "product_sku", "lot_number", "serial_number",
+            "id", "product", "product_sku", "product_name", "lot_number", "serial_number",
             "manufacturing_date", "expiry_date", "received_date",
             "quantity_received", "quantity_remaining",
             "is_active", "is_expired", "days_to_expiry",
@@ -186,6 +310,11 @@ class StockLotSerializer(serializers.ModelSerializer):
             "created_at", "updated_at",
         ]
         read_only_fields = fields
+
+    def get_product_name(self, obj):
+        return attribute_in_display_locale(
+            obj.product, "name", display_locale_from_context(self.context),
+        )
 
 
 class StockMovementLotSerializer(serializers.ModelSerializer):
@@ -202,21 +331,18 @@ class StockMovementLotSerializer(serializers.ModelSerializer):
 
 class StockMovementSerializer(serializers.ModelSerializer):
     product_sku = serializers.CharField(source="product.sku", read_only=True)
+    product_name = serializers.SerializerMethodField()
     movement_type_display = serializers.CharField(
         source="get_movement_type_display", read_only=True,
     )
-    from_location_name = serializers.CharField(
-        source="from_location.name", read_only=True, default=None,
-    )
-    to_location_name = serializers.CharField(
-        source="to_location.name", read_only=True, default=None,
-    )
+    from_location_name = serializers.SerializerMethodField()
+    to_location_name = serializers.SerializerMethodField()
     lot_allocations = StockMovementLotSerializer(many=True, read_only=True)
 
     class Meta:
         model = StockMovement
         fields = [
-            "id", "product", "product_sku",
+            "id", "product", "product_sku", "product_name",
             "movement_type", "movement_type_display",
             "quantity", "unit_cost",
             "from_location", "from_location_name",
@@ -226,6 +352,27 @@ class StockMovementSerializer(serializers.ModelSerializer):
             "created_at", "created_by",
         ]
         read_only_fields = fields
+
+    def get_product_name(self, obj):
+        return attribute_in_display_locale(
+            obj.product, "name", display_locale_from_context(self.context),
+        )
+
+    def get_from_location_name(self, obj):
+        loc = obj.from_location
+        if loc is None:
+            return None
+        return attribute_in_display_locale(
+            loc, "name", display_locale_from_context(self.context),
+        )
+
+    def get_to_location_name(self, obj):
+        loc = obj.to_location
+        if loc is None:
+            return None
+        return attribute_in_display_locale(
+            loc, "name", display_locale_from_context(self.context),
+        )
 
 
 class StockMovementCreateSerializer(serializers.Serializer):

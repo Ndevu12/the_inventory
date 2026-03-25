@@ -11,6 +11,7 @@ export function createLocationSchema(messages: LocationSchemaMessages) {
     description: z.string(),
     is_active: z.boolean(),
     max_capacity: z.string(),
+    warehouse_id: z.number().nullable(),
   })
 }
 

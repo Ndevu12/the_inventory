@@ -10,7 +10,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from inventory.models import ReservationStatus
+from inventory.models import ReservationStatus, Warehouse
 from tests.fixtures.factories import (
     create_location,
     create_product,
@@ -58,6 +58,9 @@ class DashboardAPITests(TestCase):
         expected_keys = [
             "total_products",
             "total_locations",
+            "active_warehouses",
+            "locations_with_warehouse",
+            "locations_retail_site",
             "low_stock_count",
             "total_stock_records",
             "total_reserved",
@@ -118,6 +121,49 @@ class DashboardAPITests(TestCase):
         self.assertEqual(response.data["data"][idx], 200)
         self.assertEqual(response.data["reserved"][idx], 60)
         self.assertEqual(response.data["available"][idx], 140)
+
+    def test_stock_by_location_by_site_rollup(self):
+        product = create_product(tenant=self.tenant, sku="SITE-1")
+        wh_a = Warehouse.objects.create(tenant=self.tenant, name="DC Alpha")
+        wh_b = Warehouse.objects.create(tenant=self.tenant, name="DC Beta")
+        loc_a = create_location(tenant=self.tenant, name="Bin A", warehouse=wh_a)
+        loc_b = create_location(tenant=self.tenant, name="Bin B", warehouse=wh_b)
+        loc_retail = create_location(tenant=self.tenant, name="Floor", warehouse=None)
+
+        create_stock_record(product=product, location=loc_a, quantity=100)
+        create_stock_record(product=product, location=loc_b, quantity=200)
+        create_stock_record(product=product, location=loc_retail, quantity=50)
+        create_reservation(
+            product=product, location=loc_a,
+            quantity=25, status=ReservationStatus.CONFIRMED, tenant=self.tenant,
+        )
+
+        url = reverse("api-stock-by-location")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("by_site", response.data)
+        by_site = response.data["by_site"]
+        self.assertEqual(len(by_site), 3)
+
+        def site_row(label):
+            matches = [r for r in by_site if r["label"] == label]
+            self.assertEqual(len(matches), 1, f"expected one site row for {label!r}")
+            return matches[0]
+
+        self.assertEqual(site_row("DC Alpha")["total_quantity"], 100)
+        self.assertEqual(site_row("DC Alpha")["reserved"], 25)
+        self.assertEqual(site_row("DC Alpha")["available"], 75)
+        self.assertEqual(site_row("DC Alpha")["kind"], "warehouse")
+        self.assertEqual(site_row("DC Alpha")["warehouse_id"], wh_a.pk)
+
+        self.assertEqual(site_row("DC Beta")["total_quantity"], 200)
+        self.assertEqual(site_row("DC Beta")["reserved"], 0)
+        self.assertEqual(site_row("DC Beta")["kind"], "warehouse")
+
+        retail = site_row(self.tenant.name)
+        self.assertEqual(retail["kind"], "retail_site")
+        self.assertIsNone(retail["warehouse_id"])
+        self.assertEqual(retail["total_quantity"], 50)
 
     def test_movement_trends(self):
         url = reverse("api-movement-trends")

@@ -20,12 +20,14 @@ class SeederManagerTestCase(TransactionTestCase):
             StockLocation,
             StockRecord,
             StockMovement,
+            Warehouse,
         )
 
         StockMovement.objects.all().delete()
         StockRecord.objects.all().delete()
         Product.objects.all().delete()
         StockLocation.objects.all().delete()
+        Warehouse.objects.all().delete()
         Category.objects.all().delete()
 
         # Clean up tenants
@@ -40,12 +42,14 @@ class SeederManagerTestCase(TransactionTestCase):
             StockLocation,
             StockRecord,
             StockMovement,
+            Warehouse,
         )
 
         StockMovement.objects.all().delete()
         StockRecord.objects.all().delete()
         Product.objects.all().delete()
         StockLocation.objects.all().delete()
+        Warehouse.objects.all().delete()
         Category.objects.all().delete()
 
         # Clean up tenants

@@ -3,6 +3,10 @@
 Registers platform-level dashboard panels and admin CSS.
 The Tenants menu item is provided by ``TenantSnippetViewSet``
 in ``tenants/snippets.py`` (via ``add_to_admin_menu = True``).
+Catalog snippet group (**Catalog (translations)**) is loaded from
+``tenants.catalog_snippets`` so Product, Category, Supplier, and Customer
+appear under Snippets with wagtail-localize **Translate** actions (permission:
+``wagtail_localize.submit_translation``).
 """
 
 from urllib.parse import urlencode
@@ -12,6 +16,7 @@ from django.urls import reverse
 from wagtail import hooks
 from wagtail.admin.widgets.button import Button
 
+import tenants.catalog_snippets  # noqa: F401 — catalog SnippetViewSetGroup + register_snippet
 import tenants.snippets  # noqa: F401 — triggers register_snippet() at startup
 from tenants.models import Tenant
 from tenants.panels import (

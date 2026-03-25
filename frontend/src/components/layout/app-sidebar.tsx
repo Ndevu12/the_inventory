@@ -6,7 +6,8 @@ import {
   LayoutDashboardIcon,
   PackageIcon,
   TagsIcon,
-  WarehouseIcon,
+  Building2Icon,
+  MapPinIcon,
   DatabaseIcon,
   ArrowRightLeftIcon,
   BoxesIcon,
@@ -70,7 +71,13 @@ const NAV_GROUPS: NavGroupDef[] = [
     items: [
       { itemKey: "products", href: "/products", icon: PackageIcon },
       { itemKey: "categories", href: "/categories", icon: TagsIcon },
-      { itemKey: "stockLocations", href: "/stock/locations", icon: WarehouseIcon },
+    ],
+  },
+  {
+    groupKey: "stock",
+    items: [
+      { itemKey: "warehouses", href: "/stock/warehouses", icon: Building2Icon },
+      { itemKey: "stockLocations", href: "/stock/locations", icon: MapPinIcon },
       { itemKey: "stockRecords", href: "/stock/records", icon: DatabaseIcon },
       { itemKey: "stockMovements", href: "/stock/movements", icon: ArrowRightLeftIcon },
       { itemKey: "stockLots", href: "/stock/lots", icon: BoxesIcon },

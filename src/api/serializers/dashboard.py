@@ -6,6 +6,9 @@ from rest_framework import serializers
 class DashboardSummarySerializer(serializers.Serializer):
     total_products = serializers.IntegerField()
     total_locations = serializers.IntegerField()
+    active_warehouses = serializers.IntegerField()
+    locations_with_warehouse = serializers.IntegerField()
+    locations_retail_site = serializers.IntegerField()
     low_stock_count = serializers.IntegerField()
     total_stock_records = serializers.IntegerField()
     total_reserved = serializers.IntegerField()
@@ -20,11 +23,21 @@ class ChartDatasetSerializer(serializers.Serializer):
     data = serializers.ListField(child=serializers.IntegerField())
 
 
+class StockBySiteSerializer(serializers.Serializer):
+    warehouse_id = serializers.IntegerField(allow_null=True)
+    label = serializers.CharField()
+    kind = serializers.ChoiceField(choices=["warehouse", "retail_site"])
+    total_quantity = serializers.IntegerField()
+    reserved = serializers.IntegerField()
+    available = serializers.IntegerField()
+
+
 class StockByLocationSerializer(serializers.Serializer):
     labels = serializers.ListField(child=serializers.CharField())
     data = serializers.ListField(child=serializers.IntegerField())
     reserved = serializers.ListField(child=serializers.IntegerField())
     available = serializers.ListField(child=serializers.IntegerField())
+    by_site = StockBySiteSerializer(many=True)
 
 
 class OrderStatusSerializer(serializers.Serializer):

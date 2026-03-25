@@ -151,13 +151,25 @@ class GoodsReceivedNoteSerializer(serializers.ModelSerializer):
     location_name = serializers.CharField(
         source="location.name", read_only=True,
     )
+    warehouse_id = serializers.IntegerField(
+        source="location.warehouse_id", read_only=True, allow_null=True,
+    )
+    warehouse_name = serializers.SerializerMethodField()
 
     class Meta:
         model = GoodsReceivedNote
         fields = [
             "id", "grn_number", "purchase_order",
             "purchase_order_number", "received_date",
-            "location", "location_name", "notes", "is_processed",
+            "location", "location_name",
+            "warehouse_id", "warehouse_name",
+            "notes", "is_processed",
             "created_at", "updated_at",
         ]
         read_only_fields = ["is_processed", "created_at", "updated_at"]
+
+    def get_warehouse_name(self, obj):
+        loc = obj.location
+        if loc is None or not loc.warehouse_id:
+            return None
+        return loc.warehouse.name

@@ -3,6 +3,11 @@
 from rest_framework import serializers
 
 from inventory.models import StockLocation
+from inventory.utils.warehouse_scope import (
+    WAREHOUSE_SCOPE_UNSPECIFIED,
+    parse_report_warehouse_scope,
+)
+from tenants.middleware import get_effective_tenant
 
 
 # ---------------------------------------------------------------------------
@@ -45,10 +50,21 @@ class BulkTransferSerializer(serializers.Serializer):
 
     items = BulkTransferItemSerializer(many=True, min_length=1)
     from_location = serializers.PrimaryKeyRelatedField(
-        queryset=StockLocation.objects.all(),
+        queryset=StockLocation.objects.none(),
     )
     to_location = serializers.PrimaryKeyRelatedField(
-        queryset=StockLocation.objects.all(),
+        queryset=StockLocation.objects.none(),
+    )
+    warehouse_id = serializers.IntegerField(
+        required=False,
+        allow_null=True,
+        write_only=True,
+        help_text="When set, only locations in this facility are valid. JSON null means retail-only locations.",
+    )
+    retail_locations_only = serializers.BooleanField(
+        required=False,
+        default=False,
+        write_only=True,
     )
     reference = serializers.CharField(
         required=False, allow_blank=True, default="",
@@ -58,8 +74,56 @@ class BulkTransferSerializer(serializers.Serializer):
     )
     fail_fast = serializers.BooleanField(required=False, default=False)
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        request = self.context.get("request")
+        tenant = get_effective_tenant(request) if request else None
+        data = kwargs.get("data")
+        loc_qs = StockLocation.objects.none()
+        if tenant:
+            loc_qs = StockLocation.objects.filter(tenant=tenant)
+            if isinstance(data, dict):
+                try:
+                    scope, wid = parse_report_warehouse_scope(
+                        warehouse_id=data.get("warehouse_id", WAREHOUSE_SCOPE_UNSPECIFIED),
+                        retail_locations_only=bool(data.get("retail_locations_only")),
+                    )
+                except ValueError:
+                    scope = "all"
+                if scope == "retail":
+                    loc_qs = loc_qs.filter(warehouse_id__isnull=True)
+                elif scope == "facility":
+                    loc_qs = loc_qs.filter(warehouse_id=wid)
+        self.fields["from_location"].queryset = loc_qs
+        self.fields["to_location"].queryset = loc_qs
+
     def validate(self, attrs):
-        if attrs["from_location"] == attrs["to_location"]:
+        wh_raw = attrs.pop("warehouse_id", WAREHOUSE_SCOPE_UNSPECIFIED)
+        retail = attrs.pop("retail_locations_only", False)
+        try:
+            scope, wid = parse_report_warehouse_scope(
+                warehouse_id=wh_raw,
+                retail_locations_only=retail,
+            )
+        except ValueError as exc:
+            raise serializers.ValidationError(
+                "Invalid warehouse scope parameters."
+            ) from exc
+
+        from_loc = attrs["from_location"]
+        to_loc = attrs["to_location"]
+        if scope != "all":
+            for label, loc in (("from_location", from_loc), ("to_location", to_loc)):
+                if scope == "retail" and loc.warehouse_id is not None:
+                    raise serializers.ValidationError({
+                        label: "Location is not in the retail-only warehouse scope.",
+                    })
+                if scope == "facility" and loc.warehouse_id != wid:
+                    raise serializers.ValidationError({
+                        label: "Location does not belong to the requested warehouse.",
+                    })
+
+        if from_loc == to_loc:
             raise serializers.ValidationError({
                 "to_location": "Source and destination must be different.",
             })
@@ -85,12 +149,68 @@ class BulkAdjustmentSerializer(serializers.Serializer):
 
     items = BulkAdjustmentItemSerializer(many=True, min_length=1)
     location = serializers.PrimaryKeyRelatedField(
-        queryset=StockLocation.objects.all(),
+        queryset=StockLocation.objects.none(),
+    )
+    warehouse_id = serializers.IntegerField(
+        required=False,
+        allow_null=True,
+        write_only=True,
+    )
+    retail_locations_only = serializers.BooleanField(
+        required=False,
+        default=False,
+        write_only=True,
     )
     notes = serializers.CharField(
         required=False, allow_blank=True, default="",
     )
     fail_fast = serializers.BooleanField(required=False, default=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        request = self.context.get("request")
+        tenant = get_effective_tenant(request) if request else None
+        data = kwargs.get("data")
+        loc_qs = StockLocation.objects.none()
+        if tenant:
+            loc_qs = StockLocation.objects.filter(tenant=tenant)
+            if isinstance(data, dict):
+                try:
+                    scope, wid = parse_report_warehouse_scope(
+                        warehouse_id=data.get("warehouse_id", WAREHOUSE_SCOPE_UNSPECIFIED),
+                        retail_locations_only=bool(data.get("retail_locations_only")),
+                    )
+                except ValueError:
+                    scope = "all"
+                if scope == "retail":
+                    loc_qs = loc_qs.filter(warehouse_id__isnull=True)
+                elif scope == "facility":
+                    loc_qs = loc_qs.filter(warehouse_id=wid)
+        self.fields["location"].queryset = loc_qs
+
+    def validate(self, attrs):
+        wh_raw = attrs.pop("warehouse_id", WAREHOUSE_SCOPE_UNSPECIFIED)
+        retail = attrs.pop("retail_locations_only", False)
+        try:
+            scope, wid = parse_report_warehouse_scope(
+                warehouse_id=wh_raw,
+                retail_locations_only=retail,
+            )
+        except ValueError as exc:
+            raise serializers.ValidationError(
+                "Invalid warehouse scope parameters."
+            ) from exc
+        loc = attrs["location"]
+        if scope != "all":
+            if scope == "retail" and loc.warehouse_id is not None:
+                raise serializers.ValidationError({
+                    "location": "Location is not in the retail-only warehouse scope.",
+                })
+            if scope == "facility" and loc.warehouse_id != wid:
+                raise serializers.ValidationError({
+                    "location": "Location does not belong to the requested warehouse.",
+                })
+        return attrs
 
     def validate_items(self, value):
         if not value:

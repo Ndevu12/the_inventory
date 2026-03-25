@@ -14,8 +14,9 @@ from __future__ import annotations
 import logging
 from datetime import timedelta
 
+from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import Sum
+from django.db.models import QuerySet, Sum
 from django.utils import timezone
 
 from inventory.exceptions import InsufficientStockError, ReservationConflictError
@@ -28,6 +29,25 @@ from inventory.services.cache import invalidate_dashboard, invalidate_stock_reco
 from inventory.services.stock import StockService
 
 logger = logging.getLogger(__name__)
+
+
+def filter_stock_reservations_by_warehouse_scope(
+    queryset: QuerySet,
+    *,
+    tenant_id: int,
+    warehouse_id: int | None,
+) -> QuerySet:
+    """Narrow a :class:`~inventory.models.reservation.StockReservation` queryset by location partition.
+
+    Aligns with :class:`~inventory.models.stock.StockLocation` tree scope:
+    ``(tenant_id, warehouse_id)``, where ``warehouse_id`` of ``None`` selects
+    reservations at retail-only locations (no facility FK on the location).
+    """
+    qs = queryset.filter(tenant_id=tenant_id)
+    if warehouse_id is None:
+        return qs.filter(location__warehouse_id__isnull=True)
+    return qs.filter(location__warehouse_id=warehouse_id)
+
 
 _CANCELLABLE_STATUSES = frozenset({
     ReservationStatus.PENDING,
@@ -123,6 +143,11 @@ class ReservationService:
         """
         if quantity <= 0:
             raise ValueError("Reservation quantity must be positive.")
+
+        if product.tenant_id != location.tenant_id:
+            raise ValidationError(
+                "Product and stock location must belong to the same tenant.",
+            )
 
         if expires_at is None:
             expires_at = timezone.now() + DEFAULT_RESERVATION_TTL
@@ -277,10 +302,11 @@ class ReservationService:
 
         logger.info("Reservation %s cancelled.", reservation.pk)
 
-    def expire_stale_reservations(self) -> int:
+    def expire_stale_reservations(self, *, tenant_id: int | None = None) -> int:
         """Bulk-expire reservations past their ``expires_at``.
 
         Designed to be called by a management command or periodic task.
+        When ``tenant_id`` is set, only that tenant's reservations are expired.
 
         Returns
         -------
@@ -297,6 +323,8 @@ class ReservationService:
                     expires_at__lte=now,
                 )
             )
+            if tenant_id is not None:
+                stale_qs = stale_qs.filter(tenant_id=tenant_id)
             count = stale_qs.update(status=ReservationStatus.EXPIRED)
 
         if count:
@@ -349,6 +377,7 @@ class ReservationService:
         result = (
             StockReservation.objects
             .filter(
+                tenant_id=product.tenant_id,
                 product=product,
                 location=location,
                 status__in=list(_CANCELLABLE_STATUSES),
@@ -395,13 +424,14 @@ class ReservationService:
         Returns a :class:`StockLot` or ``None`` if no lots are available
         or the product has no active lots.
         """
-        rule = ReservationRule.get_rule_for_product(product)
+        rule = ReservationRule.get_rule_for_product(product, tenant=product.tenant)
         strategy = rule.allocation_strategy if rule else "FIFO"
         ordering = "received_date" if strategy == "FIFO" else "-received_date"
 
         lot = (
             StockLot.objects
             .filter(
+                tenant_id=product.tenant_id,
                 product=product,
                 is_active=True,
                 quantity_remaining__gte=quantity,

@@ -5,19 +5,25 @@ from io import BytesIO
 
 from django.http import HttpResponse
 from django_filters.rest_framework import DjangoFilterBackend, FilterSet, filters
+from drf_spectacular.utils import extend_schema
 from openpyxl import Workbook
 from rest_framework import viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 
+from api.mixins import TranslatableAPIReadMixin
 from api.pagination import StandardPagination
 from api.permissions import IsAdminOrOwner, IsPlatformSuperuser
+from api.schema_i18n import OPENAPI_LANGUAGE_QUERY_PARAMETER
 from api.serializers.audit import (
     ComplianceAuditLogSerializer,
     PlatformAuditLogSerializer,
 )
 from inventory.models import AuditAction, ComplianceAuditLog
+from inventory.utils.localized_attributes import attribute_in_display_locale
 from tenants.middleware import get_effective_tenant
+from tenants.permissions import get_membership
 
 _TENANT_CSV_HEADERS = [
     "ID", "Timestamp", "Action", "Product SKU", "Product",
@@ -42,7 +48,8 @@ class AuditLogFilter(FilterSet):
         fields = ["date_from", "date_to", "action", "product", "user"]
 
 
-class ComplianceAuditLogViewSet(viewsets.ReadOnlyModelViewSet):
+@extend_schema(parameters=[OPENAPI_LANGUAGE_QUERY_PARAMETER])
+class ComplianceAuditLogViewSet(TranslatableAPIReadMixin, viewsets.ReadOnlyModelViewSet):
     """Read-only audit log with filtering and CSV export.
 
     Accessible only to tenant admins and owners (JWT-safe via
@@ -72,6 +79,16 @@ class ComplianceAuditLogViewSet(viewsets.ReadOnlyModelViewSet):
     filterset_class = AuditLogFilter
     ordering = ["-timestamp"]
 
+    def _get_current_tenant(self):
+        tenant = get_effective_tenant(self.request)
+        if self.request.user.is_superuser:
+            return tenant
+        if tenant is None:
+            raise PermissionDenied("No tenant context set.")
+        if not get_membership(self.request.user, tenant=tenant):
+            raise PermissionDenied("User does not belong to this tenant.")
+        return tenant
+
     def get_queryset(self):
         qs = super().get_queryset()
         if self.request.user.is_superuser:
@@ -98,13 +115,17 @@ class ComplianceAuditLogViewSet(viewsets.ReadOnlyModelViewSet):
 
         writer = csv.writer(response)
         writer.writerow(_TENANT_CSV_HEADERS)
+        loc = getattr(self, "_api_display_locale", None)
         for entry in qs.iterator():
+            prod_name = ""
+            if entry.product_id:
+                prod_name = attribute_in_display_locale(entry.product, "name", loc) or ""
             writer.writerow([
                 entry.pk,
                 entry.timestamp.strftime("%Y-%m-%d %H:%M:%S") if entry.timestamp else "",
                 entry.get_action_display(),
-                getattr(entry.product, "sku", ""),
-                getattr(entry.product, "name", ""),
+                getattr(entry.product, "sku", "") if entry.product_id else "",
+                prod_name,
                 getattr(entry.user, "username", ""),
                 entry.ip_address or "",
                 str(entry.details) if entry.details else "",
@@ -121,7 +142,7 @@ class PlatformAuditLogFilter(AuditLogFilter):
         fields = AuditLogFilter.Meta.fields + ["tenant"]
 
 
-def _platform_export_row(entry):
+def _platform_export_row(entry, display_locale=None):
     """Build a row for CSV/Excel export (platform view)."""
     obj_type = "product" if entry.product_id else "general"
     obj_id = str(entry.product_id) if entry.product_id else ""
@@ -131,6 +152,9 @@ def _platform_export_row(entry):
                 obj_id = str(entry.details[key])
                 break
     tenant_name = entry.tenant.name if entry.tenant_id else ""
+    prod_name = ""
+    if entry.product_id:
+        prod_name = attribute_in_display_locale(entry.product, "name", display_locale) or ""
     return [
         entry.pk,
         entry.timestamp.strftime("%Y-%m-%d %H:%M:%S") if entry.timestamp else "",
@@ -138,15 +162,16 @@ def _platform_export_row(entry):
         entry.get_action_display(),
         obj_type,
         obj_id,
-        getattr(entry.product, "sku", ""),
-        getattr(entry.product, "name", ""),
+        getattr(entry.product, "sku", "") if entry.product_id else "",
+        prod_name,
         getattr(entry.user, "username", ""),
         entry.ip_address or "",
         str(entry.details) if entry.details else "",
     ]
 
 
-class PlatformAuditLogViewSet(viewsets.ReadOnlyModelViewSet):
+@extend_schema(parameters=[OPENAPI_LANGUAGE_QUERY_PARAMETER])
+class PlatformAuditLogViewSet(TranslatableAPIReadMixin, viewsets.ReadOnlyModelViewSet):
     """Platform-wide audit log for superusers.
 
     List all audit entries across tenants with filters and export.
@@ -177,6 +202,9 @@ class PlatformAuditLogViewSet(viewsets.ReadOnlyModelViewSet):
     filterset_class = PlatformAuditLogFilter
     ordering = ["-timestamp"]
 
+    def _get_current_tenant(self):
+        return get_effective_tenant(self.request)
+
     def list(self, request, *args, **kwargs):
         fmt = request.query_params.get("format") or request.query_params.get("export")
         if fmt == "csv":
@@ -200,8 +228,9 @@ class PlatformAuditLogViewSet(viewsets.ReadOnlyModelViewSet):
 
         writer = csv.writer(response)
         writer.writerow(_PLATFORM_CSV_HEADERS)
+        loc = getattr(self, "_api_display_locale", None)
         for entry in qs.iterator():
-            writer.writerow(_platform_export_row(entry))
+            writer.writerow(_platform_export_row(entry, display_locale=loc))
         return response
 
     def _export_xlsx(self, request):
@@ -210,8 +239,9 @@ class PlatformAuditLogViewSet(viewsets.ReadOnlyModelViewSet):
         ws = wb.active
         ws.title = "Audit Log"
         ws.append(_PLATFORM_CSV_HEADERS)
+        loc = getattr(self, "_api_display_locale", None)
         for entry in qs.iterator():
-            ws.append(_platform_export_row(entry))
+            ws.append(_platform_export_row(entry, display_locale=loc))
 
         buf = BytesIO()
         wb.save(buf)
