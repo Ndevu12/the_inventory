@@ -9,7 +9,48 @@ export type AuditAction =
   | "cycle_count_started"
   | "cycle_count_reconciled"
   | "bulk_operation"
+  | "product_created"
+  | "product_updated"
+  | "product_deleted"
+  | "category_created"
+  | "category_updated"
+  | "category_deleted"
+  | "warehouse_created"
+  | "warehouse_updated"
+  | "warehouse_deleted"
+  | "location_created"
+  | "location_updated"
+  | "location_deleted"
+  | "customer_created"
+  | "customer_updated"
+  | "customer_deleted"
+  | "supplier_created"
+  | "supplier_updated"
+  | "supplier_deleted"
+  | "sales_order_created"
+  | "sales_order_updated"
+  | "sales_order_deleted"
+  | "sales_order_confirmed"
+  | "sales_order_cancelled"
+  | "dispatch_created"
+  | "dispatch_updated"
+  | "dispatch_deleted"
+  | "dispatch_processed"
+  | "purchase_order_created"
+  | "purchase_order_updated"
+  | "purchase_order_deleted"
+  | "purchase_order_confirmed"
+  | "purchase_order_cancelled"
+  | "grn_created"
+  | "grn_updated"
+  | "grn_deleted"
+  | "grn_received"
   | "tenant_accessed"
+  | "tenant_deactivated"
+  | "tenant_reactivated"
+  | "tenant_limit_overridden"
+  | "impersonation_started"
+  | "impersonation_ended"
   | "tenant_export"
 
 export interface AuditEntry {
@@ -17,6 +58,8 @@ export interface AuditEntry {
   tenant: number
   action: AuditAction
   action_display: string
+  event_scope?: "operational" | "platform"
+  summary?: string
   product: number | null
   product_sku: string | null
   product_name: string | null
@@ -36,16 +79,4 @@ export interface AuditListParams {
   user?: string
   date_from?: string
   date_to?: string
-}
-
-/** Platform audit entry (superuser view across all tenants) */
-export interface PlatformAuditEntry extends AuditEntry {
-  tenant_name: string
-  tenant_slug: string
-  object_type: string
-  object_id: string | null
-}
-
-export interface PlatformAuditListParams extends AuditListParams {
-  tenant?: string
 }

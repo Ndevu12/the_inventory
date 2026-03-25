@@ -14,12 +14,13 @@ from rest_framework.permissions import IsAuthenticated
 
 from api.mixins import TranslatableAPIReadMixin
 from api.pagination import StandardPagination
-from api.permissions import IsPlatformSuperuser, IsTenantMemberAuthorizedForAuditLog
+from api.permissions import IsPlatformAuditAPIAccess, IsTenantMemberAuthorizedForAuditLog
 from api.schema_i18n import OPENAPI_LANGUAGE_QUERY_PARAMETER
 from api.serializers.audit import (
     ComplianceAuditLogSerializer,
     PlatformAuditLogSerializer,
 )
+from inventory.audit_display import PLATFORM_AUDIT_ACTIONS
 from inventory.models import AuditAction, ComplianceAuditLog
 from inventory.utils.localized_attributes import attribute_in_display_locale
 from tenants.middleware import get_effective_tenant
@@ -34,7 +35,6 @@ _PLATFORM_CSV_HEADERS = [
     "ID", "Timestamp", "Tenant", "Action", "Object Type", "Object ID",
     "Product SKU", "Product", "User", "IP Address", "Details",
 ]
-
 
 class AuditLogFilter(FilterSet):
     date_from = filters.DateTimeFilter(field_name="timestamp", lookup_expr="gte")
@@ -55,10 +55,16 @@ class ComplianceAuditLogViewSet(TranslatableAPIReadMixin, viewsets.ReadOnlyModel
     Accessible only to organization governance roles (owner/coordinator), JWT-safe via
     :class:`~api.permissions.IsTenantMemberAuthorizedForAuditLog`.
 
+    Responses **never** include **platform-scoped** actions (impersonation, tenant
+    lifecycle, export governance, etc.). Those entries are available to platform
+    operators only (e.g. ``PlatformAuditLogViewSet`` / Wagtail). Query parameters
+    ``include_platform_events`` / ``include_platform`` are ignored if sent by legacy
+    clients.
+
     Filters
     -------
     - ``date_from`` / ``date_to`` — timestamp range
-    - ``action`` — one of :class:`~inventory.models.audit.AuditAction`
+    - ``action`` — one of :class:`~inventory.models.audit_action.AuditAction`
     - ``product`` — product id
     - ``user`` — user id
 
@@ -92,7 +98,9 @@ class ComplianceAuditLogViewSet(TranslatableAPIReadMixin, viewsets.ReadOnlyModel
         tenant = get_effective_tenant(self.request)
         if tenant is None:
             return qs.none()
-        return qs.filter(tenant=tenant)
+        qs = qs.filter(tenant=tenant)
+        qs = qs.exclude(action__in=PLATFORM_AUDIT_ACTIONS)
+        return qs
 
     def list(self, request, *args, **kwargs):
         if request.query_params.get("export") == "csv":
@@ -168,7 +176,10 @@ def _platform_export_row(entry, display_locale=None):
 
 @extend_schema(parameters=[OPENAPI_LANGUAGE_QUERY_PARAMETER])
 class PlatformAuditLogViewSet(TranslatableAPIReadMixin, viewsets.ReadOnlyModelViewSet):
-    """Platform-wide audit log for superusers.
+    """Platform-wide audit log for system operators.
+
+    Accessible to Django superusers and to users with Wagtail **access admin**
+    permission — same policy as the read-only platform audit snippet in Wagtail.
 
     List all audit entries across tenants with filters and export.
 
@@ -176,7 +187,7 @@ class PlatformAuditLogViewSet(TranslatableAPIReadMixin, viewsets.ReadOnlyModelVi
     -------
     - ``tenant`` — tenant id
     - ``date_from`` / ``date_to`` — timestamp range
-    - ``action`` — one of :class:`~inventory.models.audit.AuditAction`
+    - ``action`` — one of :class:`~inventory.models.audit_action.AuditAction`
     - ``product`` — product id
     - ``user`` — user id
 
@@ -192,7 +203,7 @@ class PlatformAuditLogViewSet(TranslatableAPIReadMixin, viewsets.ReadOnlyModelVi
         .all()
     )
     serializer_class = PlatformAuditLogSerializer
-    permission_classes = [IsAuthenticated, IsPlatformSuperuser]
+    permission_classes = [IsAuthenticated, IsPlatformAuditAPIAccess]
     pagination_class = StandardPagination
     filter_backends = [DjangoFilterBackend]
     filterset_class = PlatformAuditLogFilter

@@ -2,6 +2,7 @@
 
 from rest_framework import serializers
 
+from inventory.audit_display import build_audit_summary, event_scope_for_action
 from inventory.models import ComplianceAuditLog
 
 from api.serializers.localized_strings import (
@@ -21,6 +22,8 @@ class ComplianceAuditLogSerializer(serializers.ModelSerializer):
     username = serializers.CharField(
         source="user.username", read_only=True, default=None,
     )
+    event_scope = serializers.SerializerMethodField()
+    summary = serializers.SerializerMethodField()
 
     class Meta:
         model = ComplianceAuditLog
@@ -29,6 +32,8 @@ class ComplianceAuditLogSerializer(serializers.ModelSerializer):
             "tenant",
             "action",
             "action_display",
+            "event_scope",
+            "summary",
             "product",
             "product_sku",
             "product_name",
@@ -39,6 +44,12 @@ class ComplianceAuditLogSerializer(serializers.ModelSerializer):
             "details",
         ]
         read_only_fields = fields
+
+    def get_event_scope(self, obj):
+        return event_scope_for_action(obj.action)
+
+    def get_summary(self, obj):
+        return build_audit_summary(obj)
 
     def get_product_name(self, obj):
         if not obj.product_id:

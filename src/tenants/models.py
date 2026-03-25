@@ -19,7 +19,6 @@ import secrets
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
-from django.utils.translation import gettext_lazy as _
 from modelcluster.fields import ParentalKey
 from modelcluster.models import ClusterableModel
 from wagtail.admin.panels import (
@@ -31,34 +30,8 @@ from wagtail.admin.panels import (
 )
 from wagtail.search import index
 
+from tenants.enums import InvitationStatus, SubscriptionPlan, SubscriptionStatus, TenantRole
 from tenants.wagtail_locales import wagtail_locale_choices
-
-
-# ---------------------------------------------------------------------------
-# Choices
-# ---------------------------------------------------------------------------
-
-
-class TenantRole(models.TextChoices):
-    OWNER = "owner", _("Owner")
-    COORDINATOR = "coordinator", _("Coordinator")
-    MANAGER = "manager", _("Manager")
-    VIEWER = "viewer", _("Viewer")
-
-
-class SubscriptionPlan(models.TextChoices):
-    FREE = "free", _("Free")
-    STARTER = "starter", _("Starter")
-    PROFESSIONAL = "professional", _("Professional")
-    ENTERPRISE = "enterprise", _("Enterprise")
-
-
-class SubscriptionStatus(models.TextChoices):
-    ACTIVE = "active", _("Active")
-    TRIAL = "trial", _("Trial")
-    PAST_DUE = "past_due", _("Past Due")
-    CANCELLED = "cancelled", _("Cancelled")
-    SUSPENDED = "suspended", _("Suspended")
 
 
 # ---------------------------------------------------------------------------
@@ -355,13 +328,6 @@ INVITATION_EXPIRY_DAYS = 7
 
 def _make_token():
     return secrets.token_urlsafe(48)
-
-
-class InvitationStatus(models.TextChoices):
-    PENDING = "pending", _("Pending")
-    ACCEPTED = "accepted", _("Accepted")
-    CANCELLED = "cancelled", _("Cancelled")
-    EXPIRED = "expired", _("Expired")
 
 
 class TenantInvitation(models.Model):

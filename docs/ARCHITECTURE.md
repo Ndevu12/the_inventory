@@ -58,7 +58,7 @@ The product separates **who can use the tenant inventory app** from **who can op
 
 - Issuing and refreshing access tokens requires **at least one active** `TenantMembership`. If a user is valid for Wagtail but has no active organization membership, login responds with **403** and a stable payload including `code: "no_tenant_membership"` and guidance that platform operators should use Wagtail.
 - Refresh re-checks membership so sessions cannot be extended after the last membership is revoked.
-- Tenant-facing API responses for the current user (e.g. `/api/v1/auth/me/`) intentionally avoid exposing `is_staff` / `is_superuser` so the Next.js app does not treat platform flags as tenant capabilities.
+- **User payload:** read-only `is_superuser` (and optionally `is_staff`) on login and `/api/v1/auth/me/` lets the Next.js app gate platform-only UI without probing 403 on every visit. Contract details: [API_SHARED_CONTRACT.md](API_SHARED_CONTRACT.md). Tenant REST routes still require membership; platform flags are **not** tenant capabilities.
 
 - **Dual-console accounts:** If a person is deliberately given both Wagtail access (`is_staff` / `is_superuser`) **and** an active `TenantMembership`, they obtain tenant JWTs and use the SPA like any other member. The inventory app does **not** block the SPA solely because those Django flags are set; lack of membership is what keeps typical platform operators out of the tenant app.
 
@@ -142,7 +142,7 @@ The backend is a **headless API** for **tenant** applications: the **[frontend/]
 | Platform admin | **Wagtail 7** | Staff UI, reports; inventory snippets **if registered** (monitoring/support—not primary for tenant operators) |
 | Legacy / optional templates | Django templates, **HTMX**, **Alpine.js**, **Tailwind** | Some reports, imports, or custom views under Wagtail—not the tenant Next.js app |
 
-**Internationalization:** The stack uses **more than next-intl**. **Static tenant UI copy** (nav, forms, errors in the SPA) uses **next-intl** and JSON under `frontend/public/locales/`. **Catalog and domain content** (product name, descriptions, etc.) uses **Wagtail i18n + [wagtail-localize](https://www.wagtail-localize.org/)** (`TranslatableMixin`) with **linked rows per locale** in the database—not those JSON files. The **REST API** exposes the correct language variant via `GET ?language=` and write rules below. Tenant **reads** use `GET ?language=` (then tenant default, then `Accept-Language`) to overlay translated strings while list endpoints keep **canonical locale ids**. **Writes** (`POST`/`PATCH`/`PUT`) use `?language=` when set; otherwise the tenant **canonical** locale (`Accept-Language` is not used on writes). **POST** in a non-canonical locale requires body field **`translation_of`**: the primary key of the **canonical** row (the id from default list responses). **PATCH** with `?language=` updates that locale’s row (creating the linked translation when missing). Wagtail admin remains available for staff where snippets are registered. Task breakdown: [TASKS.MD](TASKS.MD) (I18N-*). **Stack table, boundaries, and Next-only merge limits:** [I18N_LIMITATIONS.md](I18N_LIMITATIONS.md).
+**Internationalization:** The stack uses **more than next-intl**. **Static tenant UI copy** (nav, forms, errors in the SPA) uses **next-intl** and JSON under `frontend/public/locales/` (loaded at runtime; many trees are produced from `frontend/scripts/` via `yarn locale:merge`—see [I18N_FRONTEND.md](I18N_FRONTEND.md)). **Catalog and domain content** (product name, descriptions, etc.) uses **Wagtail i18n + [wagtail-localize](https://www.wagtail-localize.org/)** (`TranslatableMixin`) with **linked rows per locale** in the database—not those JSON files. The **REST API** exposes the correct language variant via `GET ?language=` and write rules below. Tenant **reads** use `GET ?language=` (then tenant default, then `Accept-Language`) to overlay translated strings while list endpoints keep **canonical locale ids**. **Writes** (`POST`/`PATCH`/`PUT`) use `?language=` when set; otherwise the tenant **canonical** locale (`Accept-Language` is not used on writes). **POST** in a non-canonical locale requires body field **`translation_of`**: the primary key of the **canonical** row (the id from default list responses). **PATCH** with `?language=` updates that locale’s row (creating the linked translation when missing). Wagtail admin remains available for staff where snippets are registered. Task breakdown: [TASKS.MD](TASKS.MD) (I18N-*). **Next.js catalogs (scripts, merge, runtime):** [I18N_FRONTEND.md](I18N_FRONTEND.md). **Stack boundaries and limitations:** [I18N_LIMITATIONS.md](I18N_LIMITATIONS.md).
 
 **Why this split?**
 
@@ -580,6 +580,8 @@ JWT tokens are obtained via `/api/v1/auth/login/` and refreshed via `/api/v1/aut
 **CORS:** `django-cors-headers` allows cross-origin requests from configured frontend origins.
 
 **API Documentation:** OpenAPI 3.0 schema at `/api/v1/schema/`, Swagger UI at `/api/v1/docs/`, Redoc at `/api/v1/redoc/` — powered by `drf-spectacular`.
+
+**Shared REST contract (user flags, audit list `summary` / `event_scope`, tenant audit filtering):** [API_SHARED_CONTRACT.md](API_SHARED_CONTRACT.md).
 
 **CRUD Endpoints (11 ViewSets):**
 

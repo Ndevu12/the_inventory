@@ -4,19 +4,35 @@ import csv
 import io
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Permission
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase
 
+from inventory.audit_display import EVENT_SCOPE_OPERATIONAL, PLATFORM_AUDIT_ACTIONS
 from inventory.models import AuditAction, ComplianceAuditLog
-from tests.fixtures.factories import create_product, create_tenant
+from tests.fixtures.factories import (
+    create_membership,
+    create_platform_staff_user,
+    create_platform_superuser,
+    create_product,
+    create_tenant,
+)
 from tenants.models import TenantRole
-from tests.fixtures.factories import create_membership
 
 User = get_user_model()
 
 AUDIT_LOG_URL = "/api/v1/audit-log/"
+PLATFORM_AUDIT_LOG_URL = "/api/v1/platform/audit-log/"
+
+
+def _grant_wagtail_admin_access(user):
+    perm = Permission.objects.get(
+        content_type__app_label="wagtailadmin",
+        codename="access_admin",
+    )
+    user.user_permissions.add(perm)
 
 
 class AuditLogSetupMixin:
@@ -74,6 +90,9 @@ class AuditLogListTests(AuditLogSetupMixin, APITestCase):
         self.assertIn("timestamp", entry)
         self.assertIn("ip_address", entry)
         self.assertIn("details", entry)
+        self.assertIn("event_scope", entry)
+        self.assertIn("summary", entry)
+        self.assertEqual(entry["event_scope"], EVENT_SCOPE_OPERATIONAL)
         self.assertEqual(entry["product_sku"], "AUD-001")
         self.assertEqual(entry["username"], "audit_coordinator")
 
@@ -87,6 +106,88 @@ class AuditLogListTests(AuditLogSetupMixin, APITestCase):
         response = self.client.get(AUDIT_LOG_URL)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["count"], 0)
+
+    def test_list_excludes_platform_scoped_actions_by_default(self):
+        self._create_log(action=AuditAction.STOCK_RECEIVED)
+        self._create_log(action=AuditAction.IMPERSONATION_STARTED, details={})
+        self._create_log(action=AuditAction.TENANT_EXPORT, details={})
+        response = self.client.get(AUDIT_LOG_URL)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["count"], 1)
+        self.assertEqual(response.data["results"][0]["action"], AuditAction.STOCK_RECEIVED)
+        self.assertEqual(response.data["results"][0]["event_scope"], EVENT_SCOPE_OPERATIONAL)
+
+    def test_list_include_platform_events_does_not_widen_results(self):
+        self._create_log(action=AuditAction.STOCK_RECEIVED)
+        self._create_log(action=AuditAction.IMPERSONATION_STARTED, details={})
+        default = self.client.get(AUDIT_LOG_URL)
+        with_flag = self.client.get(
+            AUDIT_LOG_URL, {"include_platform_events": "true"},
+        )
+        self.assertEqual(default.status_code, status.HTTP_200_OK)
+        self.assertEqual(with_flag.status_code, status.HTTP_200_OK)
+        self.assertEqual(default.data["count"], 1)
+        self.assertEqual(with_flag.data["count"], 1)
+        self.assertEqual(with_flag.data["results"][0]["action"], AuditAction.STOCK_RECEIVED)
+        self.assertEqual(with_flag.data["results"][0]["event_scope"], EVENT_SCOPE_OPERATIONAL)
+
+    def test_list_include_platform_events_never_returns_platform_scoped_rows(self):
+        self._create_log(action=AuditAction.STOCK_RECEIVED)
+        self._create_log(action=AuditAction.TENANT_ACCESSED, details={})
+        self._create_log(action=AuditAction.IMPERSONATION_STARTED, details={})
+        response = self.client.get(AUDIT_LOG_URL, {"include_platform_events": "true"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["count"], 1)
+        self.assertTrue(
+            all(item["event_scope"] == EVENT_SCOPE_OPERATIONAL for item in response.data["results"]),
+        )
+        self.assertTrue(
+            all(item["action"] not in PLATFORM_AUDIT_ACTIONS for item in response.data["results"]),
+        )
+
+    def test_list_include_platform_alias_ignored(self):
+        self._create_log(action=AuditAction.TENANT_DEACTIVATED, details={"reason": "test"})
+        response = self.client.get(AUDIT_LOG_URL, {"include_platform": "1"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["count"], 0)
+
+    def test_include_platform_events_does_not_include_other_tenants(self):
+        other_tenant = create_tenant(name="Other Org", slug="audit-other-tenant-iso")
+        other_user = User.objects.create_user(
+            username="audit_other_tenant_coord",
+            password="testpass123",
+            is_staff=False,
+        )
+        create_membership(
+            tenant=other_tenant,
+            user=other_user,
+            role=TenantRole.COORDINATOR,
+            is_default=True,
+        )
+        ComplianceAuditLog.objects.create(
+            tenant=other_tenant,
+            action=AuditAction.IMPERSONATION_STARTED,
+            user=other_user,
+            details={},
+        )
+        self._create_log(action=AuditAction.STOCK_RECEIVED)
+        self._create_log(action=AuditAction.IMPERSONATION_STARTED, details={})
+        response = self.client.get(
+            AUDIT_LOG_URL,
+            {"include_platform_events": "true"},
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["count"], 1)
+        tenant_pks = {r["tenant"] for r in response.data["results"]}
+        self.assertEqual(tenant_pks, {self.tenant.pk})
+        self.assertEqual(
+            response.data["results"][0]["action"], AuditAction.STOCK_RECEIVED,
+        )
+
+    def test_retrieve_platform_scoped_entry_not_found_for_tenant_api(self):
+        log = self._create_log(action=AuditAction.IMPERSONATION_STARTED, details={})
+        response = self.client.get(f"{AUDIT_LOG_URL}{log.pk}/")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
 
 class AuditLogFilterTests(AuditLogSetupMixin, APITestCase):
@@ -191,6 +292,15 @@ class AuditLogCSVExportTests(AuditLogSetupMixin, APITestCase):
         rows = list(reader)
         self.assertEqual(len(rows), 2)  # header + 1 filtered row
 
+    def test_csv_export_omits_platform_rows_by_default(self):
+        self._create_log(action=AuditAction.STOCK_RECEIVED)
+        self._create_log(action=AuditAction.TENANT_EXPORT, details={})
+        response = self.client.get(AUDIT_LOG_URL, {"export": "csv"})
+        content = response.content.decode("utf-8")
+        reader = csv.reader(io.StringIO(content))
+        rows = list(reader)
+        self.assertEqual(len(rows), 2)  # header + operational only
+
     def test_csv_export_empty(self):
         response = self.client.get(AUDIT_LOG_URL, {"export": "csv"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -292,3 +402,193 @@ class AuditLogPermissionTests(AuditLogSetupMixin, APITestCase):
         log = self._create_log()
         response = self.client.delete(f"{AUDIT_LOG_URL}{log.pk}/")
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
+class AuditLogTenantIsolationTests(APITestCase):
+    """Tenant audit list/detail never leak another tenant when user has multiple memberships."""
+
+    def setUp(self):
+        self.tenant_a = create_tenant(name="Iso A", slug="audit-tenant-iso-a")
+        self.tenant_b = create_tenant(name="Iso B", slug="audit-tenant-iso-b")
+        self.user = User.objects.create_user(
+            username="audit_isolation_user",
+            password="testpass123",
+            is_staff=False,
+        )
+        create_membership(
+            tenant=self.tenant_a,
+            user=self.user,
+            role=TenantRole.COORDINATOR,
+            is_default=True,
+        )
+        create_membership(
+            tenant=self.tenant_b,
+            user=self.user,
+            role=TenantRole.COORDINATOR,
+            is_default=False,
+        )
+        self.token = Token.objects.create(user=self.user)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {self.token.key}")
+
+        self.log_a = ComplianceAuditLog.objects.create(
+            tenant=self.tenant_a,
+            action=AuditAction.STOCK_RECEIVED,
+            user=self.user,
+            details={"n": "a"},
+        )
+        self.log_b = ComplianceAuditLog.objects.create(
+            tenant=self.tenant_b,
+            action=AuditAction.STOCK_ISSUED,
+            user=self.user,
+            details={"n": "b"},
+        )
+
+    def test_list_respects_x_tenant_header(self):
+        response = self.client.get(
+            AUDIT_LOG_URL,
+            HTTP_X_TENANT=self.tenant_a.slug,
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        ids = {r["id"] for r in response.data["results"]}
+        self.assertEqual(ids, {self.log_a.pk})
+
+        response_b = self.client.get(
+            AUDIT_LOG_URL,
+            HTTP_X_TENANT=self.tenant_b.slug,
+        )
+        self.assertEqual(response_b.status_code, status.HTTP_200_OK)
+        ids_b = {r["id"] for r in response_b.data["results"]}
+        self.assertEqual(ids_b, {self.log_b.pk})
+
+    def test_list_platform_rows_excluded_still_scoped_to_active_tenant(self):
+        ComplianceAuditLog.objects.create(
+            tenant=self.tenant_b,
+            action=AuditAction.IMPERSONATION_STARTED,
+            user=self.user,
+            details={},
+        )
+        ComplianceAuditLog.objects.create(
+            tenant=self.tenant_a,
+            action=AuditAction.IMPERSONATION_STARTED,
+            user=self.user,
+            details={},
+        )
+        response = self.client.get(
+            AUDIT_LOG_URL,
+            {"include_platform_events": "true"},
+            HTTP_X_TENANT=self.tenant_a.slug,
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        ids = {r["id"] for r in response.data["results"]}
+        self.assertEqual(ids, {self.log_a.pk})
+        tenant_pks = {r["tenant"] for r in response.data["results"]}
+        self.assertEqual(tenant_pks, {self.tenant_a.pk})
+        self.assertTrue(
+            all(r["event_scope"] == EVENT_SCOPE_OPERATIONAL for r in response.data["results"]),
+        )
+
+    def test_retrieve_other_tenant_log_returns_not_found(self):
+        response = self.client.get(
+            f"{AUDIT_LOG_URL}{self.log_b.pk}/",
+            HTTP_X_TENANT=self.tenant_a.slug,
+        )
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+
+class PlatformAuditLogAPITests(APITestCase):
+    """Cross-tenant platform audit API: superuser or Wagtail admin."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.tenant_a = create_tenant(name="Plat A", slug="platform-audit-api-a")
+        cls.tenant_b = create_tenant(name="Plat B", slug="platform-audit-api-b")
+        cls.coord_user = User.objects.create_user(
+            username="platform_audit_coord_api",
+            password="testpass123",
+            is_staff=False,
+        )
+        create_membership(
+            tenant=cls.tenant_a,
+            user=cls.coord_user,
+            role=TenantRole.COORDINATOR,
+            is_default=True,
+        )
+        cls.owner_user = User.objects.create_user(
+            username="platform_audit_owner_api",
+            password="testpass123",
+            is_staff=False,
+        )
+        create_membership(
+            tenant=cls.tenant_a,
+            user=cls.owner_user,
+            role=TenantRole.OWNER,
+            is_default=True,
+        )
+        cls.log_a = ComplianceAuditLog.objects.create(
+            tenant=cls.tenant_a,
+            action=AuditAction.STOCK_RECEIVED,
+            user=cls.coord_user,
+            details={},
+        )
+        cls.log_b = ComplianceAuditLog.objects.create(
+            tenant=cls.tenant_b,
+            action=AuditAction.STOCK_ISSUED,
+            user=cls.coord_user,
+            details={},
+        )
+
+    def test_unauthenticated_forbidden(self):
+        self.client.credentials()
+        response = self.client.get(PLATFORM_AUDIT_LOG_URL)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_coordinator_forbidden(self):
+        token, _ = Token.objects.get_or_create(user=self.coord_user)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {token.key}")
+        response = self.client.get(PLATFORM_AUDIT_LOG_URL)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_owner_forbidden(self):
+        token, _ = Token.objects.get_or_create(user=self.owner_user)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {token.key}")
+        response = self.client.get(PLATFORM_AUDIT_LOG_URL)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_staff_without_wagtail_admin_forbidden(self):
+        staff = create_platform_staff_user(
+            username="platform_audit_staff_no_wagtail",
+            password="staff_no_wagtail123",
+        )
+        token, _ = Token.objects.get_or_create(user=staff)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {token.key}")
+        response = self.client.get(PLATFORM_AUDIT_LOG_URL)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_wagtail_admin_non_superuser_sees_cross_tenant_rows(self):
+        wagtail_admin = create_platform_staff_user(
+            username="platform_audit_wagtail_api",
+            password="wagtail_api_pass123",
+        )
+        _grant_wagtail_admin_access(wagtail_admin)
+        token, _ = Token.objects.get_or_create(user=wagtail_admin)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {token.key}")
+        response = self.client.get(PLATFORM_AUDIT_LOG_URL)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertGreaterEqual(response.data["count"], 2)
+        ids = {r["id"] for r in response.data["results"]}
+        self.assertIn(self.log_a.pk, ids)
+        self.assertIn(self.log_b.pk, ids)
+
+    def test_superuser_sees_cross_tenant_rows(self):
+        su = create_platform_superuser(
+            username="platform_audit_super_api",
+            password="super_api_pass123",
+        )
+        token, _ = Token.objects.get_or_create(user=su)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {token.key}")
+        response = self.client.get(PLATFORM_AUDIT_LOG_URL)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertGreaterEqual(response.data["count"], 2)
+        ids = {r["id"] for r in response.data["results"]}
+        self.assertIn(self.log_a.pk, ids)
+        self.assertIn(self.log_b.pk, ids)

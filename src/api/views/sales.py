@@ -10,10 +10,13 @@ from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema
 
 from api.serializers.localized_strings import attribute_in_display_locale
+from inventory.audit_crud import log_tenant_audit
+from inventory.models import AuditAction
 from sales.models import Customer, Dispatch, SalesOrder
 from sales.services.sales import SalesService
 
 from api.mixins import TranslatableAPIReadMixin
+from api.mixins.audited_crud import AuditedTenantCRUDMixin
 from api.schema_i18n import OPENAPI_LANGUAGE_QUERY_PARAMETER
 from api.serializers.sales import (
     CustomerSerializer,
@@ -40,7 +43,12 @@ def _django_validation_detail(exc: DjangoValidationError) -> str:
 
 
 @extend_schema(parameters=[OPENAPI_LANGUAGE_QUERY_PARAMETER])
-class CustomerViewSet(TranslatableAPIReadMixin, TenantScopedInventoryMixin, viewsets.ModelViewSet):
+class CustomerViewSet(
+    TranslatableAPIReadMixin,
+    AuditedTenantCRUDMixin,
+    TenantScopedInventoryMixin,
+    viewsets.ModelViewSet,
+):
     queryset = Customer.objects.all()
     serializer_class = CustomerSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -49,14 +57,27 @@ class CustomerViewSet(TranslatableAPIReadMixin, TenantScopedInventoryMixin, view
     ordering_fields = ["name", "code", "created_at"]
     ordering = ["name"]
 
+    audit_action_create = AuditAction.CUSTOMER_CREATED
+    audit_action_update = AuditAction.CUSTOMER_UPDATED
+    audit_action_delete = AuditAction.CUSTOMER_DELETED
+
     def get_queryset(self):
         tenant = self._get_current_tenant()
         return super().get_queryset().filter(tenant=tenant)
+
+    def _audit_log_payload(self, instance):
+        return None, {
+            "object_type": "customer",
+            "object_id": instance.pk,
+            "code": instance.code,
+            "name": instance.name,
+        }
 
 
 @extend_schema(parameters=[OPENAPI_LANGUAGE_QUERY_PARAMETER])
 class SalesOrderViewSet(
     TranslatableAPIReadMixin,
+    AuditedTenantCRUDMixin,
     TenantScopedInventoryMixin,
     viewsets.ModelViewSet,
 ):
@@ -77,9 +98,21 @@ class SalesOrderViewSet(
     ordering_fields = ["order_date", "order_number", "created_at"]
     ordering = ["-order_date"]
 
+    audit_action_create = AuditAction.SALES_ORDER_CREATED
+    audit_action_update = AuditAction.SALES_ORDER_UPDATED
+    audit_action_delete = AuditAction.SALES_ORDER_DELETED
+
     def get_queryset(self):
         tenant = self._get_current_tenant()
         return super().get_queryset().filter(tenant=tenant)
+
+    def _audit_log_payload(self, instance):
+        return None, {
+            "object_type": "salesorder",
+            "object_id": instance.pk,
+            "order_number": instance.order_number,
+            "status": instance.status,
+        }
 
     @action(detail=True, methods=["post"])
     def confirm(self, request, pk=None):
@@ -96,6 +129,16 @@ class SalesOrderViewSet(
                 {"detail": _django_validation_detail(exc)},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        so.refresh_from_db()
+        log_tenant_audit(
+            request,
+            self._get_current_tenant(),
+            AuditAction.SALES_ORDER_CONFIRMED,
+            object_type="salesorder",
+            object_id=so.pk,
+            order_number=so.order_number,
+            status=so.status,
+        )
         return Response(self.get_serializer(so).data)
 
     @action(detail=True, methods=["post"])
@@ -110,12 +153,23 @@ class SalesOrderViewSet(
                 {"detail": _django_validation_detail(exc)},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        so.refresh_from_db()
+        log_tenant_audit(
+            request,
+            self._get_current_tenant(),
+            AuditAction.SALES_ORDER_CANCELLED,
+            object_type="salesorder",
+            object_id=so.pk,
+            order_number=so.order_number,
+            status=so.status,
+        )
         return Response(self.get_serializer(so).data)
 
 
 @extend_schema(parameters=[OPENAPI_LANGUAGE_QUERY_PARAMETER])
 class DispatchViewSet(
     TranslatableAPIReadMixin,
+    AuditedTenantCRUDMixin,
     TenantScopedInventoryMixin,
     viewsets.ModelViewSet,
 ):
@@ -128,9 +182,21 @@ class DispatchViewSet(
     ordering_fields = ["dispatch_date", "created_at"]
     ordering = ["-dispatch_date"]
 
+    audit_action_create = AuditAction.DISPATCH_CREATED
+    audit_action_update = AuditAction.DISPATCH_UPDATED
+    audit_action_delete = AuditAction.DISPATCH_DELETED
+
     def get_queryset(self):
         tenant = self._get_current_tenant()
         return super().get_queryset().filter(tenant=tenant)
+
+    def _audit_log_payload(self, instance):
+        return None, {
+            "object_type": "dispatch",
+            "object_id": instance.pk,
+            "dispatch_number": instance.dispatch_number,
+            "sales_order_id": instance.sales_order_id,
+        }
 
     @extend_schema(
         parameters=[OPENAPI_LANGUAGE_QUERY_PARAMETER],
@@ -163,6 +229,15 @@ class DispatchViewSet(
                 status=status.HTTP_400_BAD_REQUEST,
             )
         dispatch.refresh_from_db()
+        log_tenant_audit(
+            request,
+            self._get_current_tenant(),
+            AuditAction.DISPATCH_PROCESSED,
+            object_type="dispatch",
+            object_id=dispatch.pk,
+            dispatch_number=dispatch.dispatch_number,
+            sales_order_id=dispatch.sales_order_id,
+        )
         return Response(self.get_serializer(dispatch).data)
 
     @extend_schema(parameters=[OPENAPI_LANGUAGE_QUERY_PARAMETER])

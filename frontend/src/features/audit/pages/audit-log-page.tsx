@@ -16,7 +16,7 @@ import { AuditDetailDialog } from "../components/audit-detail-dialog"
 import type { AuditEntry, AuditListParams } from "../types/audit.types"
 
 export function AuditLogPage() {
-  const tPage = useTranslations("Audit.tenantPage")
+  const tAudit = useTranslations("Audit")
   const filters = useAuditFiltersStore()
 
   const [pagination, setPagination] = React.useState<PaginationState>({
@@ -43,7 +43,13 @@ export function AuditLogPage() {
     if (filters.dateFrom) p.date_from = filters.dateFrom
     if (filters.dateTo) p.date_to = filters.dateTo
     return p
-  }, [pagination, filters.ordering, actionFilter, filters.dateFrom, filters.dateTo])
+  }, [
+    pagination,
+    filters.ordering,
+    actionFilter,
+    filters.dateFrom,
+    filters.dateTo,
+  ])
 
   const { data, isLoading } = useAuditLog(params)
   const pageCount = data ? Math.ceil(data.count / pagination.pageSize) : 0
@@ -66,19 +72,19 @@ export function AuditLogPage() {
       const url = exportAuditCsv(params)
       window.open(url, "_blank")
     } catch {
-      toast.error(tPage("exportFailed"))
+      toast.error(tAudit("tenantPage.exportFailed"))
     }
-  }, [params, tPage])
+  }, [params, tAudit])
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-6">
       <PageHeader
-        title={tPage("title")}
-        description={tPage("description")}
+        title={tAudit("tenantPage.title")}
+        description={tAudit("tenantPage.description")}
         actions={
           <Button variant="outline" onClick={handleExportCsv}>
             <DownloadIcon className="mr-2 size-4" />
-            {tPage("exportCsv")}
+            {tAudit("tenantPage.exportCsv")}
           </Button>
         }
       />

@@ -1,4 +1,5 @@
-from .audit import AuditAction, ComplianceAuditLog
+from .audit import ComplianceAuditLog
+from .audit_action import AuditAction
 from .base import TimeStampedModel
 from .category import Category
 from .cycle import (

@@ -47,6 +47,7 @@ const BREADCRUMB_SEGMENT_KEYS = new Set([
   "audit-log",
   "settings",
   "members",
+  "platform-audit-log",
   "new",
   "edit",
 ]);

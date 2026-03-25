@@ -4,11 +4,16 @@ import type { ColumnDef } from "@tanstack/react-table"
 import { Badge } from "@/components/ui/badge"
 import { DataTableColumnHeader } from "@/components/data-table"
 import type { AuditEntry } from "../types/audit.types"
-import { AUDIT_ACTION_COLOR_MAP } from "../helpers/audit-constants"
+import {
+  AUDIT_ACTION_COLOR_MAP,
+  isAuditAction,
+} from "../helpers/audit-constants"
 
 export interface AuditColumnLabels {
   timestamp: string
   action: string
+  summary: string
+  scope: string
   product: string
   user: string
   ipAddress: string
@@ -20,13 +25,22 @@ export interface AuditColumnLabels {
 interface AuditColumnActions {
   onViewDetails: (entry: AuditEntry) => void
   labels: AuditColumnLabels
+  /** Localized action badge text (i18n), with server fallback inside implementation. */
+  getActionLabel: (entry: AuditEntry) => string
+  eventScopeLabel: (scope: "operational" | "platform") => string
+  showScopeColumn?: boolean
 }
 
 export function getAuditColumns(
   actions: AuditColumnActions,
 ): ColumnDef<AuditEntry>[] {
-  const { labels: L } = actions
-  return [
+  const {
+    labels: L,
+    getActionLabel,
+    eventScopeLabel,
+    showScopeColumn = true,
+  } = actions
+  const columns: ColumnDef<AuditEntry>[] = [
     {
       accessorKey: "timestamp",
       header: ({ column }) => (
@@ -43,14 +57,17 @@ export function getAuditColumns(
         <DataTableColumnHeader column={column} title={L.action} />
       ),
       cell: ({ row }) => {
-        const action = row.original.action
-        const colors = AUDIT_ACTION_COLOR_MAP[action]
+        const entry = row.original
+        const action = entry.action
+        const colors = isAuditAction(action)
+          ? AUDIT_ACTION_COLOR_MAP[action]
+          : undefined
         return (
           <Badge
             variant="outline"
-            className={`${colors?.bg ?? ""} ${colors?.text ?? ""} border-transparent`}
+            className={`${colors?.bg ?? ""} ${colors?.text ?? ""} border-transparent max-w-[min(100%,14rem)] whitespace-normal text-left`}
           >
-            {row.original.action_display}
+            {getActionLabel(entry)}
           </Badge>
         )
       },
@@ -58,6 +75,50 @@ export function getAuditColumns(
         if (!filterValue || filterValue.length === 0) return true
         return filterValue.includes(row.original.action)
       },
+    },
+    {
+      id: "summary",
+      accessorFn: (row) => row.summary ?? "",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={L.summary} />
+      ),
+      cell: ({ row }) => {
+        const summary = row.original.summary
+        if (!summary)
+          return <span className="text-muted-foreground">{L.emDash}</span>
+        return (
+          <span className="line-clamp-2 max-w-md text-sm" title={summary}>
+            {summary}
+          </span>
+        )
+      },
+      enableSorting: false,
+    },
+    {
+      id: "event_scope",
+      accessorFn: (row) => row.event_scope ?? "",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={L.scope} />
+      ),
+      cell: ({ row }) => {
+        const scope = row.original.event_scope
+        if (!scope)
+          return <span className="text-muted-foreground">{L.emDash}</span>
+        const isPlatform = scope === "platform"
+        return (
+          <Badge
+            variant="outline"
+            className={
+              isPlatform
+                ? "border-transparent bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300"
+                : "border-transparent bg-slate-100 text-slate-800 dark:bg-slate-800/40 dark:text-slate-300"
+            }
+          >
+            {eventScopeLabel(scope)}
+          </Badge>
+        )
+      },
+      enableSorting: false,
     },
     {
       accessorKey: "product_name",
@@ -117,4 +178,9 @@ export function getAuditColumns(
       enableHiding: false,
     },
   ]
+
+  if (!showScopeColumn) {
+    return columns.filter((column) => column.id !== "event_scope")
+  }
+  return columns
 }

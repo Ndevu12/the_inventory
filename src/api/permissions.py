@@ -35,6 +35,29 @@ class IsPlatformSuperuser(BasePermission):
         )
 
 
+# Permission codename for Wagtail admin menu (mirrors ``require_admin_access``).
+_WAGTAIL_ACCESS_ADMIN = "wagtailadmin.access_admin"
+
+
+class IsPlatformAuditAPIAccess(BasePermission):
+    """Full compliance audit via REST — same audience as the Wagtail platform audit snippet.
+
+    Allows **active** Django superusers or any user with **``wagtailadmin.access_admin``**
+    (typical Wagtail staff). Matches :class:`PlatformAuditLogPermissionPolicy` in
+    ``inventory.wagtail_audit_snippet``.
+    """
+
+    message = "Platform audit access requires superuser or Wagtail admin permission."
+
+    def has_permission(self, request, view):
+        user = request.user
+        if not user or not user.is_authenticated or not user.is_active:
+            return False
+        if user.is_superuser:
+            return True
+        return user.has_perm(_WAGTAIL_ACCESS_ADMIN)
+
+
 class IsTenantMemberAuthorizedForAuditLog(BasePermission):
     """Allow access to users with organization governance roles (JWT membership).
 

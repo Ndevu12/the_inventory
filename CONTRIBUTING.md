@@ -129,36 +129,46 @@ New Django apps live under **`src/`** next to the other apps. The **`seeders`** 
 
 ## Running Tests & Checks
 
-From **`src/`** (after `cd src`):
+### Mirror CI locally
+
+From the **repository root** (with your venv activated and `requirements.txt` / `requirements-dev.txt` installed), run the same steps as [GitHub Actions](.github/workflows/ci.yml):
 
 ```bash
-python manage.py test tests
+cd src
 python manage.py check
+python manage.py test tests
 python manage.py makemigrations --check --dry-run
+cd ..
+ruff check src tests
+```
+
+One-line equivalent from the **repository root** (ends back at the repo root for Ruff):
+
+```bash
+cd src && python manage.py check && python manage.py test tests && python manage.py makemigrations --check --dry-run && cd .. && ruff check src tests
 ```
 
 The test suite lives in the top-level **`tests`** package (repo root), not inside an installed app, so pass the **`tests`** label (or a dotted path such as `tests.api`) so Django discovers `TestCase` modules.
 
-**Ruff** is run from the **repository root** so paths match CI:
+**Ruff** must be run from the **repository root** so paths match CI. If you edited **`seeders/`**, also run:
 
 ```bash
-cd ..   # if you are still inside src/
-ruff check src tests seeders
+ruff check seeders
 ```
 
-CI sets `PYTHONPATH=<workspace>/src:<workspace>` and uses `working-directory: src` for Django steps. Locally, `cd src && python manage.py …` is enough because importing `the_inventory` adds the repo root and `src` to `sys.path`.
+**PYTHONPATH:** CI sets `PYTHONPATH=<workspace>/src:<workspace>`. Locally, `cd src && python manage.py …` is usually enough because importing `the_inventory` bootstraps `sys.path`. If you see `ModuleNotFoundError` for `seeders` or `tests`, set `export PYTHONPATH="$(pwd)/src:$(pwd)"` from the repo root before `cd src`.
 
 When adding new features, **include tests** under the top-level **`tests/`** package (mirroring the app or domain you are changing).
 
 ### Docker
 
-From the repository root, build the image to confirm the Dockerfile and entrypoint (migrate + Gunicorn from `src/`) still work:
+From the repository root, build the image to confirm the Dockerfile and entrypoint (migrations + Gunicorn after `cd` into `/app/src`) still work:
 
 ```bash
 docker build -t the_inventory .
 ```
 
-See [README — Docker](README.md#docker) for `docker run` examples and environment variables.
+A full build can take several minutes the first time. See [README — Docker](README.md#docker) for `docker run` examples and environment variables.
 
 ## Submitting a Pull Request
 
@@ -179,7 +189,7 @@ See [README — Docker](README.md#docker) for `docker run` examples and environm
 - [ ] Tests pass (`cd src && python manage.py test tests`)
 - [ ] No missing migrations (`cd src && python manage.py makemigrations --check --dry-run`)
 - [ ] `cd src && python manage.py check` reports no issues
-- [ ] Ruff clean from repo root (`ruff check src tests seeders`)
+- [ ] Ruff passes from repo root (`ruff check src tests`, plus `ruff check seeders` if you touched that app)
 - [ ] New features include tests
 - [ ] New models include migrations
 - [ ] Documentation updated if needed
