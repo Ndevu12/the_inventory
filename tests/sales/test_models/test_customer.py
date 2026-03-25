@@ -13,7 +13,7 @@ class CustomerCreationTests(TestCase):
     """Test Customer creation and field defaults."""
 
     def test_create_customer_with_defaults(self):
-        customer = create_customer()
+        customer = create_customer(code="CUST-001")
         self.assertEqual(customer.code, "CUST-001")
         self.assertEqual(customer.name, "Test Customer")
         self.assertTrue(customer.is_active)
@@ -23,7 +23,10 @@ class CustomerCreationTests(TestCase):
         self.assertEqual(str(customer), "CUST-100 — Acme Inc")
 
     def test_default_is_active(self):
-        customer = Customer.objects.create(code="CUST-DEF", name="Default Co")
+        tenant = create_tenant()
+        customer = Customer.objects.create(
+            code="CUST-DEF", name="Default Co", tenant=tenant,
+        )
         self.assertTrue(customer.is_active)
 
 

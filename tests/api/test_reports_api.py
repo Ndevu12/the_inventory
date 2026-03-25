@@ -39,7 +39,7 @@ class ReportsAPITests(TestCase):
         create_membership(
             tenant=self.tenant,
             user=self.user,
-            role=TenantRole.ADMIN,
+            role=TenantRole.COORDINATOR,
             is_default=True,
         )
         login_response = self.client.post(
@@ -239,7 +239,7 @@ class ProductTraceabilityAPITests(TestCase):
         create_membership(
             tenant=self.tenant,
             user=self.user,
-            role=TenantRole.ADMIN,
+            role=TenantRole.COORDINATOR,
             is_default=True,
         )
         login_response = self.client.post(

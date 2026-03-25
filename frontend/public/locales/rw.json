@@ -71,13 +71,9 @@
       "dispatches": "Kohereza",
       "reports": "Raporo",
       "auditLog": "Inyandiko zo gusuzuma",
-      "platformAuditLog": "Gusuzuma urubuga",
       "account": "Konti",
       "tenant": "Umukoresha w'urubuga",
-      "teamMembers": "Abanyamuryango b'itsinda",
-      "platformUsers": "Abakoresha",
-      "invitations": "Ubutumire",
-      "billing": "Kwishyuza"
+      "teamMembers": "Abanyamuryango b'itsinda"
     }
   },
   "Shell": {
@@ -1325,7 +1321,7 @@
     },
     "roles": {
       "owner": "Owner",
-      "admin": "Admin",
+      "coordinator": "Umukuru w'ibikorwa",
       "manager": "Manager",
       "viewer": "Viewer"
     },
@@ -1960,6 +1956,19 @@
     },
     "guard": {
       "loading": "Buri gukurura…"
+    },
+    "noOrganization": {
+      "loading": "Buri gukurura…",
+      "title": "Nta gihugu cy'umuryango ufite",
+      "description": "Winjiye, ariko ntiuri munyamuryango wa kimwe na kimwe mu gisubizo. Ibiharuro bigera gusa iyo uri munyamuryango.",
+      "platformHint": "Niba uyobora urubuga, winjire mua Wagtail (Django admin) kuyobora abakoresha, ubutumire, kwishyuza, n'ibikoresho by'imiryango myinshi.",
+      "signOut": "Sohoka"
+    },
+    "platformWagtail": {
+      "title": "Iki gikoresha kiri mua Wagtail",
+      "description": "Gucunga urubuga—abakoresha, ubutumire, kwishyuza, n'isuzuma ry'urubuga—bikorwa kuri Wagtail admin, atari kuri iri tsinda.",
+      "backHome": "Subira ku rubaho",
+      "signInDifferent": "Injira na konti indi"
     },
     "invitation": {
       "invalidTitle": "Invalid Invitation",

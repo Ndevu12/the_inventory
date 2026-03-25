@@ -71,13 +71,9 @@
       "dispatches": "Dispatches",
       "reports": "Reports",
       "auditLog": "Audit Log",
-      "platformAuditLog": "Platform Audit Log",
       "account": "Account",
       "tenant": "Tenant",
-      "teamMembers": "Team Members",
-      "platformUsers": "Users",
-      "invitations": "Invitations",
-      "billing": "Billing"
+      "teamMembers": "Team Members"
     }
   },
   "Shell": {

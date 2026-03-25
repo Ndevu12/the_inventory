@@ -58,7 +58,7 @@ class SeedDatabaseCommandTest(TransactionTestCase):
         self.assertEqual(Tenant.objects.get(slug="default").id, default_tenant.id)
 
     def test_seed_command_fails_without_default_tenant(self):
-        """Test: seed_database fails if Default tenant missing and --create-default not set."""
+        """Test: seed_database fails if Default tenant missing and not --clear / --create-default."""
         # Ensure no default tenant exists
         Tenant.objects.filter(slug="default").delete()
 
@@ -73,6 +73,22 @@ class SeedDatabaseCommandTest(TransactionTestCase):
 
         self.assertIn("Default tenant does not exist", str(cm.exception))
         self.assertIn("--create-default", str(cm.exception))
+
+    def test_seed_command_clear_creates_default_tenant_if_missing(self):
+        """Test: --clear creates Default tenant when missing (dev full reset)."""
+        Tenant.objects.filter(slug="default").delete()
+
+        call_command(
+            "seed_database",
+            "--clear",
+            "--quiet",
+            stdout=self.stdout,
+            stderr=self.stderr,
+        )
+
+        tenant = Tenant.objects.get(slug="default")
+        self.assertEqual(tenant.name, "Default")
+        self.assertTrue(tenant.is_active)
 
     def test_seed_command_uses_specified_tenant(self):
         """Test: seed_database seeds into specified tenant when --tenant is provided."""
@@ -226,6 +242,29 @@ class SeedDatabaseCommandTest(TransactionTestCase):
         # Should succeed using existing Default
         output = self.stdout.getvalue()
         self.assertIn("seeding completed successfully", output.lower())
+
+    def test_seed_command_models_users_runs_user_seeders(self):
+        """Test: --models=users seeds platform + tenant users for resolved tenant."""
+        from django.contrib.auth import get_user_model
+        from tenants.models import TenantMembership
+
+        tenant = create_tenant(name="Default", slug="default")
+        User = get_user_model()
+
+        call_command(
+            "seed_database",
+            "--models",
+            "users",
+            "--quiet",
+            stdout=self.stdout,
+            stderr=self.stderr,
+        )
+
+        self.assertTrue(User.objects.filter(username="platform_super").exists())
+        owner = User.objects.get(username="owner")
+        self.assertTrue(
+            TenantMembership.objects.filter(user=owner, tenant=tenant).exists(),
+        )
 
     def test_seed_command_create_default_flag_ignored_with_tenant(self):
         """Test: --create-default is ignored when --tenant is specified."""

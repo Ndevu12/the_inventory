@@ -379,7 +379,7 @@ function CreateUserDialog({
         email,
         password,
         tenant_ids: tenantIds.length ? tenantIds : undefined,
-        default_role: defaultRole as "owner" | "admin" | "manager" | "viewer",
+        default_role: defaultRole as "owner" | "coordinator" | "manager" | "viewer",
       },
       {
         onSuccess: () => {

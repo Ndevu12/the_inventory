@@ -59,7 +59,8 @@ def create_tenant_with_owner(
     - If owner_username is provided and user does not exist:
       - If owner_password: create user with password, TenantMembership.
       - If send_owner_invitation: create TenantInvitation (role=OWNER); no user yet.
-    - Owner user is made is_staff=True when assigned as owner.
+    - Owner assignment does not grant Django/Wagtail staff; tenant access is via
+      TenantMembership only (platform operators are provisioned separately).
 
     Returns:
         Tuple of (tenant, invitation_or_none). Invitation is set when
@@ -108,9 +109,6 @@ def create_tenant_with_owner(
                     )
 
         if user is not None:
-            user.is_staff = True
-            user.save(update_fields=["is_staff"])
-
             membership, created = TenantMembership.objects.get_or_create(
                 tenant=tenant,
                 user=user,

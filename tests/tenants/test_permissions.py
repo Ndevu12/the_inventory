@@ -3,13 +3,13 @@ from django.test import RequestFactory, TestCase
 from tenants.context import clear_current_tenant, set_current_tenant
 from tenants.models import TenantRole
 from tenants.permissions import (
-    IsTenantAdmin,
+    IsTenantGovernanceMember,
     IsTenantManager,
     IsTenantMember,
     IsTenantOwner,
     TenantReadOnlyOrManager,
-    can_admin,
     can_manage,
+    can_manage_organization,
     get_membership,
     has_role,
     is_owner,
@@ -27,7 +27,7 @@ class UtilityFunctionTest(TestCase):
 
     def test_get_membership_returns_active(self):
         m = create_membership(
-            tenant=self.tenant, user=self.user, role=TenantRole.ADMIN
+            tenant=self.tenant, user=self.user, role=TenantRole.COORDINATOR
         )
         set_current_tenant(self.tenant)
         self.assertEqual(get_membership(self.user), m)
@@ -36,7 +36,7 @@ class UtilityFunctionTest(TestCase):
         create_membership(
             tenant=self.tenant,
             user=self.user,
-            role=TenantRole.ADMIN,
+            role=TenantRole.COORDINATOR,
             is_active=False,
         )
         set_current_tenant(self.tenant)
@@ -67,15 +67,15 @@ class UtilityFunctionTest(TestCase):
         set_current_tenant(self.tenant)
         self.assertFalse(can_manage(self.user))
 
-    def test_can_admin_admin(self):
-        create_membership(tenant=self.tenant, user=self.user, role=TenantRole.ADMIN)
+    def test_can_manage_organization_coordinator(self):
+        create_membership(tenant=self.tenant, user=self.user, role=TenantRole.COORDINATOR)
         set_current_tenant(self.tenant)
-        self.assertTrue(can_admin(self.user))
+        self.assertTrue(can_manage_organization(self.user))
 
-    def test_can_admin_manager(self):
+    def test_can_manage_organization_denies_manager(self):
         create_membership(tenant=self.tenant, user=self.user, role=TenantRole.MANAGER)
         set_current_tenant(self.tenant)
-        self.assertFalse(can_admin(self.user))
+        self.assertFalse(can_manage_organization(self.user))
 
     def test_is_owner_true(self):
         create_membership(tenant=self.tenant, user=self.user, role=TenantRole.OWNER)
@@ -83,7 +83,7 @@ class UtilityFunctionTest(TestCase):
         self.assertTrue(is_owner(self.user))
 
     def test_is_owner_false(self):
-        create_membership(tenant=self.tenant, user=self.user, role=TenantRole.ADMIN)
+        create_membership(tenant=self.tenant, user=self.user, role=TenantRole.COORDINATOR)
         set_current_tenant(self.tenant)
         self.assertFalse(is_owner(self.user))
 
@@ -131,20 +131,20 @@ class DRFPermissionClassTest(TestCase):
         perm = IsTenantManager()
         self.assertFalse(perm.has_permission(self._request(), None))
 
-    def test_is_tenant_admin_allows_admin(self):
+    def test_is_tenant_governance_allows_coordinator(self):
         create_membership(
-            tenant=self.tenant, user=self.user, role=TenantRole.ADMIN
+            tenant=self.tenant, user=self.user, role=TenantRole.COORDINATOR
         )
         set_current_tenant(self.tenant)
-        perm = IsTenantAdmin()
+        perm = IsTenantGovernanceMember()
         self.assertTrue(perm.has_permission(self._request(), None))
 
-    def test_is_tenant_admin_denies_manager(self):
+    def test_is_tenant_governance_denies_manager(self):
         create_membership(
             tenant=self.tenant, user=self.user, role=TenantRole.MANAGER
         )
         set_current_tenant(self.tenant)
-        perm = IsTenantAdmin()
+        perm = IsTenantGovernanceMember()
         self.assertFalse(perm.has_permission(self._request(), None))
 
     def test_is_tenant_owner_allows_owner(self):
@@ -155,9 +155,9 @@ class DRFPermissionClassTest(TestCase):
         perm = IsTenantOwner()
         self.assertTrue(perm.has_permission(self._request(), None))
 
-    def test_is_tenant_owner_denies_admin(self):
+    def test_is_tenant_owner_denies_coordinator(self):
         create_membership(
-            tenant=self.tenant, user=self.user, role=TenantRole.ADMIN
+            tenant=self.tenant, user=self.user, role=TenantRole.COORDINATOR
         )
         set_current_tenant(self.tenant)
         perm = IsTenantOwner()
@@ -199,13 +199,13 @@ class DRFPermissionClassTest(TestCase):
         perm = IsTenantMember()
         self.assertTrue(perm.has_permission(self._request(), None))
 
-    def test_is_tenant_admin_resolves_tenant_without_thread_local(self):
+    def test_is_tenant_governance_resolves_tenant_without_thread_local(self):
         clear_current_tenant()
         create_membership(
             tenant=self.tenant,
             user=self.user,
-            role=TenantRole.ADMIN,
+            role=TenantRole.COORDINATOR,
             is_default=True,
         )
-        perm = IsTenantAdmin()
+        perm = IsTenantGovernanceMember()
         self.assertTrue(perm.has_permission(self._request(), None))

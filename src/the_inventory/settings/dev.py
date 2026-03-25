@@ -11,6 +11,8 @@ ALLOWED_HOSTS = ["*"]
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
+# Reset thread-local tenant between tests (see tests/runner.py).
+TEST_RUNNER = "tests.runner.DiscoverRunner"
 
 try:
     from .local import *  # noqa: F403,F401

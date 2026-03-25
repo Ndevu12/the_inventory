@@ -7,10 +7,10 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.filters import OrderingFilter, SearchFilter
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from api.mixins import TranslatableAPIReadMixin
-from api.permissions import ReadOnlyOrStaff
 from api.schema_i18n import OPENAPI_LANGUAGE_QUERY_PARAMETER
 from api.filters.cycle_reservation import InventoryCycleFilter
 from api.serializers.cycle import (
@@ -28,7 +28,7 @@ from inventory.models.cycle import (
 from inventory.services.cycle import CycleCountService
 from tenants.context import get_current_tenant
 from tenants.middleware import resolve_tenant_for_request
-from tenants.permissions import get_membership
+from tenants.permissions import TenantReadOnlyOrManager, get_membership
 
 import logging
 
@@ -42,8 +42,8 @@ class InventoryCycleViewSet(TranslatableAPIReadMixin,
                             viewsets.mixins.RetrieveModelMixin):
     """Manage inventory cycle counts.
 
-    Supports listing, retrieving, starting (creating), recording counts,
-    completing, and reconciling cycles.
+    All tenant members can list and retrieve. Owners, admins, and managers
+    may start cycles, record counts, complete, and reconcile.
     """
 
     queryset = (
@@ -65,7 +65,7 @@ class InventoryCycleViewSet(TranslatableAPIReadMixin,
         )
         .all()
     )
-    permission_classes = [ReadOnlyOrStaff]
+    permission_classes = [IsAuthenticated, TenantReadOnlyOrManager]
     filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
     filterset_class = InventoryCycleFilter
     search_fields = ["name"]

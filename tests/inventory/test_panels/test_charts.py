@@ -10,7 +10,13 @@ from inventory.panels import MovementTrendChart, OrderStatusChart, StockByLocati
 from procurement.models import PurchaseOrder, Supplier
 from sales.models import Customer, SalesOrder
 
-from ..factories import create_location, create_product, create_stock_movement, create_stock_record
+from ..factories import (
+    create_location,
+    create_product,
+    create_stock_movement,
+    create_stock_record,
+    create_tenant,
+)
 
 
 class StockByLocationChartTests(TestCase):
@@ -122,24 +128,30 @@ class OrderStatusChartTests(TestCase):
         self.assertEqual(json.loads(context["so_data_json"]), [])
 
     def test_with_purchase_orders(self):
-        supplier = Supplier.objects.create(code="SUP-CH1", name="Chart Supplier")
+        tenant = create_tenant()
+        supplier = Supplier.objects.create(
+            code="SUP-CH1", name="Chart Supplier", tenant=tenant,
+        )
         PurchaseOrder.objects.create(
             order_number="PO-CH1",
             supplier=supplier,
             status="draft",
             order_date=date.today(),
+            tenant=tenant,
         )
         PurchaseOrder.objects.create(
             order_number="PO-CH2",
             supplier=supplier,
             status="draft",
             order_date=date.today(),
+            tenant=tenant,
         )
         PurchaseOrder.objects.create(
             order_number="PO-CH3",
             supplier=supplier,
             status="confirmed",
             order_date=date.today(),
+            tenant=tenant,
         )
 
         panel = OrderStatusChart()
@@ -154,18 +166,23 @@ class OrderStatusChartTests(TestCase):
         self.assertEqual(po_data[po_labels.index("Confirmed")], 1)
 
     def test_with_sales_orders(self):
-        customer = Customer.objects.create(code="CUST-CH1", name="Chart Customer")
+        tenant = create_tenant()
+        customer = Customer.objects.create(
+            code="CUST-CH1", name="Chart Customer", tenant=tenant,
+        )
         SalesOrder.objects.create(
             order_number="SO-CH1",
             customer=customer,
             status="draft",
             order_date=date.today(),
+            tenant=tenant,
         )
         SalesOrder.objects.create(
             order_number="SO-CH2",
             customer=customer,
             status="fulfilled",
             order_date=date.today(),
+            tenant=tenant,
         )
 
         panel = OrderStatusChart()
@@ -180,20 +197,27 @@ class OrderStatusChartTests(TestCase):
         self.assertEqual(so_data[so_labels.index("Fulfilled")], 1)
 
     def test_with_both_order_types(self):
-        supplier = Supplier.objects.create(code="SUP-CH2", name="Both Supplier")
-        customer = Customer.objects.create(code="CUST-CH2", name="Both Customer")
+        tenant = create_tenant()
+        supplier = Supplier.objects.create(
+            code="SUP-CH2", name="Both Supplier", tenant=tenant,
+        )
+        customer = Customer.objects.create(
+            code="CUST-CH2", name="Both Customer", tenant=tenant,
+        )
 
         PurchaseOrder.objects.create(
             order_number="PO-B1",
             supplier=supplier,
             status="draft",
             order_date=date.today(),
+            tenant=tenant,
         )
         SalesOrder.objects.create(
             order_number="SO-B1",
             customer=customer,
             status="confirmed",
             order_date=date.today(),
+            tenant=tenant,
         )
 
         panel = OrderStatusChart()

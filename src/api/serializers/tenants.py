@@ -1,9 +1,11 @@
 """Serializers for tenant management API."""
 
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
 
 from tenants.models import Tenant, TenantMembership, TenantRole
+from tenants.role_validation import ensure_valid_tenant_role
 
 User = get_user_model()
 
@@ -108,6 +110,7 @@ class TenantMemberSerializer(serializers.ModelSerializer):
     email = serializers.CharField(source="user.email", read_only=True)
     first_name = serializers.CharField(source="user.first_name", read_only=True)
     last_name = serializers.CharField(source="user.last_name", read_only=True)
+    role = serializers.CharField(max_length=20)
     role_display = serializers.CharField(
         source="get_role_display", read_only=True,
     )
@@ -121,6 +124,10 @@ class TenantMemberSerializer(serializers.ModelSerializer):
         read_only_fields = ("id", "username", "email", "first_name", "last_name", "created_at")
 
     def validate_role(self, value):
+        try:
+            ensure_valid_tenant_role(value)
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError(list(exc.messages)) from exc
         request = self.context.get("request")
         if not request:
             return value

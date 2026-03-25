@@ -102,9 +102,14 @@ class StockLocationWarehouseScopeTests(TestCase):
 class StockLocationSaveOverrideTests(TestCase):
     """Test save() override for treebeard MP_Node creation."""
 
+    def setUp(self):
+        self.tenant = create_tenant()
+
     def test_save_creates_root_node_with_depth(self):
         """Direct save() on new instance should create a root node via add_root()."""
-        location = StockLocation(name="Direct Save", description="Test")
+        location = StockLocation(
+            name="Direct Save", description="Test", tenant=self.tenant,
+        )
         location.save()
         self.assertEqual(location.depth, 1)
         self.assertIsNotNone(location.path)
@@ -112,9 +117,9 @@ class StockLocationSaveOverrideTests(TestCase):
 
     def test_save_multiple_root_nodes(self):
         """Multiple save() calls should create distinct root nodes, not duplicates."""
-        loc1 = StockLocation(name="Warehouse A", description="")
+        loc1 = StockLocation(name="Warehouse A", description="", tenant=self.tenant)
         loc1.save()
-        loc2 = StockLocation(name="Warehouse B", description="")
+        loc2 = StockLocation(name="Warehouse B", description="", tenant=self.tenant)
         loc2.save()
         self.assertEqual(loc1.depth, 1)
         self.assertEqual(loc2.depth, 1)
@@ -434,6 +439,7 @@ class StockMovementStrTests(TestCase):
         location = create_location(name="Warehouse")
         movement = StockMovement(
             product=product,
+            tenant=product.tenant,
             movement_type=MovementType.RECEIVE,
             quantity=50,
             to_location=location,
@@ -450,6 +456,7 @@ class StockMovementValidationReceiveTests(TestCase):
         product = create_product(sku="RV-001")
         movement = StockMovement(
             product=product,
+            tenant=product.tenant,
             movement_type=MovementType.RECEIVE,
             quantity=10,
             to_location=None,
@@ -463,6 +470,7 @@ class StockMovementValidationReceiveTests(TestCase):
         location = create_location(name="Warehouse")
         movement = StockMovement(
             product=product,
+            tenant=product.tenant,
             movement_type=MovementType.RECEIVE,
             quantity=10,
             from_location=location,
@@ -477,6 +485,7 @@ class StockMovementValidationReceiveTests(TestCase):
         location = create_location(name="Warehouse")
         movement = StockMovement(
             product=product,
+            tenant=product.tenant,
             movement_type=MovementType.RECEIVE,
             quantity=10,
             to_location=location,
@@ -491,6 +500,7 @@ class StockMovementValidationIssueTests(TestCase):
         product = create_product(sku="IS-001")
         movement = StockMovement(
             product=product,
+            tenant=product.tenant,
             movement_type=MovementType.ISSUE,
             quantity=5,
             from_location=None,
@@ -504,6 +514,7 @@ class StockMovementValidationIssueTests(TestCase):
         location = create_location(name="Warehouse")
         movement = StockMovement(
             product=product,
+            tenant=product.tenant,
             movement_type=MovementType.ISSUE,
             quantity=5,
             from_location=location,
@@ -518,6 +529,7 @@ class StockMovementValidationIssueTests(TestCase):
         location = create_location(name="Warehouse")
         movement = StockMovement(
             product=product,
+            tenant=product.tenant,
             movement_type=MovementType.ISSUE,
             quantity=5,
             from_location=location,
@@ -533,6 +545,7 @@ class StockMovementValidationTransferTests(TestCase):
         location = create_location(name="Dest")
         movement = StockMovement(
             product=product,
+            tenant=product.tenant,
             movement_type=MovementType.TRANSFER,
             quantity=5,
             to_location=location,
@@ -546,6 +559,7 @@ class StockMovementValidationTransferTests(TestCase):
         location = create_location(name="Source")
         movement = StockMovement(
             product=product,
+            tenant=product.tenant,
             movement_type=MovementType.TRANSFER,
             quantity=5,
             from_location=location,
@@ -559,6 +573,7 @@ class StockMovementValidationTransferTests(TestCase):
         location = create_location(name="Same Place")
         movement = StockMovement(
             product=product,
+            tenant=product.tenant,
             movement_type=MovementType.TRANSFER,
             quantity=5,
             from_location=location,
@@ -574,6 +589,7 @@ class StockMovementValidationTransferTests(TestCase):
         loc_b = create_location(name="Location B")
         movement = StockMovement(
             product=product,
+            tenant=product.tenant,
             movement_type=MovementType.TRANSFER,
             quantity=5,
             from_location=loc_a,
@@ -589,6 +605,7 @@ class StockMovementValidationAdjustmentTests(TestCase):
         product = create_product(sku="ADJ-001")
         movement = StockMovement(
             product=product,
+            tenant=product.tenant,
             movement_type=MovementType.ADJUSTMENT,
             quantity=5,
         )
@@ -601,6 +618,7 @@ class StockMovementValidationAdjustmentTests(TestCase):
         location = create_location(name="Warehouse")
         movement = StockMovement(
             product=product,
+            tenant=product.tenant,
             movement_type=MovementType.ADJUSTMENT,
             quantity=5,
             from_location=location,
@@ -612,6 +630,7 @@ class StockMovementValidationAdjustmentTests(TestCase):
         location = create_location(name="Warehouse")
         movement = StockMovement(
             product=product,
+            tenant=product.tenant,
             movement_type=MovementType.ADJUSTMENT,
             quantity=5,
             to_location=location,
@@ -624,6 +643,7 @@ class StockMovementValidationAdjustmentTests(TestCase):
         loc_b = create_location(name="Dest")
         movement = StockMovement(
             product=product,
+            tenant=product.tenant,
             movement_type=MovementType.ADJUSTMENT,
             quantity=5,
             from_location=loc_a,
@@ -640,6 +660,7 @@ class StockMovementImmutabilityTests(TestCase):
         location = create_location(name="Warehouse")
         movement = StockMovement(
             product=product,
+            tenant=product.tenant,
             movement_type=MovementType.RECEIVE,
             quantity=10,
             to_location=location,
@@ -662,6 +683,7 @@ class StockMovementFKProtectionTests(TestCase):
         location = create_location(name="Warehouse")
         StockMovement(
             product=product,
+            tenant=product.tenant,
             movement_type=MovementType.RECEIVE,
             quantity=10,
             to_location=location,
@@ -677,6 +699,7 @@ class StockMovementFKProtectionTests(TestCase):
         location = create_location(name="Protected Warehouse")
         StockMovement(
             product=product,
+            tenant=product.tenant,
             movement_type=MovementType.RECEIVE,
             quantity=10,
             to_location=location,

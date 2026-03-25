@@ -45,6 +45,72 @@ The standard Django admin remains at `/django-admin/` for low-level access when 
 
 ---
 
+## Tenant plane vs platform plane (RBAC)
+
+The product separates **who can use the tenant inventory app** from **who can operate the platform**. Do not rely on Django `is_superuser` or `is_staff` to bypass tenant scoping on tenant inventory REST routes: effective tenant and an **active** [`TenantMembership`](../tenants/models.py) are required.
+
+| Plane | Audience | Primary UI | Auth | Tenant inventory API (`/api/v1/*` excluding platform routers) |
+| ----- | -------- | ---------- | ---- | ----- |
+| **Tenant** | Organization members (operators, managers, owners) | Next.js dashboard under `frontend/` | JWT from `/api/v1/auth/login/` and `/api/v1/auth/refresh/` | Must resolve a tenant and pass membership-aware permissions. Superuser **without** membership does **not** get tenant data via these endpoints. |
+| **Platform** | Internal staff, break-glass support | **Wagtail** at `/admin/` (session cookie) | Wagtail / Django session | Cross-tenant work happens here, not through the tenant SPA. Optional `/api/v1/platform/` may exist for automation; it is **not** a substitute for membership on tenant routes. |
+
+**JWT login rules**
+
+- Issuing and refreshing access tokens requires **at least one active** `TenantMembership`. If a user is valid for Wagtail but has no active organization membership, login responds with **403** and a stable payload including `code: "no_tenant_membership"` and guidance that platform operators should use Wagtail.
+- Refresh re-checks membership so sessions cannot be extended after the last membership is revoked.
+- Tenant-facing API responses for the current user (e.g. `/api/v1/auth/me/`) intentionally avoid exposing `is_staff` / `is_superuser` so the Next.js app does not treat platform flags as tenant capabilities.
+
+- **Dual-console accounts:** If a person is deliberately given both Wagtail access (`is_staff` / `is_superuser`) **and** an active `TenantMembership`, they obtain tenant JWTs and use the SPA like any other member. The inventory app does **not** block the SPA solely because those Django flags are set; lack of membership is what keeps typical platform operators out of the tenant app.
+
+**API impersonation (support, WS07)**
+
+Platform break-glass on **tenant** inventory APIs must use a **member** identity, not raw superuser on tenant ViewSets:
+
+| Endpoint | Who | Purpose |
+| -------- | --- | ------- |
+| `POST /api/v1/auth/impersonate/start/` | `IsAuthenticated` + **Django superuser** (`IsPlatformSuperuser`) | Returns JWT + profile + `memberships` for a **target user that has ≥ 1 active `TenantMembership`**. Each start is written to the compliance audit log. |
+| `POST /api/v1/auth/impersonate/end/` | Bearer token from an impersonation JWT (carries `impersonated_by`) | Records end-of-session in the audit log; client restores the operator’s stored tokens locally. |
+
+`ENABLE_API_IMPERSONATION` in settings (default **True**) can disable the **token-swap** routes while **Wagtail session impersonation** (`/admin/impersonate/...`) remains available for staff workflows.
+
+**Next.js dashboard**
+
+- Only users with **≥ 1** active membership are expected to use the SPA for inventory work. `AuthGuard` redirects when `memberships` is empty after bootstrap; it does **not** exclude users only because `is_staff` or `is_superuser` is true on the server. A dedicated **no-organization** route handles the edge case where a client still has credentials but no membership (defense in depth alongside the login gate).
+- Platform-only pages in the SPA (cross-tenant settings, platform audit, etc.) are removed or reduced: platform work belongs in Wagtail.
+
+**When `is_staff` and `is_superuser` still matter**
+
+| Flag | Typical use in this project |
+| ---- | --------------------------- |
+| `is_superuser` | Full Django/Wagtail access; platform break-glass. Does **not** grant tenant REST “god mode” when RBAC gates are enforced. |
+| `is_staff` | Can access Wagtail admin (and related staff workflows). **Platform-provisioned** users (e.g. created via platform APIs for staff) may remain `is_staff=True`. **Tenant-only** signups (register tenant, accept invitation as a new user) should be created with `is_staff=False` so routine tenant operators are not conflated with platform staff. |
+| Neither | Normal tenant-only accounts; access only via JWT + membership. |
+
+**Migrating existing deployments**
+
+- After tightening login and permissions, ensure every person who should use the Next.js app has an **active** `TenantMembership`. Users who only need Wagtail need accounts with appropriate `is_staff` / `is_superuser`, not necessarily a tenant membership.
+- Historical data may have tenant owners with `is_staff=True` from older provisioning. You may normalize those rows to `is_staff=False` when they are not platform operators (optional data migration or one-off script); Wagtail access remains governed by staff flags independent of tenant roles.
+- API clients and scripts that assumed “superuser sees all tenants over `/api/v1/`” must move cross-tenant operations to **Wagtail**, **platform** endpoints where explicitly supported, or dedicated service patterns — not generic tenant CRUD.
+
+**Vocabulary: tenant identifiers vs platform terminology**
+
+In code, APIs, and docs, keep **“admin”** language clearly **platform-oriented** (Wagtail, Django staff, superuser). Tenant-scoped names should encode **tenant + capability** (e.g. manage memberships, governance, audit) so they are not confused with platform admin.
+
+The second-tier tenant governance role is stored as **`coordinator`** (`TenantRole.COORDINATOR`); older databases are migrated from the legacy value `admin`. Tenant-scoped identifiers avoid the substring **admin** except when referring to **platform** (Wagtail, Django staff, superuser).
+
+| Concept | Implementation |
+| --- | --- |
+| Governance role (owner + second tier) | `TenantRole.OWNER`, `TenantRole.COORDINATOR`; `_TENANT_GOVERNANCE_ROLES` in `api/permissions.py` |
+| Membership / permission helpers | `TenantMembership.can_manage_organization`; `can_manage_organization()` in `tenants/permissions.py` |
+| DRF: organization governance | `IsTenantGovernanceMember` |
+| DRF: compliance audit log (JWT) | `IsTenantMemberAuthorizedForAuditLog` |
+
+User-visible copy uses labels such as “Coordinator” (i18n under `SettingsTenant.roles.coordinator`).
+
+See also: [TEST_USERS.md](../TEST_USERS.md) for seeded accounts and which plane they exercise.
+
+---
+
 ## Tech Stack
 
 | Layer | Technology | Notes |
@@ -564,9 +630,9 @@ JWT tokens are obtained via `/api/v1/auth/login/` and refreshed via `/api/v1/aut
 
 | Endpoint | Method | Permission |
 |---|---|---|
-| `/api/v1/tenants/current/` | GET/PATCH | Member (read) / Admin (write) |
+| `/api/v1/tenants/current/` | GET/PATCH | Member (read) / governance role — owner or tenant admin role — (write) |
 | `/api/v1/tenants/members/` | GET | Member |
-| `/api/v1/tenants/members/<id>/` | PATCH/DELETE | Admin/Owner |
+| `/api/v1/tenants/members/<id>/` | PATCH/DELETE | Owner or tenant admin role |
 
 **Import Endpoint:** POST `/api/v1/import/` — multipart file upload for CSV/Excel bulk imports.
 
@@ -583,22 +649,22 @@ Multi-tenancy infrastructure enabling multiple organizations to share a single d
 | Model | Type | Purpose |
 |---|---|---|
 | `Tenant` | Django Model (indexed) | Organization root — name, slug, active flag, branding (site name, colour, logo), subscription metadata (plan, status, limits) |
-| `TenantMembership` | Django Model | Links a user to a tenant with a role (owner / admin / manager / viewer). `unique_together = ("tenant", "user")` |
+| `TenantMembership` | Django Model | Links a user to a tenant with a role (owner / coordinator / manager / viewer). `unique_together = ("tenant", "user")` |
 
 **Middleware:** `TenantMiddleware` runs after `AuthenticationMiddleware`.  It resolves the current tenant and stores it in `request.tenant` and thread-local context.  Resolution order: `X-Tenant` header → `?tenant=` query param → default membership → first active membership → `None`.
 
 **Manager:** `TenantAwareManager` overrides `get_queryset()` to auto-filter by the current tenant.  Returns unfiltered results when no tenant is set (safe for management commands and migrations).  `unscoped()` bypasses filtering for cross-tenant operations.
 
-**RBAC Roles:**
+**RBAC Roles** (tenant scope; see [Tenant plane vs platform plane](#tenant-plane-vs-platform-plane-rbac)):
 
-| Role | `can_manage` | `can_admin` | `is_owner` |
+| Role | `can_manage` | `can_manage_organization` | `is_owner` |
 |---|---|---|---|
 | Owner | Yes | Yes | Yes |
-| Admin | Yes | Yes | No |
+| Coordinator (tenant governance) | Yes | Yes | No |
 | Manager | Yes | No | No |
 | Viewer | No | No | No |
 
-**DRF Permission Classes:** `IsTenantMember`, `IsTenantManager`, `IsTenantAdmin`, `IsTenantOwner`, `TenantReadOnlyOrManager`.
+**DRF Permission Classes:** `IsTenantMember`, `IsTenantManager`, `IsTenantGovernanceMember`, `IsTenantOwner`, `TenantReadOnlyOrManager`, plus `IsTenantMemberAuthorizedForAuditLog` for tenant compliance audit routes.
 
 **Branding:** `tenant_branding` context processor injects `tenant_site_name`, `tenant_primary_color`, and `tenant_logo` into templates.
 

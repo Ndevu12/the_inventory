@@ -47,7 +47,7 @@ from tenants.models import (
     TenantInvitation,
     TenantMembership,
 )
-from tenants.permissions import IsTenantAdmin, IsTenantMember
+from tenants.permissions import IsTenantGovernanceMember, IsTenantMember
 
 User = get_user_model()
 
@@ -64,7 +64,7 @@ class InvitationListCreateView(ListAPIView):
 
     def get_permissions(self):
         if self.request.method == "POST":
-            return [IsAuthenticated(), IsTenantAdmin()]
+            return [IsAuthenticated(), IsTenantGovernanceMember()]
         return [IsAuthenticated(), IsTenantMember()]
 
     def get_queryset(self):
@@ -110,7 +110,7 @@ class InvitationListCreateView(ListAPIView):
 class InvitationCancelView(APIView):
     """Cancel (revoke) a pending invitation."""
 
-    permission_classes = (IsAuthenticated, IsTenantAdmin)
+    permission_classes = (IsAuthenticated, IsTenantGovernanceMember)
 
     def delete(self, request, pk):
         tenant = get_effective_tenant(request)
@@ -186,7 +186,7 @@ class AcceptInvitationView(APIView):
                 password=serializer.validated_data["password"],
                 first_name=serializer.validated_data.get("first_name", ""),
                 last_name=serializer.validated_data.get("last_name", ""),
-                is_staff=True,
+                is_staff=False,
             )
 
         has_other_memberships = TenantMembership.objects.filter(

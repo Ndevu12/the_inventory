@@ -44,17 +44,17 @@ def has_role(user, *roles, tenant=None, request=None):
 
 
 def can_manage(user, tenant=None, request=None):
-    """Owner / admin / manager — can create, update, and delete data."""
+    """Owner, coordinator, or manager — can create, update, and delete data."""
     return has_role(
-        user, TenantRole.OWNER, TenantRole.ADMIN, TenantRole.MANAGER,
+        user, TenantRole.OWNER, TenantRole.COORDINATOR, TenantRole.MANAGER,
         tenant=tenant, request=request,
     )
 
 
-def can_admin(user, tenant=None, request=None):
-    """Owner / admin — can manage tenant settings and members."""
+def can_manage_organization(user, tenant=None, request=None):
+    """Owner or coordinator — can manage tenant settings and members."""
     return has_role(
-        user, TenantRole.OWNER, TenantRole.ADMIN, tenant=tenant, request=request,
+        user, TenantRole.OWNER, TenantRole.COORDINATOR, tenant=tenant, request=request,
     )
 
 
@@ -77,7 +77,7 @@ class IsTenantMember(BasePermission):
 
 
 class IsTenantManager(BasePermission):
-    """Allows access if the user is owner, admin, or manager."""
+    """Allows access if the user is owner, coordinator, or manager."""
 
     message = "Manager-level access is required."
 
@@ -85,13 +85,13 @@ class IsTenantManager(BasePermission):
         return can_manage(request.user, request=request)
 
 
-class IsTenantAdmin(BasePermission):
-    """Allows access if the user is owner or admin."""
+class IsTenantGovernanceMember(BasePermission):
+    """Allows access if the user is owner or coordinator (organization governance)."""
 
-    message = "Admin-level access is required."
+    message = "Organization governance access is required."
 
     def has_permission(self, request, view):
-        return can_admin(request.user, request=request)
+        return can_manage_organization(request.user, request=request)
 
 
 class IsTenantOwner(BasePermission):

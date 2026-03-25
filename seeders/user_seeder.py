@@ -1,79 +1,105 @@
-"""Seeder for User and TenantMembership models."""
+"""Seeder for tenant-plane users and ``TenantMembership`` rows.
+
+Usernames match tenant roles; emails use ``@org.seed.local`` (fictional org mailbox)
+so they read as **organization members**, not system operators—see
+docs/ARCHITECTURE.md (*Vocabulary: tenant identifiers vs platform terminology*).
+"""
 
 from django.contrib.auth import get_user_model
+
 from tenants.models import TenantMembership, TenantRole
+
 from .base import BaseSeeder
 
 User = get_user_model()
 
+# Shared synthetic domain for seeded tenant mailboxes (not deliverable).
+_TENANT_SEED_EMAIL_DOMAIN = "org.seed.local"
+
 
 class UserSeeder(BaseSeeder):
-    """Create test users and assign them to the tenant with various roles."""
+    """Create tenant-only users (``is_staff=False``) and link them to the tenant.
+
+    Inventory SPA + tenant JWT require at least one active membership; these
+    accounts are **org members**, not Wagtail-only operators (see
+    ``PlatformUserSeeder``).
+    """
 
     def seed(self):
-        """Create test users and add them to the tenant."""
-        self.log("Creating test users...")
+        self.log("Creating tenant users and memberships...")
+        if not self.tenant:
+            self.log("✗ No tenant context; skipping tenant users")
+            return
 
-        # Admin user
-        admin_user, created = User.objects.get_or_create(
-            username="admin",
-            defaults={
-                "email": "admin@example.com",
-                "first_name": "Admin",
-                "last_name": "User",
-                "is_staff": True,
-                "is_superuser": True,
-            },
-        )
-        if created:
-            admin_user.set_password("admin123")
-            admin_user.save()
-            self.log(f"✓ Created superuser: {admin_user.username}")
-        else:
-            self.log(f"✓ Using existing superuser: {admin_user.username}")
+        specs = [
+            (
+                "owner",
+                {
+                    "email": f"owner@{_TENANT_SEED_EMAIL_DOMAIN}",
+                    "first_name": "Elena",
+                    "last_name": "Martinez",
+                },
+                TenantRole.OWNER,
+                True,
+            ),
+            (
+                "coordinator",
+                {
+                    "email": f"coordinator@{_TENANT_SEED_EMAIL_DOMAIN}",
+                    "first_name": "Jordan",
+                    "last_name": "Lee",
+                },
+                TenantRole.COORDINATOR,
+                False,
+            ),
+            (
+                "manager",
+                {
+                    "email": f"manager@{_TENANT_SEED_EMAIL_DOMAIN}",
+                    "first_name": "Sam",
+                    "last_name": "Nguyen",
+                },
+                TenantRole.MANAGER,
+                False,
+            ),
+            (
+                "tenant_viewer",
+                {
+                    "email": f"viewer@{_TENANT_SEED_EMAIL_DOMAIN}",
+                    "first_name": "Riley",
+                    "last_name": "Chen",
+                },
+                TenantRole.VIEWER,
+                False,
+            ),
+        ]
 
-        # Manager user
-        manager_user, created = User.objects.get_or_create(
-            username="manager",
-            defaults={
-                "email": "manager@example.com",
-                "first_name": "Manager",
-                "last_name": "User",
-                "is_staff": True,
-            },
-        )
-        if created:
-            manager_user.set_password("manager123")
-            manager_user.save()
-            self.log(f"✓ Created staff user: {manager_user.username}")
-        else:
-            self.log(f"✓ Using existing staff user: {manager_user.username}")
+        passwords = {
+            "owner": "owner123",
+            "coordinator": "coordinator123",
+            "manager": "manager123",
+            "tenant_viewer": "tenant_viewer123",
+        }
 
-        # Regular user
-        regular_user, created = User.objects.get_or_create(
-            username="user",
-            defaults={
-                "email": "user@example.com",
-                "first_name": "Regular",
-                "last_name": "User",
-                "is_staff": False,
-            },
-        )
-        if created:
-            regular_user.set_password("user123")
-            regular_user.save()
-            self.log(f"✓ Created regular user: {regular_user.username}")
-        else:
-            self.log(f"✓ Using existing regular user: {regular_user.username}")
+        for username, name_fields, role, is_default in specs:
+            user, created = User.objects.get_or_create(
+                username=username,
+                defaults={
+                    **name_fields,
+                    "is_staff": False,
+                    "is_superuser": False,
+                },
+            )
+            if created:
+                user.set_password(passwords[username])
+                user.save()
+                self.log(f"✓ Created tenant user: {username} (role seed: {role})")
+            else:
+                self.log(f"✓ Using existing tenant user: {username}")
 
-        # Add users to tenant with appropriate roles
-        if self.tenant:
-            self._add_user_to_tenant(admin_user, TenantRole.ADMIN, is_default=True)
-            self._add_user_to_tenant(manager_user, TenantRole.MANAGER)
-            self._add_user_to_tenant(regular_user, TenantRole.VIEWER)
+            self._add_user_to_tenant(user, role, is_default=is_default)
 
     def _add_user_to_tenant(self, user, role, is_default=False):
-        """Add a user to the tenant with the specified role."""
         membership, created = TenantMembership.objects.get_or_create(
             tenant=self.tenant,
             user=user,

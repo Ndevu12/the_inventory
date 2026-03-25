@@ -71,13 +71,9 @@
       "dispatches": "الشحنات",
       "reports": "التقارير",
       "auditLog": "سجل التدقيق",
-      "platformAuditLog": "تدقيق المنصة",
       "account": "الحساب",
       "tenant": "المستأجر",
-      "teamMembers": "أعضاء الفريق",
-      "platformUsers": "المستخدمون",
-      "invitations": "الدعوات",
-      "billing": "الفوترة"
+      "teamMembers": "أعضاء الفريق"
     }
   },
   "Shell": {
@@ -1325,7 +1321,7 @@
     },
     "roles": {
       "owner": "Owner",
-      "admin": "Admin",
+      "coordinator": "منسق",
       "manager": "Manager",
       "viewer": "Viewer"
     },
@@ -1960,6 +1956,19 @@
     },
     "guard": {
       "loading": "جاري التحميل…"
+    },
+    "noOrganization": {
+      "loading": "جاري التحميل…",
+      "title": "لا يوجد وصول إلى منظمة",
+      "description": "أنت مسجل الدخول، لكنك لست عضوًا في أي منظمة داخل هذا التطبيق. بيانات المخزون متاحة فقط عند انتمائك إلى منظمة.",
+      "platformHint": "إذا كنت تدير المنصة، سجّل الدخول إلى Wagtail (إدارة Django) لإدارة المستخدمين والدعوات والفوترة والأدوات بين المنظمات.",
+      "signOut": "تسجيل الخروج"
+    },
+    "platformWagtail": {
+      "title": "هذه الأداة في Wagtail",
+      "description": "إدارة المنصة—المستخدمون والدعوات والفوترة وتدقيق المنصة—تتم عبر موقع إدارة Wagtail، وليس في هذا لوحة التحكم.",
+      "backHome": "العودة إلى لوحة التحكم",
+      "signInDifferent": "تسجيل الدخول بحساب آخر"
     },
     "invitation": {
       "invalidTitle": "دعوة غير صالحة",

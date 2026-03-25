@@ -2,6 +2,7 @@
 
 from django.conf import settings as django_settings
 from django.db import transaction
+from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -127,7 +128,7 @@ class RegisterTenantView(APIView):
                 password=data["owner_password"],
                 first_name=data.get("owner_first_name", "") or "",
                 last_name=data.get("owner_last_name", "") or "",
-                is_staff=True,
+                is_staff=False,
             )
             TenantMembership.objects.create(
                 tenant=tenant,
@@ -158,16 +159,37 @@ class RegisterTenantView(APIView):
         )
 
 
+@extend_schema_view(
+    post=extend_schema(
+        summary="Start API impersonation (platform support)",
+        description=(
+            "Issues JWTs for a **tenant member** (active ``TenantMembership`` required) on "
+            "behalf of a **Django superuser**. Every start is written to the compliance audit "
+            "log. Prefer Wagtail admin for routine platform work; this route exists for "
+            "support and automation when the operator needs the same JWT shape as the SPA. "
+            "Set ``ENABLE_API_IMPERSONATION=False`` to disable while keeping Wagtail session "
+            "impersonation."
+        ),
+        tags=["Authentication"],
+    ),
+)
 class ImpersonateStartView(APIView):
-    """Start impersonating a user (platform superuser only).
-
-    Returns JWT tokens for the target user. Frontend stores the real user's
-    tokens for exit. Impersonation is audited.
-    """
+    """Platform superuser only: JWT as another user (audited, optional env kill-switch)."""
 
     permission_classes = (IsAuthenticated, IsPlatformSuperuser)
 
     def post(self, request):
+        if not getattr(django_settings, "ENABLE_API_IMPERSONATION", True):
+            return Response(
+                {
+                    "detail": (
+                        "API impersonation is disabled for this deployment. "
+                        "Use Wagtail admin for session-based impersonation."
+                    ),
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         from django.contrib.auth import get_user_model
         from inventory.models.audit import AuditAction
         from inventory.services.audit import AuditService
@@ -194,6 +216,12 @@ class ImpersonateStartView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        if target_user.is_superuser:
+            return Response(
+                {"detail": "Cannot impersonate platform superusers."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         real_user = request.user
         membership = (
             TenantMembership.objects.filter(user=target_user, is_active=True)
@@ -201,7 +229,18 @@ class ImpersonateStartView(APIView):
             .order_by("-is_default", "pk")
             .first()
         )
-        tenant = membership.tenant if membership else None
+        if membership is None:
+            return Response(
+                {
+                    "detail": (
+                        "Target user must have at least one active organization membership. "
+                        "API impersonation issues a tenant-member identity for inventory API "
+                        "access; use Wagtail for users without memberships."
+                    ),
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        tenant = membership.tenant
 
         # Use target user's tenant for audit; fallback to real user's or first active
         audit_tenant = tenant
@@ -233,41 +272,48 @@ class ImpersonateStartView(APIView):
             details={
                 "impersonated_user_id": target_user.pk,
                 "impersonated_username": target_user.username,
+                "channel": "api",
             },
         )
+
+        real_refresh = RefreshToken.for_user(real_user)
 
         return Response(
             {
                 "access": str(refresh.access_token),
                 "refresh": str(refresh),
                 "user": UserSerializer(target_user).data,
-                "tenant": (
-                    {
-                        "id": tenant.pk,
-                        "name": tenant.name,
-                        "slug": tenant.slug,
-                        "role": membership.role,
-                        "preferred_language": tenant.preferred_language,
-                    }
-                    if tenant
-                    else None
-                ),
+                "tenant": {
+                    "id": tenant.pk,
+                    "name": tenant.name,
+                    "slug": tenant.slug,
+                    "role": membership.role,
+                    "preferred_language": tenant.preferred_language,
+                },
                 "memberships": memberships,
                 "impersonation": {
                     "real_user": UserSerializer(real_user).data,
-                    "real_access_token": str(RefreshToken.for_user(real_user).access_token),
-                    "real_refresh_token": str(RefreshToken.for_user(real_user)),
+                    "real_access_token": str(real_refresh.access_token),
+                    "real_refresh_token": str(real_refresh),
                 },
             },
             status=status.HTTP_200_OK,
         )
 
 
+@extend_schema_view(
+    post=extend_schema(
+        summary="End API impersonation (audit)",
+        description=(
+            "Record end of an API impersonation session. The caller must present an access "
+            "JWT issued by ``/auth/impersonate/start/`` (includes ``impersonated_by``). "
+            "The original operator must still be a Django superuser."
+        ),
+        tags=["Authentication"],
+    ),
+)
 class ImpersonateEndView(APIView):
-    """End impersonation (audit only; frontend restores stored tokens).
-
-    Expects the current JWT (impersonation token) to have 'impersonated_by' claim.
-    """
+    """Audit-only end of API impersonation; client restores the superuser JWT locally."""
 
     permission_classes = (IsAuthenticated,)
 
@@ -297,14 +343,33 @@ class ImpersonateEndView(APIView):
             )
 
         try:
-            real_user = User.objects.get(pk=real_user_id)
-        except User.DoesNotExist:
+            real_user = User.objects.get(pk=int(real_user_id))
+        except (User.DoesNotExist, ValueError, TypeError):
             return Response(
                 {"detail": "Real user no longer exists."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        if not real_user.is_superuser:
+            return Response(
+                {
+                    "detail": (
+                        "Impersonation session is no longer valid: the issuing account "
+                        "is not a platform superuser. Restore your stored operator tokens "
+                        "or sign in via Wagtail."
+                    ),
+                    "code": "impersonation_invalid_operator",
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         imp_user = request.user
+
+        if imp_user.pk == real_user.pk:
+            return Response(
+                {"detail": "Not in impersonation session."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         # Audit tenant: use impersonated user's first tenant or real user's
         membership = (
@@ -332,6 +397,7 @@ class ImpersonateEndView(APIView):
                 details={
                     "impersonated_user_id": imp_user.pk,
                     "impersonated_username": imp_user.username,
+                    "channel": "api",
                 },
             )
 

@@ -14,7 +14,7 @@ from rest_framework.permissions import IsAuthenticated
 
 from api.mixins import TranslatableAPIReadMixin
 from api.pagination import StandardPagination
-from api.permissions import IsAdminOrOwner, IsPlatformSuperuser
+from api.permissions import IsPlatformSuperuser, IsTenantMemberAuthorizedForAuditLog
 from api.schema_i18n import OPENAPI_LANGUAGE_QUERY_PARAMETER
 from api.serializers.audit import (
     ComplianceAuditLogSerializer,
@@ -52,8 +52,8 @@ class AuditLogFilter(FilterSet):
 class ComplianceAuditLogViewSet(TranslatableAPIReadMixin, viewsets.ReadOnlyModelViewSet):
     """Read-only audit log with filtering and CSV export.
 
-    Accessible only to tenant admins and owners (JWT-safe via
-    :class:`~api.permissions.IsAdminOrOwner`).
+    Accessible only to organization governance roles (owner/coordinator), JWT-safe via
+    :class:`~api.permissions.IsTenantMemberAuthorizedForAuditLog`.
 
     Filters
     -------
@@ -74,15 +74,13 @@ class ComplianceAuditLogViewSet(TranslatableAPIReadMixin, viewsets.ReadOnlyModel
         .all()
     )
     serializer_class = ComplianceAuditLogSerializer
-    permission_classes = [IsAuthenticated, IsAdminOrOwner]
+    permission_classes = [IsAuthenticated, IsTenantMemberAuthorizedForAuditLog]
     filter_backends = [DjangoFilterBackend]
     filterset_class = AuditLogFilter
     ordering = ["-timestamp"]
 
     def _get_current_tenant(self):
         tenant = get_effective_tenant(self.request)
-        if self.request.user.is_superuser:
-            return tenant
         if tenant is None:
             raise PermissionDenied("No tenant context set.")
         if not get_membership(self.request.user, tenant=tenant):
@@ -91,8 +89,6 @@ class ComplianceAuditLogViewSet(TranslatableAPIReadMixin, viewsets.ReadOnlyModel
 
     def get_queryset(self):
         qs = super().get_queryset()
-        if self.request.user.is_superuser:
-            return qs
         tenant = get_effective_tenant(self.request)
         if tenant is None:
             return qs.none()

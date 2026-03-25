@@ -3,7 +3,7 @@ import type { SubscriptionPlan, SubscriptionStatus, TenantRole } from "../types/
 /** Role keys for selects and badges (labels come from i18n `SettingsTenant.roles.*`). */
 export const TENANT_ROLE_VALUES: TenantRole[] = [
   "owner",
-  "admin",
+  "coordinator",
   "manager",
   "viewer",
 ]
@@ -16,7 +16,7 @@ export const ROLE_COLOR_MAP: Record<
     bg: "bg-purple-100 dark:bg-purple-900/30",
     text: "text-purple-800 dark:text-purple-300",
   },
-  admin: {
+  coordinator: {
     bg: "bg-blue-100 dark:bg-blue-900/30",
     text: "text-blue-800 dark:text-blue-300",
   },

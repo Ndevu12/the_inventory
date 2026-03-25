@@ -3,7 +3,7 @@
 Tests cover all three bulk endpoints (transfer, adjust, revalue):
 - Success scenarios
 - Validation failures (empty list, bad payload)
-- Permission enforcement (manager vs admin)
+- Permission enforcement (manager vs coordinator)
 - Partial failure responses with fail_fast=False
 - Edge cases (all items invalid, duplicate products)
 """
@@ -29,7 +29,7 @@ User = get_user_model()
 
 
 class BulkAPISetupMixin:
-    """Shared setUp: staff user (manager), admin user, products, locations."""
+    """Shared setUp: manager member, governance (coordinator) member, products."""
 
     def setUp(self):
         self.tenant = Tenant.objects.create(
@@ -38,7 +38,10 @@ class BulkAPISetupMixin:
         set_current_tenant(self.tenant)
 
         self.manager = User.objects.create_user(
-            username="manager", password="testpass123", is_staff=True,
+            username="bulk_manager",
+            password="testpass123",
+            email="manager@org.seed.local",
+            is_staff=False,
         )
         self.manager_token = Token.objects.create(user=self.manager)
         TenantMembership.objects.create(
@@ -46,13 +49,15 @@ class BulkAPISetupMixin:
             role=TenantRole.MANAGER, is_active=True,
         )
 
-        self.admin = User.objects.create_superuser(
-            username="admin", password="adminpass123", email="admin@example.com",
+        self.coordinator = User.objects.create_user(
+            username="bulk_coordinator",
+            password="coordpass123",
+            email="coordinator@org.seed.local",
         )
-        self.admin_token = Token.objects.create(user=self.admin)
+        self.coordinator_token = Token.objects.create(user=self.coordinator)
         TenantMembership.objects.create(
-            tenant=self.tenant, user=self.admin,
-            role=TenantRole.ADMIN, is_active=True,
+            tenant=self.tenant, user=self.coordinator,
+            role=TenantRole.COORDINATOR, is_active=True,
         )
 
         self.regular = User.objects.create_user(
@@ -70,12 +75,12 @@ class BulkAPISetupMixin:
         )
 
     def _auth_manager(self):
-        self.client.login(username="manager", password="testpass123")
+        self.client.login(username="bulk_manager", password="testpass123")
         self.client.credentials(HTTP_AUTHORIZATION=f"Token {self.manager_token.key}")
 
-    def _auth_admin(self):
-        self.client.login(username="admin", password="adminpass123")
-        self.client.credentials(HTTP_AUTHORIZATION=f"Token {self.admin_token.key}")
+    def _auth_coordinator(self):
+        self.client.login(username="bulk_coordinator", password="coordpass123")
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {self.coordinator_token.key}")
 
     def _auth_regular(self):
         self.client.login(username="regular", password="testpass123")
@@ -191,7 +196,7 @@ class BulkTransferAPITests(BulkAPISetupMixin, APITestCase):
 
     def test_transfer_admin_allowed(self):
         create_stock_record(product=self.product_a, location=self.warehouse, quantity=100)
-        self._auth_admin()
+        self._auth_coordinator()
 
         response = self.client.post(self.URL, {
             "items": [{"product_id": self.product_a.pk, "quantity": 10}],
@@ -440,7 +445,7 @@ class BulkRevalueAPITests(BulkAPISetupMixin, APITestCase):
     URL = "/api/v1/bulk-operations/revalue/"
 
     def test_revalue_success(self):
-        self._auth_admin()
+        self._auth_coordinator()
 
         response = self.client.post(self.URL, {
             "items": [
@@ -459,7 +464,7 @@ class BulkRevalueAPITests(BulkAPISetupMixin, APITestCase):
         self.assertEqual(self.product_b.unit_cost, Decimal("25.00"))
 
     def test_revalue_empty_items_rejected(self):
-        self._auth_admin()
+        self._auth_coordinator()
 
         response = self.client.post(self.URL, {
             "items": [],
@@ -495,7 +500,7 @@ class BulkRevalueAPITests(BulkAPISetupMixin, APITestCase):
 
     def test_revalue_partial_failure(self):
         """One item has a non-existent product; the other succeeds."""
-        self._auth_admin()
+        self._auth_coordinator()
 
         response = self.client.post(self.URL, {
             "items": [
@@ -510,7 +515,7 @@ class BulkRevalueAPITests(BulkAPISetupMixin, APITestCase):
         self.assertEqual(response.data["failure_count"], 1)
 
     def test_revalue_negative_cost_rejected(self):
-        self._auth_admin()
+        self._auth_coordinator()
 
         response = self.client.post(self.URL, {
             "items": [{"product_id": self.product_a.pk, "new_unit_cost": "-5.00"}],
@@ -520,7 +525,7 @@ class BulkRevalueAPITests(BulkAPISetupMixin, APITestCase):
 
     def test_revalue_fail_fast_conflict(self):
         """With fail_fast and one non-existent product, returns 409."""
-        self._auth_admin()
+        self._auth_coordinator()
 
         response = self.client.post(self.URL, {
             "items": [
@@ -536,7 +541,7 @@ class BulkRevalueAPITests(BulkAPISetupMixin, APITestCase):
         self.assertEqual(self.product_a.unit_cost, Decimal("10.00"))
 
     def test_revalue_missing_required_field(self):
-        self._auth_admin()
+        self._auth_coordinator()
 
         response = self.client.post(self.URL, {
             "items": [{"product_id": self.product_a.pk}],

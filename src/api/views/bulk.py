@@ -13,7 +13,7 @@ from api.serializers.bulk import (
 )
 from inventory.exceptions import InventoryError
 from inventory.services.bulk import BulkStockService
-from tenants.permissions import IsTenantAdmin, IsTenantManager
+from tenants.permissions import IsTenantGovernanceMember, IsTenantManager
 
 import logging
 
@@ -115,7 +115,7 @@ class BulkAdjustmentView(APIView):
 class BulkRevalueView(APIView):
     """``POST /api/v1/bulk-operations/revalue/`` — admins+"""
 
-    permission_classes = [IsAuthenticated, IsTenantAdmin]
+    permission_classes = [IsAuthenticated, IsTenantGovernanceMember]
 
     def post(self, request):
         serializer = BulkRevalueSerializer(data=request.data)

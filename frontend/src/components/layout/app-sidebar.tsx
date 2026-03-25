@@ -1,7 +1,6 @@
 "use client";
 
 import { Link, usePathname } from "@/i18n/navigation";
-import { useAuth } from "@/features/auth/context/auth-context";
 import {
   LayoutDashboardIcon,
   PackageIcon,
@@ -24,9 +23,6 @@ import {
   ScrollTextIcon,
   SettingsIcon,
   UsersRoundIcon,
-  UserCogIcon,
-  CreditCardIcon,
-  MailIcon,
   UserIcon,
   type LucideIcon,
 } from "lucide-react";
@@ -56,7 +52,6 @@ type NavItemDef = {
 type NavGroupDef = {
   groupKey: string;
   items: NavItemDef[];
-  platformItems?: NavItemDef[];
 };
 
 const NAV_GROUPS: NavGroupDef[] = [
@@ -113,9 +108,6 @@ const NAV_GROUPS: NavGroupDef[] = [
       { itemKey: "reports", href: "/reports", icon: BarChart3Icon },
       { itemKey: "auditLog", href: "/audit-log", icon: ScrollTextIcon },
     ],
-    platformItems: [
-      { itemKey: "platformAuditLog", href: "/settings/platform-audit-log", icon: ScrollTextIcon },
-    ],
   },
   {
     groupKey: "settings",
@@ -123,11 +115,6 @@ const NAV_GROUPS: NavGroupDef[] = [
       { itemKey: "account", href: "/settings/profile", icon: UserIcon },
       { itemKey: "tenant", href: "/settings", icon: SettingsIcon },
       { itemKey: "teamMembers", href: "/settings/members", icon: UsersRoundIcon },
-    ],
-    platformItems: [
-      { itemKey: "platformUsers", href: "/settings/users", icon: UserCogIcon },
-      { itemKey: "invitations", href: "/settings/invitations", icon: MailIcon },
-      { itemKey: "billing", href: "/settings/billing", icon: CreditCardIcon },
     ],
   },
 ];
@@ -140,17 +127,7 @@ function isActive(href: string, pathname: string): boolean {
 
 export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
-  const { user } = useAuth();
-  const isSuperuser = !!user?.is_superuser;
   const t = useTranslations("Nav");
-
-  const getGroupItems = (group: NavGroupDef) => {
-    const items = [...group.items];
-    if (isSuperuser && group.platformItems?.length) {
-      items.push(...group.platformItems);
-    }
-    return items;
-  };
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -165,7 +142,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
             </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {getGroupItems(group).map((item) => {
+                {group.items.map((item) => {
                   const title = t(`items.${item.itemKey}`);
                   return (
                     <SidebarMenuItem key={item.href}>

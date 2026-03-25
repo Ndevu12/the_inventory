@@ -13,13 +13,14 @@ python manage.py seed_database --clear --create-default
 This will:
 1. Ensure default Wagtail **Locale** rows exist (same set as `seeders/wagtail_locale_seeder.py`; staff can add more in Wagtail admin)
 2. Create a "Default" tenant (if it doesn't exist)
-3. Create 3 test users linked to the Default tenant
-4. Create 10 product categories (hierarchical)
-5. Create 15 products across categories
-6. Create 17 stock locations (warehouse structure)
-7. Create 19 stock records (inventory levels)
-8. Create 10 stock movements (audit history)
-9. Create low-stock scenarios for testing alerts
+3. Create **platform** operator accounts (`platform_super`, `platform_staff`) with **no** `TenantMembership` (Wagtail / platform-only; emails under `@system.local`)
+4. Create **tenant** users (`owner`, `coordinator`, `manager`, `tenant_viewer`) with `is_staff=False` and roles on the Default tenant (SPA + tenant JWT; emails under `@org.seed.local`)
+5. Create 10 product categories (hierarchical)
+6. Create 15 products across categories
+7. Create 17 stock locations (warehouse structure)
+8. Create 19 stock records (inventory levels)
+9. Create 10 stock movements (audit history)
+10. Create low-stock scenarios for testing alerts
 
 After adding or removing locales in **Wagtail admin** (Settings → Locales), refresh the Next.js locale list and rebuild:
 
@@ -68,7 +69,8 @@ seeders/
 ├── base.py                        # BaseSeeder abstract class
 ├── seeder_manager.py              # SeederManager orchestration
 ├── tenant_seeder.py               # TenantSeeder
-├── user_seeder.py                 # UserSeeder
+├── platform_user_seeder.py        # PlatformUserSeeder (Wagtail operators, no membership)
+├── user_seeder.py                 # UserSeeder (tenant members, is_staff=False)
 ├── category_seeder.py             # CategorySeeder
 ├── product_seeder.py              # ProductSeeder
 ├── stock_location_seeder.py       # StockLocationSeeder
@@ -87,13 +89,14 @@ Seeders run in dependency order to respect foreign key relationships:
 
 0. **Wagtail locales** — `ensure_default_wagtail_locales()` (global, not tenant-scoped) runs first inside `SeederManager.seed()`
 1. **TenantSeeder** — Creates/retrieves the tenant
-2. **UserSeeder** — Creates tenant users with roles
-3. **CategorySeeder** — Creates product categories (hierarchical)
-4. **ProductSeeder** — Creates products
-5. **StockLocationSeeder** — Creates warehouse locations
-6. **StockRecordSeeder** — Creates stock records (inventory levels)
-7. **StockMovementSeeder** — Creates stock movements (audit history)
-8. **LowStockSeeder** — Creates low-stock scenarios
+2. **PlatformUserSeeder** — Platform operators (`is_staff` / `is_superuser`) **without** tenant memberships
+3. **UserSeeder** — Tenant-plane users (`is_staff=False`) with `TenantMembership` and roles
+4. **CategorySeeder** — Creates product categories (hierarchical)
+5. **ProductSeeder** — Creates products
+6. **StockLocationSeeder** — Creates warehouse locations
+7. **StockRecordSeeder** — Creates stock records (inventory levels)
+8. **StockMovementSeeder** — Creates stock movements (audit history)
+9. **LowStockSeeder** — Creates low-stock scenarios
 
 ### Key Components
 
@@ -145,7 +148,7 @@ Seed only certain models:
 python manage.py seed_database --models=categories,products
 ```
 
-Available models: `categories`, `products`, `locations`, `records`, `movements`
+Available models: `users`, `categories`, `products`, `locations`, `records`, `movements`
 
 ### Quiet Mode
 
@@ -266,10 +269,21 @@ The seeders app includes 72 comprehensive tests covering:
 
 ## Sample Data
 
-### Test Users
-- **admin** (password: `admin123`) — Superuser with ADMIN role
-- **manager** (password: `manager123`) — Staff user with MANAGER role
-- **user** (password: `user123`) — Regular user with VIEWER role
+### Test users
+
+**Platform (no tenant membership — use Wagtail):**
+
+- **platform_super** / `platform_super123` — superuser + staff (`platform.superoperator@system.local`)
+- **platform_staff** / `platform_staff123` — staff only (`platform.operator@system.local`)
+
+**Tenant (memberships on seeded tenant — use SPA / tenant JWT):**
+
+- **owner** / `owner123` — `TenantRole.OWNER` (default membership; `owner@org.seed.local`)
+- **coordinator** / `coordinator123` — `TenantRole.COORDINATOR` (`coordinator@org.seed.local`)
+- **manager** / `manager123` — `TenantRole.MANAGER` (`manager@org.seed.local`)
+- **tenant_viewer** / `tenant_viewer123` — `TenantRole.VIEWER` (`viewer@org.seed.local`)
+
+See [TEST_USERS.md](../TEST_USERS.md) for full tables and troubleshooting.
 
 ### Categories
 - Electronics (root)

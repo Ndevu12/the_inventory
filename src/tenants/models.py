@@ -41,7 +41,7 @@ from tenants.wagtail_locales import wagtail_locale_choices
 
 class TenantRole(models.TextChoices):
     OWNER = "owner", _("Owner")
-    ADMIN = "admin", _("Admin")
+    COORDINATOR = "coordinator", _("Coordinator")
     MANAGER = "manager", _("Manager")
     VIEWER = "viewer", _("Viewer")
 
@@ -297,25 +297,49 @@ class TenantMembership(models.Model):
     class Meta:
         unique_together = ("tenant", "user")
         ordering = ["-is_default", "tenant__name"]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(
+                    role__in=[
+                        TenantRole.OWNER,
+                        TenantRole.COORDINATOR,
+                        TenantRole.MANAGER,
+                        TenantRole.VIEWER,
+                    ],
+                ),
+                name="tenants_tenantmembership_role_allowed",
+            ),
+        ]
 
     def __str__(self):
         return f"{self.user} → {self.tenant.name} ({self.get_role_display()})"
+
+    def clean(self):
+        super().clean()
+        from tenants.role_validation import ensure_valid_tenant_role
+
+        ensure_valid_tenant_role(self.role)
+
+    def save(self, *args, **kwargs):
+        # Enforce choices (Django does not validate CharField.choices on save).
+        self.full_clean()
+        super().save(*args, **kwargs)
 
     # -- RBAC helpers ------------------------------------------------------
 
     @property
     def can_manage(self):
-        """Owner, admin, or manager — can create/edit data."""
+        """Owner, coordinator, or manager — can create/edit data."""
         return self.role in {
             TenantRole.OWNER,
-            TenantRole.ADMIN,
+            TenantRole.COORDINATOR,
             TenantRole.MANAGER,
         }
 
     @property
-    def can_admin(self):
-        """Owner or admin — can manage users and settings."""
-        return self.role in {TenantRole.OWNER, TenantRole.ADMIN}
+    def can_manage_organization(self):
+        """Owner or coordinator — can manage members and organization settings."""
+        return self.role in {TenantRole.OWNER, TenantRole.COORDINATOR}
 
     @property
     def is_owner(self):
@@ -344,7 +368,7 @@ class TenantInvitation(models.Model):
     """A pending invitation for someone to join a tenant.
 
     The workflow:
-      1. An admin/owner creates an invitation (email + role).
+      1. An owner or coordinator creates an invitation (email + role).
       2. The system generates a unique token and (optionally) sends an email.
       3. The invitee visits the accept-invitation URL with the token.
       4. If the invitee has no account, one is created; a TenantMembership
@@ -388,15 +412,35 @@ class TenantInvitation(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(
+                    role__in=[
+                        TenantRole.OWNER,
+                        TenantRole.COORDINATOR,
+                        TenantRole.MANAGER,
+                        TenantRole.VIEWER,
+                    ],
+                ),
+                name="tenants_tenantinvitation_role_allowed",
+            ),
+        ]
 
     def __str__(self):
         return f"Invite {self.email} → {self.tenant.name} ({self.get_status_display()})"
+
+    def clean(self):
+        super().clean()
+        from tenants.role_validation import ensure_valid_tenant_role
+
+        ensure_valid_tenant_role(self.role)
 
     def save(self, *args, **kwargs):
         if not self.expires_at:
             self.expires_at = timezone.now() + timezone.timedelta(
                 days=INVITATION_EXPIRY_DAYS
             )
+        self.full_clean()
         super().save(*args, **kwargs)
 
     @property

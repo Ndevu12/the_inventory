@@ -1,5 +1,5 @@
-import { PlatformAuditLogPage } from "@/features/audit"
+import { PlatformWagtailNoticePage } from "@/features/settings/pages/platform-wagtail-notice-page";
 
 export default function Page() {
-  return <PlatformAuditLogPage />
+  return <PlatformWagtailNoticePage />;
 }

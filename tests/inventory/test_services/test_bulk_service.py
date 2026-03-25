@@ -13,7 +13,7 @@ from inventory.exceptions import InventoryError
 from inventory.models import StockRecord
 from inventory.services.bulk import BulkOperationResult, BulkStockService
 
-from ..factories import create_location, create_product, create_stock_record
+from ..factories import create_location, create_product, create_stock_record, create_tenant
 
 
 class BulkServiceSetupMixin:
@@ -21,11 +21,18 @@ class BulkServiceSetupMixin:
 
     def setUp(self):
         self.service = BulkStockService()
-        self.warehouse = create_location(name="Bulk Warehouse")
-        self.store = create_location(name="Bulk Store")
-        self.product_a = create_product(sku="BULK-A", unit_cost=Decimal("10.00"))
-        self.product_b = create_product(sku="BULK-B", unit_cost=Decimal("20.00"))
-        self.product_c = create_product(sku="BULK-C", unit_cost=Decimal("30.00"))
+        self.tenant = create_tenant()
+        self.warehouse = create_location(name="Bulk Warehouse", tenant=self.tenant)
+        self.store = create_location(name="Bulk Store", tenant=self.tenant)
+        self.product_a = create_product(
+            sku="BULK-A", unit_cost=Decimal("10.00"), tenant=self.tenant,
+        )
+        self.product_b = create_product(
+            sku="BULK-B", unit_cost=Decimal("20.00"), tenant=self.tenant,
+        )
+        self.product_c = create_product(
+            sku="BULK-C", unit_cost=Decimal("30.00"), tenant=self.tenant,
+        )
 
 
 # =====================================================================
@@ -463,7 +470,9 @@ class BulkEdgeCaseTests(BulkServiceSetupMixin, TestCase):
         """Verify a batch with many items processes correctly."""
         products = []
         for i in range(20):
-            p = create_product(sku=f"BATCH-{i:03d}", unit_cost=Decimal("5.00"))
+            p = create_product(
+                sku=f"BATCH-{i:03d}", unit_cost=Decimal("5.00"), tenant=self.tenant,
+            )
             create_stock_record(product=p, location=self.warehouse, quantity=100)
             products.append(p)
 

@@ -1,5 +1,5 @@
-import { BillingPage } from "@/features/settings"
+import { PlatformWagtailNoticePage } from "@/features/settings/pages/platform-wagtail-notice-page";
 
 export default function Page() {
-  return <BillingPage />
+  return <PlatformWagtailNoticePage />;
 }

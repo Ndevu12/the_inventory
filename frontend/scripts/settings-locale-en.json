@@ -41,7 +41,7 @@
     },
     "roles": {
       "owner": "Owner",
-      "admin": "Admin",
+      "coordinator": "Coordinator",
       "manager": "Manager",
       "viewer": "Viewer"
     },

@@ -42,7 +42,7 @@ class CreateTenantWithOwnerTests(TestCase):
         membership = TenantMembership.objects.get(tenant=tenant, user=user)
         self.assertEqual(membership.role, TenantRole.OWNER)
         self.assertTrue(membership.is_default)
-        self.assertTrue(user.is_staff)
+        self.assertFalse(user.is_staff)
 
     def test_create_tenant_with_new_owner_password(self):
         tenant, invitation = create_tenant_with_owner(
@@ -58,9 +58,13 @@ class CreateTenantWithOwnerTests(TestCase):
         membership = TenantMembership.objects.get(tenant=tenant, user=user)
         self.assertEqual(membership.role, "owner")
         self.assertTrue(membership.is_default)
+        self.assertFalse(user.is_staff)
 
     def test_create_tenant_with_owner_invitation(self):
-        inviter = User.objects.create_user(username="admin", email="admin@example.com")
+        inviter = User.objects.create_user(
+            username="inviter_pat",
+            email="pat.inviter@org.seed.local",
+        )
         tenant, invitation = create_tenant_with_owner(
             name="Acme Corp",
             slug="acme-corp",

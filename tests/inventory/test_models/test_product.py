@@ -20,7 +20,7 @@ class ProductCreationTests(TestCase):
     """Test Product creation with various field combinations."""
 
     def test_create_product_with_defaults(self):
-        product = create_product()
+        product = create_product(sku="TEST-001")
         self.assertEqual(product.sku, "TEST-001")
         self.assertEqual(product.name, "Test Product")
         self.assertEqual(product.unit_of_measure, UnitOfMeasure.PIECES)

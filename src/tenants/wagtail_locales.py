@@ -4,6 +4,7 @@
 set of supported languages is edited in the admin, not in Django settings.
 """
 
+from django.db.utils import OperationalError, ProgrammingError
 from wagtail.models import Locale
 
 
@@ -14,7 +15,10 @@ def wagtail_locale_choices():
     setup), so defaults and migrations remain usable.
     """
 
-    locales = list(Locale.objects.order_by("language_code"))
+    try:
+        locales = list(Locale.objects.order_by("language_code"))
+    except (OperationalError, ProgrammingError):
+        return [("en", "English")]
     if not locales:
         return [("en", "English")]
     return [(loc.language_code, str(loc)) for loc in locales]

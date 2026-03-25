@@ -1,4 +1,4 @@
-export type TenantRole = "owner" | "admin" | "manager" | "viewer"
+export type TenantRole = "owner" | "coordinator" | "manager" | "viewer"
 
 export type SubscriptionPlan = "free" | "starter" | "professional" | "enterprise"
 

@@ -359,6 +359,10 @@ FRONTEND_URL = env_str("FRONTEND_URL", "http://localhost:3000") or "http://local
 # Hosters set ENABLE_PUBLIC_TENANT_REGISTRATION=True; self-hosted leave default
 ENABLE_PUBLIC_TENANT_REGISTRATION = env_bool("ENABLE_PUBLIC_TENANT_REGISTRATION", False)
 
+# JWT impersonation (POST /auth/impersonate/*): platform superuser support-only. Set False to
+# disable token swap while keeping Wagtail session impersonation.
+ENABLE_API_IMPERSONATION = env_bool("ENABLE_API_IMPERSONATION", True)
+
 # Tenant access audit trail
 AUDIT_TENANT_ACCESS = env_bool("AUDIT_TENANT_ACCESS", True)
 

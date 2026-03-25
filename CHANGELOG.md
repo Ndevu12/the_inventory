@@ -7,6 +7,10 @@ and this project aims to follow [Semantic Versioning](https://semver.org/spec/v2
 
 ## [Unreleased]
 
+### Changed
+
+- **Tenant RBAC vocabulary:** second-tier governance role renamed from `admin` / `TenantRole.ADMIN` to **`coordinator` / `TenantRole.COORDINATOR`** (data migration `0009_tenant_role_coordinator`). `can_admin` → `can_manage_organization`, `IsTenantAdmin` → `IsTenantGovernanceMember`, tenant audit permission `IsAdminOrOwner` → `IsTenantMemberAuthorizedForAuditLog`; API constant `_ADMIN_ROLES` → `_TENANT_GOVERNANCE_ROLES`. Next.js settings types and i18n keys updated accordingly.
+
 ### Added
 
 - **Headless API Server Preparation:**
