@@ -1,6 +1,7 @@
 """API tests for inventory endpoints."""
 
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase
@@ -28,6 +29,7 @@ class APISetupMixin:
     """Shared setUp: create a staff user with a token and tenant context."""
 
     def setUp(self):
+        cache.clear()
         self.tenant = create_tenant(name="API Test Tenant")
         self.user = User.objects.create_user(
             username="apiuser", password="testpass123", is_staff=True,
@@ -379,6 +381,34 @@ class StockLocationAPITests(APISetupMixin, APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         ids = {row["id"] for row in response.data["results"]}
         self.assertEqual(ids, {a.pk, b.pk})
+
+    def test_list_and_retrieve_locations_include_stock_line_count(self):
+        loc_empty = create_location(name="Loc Empty")
+        loc_stocked = create_location(name="Loc Stocked")
+        for i in range(3):
+            p = create_product(sku=f"API-SLC-{i}")
+            create_stock_record(product=p, location=loc_stocked, quantity=i + 1)
+        list_resp = self.client.get("/api/v1/stock-locations/")
+        self.assertEqual(list_resp.status_code, status.HTTP_200_OK)
+        by_id = {row["id"]: row for row in list_resp.data["results"]}
+        self.assertEqual(by_id[loc_empty.id]["stock_line_count"], 0)
+        self.assertEqual(by_id[loc_stocked.id]["stock_line_count"], 3)
+        detail = self.client.get(f"/api/v1/stock-locations/{loc_stocked.pk}/")
+        self.assertEqual(detail.status_code, status.HTTP_200_OK)
+        self.assertEqual(detail.data["stock_line_count"], 3)
+
+    def test_list_locations_can_order_by_stock_line_count(self):
+        loc_a = create_location(name="Loc Order A")
+        loc_b = create_location(name="Loc Order B")
+        p = create_product(sku="API-SLO-1")
+        create_stock_record(product=p, location=loc_b, quantity=5)
+        response = self.client.get(
+            "/api/v1/stock-locations/",
+            {"ordering": "stock_line_count"},
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        counts = [row["stock_line_count"] for row in response.data["results"]]
+        self.assertEqual(counts, sorted(counts))
 
     def test_location_stock_action(self):
         loc = create_location(name="Loc Stock")

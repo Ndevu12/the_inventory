@@ -256,6 +256,50 @@
     "toastUpdateFailed": "No se pudo actualizar la ubicación",
     "toastCreateFailed": "No se pudo crear la ubicación",
     "toastDeleteFailed": "No se pudo eliminar la ubicación",
+    "list": {
+      "colExpand": "Expansión de rama",
+      "colLocation": "Ubicación",
+      "colUtilization": "Utilización",
+      "colActions": "Acciones",
+      "expandBranch": "Expandir ubicaciones anidadas",
+      "collapseBranch": "Contraer ubicaciones anidadas",
+      "expandSite": "Expandir {name}",
+      "collapseSite": "Contraer {name}",
+      "groupLocationCount": "{count, number} en el grupo",
+      "loadedSummary": "{loaded, number} cargadas · {total, number} en total",
+      "hintScroll": "Desplázate para cargar más",
+      "loadingMore": "Cargando más…",
+      "utilUnlimited": "{count, number} unidades · capacidad ilimitada",
+      "openDetailAria": "Abrir detalles de {name}"
+    },
+    "hierarchy": {
+      "hintCommandPalette": "Consejo: abre la paleta de comandos (búsqueda) para ir directamente al detalle de una ubicación."
+    },
+    "commandPalette": {
+      "groupHeading": "Ubicaciones"
+    },
+    "siteGroup": {
+      "storeRetail": "Tienda / retail",
+      "unknownFacility": "Instalación"
+    },
+    "savedViews": {
+      "trigger": "Vistas guardadas",
+      "menuTitle": "Filtros guardados",
+      "saveCurrent": "Guardar filtros actuales",
+      "empty": "Aún no hay vistas guardadas.",
+      "promptName": "Nombre de esta vista:",
+      "removeAria": "Eliminar vista guardada {name}"
+    },
+    "detail": {
+      "backToList": "Todas las ubicaciones",
+      "invalidTitle": "Ubicación no válida",
+      "invalidBody": "El id de ubicación en la URL no es válido.",
+      "notFoundTitle": "Ubicación no encontrada",
+      "notFoundBody": "Esta ubicación no existe o no tienes acceso.",
+      "stockSectionTitle": "Líneas de stock",
+      "retailSite": "Tienda / retail",
+      "capacityHint": "Uso frente a la capacidad máxima de esta ubicación."
+    },
     "form": {
       "createTitle": "Ubicación nueva",
       "editTitle": "Editar ubicación",

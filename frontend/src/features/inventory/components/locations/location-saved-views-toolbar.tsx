@@ -105,18 +105,19 @@ export function LocationSavedViewsToolbar({
             type="button"
             variant="outline"
             size="sm"
-            className="gap-1"
+            className="h-9 gap-1 px-2.5 sm:px-3"
+            aria-label={t("locations.savedViews.trigger")}
           />
         }
       >
-        <BookmarkIcon className="size-4" />
-        <span className="max-w-[10rem] truncate">
+        <BookmarkIcon className="size-4 shrink-0" aria-hidden />
+        <span className="hidden max-w-[9rem] truncate sm:inline">
           {t("locations.savedViews.trigger")}
         </span>
-        <ChevronDownIcon className="size-3.5 opacity-60" />
+        <ChevronDownIcon className="size-3.5 shrink-0 opacity-60" aria-hidden />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-64">
-        <DropdownMenuLabel>
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
           {t("locations.savedViews.menuTitle")}
         </DropdownMenuLabel>
         <DropdownMenuItem onSelect={saveCurrent}>

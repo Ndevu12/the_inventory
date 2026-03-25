@@ -2,6 +2,7 @@
 
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import IntegrityError
+from django.db.models import Count
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
@@ -249,12 +250,19 @@ class StockLocationViewSet(
         "id": ["in"],
     }
     search_fields = ["name"]
-    ordering_fields = ["name", "created_at", "warehouse__name", "path", "depth"]
+    ordering_fields = [
+        "name", "created_at", "warehouse__name", "path", "depth", "stock_line_count",
+    ]
     ordering = ["path"]
 
     def get_queryset(self):
         tenant = self._get_current_tenant()
-        return super().get_queryset().filter(tenant=tenant)
+        return (
+            super()
+            .get_queryset()
+            .filter(tenant=tenant)
+            .annotate(stock_line_count=Count("stock_records"))
+        )
 
     def get_serializer_context(self):
         ctx = super().get_serializer_context()

@@ -1,17 +1,10 @@
 "use client"
 
-import {
-  useCallback,
-  useDeferredValue,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react"
+import { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { PlusIcon, SearchIcon } from "lucide-react"
-import { usePathname, useRouter } from "@/i18n/navigation"
+import { useRouter } from "@/i18n/navigation"
 import { PageHeader } from "@/components/layout/page-header"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -23,19 +16,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import {
-  useInfiniteLocations,
-  useLocation,
-  useLocationsByIds,
-} from "../hooks/use-locations"
+import { useInfiniteLocations } from "../hooks/use-locations"
 import {
   useWarehouseQuickStats,
   useWarehousesForSelect,
 } from "../hooks/use-warehouses"
-import {
-  LocationTree,
-  type LocationTreeHandle,
-} from "../components/locations/location-tree"
+import { LocationTree } from "../components/locations/location-tree"
 import { LocationSavedViewsToolbar } from "../components/locations/location-saved-views-toolbar"
 import type { LocationSavedView } from "../components/locations/location-saved-views-toolbar"
 import { WarehouseSummaryStrip } from "../components/locations/warehouse-summary-strip"
@@ -48,9 +34,7 @@ export function LocationListPage() {
   const t = useTranslations("Inventory")
   const tCommon = useTranslations("Common")
   const router = useRouter()
-  const pathname = usePathname()
   const searchParams = useSearchParams()
-  const treeRef = useRef<LocationTreeHandle>(null)
 
   const [search, setSearch] = useState("")
   const [warehouseFilter, setWarehouseFilter] = useState<string>("__all__")
@@ -100,43 +84,10 @@ export function LocationListPage() {
   const totalCount = data?.pages[0]?.count
   const isLoading = isPending && !data
 
-  const { data: focusDetail } = useLocation(focusIdFromUrl ?? 0)
-  const focusExtraIds = useMemo(() => {
-    if (focusIdFromUrl == null || !focusDetail) return []
-    const ancestors = focusDetail.ancestor_ids ?? []
-    return Array.from(new Set([...ancestors, focusDetail.id]))
-  }, [focusDetail, focusIdFromUrl])
-
-  const { data: supplementalPage } = useLocationsByIds(focusExtraIds)
-
-  const mergedLocations = useMemo(() => {
-    const map = new Map<number, StockLocation>()
-    for (const l of locations) map.set(l.id, l)
-    for (const l of supplementalPage?.results ?? []) map.set(l.id, l)
-    return Array.from(map.values())
-  }, [locations, supplementalPage?.results])
-
-  const consumedFocusRef = useRef<number | null>(null)
-
   useEffect(() => {
-    if (focusIdFromUrl == null) {
-      consumedFocusRef.current = null
-    }
-  }, [focusIdFromUrl])
-
-  useEffect(() => {
-    if (focusIdFromUrl == null || !focusDetail) return
-    if (consumedFocusRef.current === focusIdFromUrl) return
-    consumedFocusRef.current = focusIdFromUrl
-    const frame = requestAnimationFrame(() => {
-      treeRef.current?.revealLocation(
-        focusIdFromUrl,
-        focusDetail.ancestor_ids ?? [],
-      )
-      router.replace(pathname)
-    })
-    return () => cancelAnimationFrame(frame)
-  }, [focusDetail, focusIdFromUrl, pathname, router])
+    if (focusIdFromUrl == null) return
+    router.replace(`/stock/locations/${focusIdFromUrl}`)
+  }, [focusIdFromUrl, router])
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingLocation, setEditingLocation] =
@@ -156,6 +107,8 @@ export function LocationListPage() {
     setSearch(view.search)
     setWarehouseFilter(view.warehouseFilter)
   }, [])
+
+  const showSiteGroups = warehouseFilter === "__all__"
 
   return (
     <div className="space-y-6">
@@ -179,7 +132,7 @@ export function LocationListPage() {
         />
       ) : null}
 
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex flex-1 flex-col gap-4 sm:flex-row sm:items-end">
           <div className="relative max-w-sm flex-1">
             <SearchIcon className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -217,11 +170,13 @@ export function LocationListPage() {
             </Select>
           </div>
         </div>
-        <LocationSavedViewsToolbar
-          search={search}
-          warehouseFilter={warehouseFilter}
-          onApplyView={applySavedView}
-        />
+        <div className="shrink-0 self-end sm:self-auto">
+          <LocationSavedViewsToolbar
+            search={search}
+            warehouseFilter={warehouseFilter}
+            onApplyView={applySavedView}
+          />
+        </div>
       </div>
 
       <p className="text-xs text-muted-foreground">
@@ -229,8 +184,8 @@ export function LocationListPage() {
       </p>
 
       <LocationTree
-        ref={treeRef}
-        locations={mergedLocations}
+        locations={locations}
+        showSiteGroups={showSiteGroups}
         onEdit={openEdit}
         isLoading={isLoading}
         hasNextPage={Boolean(hasNextPage)}

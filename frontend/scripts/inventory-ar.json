@@ -256,6 +256,50 @@
     "toastUpdateFailed": "فشل تحديث الموقع",
     "toastCreateFailed": "فشل إنشاء الموقع",
     "toastDeleteFailed": "فشل حذف الموقع",
+    "list": {
+      "colExpand": "توسعة الفرع",
+      "colLocation": "الموقع",
+      "colUtilization": "الاستخدام",
+      "colActions": "إجراءات",
+      "expandBranch": "توسيع المواقع المتداخلة",
+      "collapseBranch": "طي المواقع المتداخلة",
+      "expandSite": "توسيع {name}",
+      "collapseSite": "طي {name}",
+      "groupLocationCount": "{count, number} في المجموعة",
+      "loadedSummary": "تم التحميل {loaded, number} · الإجمالي {total, number}",
+      "hintScroll": "مرّر لأسفل لتحميل المزيد",
+      "loadingMore": "جارٍ تحميل المزيد…",
+      "utilUnlimited": "{count, number} وحدة · سعة غير محدودة",
+      "openDetailAria": "فتح تفاصيل {name}"
+    },
+    "hierarchy": {
+      "hintCommandPalette": "نصيحة: افتح لوحة الأوامر (البحث) للانتقال مباشرةً إلى صفحة تفاصيل الموقع."
+    },
+    "commandPalette": {
+      "groupHeading": "المواقع"
+    },
+    "siteGroup": {
+      "storeRetail": "متجر / تجزئة",
+      "unknownFacility": "المنشأة"
+    },
+    "savedViews": {
+      "trigger": "عروض محفوظة",
+      "menuTitle": "عوامل تصفية محفوظة",
+      "saveCurrent": "حفظ عوامل التصفية الحالية",
+      "empty": "لا توجد عروض محفوظة بعد.",
+      "promptName": "اسم العرض:",
+      "removeAria": "إزالة العرض المحفوظ {name}"
+    },
+    "detail": {
+      "backToList": "كل المواقع",
+      "invalidTitle": "موقع غير صالح",
+      "invalidBody": "معرّف الموقع في العنوان غير صالح.",
+      "notFoundTitle": "الموقع غير موجود",
+      "notFoundBody": "هذا الموقع غير موجود أو لا يمكنك الوصول إليه.",
+      "stockSectionTitle": "خطوط المخزون",
+      "retailSite": "متجر / موقع تجزئة",
+      "capacityHint": "الاستخدام مقارنةً بالسعة القصوى لهذا الموقع."
+    },
     "form": {
       "createTitle": "موقع جديد",
       "editTitle": "تعديل الموقع",

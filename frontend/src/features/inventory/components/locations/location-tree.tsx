@@ -13,12 +13,12 @@ import { useVirtualizer } from "@tanstack/react-virtual"
 import { useTranslations } from "next-intl"
 import {
   ChevronRightIcon,
-  ListIcon,
   PencilIcon,
   Trash2Icon,
   WarehouseIcon,
 } from "lucide-react"
 import { toast } from "sonner"
+import { Link } from "@/i18n/navigation"
 import { cn } from "@/lib/utils"
 import {
   AlertDialog,
@@ -33,7 +33,6 @@ import {
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { StockRecordsPanel } from "./stock-records-panel"
 import { useDeleteLocation } from "../../hooks/use-locations"
 import type { StockLocation } from "../../types/location.types"
 
@@ -114,10 +113,7 @@ function buildHierarchyRows(
     for (const loc of kids) {
       const hasCh = (children.get(loc.id)?.length ?? 0) > 0
       const depthIndent = hasMpDepth
-        ? Math.max(
-            0,
-            (loc.depth ?? minDepth) - minDepth,
-          )
+        ? Math.max(0, (loc.depth ?? minDepth) - minDepth)
         : walkDepth
       out.push({ location: loc, depthIndent, hasChildren: hasCh })
       if (hasCh && !collapsedTreeNodes.has(loc.id)) {
@@ -129,15 +125,8 @@ function buildHierarchyRows(
   return out
 }
 
-function buildRows(
-  locations: StockLocation[],
-  collapsedGroups: Set<string>,
-  collapsedTreeNodes: Set<number>,
-  titleForGroup: (groupKey: string, sample: StockLocation | undefined) => string,
-): TreeRow[] {
-  const map = groupLocations(locations)
-  const entries = [...map.entries()]
-  entries.sort(([ka], [kb]) => {
+function sortGroupEntries(map: Map<string, StockLocation[]>) {
+  return [...map.entries()].sort(([ka], [kb]) => {
     const isRetailA = ka === "retail"
     const isRetailB = kb === "retail"
     if (isRetailA && !isRetailB) return 1
@@ -148,16 +137,34 @@ function buildRows(
     const nameB = locB.warehouse?.name ?? ""
     return nameA.localeCompare(nameB)
   })
+}
+
+function buildRows(
+  locations: StockLocation[],
+  showSiteGroups: boolean,
+  collapsedGroups: Set<string>,
+  collapsedTreeNodes: Set<number>,
+  titleForGroup: (groupKey: string, sample: StockLocation | undefined) => string,
+): TreeRow[] {
+  const map = groupLocations(locations)
+  const entries = sortGroupEntries(map)
 
   const rows: TreeRow[] = []
   for (const [groupKey, locs] of entries) {
-    rows.push({
-      kind: "group",
-      groupKey,
-      title: titleForGroup(groupKey, locs[0]),
-      count: locs.length,
-    })
-    if (!collapsedGroups.has(groupKey)) {
+    if (showSiteGroups) {
+      rows.push({
+        kind: "group",
+        groupKey,
+        title: titleForGroup(groupKey, locs[0]),
+        count: locs.length,
+      })
+      if (!collapsedGroups.has(groupKey)) {
+        const hier = buildHierarchyRows(locs, collapsedTreeNodes)
+        for (const h of hier) {
+          rows.push({ kind: "location", ...h })
+        }
+      }
+    } else {
       const hier = buildHierarchyRows(locs, collapsedTreeNodes)
       for (const h of hier) {
         rows.push({ kind: "location", ...h })
@@ -178,8 +185,6 @@ function utilizationPercent(location: StockLocation): number | null {
 interface CompactLocationRowProps {
   location: StockLocation
   onEdit: (location: StockLocation) => void
-  stockOpen: boolean
-  onToggleStock: () => void
   depthIndent: number
   hasChildren: boolean
   treeCollapsed: boolean
@@ -189,8 +194,6 @@ interface CompactLocationRowProps {
 function CompactLocationRow({
   location,
   onEdit,
-  stockOpen,
-  onToggleStock,
   depthIndent,
   hasChildren,
   treeCollapsed,
@@ -220,68 +223,56 @@ function CompactLocationRow({
     <div className="border-b bg-card last:border-b-0">
       <div
         className={cn(
-          "grid w-full grid-cols-[2rem_minmax(0,1fr)_auto_auto_4.5rem] items-center gap-2 px-2 py-1.5 sm:grid-cols-[2rem_minmax(0,1fr)_5.5rem_4.5rem_4.5rem]",
+          "group/row flex w-full items-center gap-2 px-2 py-1.5",
         )}
       >
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          className="size-8 shrink-0"
-          onClick={onToggleStock}
-          aria-expanded={stockOpen}
-          aria-label={t("locations.list.stockLinesToggle")}
+        <div
+          className={cn(
+            "flex h-8 w-8 shrink-0 items-center justify-center",
+            !hasChildren && "pointer-events-none",
+          )}
         >
-          <ListIcon
-            className={cn(
-              "size-4 transition-colors",
-              stockOpen && "text-primary",
-            )}
-          />
-        </Button>
+          {hasChildren ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              className="size-8 shrink-0"
+              onClick={onToggleTree}
+              aria-expanded={!treeCollapsed}
+              aria-label={
+                treeCollapsed
+                  ? t("locations.list.expandBranch")
+                  : t("locations.list.collapseBranch")
+              }
+            >
+              <ChevronRightIcon
+                className={cn(
+                  "size-4 transition-transform duration-200",
+                  !treeCollapsed && "rotate-90",
+                )}
+              />
+            </Button>
+          ) : (
+            <span
+              className="size-1.5 rounded-full bg-muted-foreground/35"
+              aria-hidden
+            />
+          )}
+        </div>
 
-        <div className="min-w-0">
-          <div
+        <div className="min-w-0 flex-1">
+          <Link
+            href={`/stock/locations/${location.id}`}
             className={cn(
-              "flex min-w-0 items-center gap-1 pl-2 sm:gap-2",
+              "flex min-w-0 items-center gap-2 rounded-md py-0.5 pl-2 pr-1 outline-offset-2 hover:bg-muted/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring",
               depthIndent > 0 && "border-l border-border/70",
             )}
             style={{ marginLeft: indentPx }}
+            aria-label={t("locations.list.openDetailAria", {
+              name: location.name,
+            })}
           >
-            <div
-              className={cn(
-                "flex h-7 w-7 shrink-0 items-center justify-center",
-                !hasChildren && "pointer-events-none",
-              )}
-            >
-              {hasChildren ? (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  className="size-7 shrink-0"
-                  onClick={onToggleTree}
-                  aria-expanded={!treeCollapsed}
-                  aria-label={
-                    treeCollapsed
-                      ? t("locations.list.expandBranch")
-                      : t("locations.list.collapseBranch")
-                  }
-                >
-                  <ChevronRightIcon
-                    className={cn(
-                      "size-4 transition-transform duration-200",
-                      !treeCollapsed && "rotate-90",
-                    )}
-                  />
-                </Button>
-              ) : (
-                <span
-                  className="size-1.5 rounded-full bg-muted-foreground/35"
-                  aria-hidden
-                />
-              )}
-            </div>
             <div className="min-w-0 flex-1">
               <div className="flex min-w-0 items-center gap-2">
                 <span className="truncate text-sm font-medium">
@@ -300,10 +291,14 @@ function CompactLocationRow({
                 </p>
               ) : null}
             </div>
-          </div>
+            <ChevronRightIcon
+              className="size-4 shrink-0 text-muted-foreground opacity-40 transition-opacity group-hover/row:opacity-80"
+              aria-hidden
+            />
+          </Link>
         </div>
 
-        <div className="hidden text-right text-xs tabular-nums text-muted-foreground sm:block">
+        <div className="hidden w-[5.5rem] shrink-0 text-right text-xs tabular-nums text-muted-foreground sm:block">
           {pct != null
             ? t("locations.capacity.percent", { pct: Math.round(pct) })
             : t("locations.list.utilUnlimited", {
@@ -313,18 +308,22 @@ function CompactLocationRow({
 
         <Badge
           variant={location.is_active ? "default" : "secondary"}
-          className="justify-self-end text-[10px] sm:hidden"
+          className="shrink-0 text-[10px] sm:hidden"
         >
           {location.is_active ? t("shared.active") : t("shared.inactive")}
         </Badge>
 
-        <div className="flex shrink-0 justify-end gap-0.5">
+        <div className="flex w-[4.5rem] shrink-0 justify-end gap-0.5">
           <Button
             type="button"
             variant="ghost"
             size="icon-sm"
             className="size-8"
-            onClick={() => onEdit(location)}
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              onEdit(location)
+            }}
             aria-label={t("shared.editLocation")}
           >
             <PencilIcon className="size-4" />
@@ -334,7 +333,11 @@ function CompactLocationRow({
             variant="ghost"
             size="icon-sm"
             className="size-8"
-            onClick={() => setDeleteOpen(true)}
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              setDeleteOpen(true)
+            }}
             disabled={deleteMutation.isPending}
             aria-label={t("shared.deleteLocation")}
           >
@@ -374,19 +377,14 @@ function CompactLocationRow({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {stockOpen ? (
-        <StockRecordsPanel
-          locationId={location.id}
-          locationName={location.name}
-        />
-      ) : null}
     </div>
   )
 }
 
 interface LocationTreeProps {
   locations: StockLocation[]
+  /** When false (site filter is not “all”), hide facility group headers so the strip + filter carry site context. */
+  showSiteGroups?: boolean
   onEdit: (location: StockLocation) => void
   isLoading?: boolean
   hasNextPage?: boolean
@@ -399,6 +397,7 @@ export const LocationTree = forwardRef<LocationTreeHandle, LocationTreeProps>(
   function LocationTree(
     {
       locations,
+      showSiteGroups = true,
       onEdit,
       isLoading,
       hasNextPage,
@@ -408,288 +407,289 @@ export const LocationTree = forwardRef<LocationTreeHandle, LocationTreeProps>(
     },
     ref,
   ) {
-  const t = useTranslations("Inventory")
-  const scrollRef = useRef<HTMLDivElement>(null)
-  const sentinelRef = useRef<HTMLDivElement>(null)
-  const locationsRef = useRef(locations)
-  locationsRef.current = locations
+    const t = useTranslations("Inventory")
+    const scrollRef = useRef<HTMLDivElement>(null)
+    const sentinelRef = useRef<HTMLDivElement>(null)
+    const locationsRef = useRef(locations)
+    locationsRef.current = locations
 
-  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(
-    () => new Set(),
-  )
-  const [collapsedTreeNodes, setCollapsedTreeNodes] = useState<Set<number>>(
-    () => new Set(),
-  )
-  const [stockExpandedId, setStockExpandedId] = useState<number | null>(null)
-  const [pendingScrollToId, setPendingScrollToId] = useState<number | null>(
-    null,
-  )
+    const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(
+      () => new Set(),
+    )
+    const [collapsedTreeNodes, setCollapsedTreeNodes] = useState<Set<number>>(
+      () => new Set(),
+    )
+    const [pendingScrollToId, setPendingScrollToId] = useState<number | null>(
+      null,
+    )
 
-  const titleForGroup = useCallback(
-    (groupKey: string, sample: StockLocation | undefined) => {
-      if (groupKey === "retail") return t("locations.siteGroup.storeRetail")
-      return sample?.warehouse?.name ?? t("locations.siteGroup.unknownFacility")
-    },
-    [t],
-  )
+    const titleForGroup = useCallback(
+      (groupKey: string, sample: StockLocation | undefined) => {
+        if (groupKey === "retail") return t("locations.siteGroup.storeRetail")
+        return sample?.warehouse?.name ?? t("locations.siteGroup.unknownFacility")
+      },
+      [t],
+    )
 
-  const rows = useMemo(
-    () =>
-      buildRows(
+    const rows = useMemo(
+      () =>
+        buildRows(
+          locations,
+          showSiteGroups,
+          collapsedGroups,
+          collapsedTreeNodes,
+          titleForGroup,
+        ),
+      [
         locations,
+        showSiteGroups,
         collapsedGroups,
         collapsedTreeNodes,
         titleForGroup,
-      ),
-    [locations, collapsedGroups, collapsedTreeNodes, titleForGroup],
-  )
+      ],
+    )
 
-  const virtualizer = useVirtualizer({
-    count: rows.length,
-    getScrollElement: () => scrollRef.current,
-    estimateSize: (index) => {
-      const row = rows[index]
-      if (!row) return 44
-      if (row.kind === "group") return 40
-      const open = stockExpandedId === row.location.id
-      return open ? 420 : 44
-    },
-    overscan: 8,
-    getItemKey: (index) => {
-      const row = rows[index]
-      if (!row) return String(index)
-      if (row.kind === "group") return `g:${row.groupKey}`
-      return `l:${row.location.id}`
-    },
-  })
+    const virtualizer = useVirtualizer({
+      count: rows.length,
+      getScrollElement: () => scrollRef.current,
+      estimateSize: (index) => {
+        const row = rows[index]
+        if (!row) return 44
+        if (row.kind === "group") return 40
+        return 44
+      },
+      overscan: 8,
+      getItemKey: (index) => {
+        const row = rows[index]
+        if (!row) return String(index)
+        if (row.kind === "group") return `g:${row.groupKey}`
+        return `l:${row.location.id}`
+      },
+    })
 
-  const revealLocation = useCallback(
-    (locationId: number, ancestorIds: number[]) => {
-      const locs = locationsRef.current
-      const loc = locs.find((l) => l.id === locationId)
+    const revealLocation = useCallback(
+      (locationId: number, ancestorIds: number[]) => {
+        const locs = locationsRef.current
+        const loc = locs.find((l) => l.id === locationId)
+        setCollapsedGroups((prev) => {
+          const next = new Set(prev)
+          if (loc) {
+            const gk =
+              loc.warehouse_id != null ? `w:${loc.warehouse_id}` : "retail"
+            next.delete(gk)
+          }
+          return next
+        })
+        setCollapsedTreeNodes((prev) => {
+          const next = new Set(prev)
+          for (const aid of ancestorIds) next.delete(aid)
+          return next
+        })
+        setPendingScrollToId(locationId)
+      },
+      [],
+    )
+
+    useImperativeHandle(ref, () => ({ revealLocation }), [revealLocation])
+
+    useEffect(() => {
+      virtualizer.measure()
+    }, [collapsedGroups, collapsedTreeNodes, rows.length, virtualizer])
+
+    useEffect(() => {
+      const root = scrollRef.current
+      const sentinel = sentinelRef.current
+      if (!root || !sentinel || !hasNextPage || !fetchNextPage) return
+
+      const obs = new IntersectionObserver(
+        (entries) => {
+          const hit = entries.some((e) => e.isIntersecting)
+          if (hit) fetchNextPage()
+        },
+        { root, rootMargin: "120px", threshold: 0 },
+      )
+      obs.observe(sentinel)
+      return () => obs.disconnect()
+    }, [hasNextPage, fetchNextPage, locations.length])
+
+    useEffect(() => {
+      if (pendingScrollToId == null) return
+      const id = pendingScrollToId
+      const idx = rows.findIndex(
+        (r) => r.kind === "location" && r.location.id === id,
+      )
+      if (idx >= 0) {
+        virtualizer.scrollToIndex(idx, { align: "center" })
+        setPendingScrollToId(null)
+        return
+      }
+      if (!locations.some((l) => l.id === id)) {
+        setPendingScrollToId(null)
+      }
+    }, [pendingScrollToId, rows, virtualizer, locations])
+
+    const toggleGroup = (groupKey: string) => {
       setCollapsedGroups((prev) => {
         const next = new Set(prev)
-        if (loc) {
-          const gk =
-            loc.warehouse_id != null ? `w:${loc.warehouse_id}` : "retail"
-          next.delete(gk)
-        }
+        if (next.has(groupKey)) next.delete(groupKey)
+        else next.add(groupKey)
         return next
       })
+    }
+
+    const toggleTreeNode = (nodeId: number) => {
       setCollapsedTreeNodes((prev) => {
         const next = new Set(prev)
-        for (const aid of ancestorIds) next.delete(aid)
+        if (next.has(nodeId)) next.delete(nodeId)
+        else next.add(nodeId)
         return next
       })
-      setPendingScrollToId(locationId)
-    },
-    [],
-  )
-
-  useImperativeHandle(ref, () => ({ revealLocation }), [revealLocation])
-
-  useEffect(() => {
-    virtualizer.measure()
-  }, [collapsedGroups, collapsedTreeNodes, rows.length, stockExpandedId, virtualizer])
-
-  useEffect(() => {
-    const root = scrollRef.current
-    const sentinel = sentinelRef.current
-    if (!root || !sentinel || !hasNextPage || !fetchNextPage) return
-
-    const obs = new IntersectionObserver(
-      (entries) => {
-        const hit = entries.some((e) => e.isIntersecting)
-        if (hit) fetchNextPage()
-      },
-      { root, rootMargin: "120px", threshold: 0 },
-    )
-    obs.observe(sentinel)
-    return () => obs.disconnect()
-  }, [hasNextPage, fetchNextPage, locations.length])
-
-  useEffect(() => {
-    if (pendingScrollToId == null) return
-    const id = pendingScrollToId
-    const idx = rows.findIndex(
-      (r) => r.kind === "location" && r.location.id === id,
-    )
-    if (idx >= 0) {
-      virtualizer.scrollToIndex(idx, { align: "center" })
-      setPendingScrollToId(null)
-      return
     }
-    if (!locations.some((l) => l.id === id)) {
-      setPendingScrollToId(null)
+
+    if (isLoading) {
+      return (
+        <div className="space-y-2 rounded-md border p-2">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <Skeleton key={i} className="h-10 w-full" />
+          ))}
+        </div>
+      )
     }
-  }, [pendingScrollToId, rows, virtualizer, locations])
 
-  const toggleGroup = (groupKey: string) => {
-    setCollapsedGroups((prev) => {
-      const next = new Set(prev)
-      if (next.has(groupKey)) next.delete(groupKey)
-      else next.add(groupKey)
-      return next
-    })
-  }
+    if (!locations.length) {
+      return (
+        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
+          <WarehouseIcon className="mb-4 size-12 text-muted-foreground/50" />
+          <h3 className="text-lg font-medium">{t("locations.emptyTitle")}</h3>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {t("locations.emptyDescription")}
+          </p>
+        </div>
+      )
+    }
 
-  const toggleTreeNode = (nodeId: number) => {
-    setCollapsedTreeNodes((prev) => {
-      const next = new Set(prev)
-      if (next.has(nodeId)) next.delete(nodeId)
-      else next.add(nodeId)
-      return next
-    })
-  }
+    const loaded = locations.length
+    const total = totalCount ?? loaded
 
-  if (isLoading) {
     return (
-      <div className="space-y-2 rounded-md border p-2">
-        {Array.from({ length: 8 }).map((_, i) => (
-          <Skeleton key={i} className="h-10 w-full" />
-        ))}
-      </div>
-    )
-  }
-
-  if (!locations.length) {
-    return (
-      <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
-        <WarehouseIcon className="mb-4 size-12 text-muted-foreground/50" />
-        <h3 className="text-lg font-medium">{t("locations.emptyTitle")}</h3>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {t("locations.emptyDescription")}
-        </p>
-      </div>
-    )
-  }
-
-  const loaded = locations.length
-  const total = totalCount ?? loaded
-
-  return (
-    <div className="space-y-2">
-      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
-        <span>
-          {t("locations.list.loadedSummary", { loaded, total })}
-        </span>
-        <span className="hidden sm:inline">
-          {t("locations.list.hintScroll")}
-        </span>
-      </div>
-
-      <div
-        ref={scrollRef}
-        className="max-h-[min(70vh,560px)] overflow-auto rounded-md border"
-      >
-        <div className="sticky top-0 z-10 grid w-full grid-cols-[2rem_minmax(0,1fr)_auto_auto_4.5rem] items-center gap-2 border-b bg-muted/95 px-2 py-2 text-xs font-medium backdrop-blur-sm sm:grid-cols-[2rem_minmax(0,1fr)_5.5rem_4.5rem_4.5rem]">
-          <span className="sr-only">{t("locations.list.colExpand")}</span>
-          <span>{t("locations.list.colLocation")}</span>
-          <span className="hidden text-right sm:block">
-            {t("locations.list.colUtilization")}
+      <div className="space-y-2">
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+          <span>{t("locations.list.loadedSummary", { loaded, total })}</span>
+          <span className="hidden sm:inline">
+            {t("locations.list.hintScroll")}
           </span>
-          <span className="sm:hidden" />
-          <span className="text-right">{t("locations.list.colActions")}</span>
         </div>
 
         <div
-          className="relative w-full"
-          style={{
-            height: `${virtualizer.getTotalSize() + (hasNextPage ? 40 : 0)}px`,
-          }}
+          ref={scrollRef}
+          className="max-h-[min(70vh,560px)] overflow-auto rounded-md border"
         >
-          {virtualizer.getVirtualItems().map((virtualRow) => {
-            const row = rows[virtualRow.index]
-            if (!row) return null
+          <div className="sticky top-0 z-10 flex w-full items-center gap-2 border-b bg-muted/95 px-2 py-2 text-xs font-medium backdrop-blur-sm">
+            <span className="sr-only w-8 shrink-0">
+              {t("locations.list.colExpand")}
+            </span>
+            <div className="w-8 shrink-0" aria-hidden />
+            <span className="min-w-0 flex-1">{t("locations.list.colLocation")}</span>
+            <span className="hidden w-[5.5rem] shrink-0 text-right sm:block">
+              {t("locations.list.colUtilization")}
+            </span>
+            <span className="w-[4.5rem] shrink-0 text-right">
+              {t("locations.list.colActions")}
+            </span>
+          </div>
 
-            if (row.kind === "group") {
-              const collapsed = collapsedGroups.has(row.groupKey)
+          <div
+            className="relative w-full"
+            style={{
+              height: `${virtualizer.getTotalSize() + (hasNextPage ? 40 : 0)}px`,
+            }}
+          >
+            {virtualizer.getVirtualItems().map((virtualRow) => {
+              const row = rows[virtualRow.index]
+              if (!row) return null
+
+              if (row.kind === "group") {
+                const collapsed = collapsedGroups.has(row.groupKey)
+                return (
+                  <div
+                    key={virtualRow.key}
+                    data-index={virtualRow.index}
+                    ref={virtualizer.measureElement}
+                    className="absolute left-0 top-0 w-full border-b bg-muted/30"
+                    style={{
+                      transform: `translateY(${virtualRow.start}px)`,
+                    }}
+                  >
+                    <button
+                      type="button"
+                      className="flex w-full items-center gap-2 px-2 py-2 text-left text-sm font-medium hover:bg-muted/50"
+                      onClick={() => toggleGroup(row.groupKey)}
+                      aria-expanded={!collapsed}
+                      aria-label={
+                        collapsed
+                          ? t("locations.list.expandSite", { name: row.title })
+                          : t("locations.list.collapseSite", { name: row.title })
+                      }
+                    >
+                      <ChevronRightIcon
+                        className={cn(
+                          "size-4 shrink-0 transition-transform",
+                          !collapsed && "rotate-90",
+                        )}
+                      />
+                      <span className="truncate">{row.title}</span>
+                      <span className="ml-auto shrink-0 tabular-nums text-xs font-normal text-muted-foreground">
+                        {t("locations.list.groupLocationCount", {
+                          count: row.count,
+                        })}
+                      </span>
+                    </button>
+                  </div>
+                )
+              }
+
+              const loc = row.location
+              const treeCollapsed = collapsedTreeNodes.has(loc.id)
+
               return (
                 <div
                   key={virtualRow.key}
                   data-index={virtualRow.index}
+                  data-location-id={loc.id}
                   ref={virtualizer.measureElement}
-                  className="absolute left-0 top-0 w-full border-b bg-muted/30"
+                  className="absolute left-0 top-0 w-full"
                   style={{
                     transform: `translateY(${virtualRow.start}px)`,
                   }}
                 >
-                  <button
-                    type="button"
-                    className="flex w-full items-center gap-2 px-2 py-2 text-left text-sm font-medium hover:bg-muted/50"
-                    onClick={() => toggleGroup(row.groupKey)}
-                    aria-expanded={!collapsed}
-                    aria-label={
-                      collapsed
-                        ? t("locations.list.expandSite", { name: row.title })
-                        : t("locations.list.collapseSite", { name: row.title })
-                    }
-                  >
-                    <ChevronRightIcon
-                      className={cn(
-                        "size-4 shrink-0 transition-transform",
-                        !collapsed && "rotate-90",
-                      )}
-                    />
-                    <span className="truncate">{row.title}</span>
-                    <span className="ml-auto shrink-0 tabular-nums text-xs font-normal text-muted-foreground">
-                      {t("locations.list.groupLocationCount", {
-                        count: row.count,
-                      })}
-                    </span>
-                  </button>
+                  <CompactLocationRow
+                    location={loc}
+                    onEdit={onEdit}
+                    depthIndent={row.depthIndent}
+                    hasChildren={row.hasChildren}
+                    treeCollapsed={treeCollapsed}
+                    onToggleTree={() => toggleTreeNode(loc.id)}
+                  />
                 </div>
               )
-            }
+            })}
 
-            const loc = row.location
-            const stockOpen = stockExpandedId === loc.id
-            const treeCollapsed = collapsedTreeNodes.has(loc.id)
-
-            return (
+            {hasNextPage ? (
               <div
-                key={virtualRow.key}
-                data-index={virtualRow.index}
-                data-location-id={loc.id}
-                ref={virtualizer.measureElement}
-                className="absolute left-0 top-0 w-full"
+                ref={sentinelRef}
+                className="absolute left-0 flex w-full items-center justify-center py-2 text-xs text-muted-foreground"
                 style={{
-                  transform: `translateY(${virtualRow.start}px)`,
+                  transform: `translateY(${virtualizer.getTotalSize()}px)`,
                 }}
               >
-                <CompactLocationRow
-                  location={loc}
-                  onEdit={onEdit}
-                  stockOpen={stockOpen}
-                  onToggleStock={() =>
-                    setStockExpandedId((cur) =>
-                      cur === loc.id ? null : loc.id,
-                    )
-                  }
-                  depthIndent={row.depthIndent}
-                  hasChildren={row.hasChildren}
-                  treeCollapsed={treeCollapsed}
-                  onToggleTree={() => toggleTreeNode(loc.id)}
-                />
+                {isFetchingNextPage ? t("locations.list.loadingMore") : null}
               </div>
-            )
-          })}
-
-          {hasNextPage ? (
-            <div
-              ref={sentinelRef}
-              className="absolute left-0 flex w-full items-center justify-center py-2 text-xs text-muted-foreground"
-              style={{ transform: `translateY(${virtualizer.getTotalSize()}px)` }}
-            >
-              {isFetchingNextPage ? t("locations.list.loadingMore") : null}
-            </div>
-          ) : null}
+            ) : null}
+          </div>
         </div>
       </div>
-    </div>
-  )
-}
-
+    )
+  },
 )
 
 LocationTree.displayName = "LocationTree"

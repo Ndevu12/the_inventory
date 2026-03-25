@@ -256,6 +256,50 @@
     "toastUpdateFailed": "Échec de la mise à jour de l’emplacement",
     "toastCreateFailed": "Échec de la création de l’emplacement",
     "toastDeleteFailed": "Échec de la suppression de l’emplacement",
+    "list": {
+      "colExpand": "Développement des sous-niveaux",
+      "colLocation": "Emplacement",
+      "colUtilization": "Utilisation",
+      "colActions": "Actions",
+      "expandBranch": "Développer les emplacements imbriqués",
+      "collapseBranch": "Replier les emplacements imbriqués",
+      "expandSite": "Développer {name}",
+      "collapseSite": "Replier {name}",
+      "groupLocationCount": "{count, number} dans le groupe",
+      "loadedSummary": "{loaded, number} chargés · {total, number} au total",
+      "hintScroll": "Faites défiler pour charger plus",
+      "loadingMore": "Chargement…",
+      "utilUnlimited": "{count, number} unités · capacité illimitée",
+      "openDetailAria": "Ouvrir les détails de {name}"
+    },
+    "hierarchy": {
+      "hintCommandPalette": "Astuce : ouvrez la palette de commandes (recherche) pour accéder directement au détail d’un emplacement."
+    },
+    "commandPalette": {
+      "groupHeading": "Emplacements"
+    },
+    "siteGroup": {
+      "storeRetail": "Magasin / détail",
+      "unknownFacility": "Site"
+    },
+    "savedViews": {
+      "trigger": "Vues enregistrées",
+      "menuTitle": "Filtres enregistrés",
+      "saveCurrent": "Enregistrer les filtres actuels",
+      "empty": "Aucune vue enregistrée pour le moment.",
+      "promptName": "Nom de cette vue :",
+      "removeAria": "Supprimer la vue enregistrée {name}"
+    },
+    "detail": {
+      "backToList": "Tous les emplacements",
+      "invalidTitle": "Emplacement invalide",
+      "invalidBody": "L’identifiant d’emplacement dans l’URL n’est pas valide.",
+      "notFoundTitle": "Emplacement introuvable",
+      "notFoundBody": "Cet emplacement n’existe pas ou vous n’y avez pas accès.",
+      "stockSectionTitle": "Lignes de stock",
+      "retailSite": "Magasin / site de détail",
+      "capacityHint": "Utilisation par rapport à la capacité maximale de cet emplacement."
+    },
     "form": {
       "createTitle": "Nouvel emplacement",
       "editTitle": "Modifier l’emplacement",

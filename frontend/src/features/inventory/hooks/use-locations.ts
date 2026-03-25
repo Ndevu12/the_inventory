@@ -19,10 +19,7 @@ const LOCATIONS_KEY = ["stock-locations"] as const;
 /** DRF ``StandardPagination`` max ``page_size`` is 100. */
 export const LOCATIONS_PAGE_SIZE = "100";
 
-/** Rows loaded when expanding a location in the tree (capped preview). */
-export const LOCATION_STOCK_PREVIEW_PAGE_SIZE = "15";
-
-/** Page size inside the “view all” sheet (under API max). */
+/** Stock table page size on the location detail route (under API max). */
 export const LOCATION_STOCK_DRAWER_PAGE_SIZE = "50";
 
 function getNextDrfPage(

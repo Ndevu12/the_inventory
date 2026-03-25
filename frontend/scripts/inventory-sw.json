@@ -256,6 +256,50 @@
     "toastUpdateFailed": "Imeshindwa kusasisha eneo",
     "toastCreateFailed": "Imeshindwa kuunda eneo",
     "toastDeleteFailed": "Imeshindwa kufuta eneo",
+    "list": {
+      "colExpand": "Kunyoosha tawi",
+      "colLocation": "Eneo",
+      "colUtilization": "Matumizi",
+      "colActions": "Vitendo",
+      "expandBranch": "Panua maeneo ya ndani",
+      "collapseBranch": "Kunja maeneo ya ndani",
+      "expandSite": "Panua {name}",
+      "collapseSite": "Kunja {name}",
+      "groupLocationCount": "{count, number} katika kundi",
+      "loadedSummary": "{loaded, number} yamepakuliwa · {total, number} jumla",
+      "hintScroll": "Sogeza chini kupakia zaidi",
+      "loadingMore": "Inapakia zaidi…",
+      "utilUnlimited": "{count, number} vitu · uwezo usio na kikomo",
+      "openDetailAria": "Fungua maelezo ya {name}"
+    },
+    "hierarchy": {
+      "hintCommandPalette": "Kidokezo: fungua palette ya amri (tafuta) ili uruke moja kwa moja kwenye ukurasa wa maelezo ya eneo."
+    },
+    "commandPalette": {
+      "groupHeading": "Maeneo"
+    },
+    "siteGroup": {
+      "storeRetail": "Duka / rejareja",
+      "unknownFacility": "Kituo"
+    },
+    "savedViews": {
+      "trigger": "Mitazamo iliyohifadhiwa",
+      "menuTitle": "Vichujio vilivyohifadhiwa",
+      "saveCurrent": "Hifadhi vichujio sasa",
+      "empty": "Bado hakuna mitazamo iliyohifadhiwa.",
+      "promptName": "Jina la muonekano huu:",
+      "removeAria": "Ondoa muonekano ulihifadhiwa {name}"
+    },
+    "detail": {
+      "backToList": "Maeneo yote",
+      "invalidTitle": "Eneo si halali",
+      "invalidBody": "Kitambulisho cha eneo katika URL si halali.",
+      "notFoundTitle": "Eneo halijapatikana",
+      "notFoundBody": "Eneo hili halipo au huna ruhusa.",
+      "stockSectionTitle": "Mistari ya hisa",
+      "retailSite": "Duka / eneo la rejareja",
+      "capacityHint": "Matumizi ukilinganisha na uwezo wa juu wa eneo hili."
+    },
     "form": {
       "createTitle": "Eneo jipya",
       "editTitle": "Hariri eneo",

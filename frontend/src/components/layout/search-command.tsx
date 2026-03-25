@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { usePathname, useRouter } from "@/i18n/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { useAllLocations } from "@/features/inventory/hooks/use-locations";
 import {
   PackageIcon,
@@ -130,7 +130,6 @@ export function useSearchCommand() {
 
 export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
   const router = useRouter();
-  const pathname = usePathname();
   const tNav = useTranslations("Nav");
   const tCommon = useTranslations("Common");
   const tInv = useTranslations("Inventory");
@@ -148,15 +147,9 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
   const navigateToLocation = useCallback(
     (locationId: number) => {
       onOpenChange?.(false);
-      if (pathname.includes("/stock/locations")) {
-        const q = new URLSearchParams();
-        q.set("focus", String(locationId));
-        router.push(`${pathname}?${q.toString()}`);
-      } else {
-        router.push(`/stock/locations?focus=${locationId}`);
-      }
+      router.push(`/stock/locations/${locationId}`);
     },
-    [onOpenChange, pathname, router],
+    [onOpenChange, router],
   );
 
   return (

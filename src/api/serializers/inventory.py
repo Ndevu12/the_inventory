@@ -201,6 +201,7 @@ class StockLocationSerializer(serializers.ModelSerializer):
     )
     current_utilization = serializers.IntegerField(read_only=True)
     remaining_capacity = serializers.IntegerField(read_only=True, allow_null=True)
+    stock_line_count = serializers.SerializerMethodField()
     depth = serializers.IntegerField(read_only=True)
     parent_id = serializers.SerializerMethodField()
     materialized_path = serializers.CharField(source="path", read_only=True)
@@ -211,11 +212,17 @@ class StockLocationSerializer(serializers.ModelSerializer):
         fields = [
             "id", "name", "description", "is_active",
             "max_capacity", "warehouse", "warehouse_id",
-            "current_utilization", "remaining_capacity",
+            "current_utilization", "remaining_capacity", "stock_line_count",
             "depth", "parent_id", "materialized_path", "ancestor_ids",
             "created_at", "updated_at",
         ]
         read_only_fields = ["created_at", "updated_at"]
+
+    def get_stock_line_count(self, obj):
+        try:
+            return obj.stock_line_count
+        except AttributeError:
+            return obj.stock_records.count()
 
     def get_parent_id(self, obj):
         parent_map = self.context.get("parent_id_map")

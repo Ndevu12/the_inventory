@@ -256,6 +256,50 @@
     "toastUpdateFailed": "Failed to update location",
     "toastCreateFailed": "Failed to create location",
     "toastDeleteFailed": "Failed to delete location",
+    "list": {
+      "colExpand": "Branch expansion",
+      "colLocation": "Location",
+      "colUtilization": "Utilization",
+      "colActions": "Actions",
+      "expandBranch": "Expand nested locations",
+      "collapseBranch": "Collapse nested locations",
+      "expandSite": "Expand {name}",
+      "collapseSite": "Collapse {name}",
+      "groupLocationCount": "{count, number} in group",
+      "loadedSummary": "{loaded, number} loaded · {total, number} total",
+      "hintScroll": "Scroll down to load more",
+      "loadingMore": "Loading more…",
+      "utilUnlimited": "{count, number} units · unlimited capacity",
+      "openDetailAria": "Open details for {name}"
+    },
+    "hierarchy": {
+      "hintCommandPalette": "Tip: open the command palette (search) to jump straight to a location detail page."
+    },
+    "commandPalette": {
+      "groupHeading": "Locations"
+    },
+    "siteGroup": {
+      "storeRetail": "Store / retail",
+      "unknownFacility": "Facility"
+    },
+    "savedViews": {
+      "trigger": "Saved views",
+      "menuTitle": "Saved filters",
+      "saveCurrent": "Save current filters",
+      "empty": "No saved views yet.",
+      "promptName": "Name this view:",
+      "removeAria": "Remove saved view {name}"
+    },
+    "detail": {
+      "backToList": "All locations",
+      "invalidTitle": "Invalid location",
+      "invalidBody": "The location id in the URL is not valid.",
+      "notFoundTitle": "Location not found",
+      "notFoundBody": "This location does not exist or you cannot access it.",
+      "stockSectionTitle": "Stock lines",
+      "retailSite": "Store / retail site",
+      "capacityHint": "Utilization versus max capacity for this location."
+    },
     "form": {
       "createTitle": "New Location",
       "editTitle": "Edit Location",

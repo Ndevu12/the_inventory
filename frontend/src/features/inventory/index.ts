@@ -16,6 +16,7 @@ export type {
 } from "./types/inventory.types"
 
 export { LocationListPage } from "./pages/location-list-page"
+export { LocationDetailPage } from "./pages/location-detail-page"
 export { LocationTree } from "./components/locations/location-tree"
 export type { LocationTreeHandle } from "./components/locations/location-tree"
 export { LocationFormDialog } from "./components/locations/location-form-dialog"

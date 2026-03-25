@@ -256,6 +256,50 @@
     "toastUpdateFailed": "Kuvugurura ahantu byakunze",
     "toastCreateFailed": "Guhanga ahantu byakunze",
     "toastDeleteFailed": "Gusiba ahantu byakunze",
+    "list": {
+      "colExpand": "Gufungura impemba",
+      "colLocation": "Ahantu",
+      "colUtilization": "Ikoreshwa",
+      "colActions": "Ibikorwa",
+      "expandBranch": "Gufungura ahantu ahuzwe",
+      "collapseBranch": "Gufunga ahantu ahuzwe",
+      "expandSite": "Gufungura {name}",
+      "collapseSite": "Gufunga {name}",
+      "groupLocationCount": "{count, number} mu itsinda",
+      "loadedSummary": "{loaded, number} byafunguwe · {total, number} byose",
+      "hintScroll": "Kurarama hasi ukongere ubike",
+      "loadingMore": "Biri gukurura…",
+      "utilUnlimited": "{count, number} ibintu · ubushobozi butagira iherezo",
+      "openDetailAria": "Gufungura ibisobanuro bya {name}"
+    },
+    "hierarchy": {
+      "hintCommandPalette": "Inama: fungura palette y'amabwiriza (shakisha) ngo ujye kuri page y'ibirambuye by'ahantu ako kanya."
+    },
+    "commandPalette": {
+      "groupHeading": "Ahantu"
+    },
+    "siteGroup": {
+      "storeRetail": "Iduka / retail",
+      "unknownFacility": "Ikigo"
+    },
+    "savedViews": {
+      "trigger": "Ibyabitswe",
+      "menuTitle": "Amahindo abitswe",
+      "saveCurrent": "Bika amahindo ubu",
+      "empty": "Nta ndabitswe zihari.",
+      "promptName": "Izina ry'iki gice:",
+      "removeAria": "Kureka indabitswe {name}"
+    },
+    "detail": {
+      "backToList": "Ahantu hose",
+      "invalidTitle": "Ahantu ntabwo ari meza",
+      "invalidBody": "ID y'ahantu kuri URL ntabwo ari nziza.",
+      "notFoundTitle": "Ahantu ntibabonetse",
+      "notFoundBody": "Aha hatantu ntihari cyangwa utabasha kugera kuho.",
+      "stockSectionTitle": "Imirongo ya stock",
+      "retailSite": "Iduka / site ya retail",
+      "capacityHint": "Ikoreshwa kurusha ubushobozi bw'ihanitse bw'aha hatantu."
+    },
     "form": {
       "createTitle": "Ahantu hashya",
       "editTitle": "Guhindura ahantu",
