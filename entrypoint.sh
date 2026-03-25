@@ -10,13 +10,25 @@ export DJANGO_SETTINGS_MODULE="${DJANGO_SETTINGS_MODULE:-the_inventory.settings.
 export DATABASE_URL="${DATABASE_URL}"
 export PORT="${PORT:-8000}"
 
-# Debug: Print environment variables
-echo "=== Environment Variables ==="
-echo "DJANGO_SETTINGS_MODULE=$DJANGO_SETTINGS_MODULE"
-echo "DATABASE_URL=$DATABASE_URL"
-echo "PORT=$PORT"
-echo "AUTO_SEED_DATABASE=${AUTO_SEED_DATABASE:-}"
-echo "================================"
+# Log safe startup context without leaking credentials.
+echo "=== Startup Environment Status ==="
+echo "DJANGO_SETTINGS_MODULE loaded"
+if [ -n "${DATABASE_URL:-}" ]; then
+  echo "DATABASE_URL loaded"
+else
+  echo "DATABASE_URL missing"
+fi
+if [ -n "${PORT:-}" ]; then
+  echo "PORT loaded"
+else
+  echo "PORT missing (will use default)"
+fi
+if [ -n "${AUTO_SEED_DATABASE:-}" ]; then
+  echo "AUTO_SEED_DATABASE loaded"
+else
+  echo "AUTO_SEED_DATABASE not set"
+fi
+echo "=================================="
 
 # Run database migrations
 python manage.py migrate --noinput

@@ -1958,21 +1958,6 @@
     "guard": {
       "loading": "Cargando…"
     },
-    "noOrganization": {
-      "loading": "Cargando…",
-      "title": "Sin acceso a una organización",
-      "description": "Ha iniciado sesión, pero no es miembro de ninguna organización en esta aplicación. El inventario solo está disponible cuando pertenece a una organización.",
-      "platformHint": "Si administra la plataforma, inicie sesión en Wagtail (admin de Django) para gestionar usuarios, invitaciones, facturación y herramientas entre organizaciones.",
-      "signOut": "Cerrar sesión"
-    },
-    "platformWagtail": {
-      "title": "Esta función está en Wagtail",
-      "description": "La administración de la plataforma (usuarios, invitaciones, facturación y auditoría global) se realiza en el admin de Wagtail (/admin/), no en este panel.",
-      "openPlatformAuditLog": "Abrir registro de auditoría de plataforma en Wagtail",
-      "wagtailLinkNote": "Abre Wagtail en una pestaña nueva. Inicie sesión con credenciales de staff si se le solicita.",
-      "backHome": "Volver al panel",
-      "signInDifferent": "Iniciar sesión con otra cuenta"
-    },
     "invitation": {
       "invalidTitle": "Invitación no válida",
       "invalidDescription": "Este enlace no es válido, expiró o ya se utilizó.",
