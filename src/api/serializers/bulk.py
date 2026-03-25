@@ -106,7 +106,9 @@ class BulkTransferSerializer(serializers.Serializer):
                 retail_locations_only=retail,
             )
         except ValueError as exc:
-            raise serializers.ValidationError(str(exc)) from exc
+            raise serializers.ValidationError(
+                "Invalid warehouse scope parameters."
+            ) from exc
 
         from_loc = attrs["from_location"]
         to_loc = attrs["to_location"]
