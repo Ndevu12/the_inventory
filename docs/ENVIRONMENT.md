@@ -871,8 +871,8 @@ Before deploying to production:
 ### Next.js (`next-intl`)
 
 - **Message files:** `frontend/public/locales/<locale>.json` (e.g. `en`, `fr`, `sw`, `rw`, `es`, `ar`), loaded in `frontend/src/i18n/load-messages.ts`.
-- **Add or change UI copy:** edit the JSON for each locale, keeping the **same key structure** across files (nested objects are fine; keys are resolved with dot notation, e.g. `Common.searchPlaceholder`).
-- **Use in components:** `useTranslations('Namespace')` on the client; `getTranslations` / `getMessages` on the server (see `frontend/src/app/[locale]/layout.tsx`).
+- **Add or change UI copy:** keep the **same key structure** across locale files. For namespaces maintained by the merge pipeline (**Inventory**, **Sales**, **Reports**, **Auth**, **Audit**, **en.json** rebuild slices, etc.), edit the inputs under `frontend/scripts/` and run **`yarn locale:merge`** from `frontend/` — see **[I18N_FRONTEND.md](I18N_FRONTEND.md)**. For other namespaces you may edit `public/locales/*.json` directly (avoid editing merged subtrees by hand or the next merge will overwrite them).
+- **Use in components:** `useTranslations('TopLevelNamespace')` on the client (nested keys: `t('child.grandchild')`); `getTranslations` / `getMessages` on the server (see `frontend/src/app/[locale]/layout.tsx`).
 
 ---
 

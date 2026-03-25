@@ -16,6 +16,7 @@ from django.urls import reverse
 from wagtail import hooks
 from wagtail.admin.widgets.button import Button
 
+import inventory.wagtail_audit_snippet  # noqa: F401 — platform audit log SnippetViewSet
 import tenants.catalog_snippets  # noqa: F401 — catalog SnippetViewSetGroup + register_snippet
 import tenants.snippets  # noqa: F401 — triggers register_snippet() at startup
 from tenants.models import Tenant

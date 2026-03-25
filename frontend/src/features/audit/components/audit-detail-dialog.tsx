@@ -13,7 +13,11 @@ import {
 } from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import type { AuditEntry } from "../types/audit.types"
-import { AUDIT_ACTION_COLOR_MAP } from "../helpers/audit-constants"
+import {
+  AUDIT_ACTION_COLOR_MAP,
+  getAuditActionLabel,
+  isAuditAction,
+} from "../helpers/audit-constants"
 
 interface AuditDetailDialogProps {
   open: boolean
@@ -28,11 +32,17 @@ export function AuditDetailDialog({
 }: AuditDetailDialogProps) {
   const t = useTranslations("Audit.detail")
   const tAudit = useTranslations("Audit")
+  const tActions = useTranslations("Audit.actionLabels")
+  const tEventScope = useTranslations("Audit.eventScope")
 
   if (!entry) return null
 
-  const colors = AUDIT_ACTION_COLOR_MAP[entry.action]
+  const colors = isAuditAction(entry.action)
+    ? AUDIT_ACTION_COLOR_MAP[entry.action]
+    : undefined
+  const actionLabel = getAuditActionLabel(entry, (a) => tActions(a))
   const datetime = new Date(entry.timestamp).toLocaleString()
+  const scope = entry.event_scope
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -50,9 +60,30 @@ export function AuditDetailDialog({
               variant="outline"
               className={`${colors?.bg ?? ""} ${colors?.text ?? ""} border-transparent`}
             >
-              {entry.action_display}
+              {actionLabel}
             </Badge>
           </Row>
+
+          {entry.summary ? (
+            <Row label={t("summary")}>
+              <span className="text-right text-balance">{entry.summary}</span>
+            </Row>
+          ) : null}
+
+          {scope ? (
+            <Row label={t("eventScope")}>
+              <Badge
+                variant="outline"
+                className={
+                  scope === "platform"
+                    ? "border-transparent bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300"
+                    : "border-transparent bg-slate-100 text-slate-800 dark:bg-slate-800/40 dark:text-slate-300"
+                }
+              >
+                {tEventScope(scope)}
+              </Badge>
+            </Row>
+          ) : null}
 
           <Row label={t("product")}>
             {entry.product_name ? (

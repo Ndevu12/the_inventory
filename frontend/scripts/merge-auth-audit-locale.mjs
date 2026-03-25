@@ -3,6 +3,10 @@
  * onto `public/locales/{fr,es,ar,rw,sw}.json`. English (`en.json`) is the source
  * of truth and is not modified here.
  *
+ * `Audit` includes tenant log copy: `summary` / `scope` columns,
+ * `detail.summary` / `eventScope`, `eventScope.*`, and full `actionLabels` (backend enum parity).
+ * Update `auth-audit-locale-en.json` when changing English audit keys, then `rebuild-en-locale.mjs`.
+ *
  * Run from frontend/: node scripts/merge-auth-audit-locale.mjs
  */
 import { readFileSync, writeFileSync } from "node:fs";

@@ -101,12 +101,12 @@ class InventoryTokenRefreshSerializer(TokenRefreshSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    """Tenant-app user summary (no platform flags — use Wagtail for staff/superuser)."""
+    """Tenant-app user summary; exposes read-only is_superuser for client platform UX gating."""
 
     class Meta:
         model = User
-        fields = ("id", "username", "email", "first_name", "last_name")
-        read_only_fields = ("id", "username")
+        fields = ("id", "username", "email", "first_name", "last_name", "is_superuser")
+        read_only_fields = ("id", "username", "is_superuser")
 
 
 class UserProfileSerializer(serializers.ModelSerializer):

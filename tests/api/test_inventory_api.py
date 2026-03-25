@@ -6,7 +6,14 @@ from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase
 
-from inventory.models import MovementType, ReservationStatus, StockRecord, Warehouse
+from inventory.models import (
+    AuditAction,
+    ComplianceAuditLog,
+    MovementType,
+    ReservationStatus,
+    StockRecord,
+    Warehouse,
+)
 from inventory.services.stock import StockService
 from tenants.context import set_current_tenant
 from tenants.models import TenantRole
@@ -70,6 +77,12 @@ class ProductAPITests(APISetupMixin, APITestCase):
         })
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data["sku"], "API-NEW")
+        audit = ComplianceAuditLog.objects.filter(
+            tenant=self.tenant, action=AuditAction.PRODUCT_CREATED,
+        ).last()
+        self.assertIsNotNone(audit)
+        self.assertEqual(audit.details.get("sku"), "API-NEW")
+        self.assertEqual(audit.product_id, response.data["id"])
 
     def test_update_product(self):
         p = create_product(sku="API-UPD")

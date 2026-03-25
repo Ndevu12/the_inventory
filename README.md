@@ -150,13 +150,13 @@ This project follows the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.
 Our CI workflow runs on pushes and pull requests to `main` and `develop`, and will:
 
 - Set `PYTHONPATH` to `<repo>/src:<repo>` (so `seeders` and `tests` import correctly)
-- From **`src/`**:
+- From **`src/`** (i.e. `working-directory: src` in the workflow):
     - Run `python manage.py check`
     - Run `python manage.py test tests`
     - Run `python manage.py makemigrations --check --dry-run`
-- From the repo root: `ruff check src tests seeders`
+- From the repo root: `ruff check src tests`
 
-You can mirror that locally with `cd src && python manage.py …` and `ruff check src tests seeders` from the repository root; see [Contributing](CONTRIBUTING.md) (install dev tools from `requirements-dev.txt`).
+You can mirror that locally from the repository root: `cd src` for Django commands, then `ruff check src tests` after `cd ..` (or open a second shell). If you change code under `seeders/`, also run `ruff check seeders`. Install dev tools from `requirements-dev.txt`. See [Contributing](CONTRIBUTING.md) for a full copy-paste checklist, including `docker build`.
 
 ## License
 

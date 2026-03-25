@@ -8,6 +8,8 @@
 
 **Goal:** Replace hardcoded English in feature pages with message keys in **all six** JSON files (`en`, `fr`, `sw`, `rw`, `es`, `ar`) and `useTranslations` / `getTranslations`. **CI:** [`tests/test_locale_catalogs.py`](../tests/test_locale_catalogs.py) enforces identical key trees across locales.
 
+**Scripts vs `public/locales`:** Many namespaces are filled from [`frontend/scripts/`](../frontend/scripts/) via **`yarn locale:merge`**; see [**I18N_FRONTEND.md**](I18N_FRONTEND.md).
+
 ---
 
 ### Shared rules — Next.js page UI (next-intl)

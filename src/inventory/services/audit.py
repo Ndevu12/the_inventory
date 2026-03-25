@@ -55,7 +55,7 @@ class AuditService:
         tenant : tenants.models.Tenant
             The tenant this action belongs to.
         action : str
-            One of :class:`~inventory.models.audit.AuditAction` values.
+            One of :class:`~inventory.models.audit_action.AuditAction` values.
         user : User | None
             The user who performed the action.
         product : inventory.models.Product | None
@@ -102,7 +102,7 @@ class AuditService:
             The current Django request.  Expected to have ``tenant``
             set by ``TenantMiddleware`` and ``user`` from auth middleware.
         action : str
-            One of :class:`~inventory.models.audit.AuditAction` values.
+            One of :class:`~inventory.models.audit_action.AuditAction` values.
         product : inventory.models.Product | None
             Associated product, if applicable.
         **details

@@ -15,6 +15,7 @@ from drf_spectacular.utils import OpenApiResponse, extend_schema
 
 from inventory.exceptions import InventoryError, InsufficientStockError, MovementImmutableError
 from inventory.models import (
+    AuditAction,
     Category,
     Product,
     StockLocation,
@@ -36,6 +37,7 @@ from tenants.middleware import resolve_tenant_for_request
 from tenants.permissions import TenantReadOnlyOrManager, get_membership
 
 from api.mixins import TranslatableAPIReadMixin
+from api.mixins.audited_crud import AuditedTenantCRUDMixin
 from api.schema_i18n import OPENAPI_LANGUAGE_QUERY_PARAMETER
 from api.serializers.inventory import (
     CategorySerializer,
@@ -107,7 +109,12 @@ class TenantScopedInventoryMixin:
 
 
 @extend_schema(parameters=[OPENAPI_LANGUAGE_QUERY_PARAMETER])
-class CategoryViewSet(TranslatableAPIReadMixin, TenantScopedInventoryMixin, viewsets.ModelViewSet):
+class CategoryViewSet(
+    TranslatableAPIReadMixin,
+    AuditedTenantCRUDMixin,
+    TenantScopedInventoryMixin,
+    viewsets.ModelViewSet,
+):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     filter_backends = [SearchFilter, OrderingFilter]
@@ -115,13 +122,29 @@ class CategoryViewSet(TranslatableAPIReadMixin, TenantScopedInventoryMixin, view
     ordering_fields = ["name", "created_at"]
     ordering = ["name"]
 
+    audit_action_create = AuditAction.CATEGORY_CREATED
+    audit_action_update = AuditAction.CATEGORY_UPDATED
+    audit_action_delete = AuditAction.CATEGORY_DELETED
+
     def get_queryset(self):
         tenant = self._get_current_tenant()
         return super().get_queryset().filter(tenant=tenant)
 
+    def _audit_log_payload(self, instance):
+        return None, {
+            "object_type": "category",
+            "object_id": instance.pk,
+            "name": instance.name,
+        }
+
 
 @extend_schema(parameters=[OPENAPI_LANGUAGE_QUERY_PARAMETER])
-class ProductViewSet(TranslatableAPIReadMixin, TenantScopedInventoryMixin, viewsets.ModelViewSet):
+class ProductViewSet(
+    TranslatableAPIReadMixin,
+    AuditedTenantCRUDMixin,
+    TenantScopedInventoryMixin,
+    viewsets.ModelViewSet,
+):
     queryset = Product.objects.select_related("category").all()
     serializer_class = ProductSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -129,6 +152,10 @@ class ProductViewSet(TranslatableAPIReadMixin, TenantScopedInventoryMixin, views
     search_fields = ["sku", "name"]
     ordering_fields = ["sku", "name", "unit_cost", "created_at"]
     ordering = ["sku"]
+
+    audit_action_create = AuditAction.PRODUCT_CREATED
+    audit_action_update = AuditAction.PRODUCT_UPDATED
+    audit_action_delete = AuditAction.PRODUCT_DELETED
 
     def get_queryset(self):
         tenant = self._get_current_tenant()
@@ -152,6 +179,9 @@ class ProductViewSet(TranslatableAPIReadMixin, TenantScopedInventoryMixin, views
         obj = get_object_or_404(self.get_queryset(), **filter_kwargs)
         self.check_object_permissions(self.request, obj)
         return obj
+
+    def _audit_log_payload(self, instance):
+        return instance, {"sku": instance.sku, "name": instance.name}
 
     def _product_for_stock_operations(self, product: Product) -> Product:
         """Stock/movements are keyed to the tenant canonical locale row."""
@@ -239,6 +269,7 @@ class ProductViewSet(TranslatableAPIReadMixin, TenantScopedInventoryMixin, views
 @extend_schema(parameters=[OPENAPI_LANGUAGE_QUERY_PARAMETER])
 class StockLocationViewSet(
     TranslatableAPIReadMixin,
+    AuditedTenantCRUDMixin,
     TenantScopedInventoryMixin,
     viewsets.ModelViewSet,
 ):
@@ -255,6 +286,10 @@ class StockLocationViewSet(
     ]
     ordering = ["path"]
 
+    audit_action_create = AuditAction.LOCATION_CREATED
+    audit_action_update = AuditAction.LOCATION_UPDATED
+    audit_action_delete = AuditAction.LOCATION_DELETED
+
     def get_queryset(self):
         tenant = self._get_current_tenant()
         return (
@@ -263,6 +298,14 @@ class StockLocationViewSet(
             .filter(tenant=tenant)
             .annotate(stock_line_count=Count("stock_records"))
         )
+
+    def _audit_log_payload(self, instance):
+        return None, {
+            "object_type": "stocklocation",
+            "object_id": instance.pk,
+            "name": instance.name,
+            "warehouse_id": instance.warehouse_id,
+        }
 
     def get_serializer_context(self):
         ctx = super().get_serializer_context()
@@ -343,7 +386,7 @@ class StockLocationViewSet(
 
 
 @extend_schema(parameters=[OPENAPI_LANGUAGE_QUERY_PARAMETER])
-class WarehouseViewSet(TenantScopedInventoryMixin, viewsets.ModelViewSet):
+class WarehouseViewSet(AuditedTenantCRUDMixin, TenantScopedInventoryMixin, viewsets.ModelViewSet):
     """CRUD for tenant-scoped :class:`~inventory.models.Warehouse` records."""
 
     queryset = Warehouse.objects.all()
@@ -354,9 +397,20 @@ class WarehouseViewSet(TenantScopedInventoryMixin, viewsets.ModelViewSet):
     ordering_fields = ["name", "created_at"]
     ordering = ["name"]
 
+    audit_action_create = AuditAction.WAREHOUSE_CREATED
+    audit_action_update = AuditAction.WAREHOUSE_UPDATED
+    audit_action_delete = AuditAction.WAREHOUSE_DELETED
+
     def get_queryset(self):
         tenant = self._get_current_tenant()
         return super().get_queryset().filter(tenant=tenant)
+
+    def _audit_log_payload(self, instance):
+        return None, {
+            "object_type": "warehouse",
+            "object_id": instance.pk,
+            "name": instance.name,
+        }
 
     @extend_schema(
         summary="Warehouse quick stats",

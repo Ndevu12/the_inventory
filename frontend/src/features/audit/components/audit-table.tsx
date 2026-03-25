@@ -9,7 +9,10 @@ import {
   DataTableFacetedFilter,
 } from "@/components/data-table/data-table-faceted-filter"
 import { Input } from "@/components/ui/input"
-import { getAuditActionFilterOptions } from "../helpers/audit-constants"
+import {
+  getAuditActionFilterOptions,
+  getAuditActionLabel,
+} from "../helpers/audit-constants"
 import type { AuditEntry } from "../types/audit.types"
 import { getAuditColumns, type AuditColumnLabels } from "./audit-columns"
 
@@ -42,16 +45,18 @@ export function AuditTable({
   onDateToChange,
   onViewDetails,
 }: AuditTableProps) {
-  const tPage = useTranslations("Audit.tenantPage")
   const tCols = useTranslations("Audit.columns")
   const tAudit = useTranslations("Audit")
   const tFilters = useTranslations("Audit.filters")
   const tActions = useTranslations("Audit.actionLabels")
+  const tEventScope = useTranslations("Audit.eventScope")
 
   const columnLabels = React.useMemo<AuditColumnLabels>(
     () => ({
       timestamp: tCols("timestamp"),
       action: tCols("action"),
+      summary: tCols("summary"),
+      scope: tCols("scope"),
       product: tCols("product"),
       user: tCols("user"),
       ipAddress: tCols("ipAddress"),
@@ -62,9 +67,41 @@ export function AuditTable({
     [tCols, tAudit],
   )
 
+  const getActionLabel = React.useCallback(
+    (entry: AuditEntry) =>
+      getAuditActionLabel(entry, (action) => tActions(action)),
+    [tActions],
+  )
+
+  const eventScopeLabel = React.useCallback(
+    (scope: "operational" | "platform") => tEventScope(scope),
+    [tEventScope],
+  )
+
   const columns = React.useMemo(
-    () => getAuditColumns({ onViewDetails, labels: columnLabels }),
-    [onViewDetails, columnLabels],
+    () => {
+      const hasPlatformScopedRows = data.some(
+        (entry) => entry.event_scope === "platform",
+      )
+      const hasUnknownScope = data.some(
+        (entry) => entry.event_scope && entry.event_scope !== "operational",
+      )
+      return getAuditColumns({
+        onViewDetails,
+        labels: columnLabels,
+        getActionLabel,
+        eventScopeLabel,
+        // Tenant endpoint is operational-only; hide scope unless mixed scopes appear.
+        showScopeColumn: hasPlatformScopedRows || hasUnknownScope,
+      })
+    },
+    [
+      data,
+      onViewDetails,
+      columnLabels,
+      getActionLabel,
+      eventScopeLabel,
+    ],
   )
 
   const actionOptions = React.useMemo(
@@ -93,7 +130,7 @@ export function AuditTable({
       pagination={pagination}
       onPaginationChange={onPaginationChange}
       isLoading={isLoading}
-      emptyMessage={tPage("empty")}
+      emptyMessage={tAudit("tenantPage.empty")}
       filterContent={
         <div className="flex flex-wrap items-center gap-2">
           <DataTableFacetedFilter

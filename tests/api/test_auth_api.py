@@ -43,7 +43,8 @@ class AuthLoginTests(TestCase):
         self.assertIn("user", response.data)
         self.assertIsInstance(response.data["user"], dict)
         self.assertNotIn("is_staff", response.data["user"])
-        self.assertNotIn("is_superuser", response.data["user"])
+        self.assertIn("is_superuser", response.data["user"])
+        self.assertIs(response.data["user"]["is_superuser"], False)
         self.assertIn("memberships", response.data)
         self.assertEqual(len(response.data["memberships"]), 1)
 
@@ -119,7 +120,7 @@ class AuthLoginTests(TestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("access", response.data)
-        self.assertNotIn("is_superuser", response.data["user"])
+        self.assertIs(response.data["user"]["is_superuser"], True)
         self.assertNotIn("is_staff", response.data["user"])
 
 
@@ -219,7 +220,8 @@ class MeEndpointTests(TestCase):
         self.assertEqual(user_data["first_name"], "Test")
         self.assertEqual(user_data["last_name"], "User")
         self.assertNotIn("is_staff", user_data)
-        self.assertNotIn("is_superuser", user_data)
+        self.assertIn("is_superuser", user_data)
+        self.assertIs(user_data["is_superuser"], False)
 
     def test_me_unauthenticated(self):
         response = self.client.get(reverse("api-me"))
