@@ -1,5 +1,10 @@
-import { useQuery } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { warehousesApi } from "../api/warehouses-api";
+import type { WarehouseFormData } from "../types/warehouse.types";
 
 const WAREHOUSES_KEY = ["warehouses"] as const;
 
@@ -21,5 +26,56 @@ export function useWarehouseQuickStats(enabled: boolean) {
     queryFn: () => warehousesApi.quickStats(),
     enabled,
     staleTime: 2 * 60 * 1000,
+  });
+}
+
+/** Facilities listing for the warehouse admin page (search uses API ``search``). */
+export function useWarehousesList(search?: string) {
+  return useQuery({
+    queryKey: [...WAREHOUSES_KEY, "admin-list", search ?? ""] as const,
+    queryFn: () =>
+      warehousesApi.list({
+        page_size: "100",
+        ordering: "name",
+        ...(search?.trim() ? { search: search.trim() } : {}),
+      }),
+    select: (data) => data.results,
+    staleTime: 60 * 1000,
+  });
+}
+
+export function useCreateWarehouse() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: WarehouseFormData) => warehousesApi.create(data),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: WAREHOUSES_KEY });
+    },
+  });
+}
+
+export function useUpdateWarehouse() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: number;
+      data: Partial<WarehouseFormData>;
+    }) => warehousesApi.update(id, data),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: WAREHOUSES_KEY });
+    },
+  });
+}
+
+export function useDeleteWarehouse() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => warehousesApi.delete(id),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: WAREHOUSES_KEY });
+    },
   });
 }

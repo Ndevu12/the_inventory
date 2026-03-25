@@ -4,7 +4,7 @@ import { useCallback, useDeferredValue, useEffect, useMemo, useState } from "rea
 import { useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { PlusIcon, SearchIcon } from "lucide-react"
-import { useRouter } from "@/i18n/navigation"
+import { Link, useRouter } from "@/i18n/navigation"
 import { PageHeader } from "@/components/layout/page-header"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -123,6 +123,22 @@ export function LocationListPage() {
         }
       />
 
+      {!showFacilityStrip ? (
+        <div className="rounded-lg border border-dashed bg-muted/30 p-4 text-sm">
+          <p className="font-medium text-foreground">
+            {t("locations.noFacilitiesCalloutTitle")}
+          </p>
+          <p className="mt-1 text-muted-foreground">
+            {t("locations.noFacilitiesCalloutBody")}
+          </p>
+          <Button variant="link" asChild className="mt-2 h-auto px-0 text-sm">
+            <Link href="/stock/warehouses">
+              {t("locations.noFacilitiesCalloutLink")}
+            </Link>
+          </Button>
+        </div>
+      ) : null}
+
       {showFacilityStrip ? (
         <WarehouseSummaryStrip
           warehouses={warehouses}
@@ -185,6 +201,7 @@ export function LocationListPage() {
 
       <LocationTree
         locations={locations}
+        hasWarehouses={showFacilityStrip}
         showSiteGroups={showSiteGroups}
         onEdit={openEdit}
         isLoading={isLoading}

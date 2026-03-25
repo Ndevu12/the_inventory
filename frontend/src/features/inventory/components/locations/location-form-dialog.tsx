@@ -25,6 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Link } from "@/i18n/navigation"
 import { useCreateLocation, useUpdateLocation } from "../../hooks/use-locations"
 import { useWarehousesForSelect } from "../../hooks/use-warehouses"
 import {
@@ -80,9 +81,9 @@ export function LocationFormDialog({
   const { data: warehouses = [], isLoading: warehousesLoading } =
     useWarehousesForSelect()
 
-  const warehouseSelectItems = useMemo(
+  const facilitySelectItems = useMemo(
     () => [
-      { value: "__none__", label: t("locations.form.noWarehouse") },
+      { value: "__none__", label: t("locations.form.noFacility") },
       ...warehouses.map((w) => ({ value: String(w.id), label: w.name })),
     ],
     [warehouses, t],
@@ -156,11 +157,11 @@ export function LocationFormDialog({
 
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="loc-warehouse">
-                {t("locations.form.warehouse")}
+              <Label htmlFor="loc-facility">
+                {t("locations.form.facility")}
               </Label>
               <Select
-                items={warehouseSelectItems}
+                items={facilitySelectItems}
                 value={
                   watch("warehouse_id") != null
                     ? String(watch("warehouse_id")!)
@@ -175,14 +176,14 @@ export function LocationFormDialog({
                 }
                 disabled={warehousesLoading}
               >
-                <SelectTrigger id="loc-warehouse" className="w-full">
+                <SelectTrigger id="loc-facility" className="w-full">
                   <SelectValue
-                    placeholder={t("locations.form.warehousePlaceholder")}
+                    placeholder={t("locations.form.facilityPlaceholder")}
                   />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__none__">
-                    {t("locations.form.noWarehouse")}
+                    {t("locations.form.noFacility")}
                   </SelectItem>
                   {warehouses.map((w) => (
                     <SelectItem key={w.id} value={String(w.id)}>
@@ -192,8 +193,13 @@ export function LocationFormDialog({
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                {t("locations.form.warehouseHint")}
+                {t("locations.form.facilityHint")}
               </p>
+              <Button variant="link" asChild className="h-auto p-0 text-xs font-normal">
+                <Link href="/stock/warehouses">
+                  {t("locations.noFacilitiesCalloutLink")}
+                </Link>
+              </Button>
             </div>
 
             <div className="space-y-2">

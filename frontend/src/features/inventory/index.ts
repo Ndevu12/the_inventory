@@ -15,6 +15,7 @@ export type {
   StockLot,
 } from "./types/inventory.types"
 
+export { WarehouseListPage } from "./pages/warehouse-list-page"
 export { LocationListPage } from "./pages/location-list-page"
 export { LocationDetailPage } from "./pages/location-detail-page"
 export { LocationTree } from "./components/locations/location-tree"
@@ -37,7 +38,15 @@ export type {
 } from "./types/location.types"
 export type { Warehouse, WarehouseFormData } from "./types/warehouse.types"
 export { warehousesApi } from "./api/warehouses-api"
-export { useWarehousesForSelect } from "./hooks/use-warehouses"
+export {
+  useWarehousesForSelect,
+  useWarehousesList,
+  useWarehouseQuickStats,
+  useCreateWarehouse,
+  useUpdateWarehouse,
+  useDeleteWarehouse,
+} from "./hooks/use-warehouses"
+export { WarehouseFormDialog } from "./components/warehouses/warehouse-form-dialog"
 
 export { MovementListPage } from "./pages/movement-list-page"
 export { MovementDetailPage } from "./pages/movement-detail-page"

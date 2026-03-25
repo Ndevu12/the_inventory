@@ -383,6 +383,8 @@ function CompactLocationRow({
 
 interface LocationTreeProps {
   locations: StockLocation[]
+  /** When false, empty state explains creating a warehouse first and links to stock/warehouses. */
+  hasWarehouses?: boolean
   /** When false (site filter is not “all”), hide facility group headers so the strip + filter carry site context. */
   showSiteGroups?: boolean
   onEdit: (location: StockLocation) => void
@@ -397,6 +399,7 @@ export const LocationTree = forwardRef<LocationTreeHandle, LocationTreeProps>(
   function LocationTree(
     {
       locations,
+      hasWarehouses = true,
       showSiteGroups = true,
       onEdit,
       isLoading,
@@ -561,9 +564,18 @@ export const LocationTree = forwardRef<LocationTreeHandle, LocationTreeProps>(
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
           <WarehouseIcon className="mb-4 size-12 text-muted-foreground/50" />
           <h3 className="text-lg font-medium">{t("locations.emptyTitle")}</h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {t("locations.emptyDescription")}
+          <p className="mt-1 max-w-md text-sm text-muted-foreground">
+            {hasWarehouses
+              ? t("locations.emptyDescription")
+              : t("locations.emptyDescriptionNoFacilities")}
           </p>
+          {!hasWarehouses ? (
+            <Button variant="outline" className="mt-4" asChild>
+              <Link href="/stock/warehouses">
+                {t("locations.emptyCreateWarehouseLink")}
+              </Link>
+            </Button>
+          ) : null}
         </div>
       )
     }
