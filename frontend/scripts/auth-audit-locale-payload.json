@@ -27,7 +27,8 @@
         "alertsTitle": "Alertes intelligentes",
         "alertsDescription": "Définissez des points de réapprovisionnement et recevez des notifications lorsque le stock est bas",
         "searchTitle": "Recherche avancée",
-        "searchDescription": "Trouvez produits, catégories et emplacements grâce à la recherche plein texte"
+        "searchDescription": "Trouvez produits, catégories et emplacements grâce à la recherche plein texte",
+        "disclosureTrigger": "Pourquoi The Inventory ?"
       },
       "register": {
         "title": "Créer votre organisation",
@@ -56,6 +57,10 @@
         "loadError": "Impossible de charger votre compte. Essayez de vous reconnecter.",
         "pageTitle": "Compte",
         "pageDescription": "Votre profil et votre mot de passe s'appliquent à tous les locataires auxquels vous appartenez.",
+        "tabs": {
+          "profile": "Profil",
+          "security": "Sécurité"
+        },
         "profileTitle": "Profil",
         "profileDescription": "Votre nom et votre e-mail s'appliquent à chaque organisation dont vous faites partie.",
         "username": "Nom d'utilisateur",
@@ -225,7 +230,8 @@
         "alertsTitle": "Alertas inteligentes",
         "alertsDescription": "Defina puntos de pedido y reciba notificaciones cuando el stock sea bajo",
         "searchTitle": "Búsqueda avanzada",
-        "searchDescription": "Encuentre productos, categorías y ubicaciones con búsqueda de texto completo"
+        "searchDescription": "Encuentre productos, categorías y ubicaciones con búsqueda de texto completo",
+        "disclosureTrigger": "¿Por qué The Inventory?"
       },
       "register": {
         "title": "Cree su organización",
@@ -254,6 +260,10 @@
         "loadError": "No se pudo cargar su cuenta. Intente iniciar sesión de nuevo.",
         "pageTitle": "Cuenta",
         "pageDescription": "Su perfil y contraseña se aplican a su usuario en todas las organizaciones.",
+        "tabs": {
+          "profile": "Perfil",
+          "security": "Seguridad"
+        },
         "profileTitle": "Perfil",
         "profileDescription": "Su nombre y correo se aplican a cada organización a la que pertenece.",
         "username": "Usuario",
@@ -423,7 +433,8 @@
         "alertsTitle": "تنبيهات ذكية",
         "alertsDescription": "حدد نقاط إعادة الطلب وتلقَّ إشعارات عند نفاد المخزون",
         "searchTitle": "بحث متقدم",
-        "searchDescription": "اعثر على المنتجات والفئات والمواقع عبر البحث النصي الكامل"
+        "searchDescription": "اعثر على المنتجات والفئات والمواقع عبر البحث النصي الكامل",
+        "disclosureTrigger": "لماذا The Inventory؟"
       },
       "register": {
         "title": "أنشئ مؤسستك",
@@ -452,6 +463,10 @@
         "loadError": "تعذر تحميل حسابك. حاول تسجيل الدخول مرة أخرى.",
         "pageTitle": "الحساب",
         "pageDescription": "تنطبق معلومات ملفك وكلمة المرور على مستخدمك في جميع المؤسسات.",
+        "tabs": {
+          "profile": "الملف الشخصي",
+          "security": "الأمان"
+        },
         "profileTitle": "الملف الشخصي",
         "profileDescription": "تنطبق اسمك وبريدك على كل مؤسسة تنتمي إليها.",
         "username": "اسم المستخدم",
@@ -612,16 +627,17 @@
         "signingIn": "Buri kwinjira…"
       },
       "marketing": {
-        "title": "Powerful Inventory Management",
-        "subtitle": "Everything you need to manage inventory efficiently",
-        "catalogTitle": "Catalog Management",
-        "catalogDescription": "Organize products with SKUs, descriptions, images, and hierarchical categories",
-        "trackingTitle": "Real-time Tracking",
-        "trackingDescription": "Track stock movements across multiple warehouses with instant updates",
-        "alertsTitle": "Smart Alerts",
-        "alertsDescription": "Set reorder points and receive instant notifications when stock runs low",
-        "searchTitle": "Advanced Search",
-        "searchDescription": "Find products, categories, and locations with powerful full-text search"
+        "title": "Gucunga ububiko neza kandi bukomatanyije",
+        "subtitle": "Byose ukeneye ngo ucunge ububiko mu buryo bwiza",
+        "catalogTitle": "Gucunga urutonde",
+        "catalogDescription": "Tunganya ibicuruzwa hamwe na SKU, ibisobanuro, amashusho, n'ibice by'amoko",
+        "trackingTitle": "Gukurikirana uko biri mu gihe nyacyo",
+        "trackingDescription": "Kurikirana ingendo z'ububiko mu mazu y'ububiko bitandukanye hamwe n'amakuru ashya ako kanya",
+        "alertsTitle": "Amatangazo y'ubwenge",
+        "alertsDescription": "Shyiraho ingingo zo kongera gutumiza maze ubone amatangazo igihe ububiko buke",
+        "searchTitle": "Gushakisha kunozwa",
+        "searchDescription": "Shakisha mu buryo bwuzuye ibicuruzwa, ibice, n'ahantu",
+        "disclosureTrigger": "Kuki The Inventory?"
       },
       "register": {
         "title": "Kora sosiyete yawe",
@@ -650,6 +666,10 @@
         "loadError": "Ntibishobora gukurura konti yawe. Ongera ugerageze kwinjira.",
         "pageTitle": "Konti",
         "pageDescription": "Umwirondoro wawe n'ijambo ry'ibanga bikoresha ku mukoresha wawe muri za sosiyete zose.",
+        "tabs": {
+          "profile": "Umwirondoro",
+          "security": "Umutekano"
+        },
         "profileTitle": "Umwirondoro",
         "profileDescription": "Amazina na imeri bikoresha kuri buri sosiyete uriho.",
         "username": "Username",
@@ -810,16 +830,17 @@
         "signingIn": "Inaingia…"
       },
       "marketing": {
-        "title": "Powerful Inventory Management",
-        "subtitle": "Everything you need to manage inventory efficiently",
-        "catalogTitle": "Catalog Management",
-        "catalogDescription": "Organize products with SKUs, descriptions, images, and hierarchical categories",
-        "trackingTitle": "Real-time Tracking",
-        "trackingDescription": "Track stock movements across multiple warehouses with instant updates",
-        "alertsTitle": "Smart Alerts",
-        "alertsDescription": "Set reorder points and receive instant notifications when stock runs low",
-        "searchTitle": "Advanced Search",
-        "searchDescription": "Find products, categories, and locations with powerful full-text search"
+        "title": "Usimamizi thabiti wa hesabu",
+        "subtitle": "Kila kitu unachohitaji kusimamia hesabu kwa ufanisi",
+        "catalogTitle": "Usimamizi wa katalogi",
+        "catalogDescription": "Panga bidhaa kwa SKU, maelezo, picha, na jamii za ngazi mbalimbali",
+        "trackingTitle": "Ufuatiliaji wa muda halisi",
+        "trackingDescription": "Fuata mienendo ya hifadhi kote kwenye maghala mbalimbali na masasisho ya papo hapo",
+        "alertsTitle": "Arifa mahiri",
+        "alertsDescription": "Weka kizingiti cha kuagiza upya na upokee arifa hesabu ikishuka chini",
+        "searchTitle": "Utafutaji endelevu",
+        "searchDescription": "Tafuta bidhaa, jamii, na maeneo kwa utafutaji kamili wa maandishi",
+        "disclosureTrigger": "Kwa nini The Inventory?"
       },
       "register": {
         "title": "Unda shirika lako",
@@ -848,6 +869,10 @@
         "loadError": "Imeshindwa kupakia akaunti yako. Jaribu kuingia tena.",
         "pageTitle": "Akaunti",
         "pageDescription": "Wasifu wako na nenosiri hutumika kwa mtumiaji wako katika mashirika yote.",
+        "tabs": {
+          "profile": "Wasifu",
+          "security": "Usalama"
+        },
         "profileTitle": "Wasifu",
         "profileDescription": "Jina na barua pepe hutumika kwa kila shirika unaloshiriki.",
         "username": "Username",

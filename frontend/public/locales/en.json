@@ -1756,7 +1756,8 @@
       "alertsTitle": "Smart alerts",
       "alertsDescription": "Set reorder points and get notified when stock runs low",
       "searchTitle": "Advanced search",
-      "searchDescription": "Find products, categories, and locations with full-text search"
+      "searchDescription": "Find products, categories, and locations with full-text search",
+      "disclosureTrigger": "Why The Inventory?"
     },
     "register": {
       "title": "Create your organization",
@@ -1785,6 +1786,10 @@
       "loadError": "Unable to load your account. Try signing in again.",
       "pageTitle": "Account",
       "pageDescription": "Your profile and password apply to every tenant you belong to.",
+      "tabs": {
+        "profile": "Profile",
+        "security": "Security"
+      },
       "profileTitle": "Profile",
       "profileDescription": "Your name and email apply to each organization you are part of.",
       "username": "Username",

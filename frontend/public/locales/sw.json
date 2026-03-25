@@ -1747,16 +1747,17 @@
       "signingIn": "Inaingia…"
     },
     "marketing": {
-      "title": "Powerful Inventory Management",
-      "subtitle": "Everything you need to manage inventory efficiently",
-      "catalogTitle": "Catalog Management",
-      "catalogDescription": "Organize products with SKUs, descriptions, images, and hierarchical categories",
-      "trackingTitle": "Real-time Tracking",
-      "trackingDescription": "Track stock movements across multiple warehouses with instant updates",
-      "alertsTitle": "Smart Alerts",
-      "alertsDescription": "Set reorder points and receive instant notifications when stock runs low",
-      "searchTitle": "Advanced Search",
-      "searchDescription": "Find products, categories, and locations with powerful full-text search"
+      "title": "Usimamizi thabiti wa hesabu",
+      "subtitle": "Kila kitu unachohitaji kusimamia hesabu kwa ufanisi",
+      "catalogTitle": "Usimamizi wa katalogi",
+      "catalogDescription": "Panga bidhaa kwa SKU, maelezo, picha, na jamii za ngazi mbalimbali",
+      "trackingTitle": "Ufuatiliaji wa muda halisi",
+      "trackingDescription": "Fuata mienendo ya hifadhi kote kwenye maghala mbalimbali na masasisho ya papo hapo",
+      "alertsTitle": "Arifa mahiri",
+      "alertsDescription": "Weka kizingiti cha kuagiza upya na upokee arifa hesabu ikishuka chini",
+      "searchTitle": "Utafutaji endelevu",
+      "searchDescription": "Tafuta bidhaa, jamii, na maeneo kwa utafutaji kamili wa maandishi",
+      "disclosureTrigger": "Kwa nini The Inventory?"
     },
     "register": {
       "title": "Unda shirika lako",
@@ -1785,6 +1786,10 @@
       "loadError": "Imeshindwa kupakia akaunti yako. Jaribu kuingia tena.",
       "pageTitle": "Akaunti",
       "pageDescription": "Wasifu wako na nenosiri hutumika kwa mtumiaji wako katika mashirika yote.",
+      "tabs": {
+        "profile": "Wasifu",
+        "security": "Usalama"
+      },
       "profileTitle": "Wasifu",
       "profileDescription": "Jina na barua pepe hutumika kwa kila shirika unaloshiriki.",
       "username": "Username",

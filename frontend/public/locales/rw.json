@@ -1747,16 +1747,17 @@
       "signingIn": "Buri kwinjira…"
     },
     "marketing": {
-      "title": "Powerful Inventory Management",
-      "subtitle": "Everything you need to manage inventory efficiently",
-      "catalogTitle": "Catalog Management",
-      "catalogDescription": "Organize products with SKUs, descriptions, images, and hierarchical categories",
-      "trackingTitle": "Real-time Tracking",
-      "trackingDescription": "Track stock movements across multiple warehouses with instant updates",
-      "alertsTitle": "Smart Alerts",
-      "alertsDescription": "Set reorder points and receive instant notifications when stock runs low",
-      "searchTitle": "Advanced Search",
-      "searchDescription": "Find products, categories, and locations with powerful full-text search"
+      "title": "Gucunga ububiko neza kandi bukomatanyije",
+      "subtitle": "Byose ukeneye ngo ucunge ububiko mu buryo bwiza",
+      "catalogTitle": "Gucunga urutonde",
+      "catalogDescription": "Tunganya ibicuruzwa hamwe na SKU, ibisobanuro, amashusho, n'ibice by'amoko",
+      "trackingTitle": "Gukurikirana uko biri mu gihe nyacyo",
+      "trackingDescription": "Kurikirana ingendo z'ububiko mu mazu y'ububiko bitandukanye hamwe n'amakuru ashya ako kanya",
+      "alertsTitle": "Amatangazo y'ubwenge",
+      "alertsDescription": "Shyiraho ingingo zo kongera gutumiza maze ubone amatangazo igihe ububiko buke",
+      "searchTitle": "Gushakisha kunozwa",
+      "searchDescription": "Shakisha mu buryo bwuzuye ibicuruzwa, ibice, n'ahantu",
+      "disclosureTrigger": "Kuki The Inventory?"
     },
     "register": {
       "title": "Kora sosiyete yawe",
@@ -1785,6 +1786,10 @@
       "loadError": "Ntibishobora gukurura konti yawe. Ongera ugerageze kwinjira.",
       "pageTitle": "Konti",
       "pageDescription": "Umwirondoro wawe n'ijambo ry'ibanga bikoresha ku mukoresha wawe muri za sosiyete zose.",
+      "tabs": {
+        "profile": "Umwirondoro",
+        "security": "Umutekano"
+      },
       "profileTitle": "Umwirondoro",
       "profileDescription": "Amazina na imeri bikoresha kuri buri sosiyete uriho.",
       "username": "Username",
