@@ -35,7 +35,8 @@ def _django_validation_detail(exc: DjangoValidationError) -> str:
     messages = getattr(exc, "messages", None)
     if messages:
         return str(messages[0])
-    return str(exc)
+    # Fall back to a generic message instead of exposing the raw exception.
+    return "Invalid data."
 
 
 @extend_schema(parameters=[OPENAPI_LANGUAGE_QUERY_PARAMETER])
