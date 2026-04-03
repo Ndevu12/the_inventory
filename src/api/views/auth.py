@@ -22,35 +22,6 @@ from api.serializers.auth import (
 from tenants.models import Tenant, TenantMembership, TenantRole
 
 
-def _jwt_cookie_security() -> tuple[bool, str]:
-    """Return effective secure/samesite for JWT cookies."""
-    secure = getattr(django_settings, "JWT_COOKIE_SECURE", not django_settings.DEBUG)
-    samesite = getattr(django_settings, "JWT_COOKIE_SAMESITE", "Lax")
-    return secure, samesite
-
-
-def _set_jwt_cookie(response: Response, key: str, value: str, max_age: int) -> None:
-    """Set a JWT cookie with consistent security settings."""
-    secure, samesite = _jwt_cookie_security()
-    response.set_cookie(
-        key,
-        value=value,
-        max_age=max_age,
-        httponly=True,
-        secure=secure,
-        samesite=samesite,
-    )
-
-
-def _clear_jwt_cookie(response: Response, key: str) -> None:
-    """Clear JWT cookie using same security attributes used when setting it."""
-    _, samesite = _jwt_cookie_security()
-    response.delete_cookie(
-        key,
-        samesite=samesite,
-    )
-
-
 class LoginView(TokenObtainPairView):
     """Obtain JWT access + refresh tokens.
 
@@ -66,26 +37,34 @@ class LoginView(TokenObtainPairView):
         response = super().post(request, *args, **kwargs)
         
         if response.status_code == status.HTTP_200_OK:
-            access_token = response.data.get("access")
-            refresh_token = response.data.get("refresh")
-
+            access_token = response.data.get('access')
+            refresh_token = response.data.get('refresh')
+            
             if access_token and refresh_token:
+                # Determine if cookies should be secure (based on DEBUG setting)
+                secure = getattr(django_settings, 'JWT_COOKIE_SECURE', not django_settings.DEBUG)
+                samesite = getattr(django_settings, 'JWT_COOKIE_SAMESITE', 'Lax')
+                
                 # Set access token cookie (5 minutes)
-                _set_jwt_cookie(
-                    response=response,
-                    key="access_token",
+                response.set_cookie(
+                    'access_token',
                     value=access_token,
-                    max_age=getattr(django_settings, "JWT_ACCESS_TOKEN_COOKIE_MAX_AGE", 300),
+                    max_age=getattr(django_settings, 'JWT_ACCESS_TOKEN_COOKIE_MAX_AGE', 300),
+                    httponly=True,
+                    secure=secure,
+                    samesite=samesite,
                 )
-
+                
                 # Set refresh token cookie (7 days)
-                _set_jwt_cookie(
-                    response=response,
-                    key="refresh_token",
+                response.set_cookie(
+                    'refresh_token',
                     value=refresh_token,
-                    max_age=getattr(django_settings, "JWT_REFRESH_TOKEN_COOKIE_MAX_AGE", 604800),
+                    max_age=getattr(django_settings, 'JWT_REFRESH_TOKEN_COOKIE_MAX_AGE', 604800),
+                    httponly=True,
+                    secure=secure,
+                    samesite=samesite,
                 )
-
+        
         return response
 
 
@@ -101,30 +80,36 @@ class RefreshView(TokenRefreshView):
     def post(self, request, *args, **kwargs):
         """Override to handle refresh token from cookie if not in request body."""
         # If refresh token is not in the request body, try to get it from cookies
-        if "refresh" not in request.data and "refresh_token" in request.COOKIES:
+        if 'refresh' not in request.data and 'refresh_token' in request.COOKIES:
             # Check if request.data is a QueryDict (from form data) or dict (from JSON)
-            if hasattr(request.data, "_mutable"):
+            if hasattr(request.data, '_mutable'):
                 request.data._mutable = True
-                request.data["refresh"] = request.COOKIES["refresh_token"]
+                request.data['refresh'] = request.COOKIES['refresh_token']
                 request.data._mutable = False
             else:
                 # For dict/other types, just add the key
-                request.data["refresh"] = request.COOKIES["refresh_token"]
-
+                request.data['refresh'] = request.COOKIES['refresh_token']
+        
         response = super().post(request, *args, **kwargs)
-
+        
         if response.status_code == status.HTTP_200_OK:
-            access_token = response.data.get("access")
-
+            access_token = response.data.get('access')
+            
             if access_token:
+                # Determine if cookies should be secure (based on DEBUG setting)
+                secure = getattr(django_settings, 'JWT_COOKIE_SECURE', not django_settings.DEBUG)
+                samesite = getattr(django_settings, 'JWT_COOKIE_SAMESITE', 'Lax')
+                
                 # Set new access token cookie (5 minutes)
-                _set_jwt_cookie(
-                    response=response,
-                    key="access_token",
+                response.set_cookie(
+                    'access_token',
                     value=access_token,
-                    max_age=getattr(django_settings, "JWT_ACCESS_TOKEN_COOKIE_MAX_AGE", 300),
+                    max_age=getattr(django_settings, 'JWT_ACCESS_TOKEN_COOKIE_MAX_AGE', 300),
+                    httponly=True,
+                    secure=secure,
+                    samesite=samesite,
                 )
-
+        
         return response
 
 
@@ -143,13 +128,19 @@ class LogoutView(APIView):
             {"detail": "Successfully logged out."},
             status=status.HTTP_200_OK
         )
-
+        
         # Clear the access token cookie
-        _clear_jwt_cookie(response, "access_token")
-
+        response.delete_cookie(
+            'access_token',
+            samesite=getattr(django_settings, 'JWT_COOKIE_SAMESITE', 'Lax'),
+        )
+        
         # Clear the refresh token cookie
-        _clear_jwt_cookie(response, "refresh_token")
-
+        response.delete_cookie(
+            'refresh_token',
+            samesite=getattr(django_settings, 'JWT_COOKIE_SAMESITE', 'Lax'),
+        )
+        
         return response
 
 
@@ -257,7 +248,7 @@ class RegisterTenantView(APIView):
         refresh = RefreshToken.for_user(user)
         memberships = memberships_payload_for_user(user)
 
-        response = Response(
+        return Response(
             {
                 "access": str(refresh.access_token),
                 "refresh": str(refresh),
@@ -273,19 +264,6 @@ class RegisterTenantView(APIView):
             },
             status=status.HTTP_201_CREATED,
         )
-        _set_jwt_cookie(
-            response=response,
-            key="access_token",
-            value=str(refresh.access_token),
-            max_age=getattr(django_settings, "JWT_ACCESS_TOKEN_COOKIE_MAX_AGE", 300),
-        )
-        _set_jwt_cookie(
-            response=response,
-            key="refresh_token",
-            value=str(refresh),
-            max_age=getattr(django_settings, "JWT_REFRESH_TOKEN_COOKIE_MAX_AGE", 604800),
-        )
-        return response
 
 
 @extend_schema_view(
@@ -405,7 +383,9 @@ class ImpersonateStartView(APIView):
             },
         )
 
-        response = Response(
+        real_refresh = RefreshToken.for_user(real_user)
+
+        return Response(
             {
                 "access": str(refresh.access_token),
                 "refresh": str(refresh),
@@ -420,23 +400,12 @@ class ImpersonateStartView(APIView):
                 "memberships": memberships,
                 "impersonation": {
                     "real_user": UserSerializer(real_user).data,
+                    "real_access_token": str(real_refresh.access_token),
+                    "real_refresh_token": str(real_refresh),
                 },
             },
             status=status.HTTP_200_OK,
         )
-        _set_jwt_cookie(
-            response=response,
-            key="access_token",
-            value=str(refresh.access_token),
-            max_age=getattr(django_settings, "JWT_ACCESS_TOKEN_COOKIE_MAX_AGE", 300),
-        )
-        _set_jwt_cookie(
-            response=response,
-            key="refresh_token",
-            value=str(refresh),
-            max_age=getattr(django_settings, "JWT_REFRESH_TOKEN_COOKIE_MAX_AGE", 604800),
-        )
-        return response
 
 
 @extend_schema_view(
@@ -539,21 +508,7 @@ class ImpersonateEndView(APIView):
                 },
             )
 
-        real_refresh = RefreshToken.for_user(real_user)
-        response = Response(
-            {"detail": "Impersonation ended. Restored your original session."},
+        return Response(
+            {"detail": "Impersonation ended. Restore your tokens to resume as yourself."},
             status=status.HTTP_200_OK,
         )
-        _set_jwt_cookie(
-            response=response,
-            key="access_token",
-            value=str(real_refresh.access_token),
-            max_age=getattr(django_settings, "JWT_ACCESS_TOKEN_COOKIE_MAX_AGE", 300),
-        )
-        _set_jwt_cookie(
-            response=response,
-            key="refresh_token",
-            value=str(real_refresh),
-            max_age=getattr(django_settings, "JWT_REFRESH_TOKEN_COOKIE_MAX_AGE", 604800),
-        )
-        return response

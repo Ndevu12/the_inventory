@@ -1,3 +1,7 @@
+andasy.hcl
+config.hcl
+.git/
+
 # Django project
 /media/
 /static/

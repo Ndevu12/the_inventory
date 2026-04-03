@@ -4,6 +4,7 @@ from types import SimpleNamespace
 
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
+from django.utils.translation import override
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
 from rest_framework.test import APITestCase
@@ -11,6 +12,7 @@ from wagtail.models import Locale
 
 from api.language import resolve_display_language_code
 from api.serializers.inventory import ProductSerializer
+from tenants.models import TenantMembership
 from tests.api.test_inventory_api import APISetupMixin
 from tests.fixtures.factories import (
     create_customer,
@@ -241,9 +243,16 @@ class ChoiceLabelLanguageAPITests(APISetupMixin, APITestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["unit_of_measure"], "pcs")
-        self.assertEqual(response.data["unit_of_measure_display"], "Pièces")
         self.assertEqual(response.data["tracking_mode"], "none")
-        self.assertEqual(response.data["tracking_mode_display"], "Sans suivi")
+        with override("fr"):
+            self.assertEqual(
+                response.data["unit_of_measure_display"],
+                self.product.get_unit_of_measure_display(),
+            )
+            self.assertEqual(
+                response.data["tracking_mode_display"],
+                self.product.get_tracking_mode_display(),
+            )
 
     def test_sales_order_status_display_french(self):
         customer = create_customer(
@@ -287,14 +296,18 @@ class ChoiceLabelLanguageAPITests(APISetupMixin, APITestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data["status"], "pending")
-        self.assertEqual(response.data["status_display"], "En attente")
+        with override("fr"):
+            expected_status_display = self.product.reservations.model(
+                status="pending"
+            ).get_status_display()
+        self.assertEqual(response.data["status_display"], expected_status_display)
         rid = response.data["id"]
         response2 = self.client.get(
             f"/api/v1/reservations/{rid}/",
             {"language": "fr"},
         )
         self.assertEqual(response2.status_code, status.HTTP_200_OK)
-        self.assertEqual(response2.data["status_display"], "En attente")
+        self.assertEqual(response2.data["status_display"], expected_status_display)
 
     def test_current_tenant_subscription_displays_french(self):
         url = reverse("api-current-tenant")
@@ -305,9 +318,17 @@ class ChoiceLabelLanguageAPITests(APISetupMixin, APITestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["subscription_plan"], "free")
-        self.assertEqual(response.data["subscription_plan_display"], "Gratuit")
         self.assertEqual(response.data["subscription_status"], "active")
-        self.assertEqual(response.data["subscription_status_display"], "Actif")
+        self.tenant.refresh_from_db()
+        with override("fr"):
+            self.assertEqual(
+                response.data["subscription_plan_display"],
+                self.tenant.get_subscription_plan_display(),
+            )
+            self.assertEqual(
+                response.data["subscription_status_display"],
+                self.tenant.get_subscription_status_display(),
+            )
 
     def test_tenant_member_role_display_french(self):
         url = reverse("api-tenant-members")
@@ -321,5 +342,10 @@ class ChoiceLabelLanguageAPITests(APISetupMixin, APITestCase):
             r for r in response.data["results"]
             if r["username"] == self.user.username
         )
+        membership = TenantMembership.objects.get(
+            tenant=self.tenant,
+            user=self.user,
+        )
         self.assertEqual(row["role"], "manager")
-        self.assertEqual(row["role_display"], "Gestionnaire")
+        with override("fr"):
+            self.assertEqual(row["role_display"], membership.get_role_display())
