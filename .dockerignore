@@ -17,11 +17,21 @@ __pycache__
 /.vagrant/
 /Vagrantfile.local
 node_modules/
+**/node_modules/
 /npm-debug.log
 /.idea/
 .vscode
 coverage
 .python-version
+
+# Frontend build/cache artifacts (reduce remote build context size)
+frontend/.next/
+**/.next/
+frontend/.turbo/
+**/.turbo/
+frontend/out/
+frontend/coverage/
+frontend/*.tsbuildinfo
 
 # Distribution / packaging
 .Python
