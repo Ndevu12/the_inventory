@@ -11,7 +11,7 @@ This ensures:
 5. Authentication returns None when no token is found
 """
 
-from unittest.mock import MagicMock, Mock, patch
+
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase, RequestFactory
@@ -336,7 +336,6 @@ class CookieJWTAuthenticationEdgeCasesTests(TestCase):
         token = str(refresh.access_token)
         
         # Delete the user
-        user_id = self.user.id
         self.user.delete()
         
         # Try to authenticate with deleted user's token

@@ -411,7 +411,7 @@ class StockLocationAPITests(APISetupMixin, APITestCase):
         self.assertEqual(detail.data["stock_line_count"], 3)
 
     def test_list_locations_can_order_by_stock_line_count(self):
-        loc_a = create_location(name="Loc Order A")
+        create_location(name="Loc Order A")
         loc_b = create_location(name="Loc Order B")
         p = create_product(sku="API-SLO-1")
         create_stock_record(product=p, location=loc_b, quantity=5)

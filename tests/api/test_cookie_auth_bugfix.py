@@ -15,11 +15,10 @@ This test file validates Requirements 1.1-1.9 from bugfix.md by testing:
 """
 
 import os
-from unittest.mock import patch
 
 from django.conf import settings as django_settings
 from django.contrib.auth import get_user_model
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
@@ -179,7 +178,7 @@ class CookieAuthBugConditionTests(TestCase):
         
         # Verify that centralized delete function exists (will fail on unfixed code)
         try:
-            from api.utils.cookies import delete_jwt_cookie
+            from api.utils.cookies import delete_jwt_cookie  # noqa: F401
             self.assertTrue(True, "Centralized delete_jwt_cookie() function exists")
         except ImportError:
             self.fail("Centralized delete_jwt_cookie() function should exist in api.utils.cookies")
@@ -303,7 +302,7 @@ class CookieAuthBugConditionTests(TestCase):
         
         # Verify centralized utilities exist
         try:
-            from api.utils.cookies import (
+            from api.utils.cookies import (  # noqa: F401
                 get_jwt_cookie_params,
                 set_jwt_cookie,
                 delete_jwt_cookie,
@@ -313,7 +312,6 @@ class CookieAuthBugConditionTests(TestCase):
             self.fail("Centralized cookie utilities should exist in api.utils.cookies")
         
         # Verify auth.py uses centralized utilities (not duplicated helpers)
-        from api.views import auth as auth_views
         auth_source = os.path.join(
             os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
             "src",

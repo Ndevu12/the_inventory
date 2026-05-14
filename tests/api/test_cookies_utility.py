@@ -10,9 +10,8 @@ This ensures:
 4. Both setting and deleting cookies use matching parameters
 """
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
-from django.conf import settings as django_settings
 from django.test import TestCase, override_settings
 from rest_framework.response import Response
 
