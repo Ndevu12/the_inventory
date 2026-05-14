@@ -19,6 +19,7 @@ from api.serializers.auth import (
     UserSerializer,
     memberships_payload_for_user,
 )
+from api.utils.cookies import set_jwt_cookie, delete_jwt_cookie
 from tenants.models import Tenant, TenantMembership, TenantRole
 
 
@@ -41,28 +42,20 @@ class LoginView(TokenObtainPairView):
             refresh_token = response.data.get('refresh')
             
             if access_token and refresh_token:
-                # Determine if cookies should be secure (based on DEBUG setting)
-                secure = getattr(django_settings, 'JWT_COOKIE_SECURE', not django_settings.DEBUG)
-                samesite = getattr(django_settings, 'JWT_COOKIE_SAMESITE', 'Lax')
-                
-                # Set access token cookie (5 minutes)
-                response.set_cookie(
+                # Set access token cookie using centralized utility
+                set_jwt_cookie(
+                    response,
                     'access_token',
-                    value=access_token,
-                    max_age=getattr(django_settings, 'JWT_ACCESS_TOKEN_COOKIE_MAX_AGE', 300),
-                    httponly=True,
-                    secure=secure,
-                    samesite=samesite,
+                    access_token,
+                    max_age=django_settings.JWT_ACCESS_TOKEN_COOKIE_MAX_AGE,
                 )
                 
-                # Set refresh token cookie (7 days)
-                response.set_cookie(
+                # Set refresh token cookie using centralized utility
+                set_jwt_cookie(
+                    response,
                     'refresh_token',
-                    value=refresh_token,
-                    max_age=getattr(django_settings, 'JWT_REFRESH_TOKEN_COOKIE_MAX_AGE', 604800),
-                    httponly=True,
-                    secure=secure,
-                    samesite=samesite,
+                    refresh_token,
+                    max_age=django_settings.JWT_REFRESH_TOKEN_COOKIE_MAX_AGE,
                 )
         
         return response
@@ -96,18 +89,12 @@ class RefreshView(TokenRefreshView):
             access_token = response.data.get('access')
             
             if access_token:
-                # Determine if cookies should be secure (based on DEBUG setting)
-                secure = getattr(django_settings, 'JWT_COOKIE_SECURE', not django_settings.DEBUG)
-                samesite = getattr(django_settings, 'JWT_COOKIE_SAMESITE', 'Lax')
-                
-                # Set new access token cookie (5 minutes)
-                response.set_cookie(
+                # Set new access token cookie using centralized utility
+                set_jwt_cookie(
+                    response,
                     'access_token',
-                    value=access_token,
-                    max_age=getattr(django_settings, 'JWT_ACCESS_TOKEN_COOKIE_MAX_AGE', 300),
-                    httponly=True,
-                    secure=secure,
-                    samesite=samesite,
+                    access_token,
+                    max_age=django_settings.JWT_ACCESS_TOKEN_COOKIE_MAX_AGE,
                 )
         
         return response
@@ -129,17 +116,9 @@ class LogoutView(APIView):
             status=status.HTTP_200_OK
         )
         
-        # Clear the access token cookie
-        response.delete_cookie(
-            'access_token',
-            samesite=getattr(django_settings, 'JWT_COOKIE_SAMESITE', 'Lax'),
-        )
-        
-        # Clear the refresh token cookie
-        response.delete_cookie(
-            'refresh_token',
-            samesite=getattr(django_settings, 'JWT_COOKIE_SAMESITE', 'Lax'),
-        )
+        # Clear authentication cookies using centralized utility
+        delete_jwt_cookie(response, 'access_token')
+        delete_jwt_cookie(response, 'refresh_token')
         
         return response
 

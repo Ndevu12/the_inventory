@@ -40,6 +40,7 @@ from api.serializers.invitations import (
     InvitationSerializer,
     PlatformInvitationSerializer,
 )
+from api.utils.cookies import set_jwt_cookie
 from tenants.middleware import get_effective_tenant
 from tenants.models import (
     INVITATION_EXPIRY_DAYS,
@@ -50,24 +51,6 @@ from tenants.models import (
 from tenants.permissions import IsTenantGovernanceMember, IsTenantMember
 
 User = get_user_model()
-
-
-def _jwt_cookie_security() -> tuple[bool, str]:
-    secure = getattr(django_settings, "JWT_COOKIE_SECURE", not django_settings.DEBUG)
-    samesite = getattr(django_settings, "JWT_COOKIE_SAMESITE", "Lax")
-    return secure, samesite
-
-
-def _set_jwt_cookie(response: Response, key: str, value: str, max_age: int) -> None:
-    secure, samesite = _jwt_cookie_security()
-    response.set_cookie(
-        key,
-        value=value,
-        max_age=max_age,
-        httponly=True,
-        secure=secure,
-        samesite=samesite,
-    )
 
 
 class InvitationListCreateView(ListAPIView):
@@ -255,17 +238,17 @@ class AcceptInvitationView(APIView):
             },
             status=status.HTTP_200_OK,
         )
-        _set_jwt_cookie(
+        set_jwt_cookie(
             response=response,
             key="access_token",
             value=str(refresh.access_token),
-            max_age=getattr(django_settings, "JWT_ACCESS_TOKEN_COOKIE_MAX_AGE", 300),
+            max_age=django_settings.JWT_ACCESS_TOKEN_COOKIE_MAX_AGE,
         )
-        _set_jwt_cookie(
+        set_jwt_cookie(
             response=response,
             key="refresh_token",
             value=str(refresh),
-            max_age=getattr(django_settings, "JWT_REFRESH_TOKEN_COOKIE_MAX_AGE", 604800),
+            max_age=django_settings.JWT_REFRESH_TOKEN_COOKIE_MAX_AGE,
         )
         return response
 

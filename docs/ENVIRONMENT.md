@@ -475,6 +475,147 @@ Required and important variables for both development and production.
   JWT_REFRESH_TOKEN_DAYS=30  # Refresh tokens valid for 30 days
   ```
 
+### JWT Cookie Configuration
+
+The system uses **HTTP-only cookies** for secure browser-based JWT authentication. These settings control how JWT tokens are transmitted via cookies and ensure cookies work correctly in both development (localhost) and production (subdomains) scenarios.
+
+> **Important:** JWT cookies cannot be shared across mismatched hostnames (e.g., `localhost` vs `127.0.0.1`). Ensure your frontend and backend use consistent hostnames.
+
+#### `JWT_COOKIE_DOMAIN`
+
+- **Type:** string or `None` (empty)
+- **Default:** `None` (same-domain only)
+- **Purpose:** Cookie domain scope for cross-subdomain access
+- **Values:**
+  - `None` (unset) — Bind cookie to exact request domain (development default)
+  - `".example.com"` — Share cookie across subdomains `*.example.com` (production with subdomains)
+  - `"localhost"` — Explicitly set for localhost development (rarely needed)
+- **Examples:**
+  ```bash
+  # Development (localhost only) — leave unset
+  JWT_COOKIE_DOMAIN=
+  
+  # Production with subdomains (api.example.com, app.example.com, etc.)
+  JWT_COOKIE_DOMAIN=.example.com
+  ```
+- **⚠️ Common Issue:** If frontend on `localhost:3000` and backend on `127.0.0.1:8000`, cookies won't be shared due to domain mismatch. **Solution:** Use consistent hostnames (both `localhost` or both actual domain).
+
+#### `JWT_COOKIE_PATH`
+
+- **Type:** string
+- **Default:** `/`
+- **Purpose:** Cookie path scope within the domain
+- **Common values:**
+  - `/` — Available to entire application
+  - `/api/` — Available only to `/api/*` paths (rarely needed)
+- **Example:**
+  ```bash
+  JWT_COOKIE_PATH=/
+  ```
+
+#### `JWT_COOKIE_SECURE`
+
+- **Type:** boolean (`true` or `false`)
+- **Default:** `false` (development), `true` (production)
+- **Purpose:** Enforce HTTPS-only transmission of JWT cookies
+- **Values:**
+  - `false` — Allow cookies over HTTP (development only, insecure)
+  - `true` — Require HTTPS (production security requirement)
+- **⚠️ Security:** Must be `true` in production. Only set to `false` for local development.
+- **Examples:**
+  ```bash
+  # Local development (HTTP)
+  JWT_COOKIE_SECURE=false
+  
+  # Production (HTTPS required)
+  JWT_COOKIE_SECURE=true
+  ```
+
+#### `JWT_COOKIE_SAMESITE`
+
+- **Type:** string (`Lax`, `Strict`, or `None`)
+- **Default:** `Lax`
+- **Purpose:** CSRF protection for cookie transmission across sites
+- **Values:**
+  - `Lax` — Safe default; cookies sent on same-site requests and safe cross-site requests (like following links)
+  - `Strict` — Strongest protection; cookies only sent on same-site requests (may break legitimate cross-site requests)
+  - `None` — Allow cross-site cookie transmission; requires `JWT_COOKIE_SECURE=true` and HTTPS
+- **Examples:**
+  ```bash
+  # Standard development and production
+  JWT_COOKIE_SAMESITE=Lax
+  
+  # Cross-origin SPA (app.example.com calling api.example.com) with HTTPS
+  JWT_COOKIE_SAMESITE=None
+  JWT_COOKIE_SECURE=true
+  ```
+
+#### `JWT_ACCESS_TOKEN_COOKIE_MAX_AGE`
+
+- **Type:** integer (seconds)
+- **Default:** `300` (5 minutes)
+- **Purpose:** HTTP-only access token cookie lifetime in seconds
+- **Should match:** `JWT_ACCESS_TOKEN_MINUTES` lifetime (default 30 minutes in token claim, but 5-minute cookie)
+- **Examples:**
+  ```bash
+  JWT_ACCESS_TOKEN_COOKIE_MAX_AGE=300    # 5 minutes (default)
+  JWT_ACCESS_TOKEN_COOKIE_MAX_AGE=600    # 10 minutes
+  JWT_ACCESS_TOKEN_COOKIE_MAX_AGE=1800   # 30 minutes
+  ```
+
+#### `JWT_REFRESH_TOKEN_COOKIE_MAX_AGE`
+
+- **Type:** integer (seconds)
+- **Default:** `604800` (7 days)
+- **Purpose:** HTTP-only refresh token cookie lifetime in seconds
+- **Should match:** JWT token lifetime (default 7 days)
+- **Examples:**
+  ```bash
+  JWT_REFRESH_TOKEN_COOKIE_MAX_AGE=604800   # 7 days (default)
+  JWT_REFRESH_TOKEN_COOKIE_MAX_AGE=2592000  # 30 days
+  ```
+
+#### Cookie Configuration Examples
+
+**Development (Single Machine with localhost):**
+
+```bash
+# Frontend: http://localhost:3000
+# Backend: http://localhost:8000
+JWT_COOKIE_DOMAIN=          # (unset, same-domain only)
+JWT_COOKIE_PATH=/
+JWT_COOKIE_SECURE=false     # (allow HTTP)
+JWT_COOKIE_SAMESITE=Lax
+JWT_ACCESS_TOKEN_COOKIE_MAX_AGE=300
+JWT_REFRESH_TOKEN_COOKIE_MAX_AGE=604800
+```
+
+**Production (Subdomain Sharing over HTTPS):**
+
+```bash
+# Frontend: https://app.example.com
+# Backend: https://api.example.com
+JWT_COOKIE_DOMAIN=.example.com      # Share across subdomains
+JWT_COOKIE_PATH=/
+JWT_COOKIE_SECURE=true              # HTTPS required
+JWT_COOKIE_SAMESITE=Lax
+JWT_ACCESS_TOKEN_COOKIE_MAX_AGE=300
+JWT_REFRESH_TOKEN_COOKIE_MAX_AGE=604800
+```
+
+**Production (Cross-Origin SPA over HTTPS):**
+
+```bash
+# Frontend: https://widgets.example.com
+# Backend: https://api.different.com
+JWT_COOKIE_DOMAIN=.different.com
+JWT_COOKIE_PATH=/
+JWT_COOKIE_SECURE=true              # HTTPS required
+JWT_COOKIE_SAMESITE=None            # Cross-site cookies
+JWT_ACCESS_TOKEN_COOKIE_MAX_AGE=300
+JWT_REFRESH_TOKEN_COOKIE_MAX_AGE=604800
+```
+
 ### Caching TTLs
 
 #### `STOCK_CACHE_TTL_SECONDS`
@@ -754,6 +895,24 @@ NEXT_PUBLIC_APP_NAME="The Inventory (Local)"
 - [ ] API endpoint responds: `http://localhost:8000/api/v1/`
 - [ ] No CORS errors (check browser console)
 
+#### JWT Cookie Configuration for Development
+
+The system uses **HTTP-only cookies for JWT authentication**. For cookies to work correctly between frontend and backend, **both must use the same hostname**:
+
+**✅ Correct (will work):**
+- Frontend: `http://localhost:3000` → Backend: `http://localhost:8000`
+- Frontend: `http://127.0.0.1:3000` → Backend: `http://127.0.0.1:8000` (not typically used)
+
+**❌ Incorrect (cookies won't be shared):**
+- Frontend: `http://localhost:3000` → Backend: `http://127.0.0.1:8000` (domain mismatch)
+- Frontend: `http://127.0.0.1:3000` → Backend: `http://localhost:8000` (domain mismatch)
+
+**To verify:** 
+1. Login at `http://localhost:3000`
+2. Open browser DevTools → Application/Storage → Cookies
+3. Verify `access_token` and `refresh_token` cookies are present for `localhost`
+4. If cookies show domain `127.0.0.1` but frontend URL shows `localhost`, you have a hostname mismatch
+
 ---
 
 ### Docker Deployment
@@ -818,6 +977,11 @@ Before deploying to production:
   - `ALLOWED_HOSTS` matches your domain(s)
   - `FRONTEND_URL` matches your frontend domain
   - CORS origins are restricted (not `*`)
+  - **JWT Cookie configuration** — critical for authentication:
+    - Frontend and backend use **matching hostnames** (both `example.com` or both `subdomain.example.com`, not mixed)
+    - `JWT_COOKIE_SECURE=true` (HTTPS required)
+    - `JWT_COOKIE_DOMAIN=.example.com` (for subdomain sharing) or blank (for same-domain)
+    - `JWT_COOKIE_SAMESITE` set appropriately (`Lax` for same-domain, `None` for cross-origin with `Secure=true`)
 - [ ] **Database**
   - PostgreSQL (not SQLite)
   - Backups configured
@@ -863,7 +1027,7 @@ Before deploying to production:
 
   Project catalogs under `locale/**/LC_MESSAGES/*.mo` are tracked in git (see `.gitignore`).
 
-- **Mark strings:** use `django.utils.translation.gettext_lazy as _` (models/forms) or `gettext` in views; use `{% trans %}` / `{% blocktrans %}` in templates.
+- **Mark strings:** use `django.utils.translation.gettext_lazy as _` (models/forms) or `gettext` in views; use `{% raw %}{% trans %}{% endraw %}` / `{% raw %}{% blocktrans %}{% endraw %}` in templates.
 - **Wagtail / Django admin:** pick a language via the user language preference or `Accept-Language` / `LocaleMiddleware` once `LANGUAGES` includes that code and the catalog is compiled.
 
 ### Next.js (`next-intl`)

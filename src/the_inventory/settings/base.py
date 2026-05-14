@@ -296,6 +296,33 @@ SIMPLE_JWT = {
 }
 
 
+# JWT Cookie Settings — Centralized configuration for HttpOnly cookie-based authentication
+# These settings are used by api.utils.cookies.get_jwt_cookie_params() to ensure consistent
+# cookie handling across LoginView, RefreshView, LogoutView, and all authentication flows.
+
+# HTTP-only cookie domain: use None for same-domain, ".example.com" for subdomains
+JWT_COOKIE_DOMAIN = env_str("JWT_COOKIE_DOMAIN", None)
+
+# HTTP-only cookie path: "/" for all paths
+JWT_COOKIE_PATH = env_str("JWT_COOKIE_PATH", "/")
+
+# HTTP-only cookie secure flag: True for HTTPS-only (production), False for HTTP (dev)
+# Defaults to False (insecure in development); override in production settings or with env var
+JWT_COOKIE_SECURE = env_bool("JWT_COOKIE_SECURE", False)
+
+# HTTP-only cookie SameSite flag: "Lax" (default), "Strict", or "None"
+# "Lax" is recommended for cross-origin SPAs with credentials
+JWT_COOKIE_SAMESITE = env_str("JWT_COOKIE_SAMESITE", "Lax")
+
+# Access token cookie max_age in seconds (should match JWT ACCESS_TOKEN_LIFETIME)
+# Default: 5 minutes (300 seconds) - matches SIMPLE_JWT ACCESS_TOKEN_LIFETIME default
+JWT_ACCESS_TOKEN_COOKIE_MAX_AGE = env_int("JWT_ACCESS_TOKEN_COOKIE_MAX_AGE", 300)
+
+# Refresh token cookie max_age in seconds (should match JWT REFRESH_TOKEN_LIFETIME)
+# Default: 7 days (604800 seconds) - matches SIMPLE_JWT REFRESH_TOKEN_LIFETIME default
+JWT_REFRESH_TOKEN_COOKIE_MAX_AGE = env_int("JWT_REFRESH_TOKEN_COOKIE_MAX_AGE", 604800)
+
+
 # CORS — SPA / separate frontend origin (comma-separated origins, full scheme+host+port)
 
 _DEFAULT_CORS_ORIGINS = [
