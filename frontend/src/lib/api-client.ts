@@ -7,17 +7,13 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "/api/v1";
 let refreshPromise: Promise<boolean> | null = null;
 
 async function refreshAccessToken(): Promise<boolean> {
-  const { refreshToken, setTokens, logout } = useAuthStore.getState();
-  if (!refreshToken) {
-    logout();
-    return false;
-  }
+  const { logout } = useAuthStore.getState();
 
   try {
     const res = await fetch(`${API_BASE}/auth/refresh/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ refresh: refreshToken }),
+      credentials: "include",
     });
 
     if (!res.ok) {
@@ -25,11 +21,10 @@ async function refreshAccessToken(): Promise<boolean> {
       return false;
     }
 
-    const data = await res.json();
-    setTokens(data.access, data.refresh ?? refreshToken);
+    await res.json();
     return true;
   } catch {
-    // Network error during refresh - don't logout. User stays on page with tokens.
+    // Network error during refresh - don't logout immediately.
     // They can retry or refresh. Only explicit 4xx from refresh endpoint triggers logout.
     return false;
   }
@@ -49,14 +44,10 @@ function refreshWithMutex(): Promise<boolean> {
 
 function buildHeaders(custom?: HeadersInit): Headers {
   const headers = new Headers(custom);
-  const { accessToken, tenantSlug } = useAuthStore.getState();
+  const { tenantSlug } = useAuthStore.getState();
 
   if (!headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
-  }
-
-  if (accessToken) {
-    headers.set("Authorization", `Bearer ${accessToken}`);
   }
 
   if (tenantSlug) {
@@ -192,7 +183,7 @@ async function request<T>(
   const url = buildUrl(path, mergeLanguageParam(options.params));
   const headers = buildHeaders(options.headers);
 
-  const init: RequestInit = { method, headers };
+  const init: RequestInit = { method, headers, credentials: "include" };
 
   if (options.body !== undefined) {
     if (options.body instanceof FormData) {
@@ -205,7 +196,7 @@ async function request<T>(
 
   let res = await fetch(url, init);
 
-  if (res.status === 401 && useAuthStore.getState().refreshToken) {
+  if (res.status === 401 && !url.endsWith("/auth/refresh/")) {
     const refreshed = await refreshWithMutex();
     if (refreshed) {
       const retryHeaders = buildHeaders(options.headers);

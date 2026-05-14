@@ -11,6 +11,8 @@ ALLOWED_HOSTS = ["*"]
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
+# JWT cookie defaults come from base.py (inherits session defaults in dev).
+
 # Reset thread-local tenant between tests (see tests/runner.py).
 TEST_RUNNER = "tests.runner.DiscoverRunner"
 

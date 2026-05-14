@@ -12,8 +12,8 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-  access: string;
-  refresh: string;
+  access?: string;
+  refresh?: string;
   user: User;
   tenant: TenantInfo | null;
   memberships?: Membership[];
@@ -61,22 +61,20 @@ export interface RegisterRequest {
 }
 
 export interface RegisterResponse {
-  access: string;
-  refresh: string;
+  access?: string;
+  refresh?: string;
   user: User;
   tenant: TenantInfo;
   memberships: Membership[];
 }
 
 export interface ImpersonateStartResponse {
-  access: string;
-  refresh: string;
+  access?: string;
+  refresh?: string;
   user: User;
   tenant: TenantInfo | null;
   memberships: Membership[];
   impersonation: {
     real_user: User;
-    real_access_token: string;
-    real_refresh_token: string;
   };
 }

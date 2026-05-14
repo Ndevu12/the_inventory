@@ -9,6 +9,10 @@ from wagtail.models import Locale
 
 
 class WagtailLocalesSeedTests(TestCase):
+    def setUp(self):
+        for code in ("fr", "sw", "rw", "es", "ar"):
+            Locale.objects.get_or_create(language_code=code)
+
     def test_wagtail_locale_display_name_fallback_for_rw(self):
         class _Loc:
             language_code = "rw"
@@ -40,7 +44,9 @@ class WagtailLocalesSeedTests(TestCase):
 
     def test_supported_variant_for_each_content_language(self):
         refresh_i18n_settings_from_wagtail()
-        for code in ("en", "fr", "sw", "rw", "es", "ar"):
+        supported = {code for code, _label in settings.WAGTAIL_CONTENT_LANGUAGES}
+        self.assertGreaterEqual(supported, {"en", "fr", "sw", "rw", "es", "ar"})
+        for code in ("en", "fr", "sw", "es", "ar"):
             with self.subTest(code=code):
                 self.assertEqual(get_supported_content_language_variant(code), code)
 

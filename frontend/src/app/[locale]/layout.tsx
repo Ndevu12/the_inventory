@@ -1,10 +1,15 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { hasLocale } from "next-intl";
 import { getMessages, getTranslations, setRequestLocale } from "next-intl/server";
 
 import { LocaleLayoutShell } from "./locale-layout-shell";
-import { Providers } from "@/lib/providers";
+import type { MeResponse } from "@/features/auth/types/auth.types";
+import { makeQueryClient } from "@/lib/query-client";
+import { dehydrateAuthMe, Providers } from "@/lib/providers";
+import { JWT_ACCESS_COOKIE_NAME } from "@/lib/auth-paths";
+import { fetchAuthMeOnServer } from "@/lib/server/fetch-auth-me";
 import { APP_NAME } from "@/lib/utils/constants";
 import { localeEntries, routing } from "@/i18n/routing";
 
@@ -46,8 +51,25 @@ export default async function LocaleLayout({
   const messages = await getMessages({ locale });
   const dir = textDirectionForLocale(locale);
 
+  const cookieStore = await cookies();
+  const hasAccess = cookieStore.get(JWT_ACCESS_COOKIE_NAME)?.value;
+  let serverBootstrap: MeResponse | null = null;
+  if (hasAccess) {
+    const cookieHeader = cookieStore
+      .getAll()
+      .map((c) => `${c.name}=${c.value}`)
+      .join("; ");
+    serverBootstrap = await fetchAuthMeOnServer(cookieHeader, locale);
+  }
+
+  const queryClient = makeQueryClient();
+  const dehydratedState = dehydrateAuthMe(queryClient, serverBootstrap);
+
   return (
-    <Providers>
+    <Providers
+      dehydratedState={dehydratedState}
+      serverBootstrap={serverBootstrap}
+    >
       <LocaleLayoutShell locale={locale} dir={dir} messages={messages}>
         {children}
       </LocaleLayoutShell>

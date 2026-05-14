@@ -26,15 +26,122 @@ class LoginView(TokenObtainPairView):
     """Obtain JWT access + refresh tokens.
 
     Returns tokens along with user profile and default tenant info.
+    Sets tokens in HttpOnly cookies for browser clients while maintaining
+    backward compatibility for mobile/API clients via JSON response body.
     """
 
     permission_classes = (AllowAny,)
 
+    def post(self, request, *args, **kwargs):
+        """Override to set tokens in HttpOnly cookies after successful login."""
+        response = super().post(request, *args, **kwargs)
+        
+        if response.status_code == status.HTTP_200_OK:
+            access_token = response.data.get('access')
+            refresh_token = response.data.get('refresh')
+            
+            if access_token and refresh_token:
+                # Determine if cookies should be secure (based on DEBUG setting)
+                secure = getattr(django_settings, 'JWT_COOKIE_SECURE', not django_settings.DEBUG)
+                samesite = getattr(django_settings, 'JWT_COOKIE_SAMESITE', 'Lax')
+                
+                # Set access token cookie (5 minutes)
+                response.set_cookie(
+                    'access_token',
+                    value=access_token,
+                    max_age=getattr(django_settings, 'JWT_ACCESS_TOKEN_COOKIE_MAX_AGE', 300),
+                    httponly=True,
+                    secure=secure,
+                    samesite=samesite,
+                )
+                
+                # Set refresh token cookie (7 days)
+                response.set_cookie(
+                    'refresh_token',
+                    value=refresh_token,
+                    max_age=getattr(django_settings, 'JWT_REFRESH_TOKEN_COOKIE_MAX_AGE', 604800),
+                    httponly=True,
+                    secure=secure,
+                    samesite=samesite,
+                )
+        
+        return response
+
 
 class RefreshView(TokenRefreshView):
-    """Refresh an expired access token using a valid refresh token."""
+    """Refresh an expired access token using a valid refresh token.
+    
+    Accepts refresh token from cookie or JSON body. Returns new access token
+    in both HttpOnly cookie and JSON response body.
+    """
 
     permission_classes = (AllowAny,)
+
+    def post(self, request, *args, **kwargs):
+        """Override to handle refresh token from cookie if not in request body."""
+        # If refresh token is not in the request body, try to get it from cookies
+        if 'refresh' not in request.data and 'refresh_token' in request.COOKIES:
+            # Check if request.data is a QueryDict (from form data) or dict (from JSON)
+            if hasattr(request.data, '_mutable'):
+                request.data._mutable = True
+                request.data['refresh'] = request.COOKIES['refresh_token']
+                request.data._mutable = False
+            else:
+                # For dict/other types, just add the key
+                request.data['refresh'] = request.COOKIES['refresh_token']
+        
+        response = super().post(request, *args, **kwargs)
+        
+        if response.status_code == status.HTTP_200_OK:
+            access_token = response.data.get('access')
+            
+            if access_token:
+                # Determine if cookies should be secure (based on DEBUG setting)
+                secure = getattr(django_settings, 'JWT_COOKIE_SECURE', not django_settings.DEBUG)
+                samesite = getattr(django_settings, 'JWT_COOKIE_SAMESITE', 'Lax')
+                
+                # Set new access token cookie (5 minutes)
+                response.set_cookie(
+                    'access_token',
+                    value=access_token,
+                    max_age=getattr(django_settings, 'JWT_ACCESS_TOKEN_COOKIE_MAX_AGE', 300),
+                    httponly=True,
+                    secure=secure,
+                    samesite=samesite,
+                )
+        
+        return response
+
+
+class LogoutView(APIView):
+    """Logout and clear authentication cookies.
+    
+    POST endpoint that clears access_token and refresh_token cookies.
+    Can be called by authenticated users or as a public endpoint.
+    """
+
+    permission_classes = (AllowAny,)
+
+    def post(self, request):
+        """Clear authentication cookies on logout."""
+        response = Response(
+            {"detail": "Successfully logged out."},
+            status=status.HTTP_200_OK
+        )
+        
+        # Clear the access token cookie
+        response.delete_cookie(
+            'access_token',
+            samesite=getattr(django_settings, 'JWT_COOKIE_SAMESITE', 'Lax'),
+        )
+        
+        # Clear the refresh token cookie
+        response.delete_cookie(
+            'refresh_token',
+            samesite=getattr(django_settings, 'JWT_COOKIE_SAMESITE', 'Lax'),
+        )
+        
+        return response
 
 
 class MeView(APIView):

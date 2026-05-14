@@ -64,6 +64,13 @@ local_settings.py
 db.sqlite3
 db.sqlite3-journal
 
+# Frontend generated artifacts
+frontend/.next/
+frontend/.turbo/
+frontend/out/
+frontend/coverage/
+frontend/*.tsbuildinfo
+
 # Flask stuff:
 instance/
 .webassets-cache

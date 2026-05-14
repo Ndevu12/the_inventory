@@ -57,7 +57,9 @@ describe("AuthGuard", () => {
     resetClientTestState();
   });
 
-  it("redirects to login when there is no token", async () => {
+  it("redirects to login when auth bootstrap fails", async () => {
+    bootstrapProbe.isFetched = true;
+    bootstrapProbe.isError = true;
     useAuthStore.setState({
       _hasHydrated: true,
     });
@@ -78,8 +80,6 @@ describe("AuthGuard", () => {
     bootstrapProbe.isFetched = true;
     bootstrapProbe.isError = false;
     useAuthStore.setState({
-      accessToken: "access",
-      refreshToken: "refresh",
       user: {
         id: 1,
         username: "solo",
@@ -109,8 +109,6 @@ describe("AuthGuard", () => {
     bootstrapProbe.isFetched = true;
     bootstrapProbe.isError = false;
     useAuthStore.setState({
-      accessToken: "valid-access-token-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-      refreshToken: "refresh",
       user: {
         id: 1,
         username: "member",
@@ -148,9 +146,6 @@ describe("AuthGuard", () => {
     bootstrapProbe.isFetched = true;
     bootstrapProbe.isError = false;
     useAuthStore.setState({
-      accessToken:
-        "valid-access-token-yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy",
-      refreshToken: "refresh",
       user: {
         id: 1,
         username: "dual",

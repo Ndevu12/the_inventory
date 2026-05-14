@@ -415,19 +415,17 @@ Required and important variables for both development and production.
   CSRF_TRUSTED_ORIGINS=https://app.example.com
   ```
 
-#### Cookie Security (`SESSION_COOKIE_SAMESITE`, `SESSION_COOKIE_SECURE`, etc.)
+#### JWT Cookie Security (`JWT_COOKIE_SAMESITE`, `JWT_COOKIE_SECURE`)
 
 - **Type:** string / boolean
 - **Default:**
   - Local dev: `SameSite=Lax`, `Secure=false`
   - Production: `SameSite=Lax`, `Secure=true`
-- **Purpose:** Protect against cross-site request forgery and cookie theft
+- **Purpose:** Control JWT cookie transport/security policy for browser auth flows
 - **Examples for third-party (cross-domain) cookies:**
   ```bash
-  SESSION_COOKIE_SAMESITE=None
-  SESSION_COOKIE_SECURE=true
-  CSRF_COOKIE_SAMESITE=None
-  CSRF_COOKIE_SECURE=true
+  JWT_COOKIE_SAMESITE=None
+  JWT_COOKIE_SECURE=true
   ```
 
 #### `USE_X_FORWARDED_PROTO`
@@ -640,7 +638,7 @@ NEXT_PUBLIC_APP_NAME="The Inventory (Local)"
 | `CELERY_TASK_ALWAYS_EAGER` | `true` | Tasks run synchronously |
 | `EMAIL_BACKEND` | `console` | Emails printed to console |
 | `CORS_ALLOWED_ORIGINS` | `http://localhost:3000,http://localhost:5173` | Local frontend origins |
-| `SESSION_COOKIE_SECURE` | `false` | Allow cookies over HTTP |
+| `JWT_COOKIE_SECURE` | `false` | Allow JWT cookies over HTTP |
 
 **Result:**
 - ✅ Fast iteration, no external services needed
@@ -660,7 +658,7 @@ NEXT_PUBLIC_APP_NAME="The Inventory (Local)"
 | `CELERY_TASK_ALWAYS_EAGER` | `false` | Queue tasks to Redis broker |
 | `EMAIL_BACKEND` | `smtp` | Use real SMTP server |
 | `CORS_ALLOWED_ORIGINS` | Not set — must override | Your production frontend URL(s) |
-| `SESSION_COOKIE_SECURE` | `true` | Only send over HTTPS |
+| `JWT_COOKIE_SECURE` | `true` | Only send JWT cookies over HTTPS |
 
 **Result:**
 - ✅ Security hardening (no DEBUG, secure cookies, etc.)
@@ -1091,7 +1089,7 @@ If you're stuck:
 | **Database** | `DATABASE_URL`, `STATIC_URL`, `MEDIA_URL` |
 | **Caching** | `REDIS_URL`, `CELERY_BROKER_URL`, `CELERY_TASK_ALWAYS_EAGER` |
 | **URLs** | `FRONTEND_URL`, `PUBLIC_BASE_URL`, `WAGTAILADMIN_BASE_URL` |
-| **Security** | `CORS_ALLOWED_ORIGINS`, `CSRF_TRUSTED_ORIGINS`, `SESSION_COOKIE_SECURE` |
+| **Security** | `CORS_ALLOWED_ORIGINS`, `CSRF_TRUSTED_ORIGINS`, `JWT_COOKIE_SAMESITE`, `JWT_COOKIE_SECURE` |
 | **Tenants** | `ENABLE_PUBLIC_TENANT_REGISTRATION`, `AUDIT_TENANT_ACCESS` |
 | **API** | `API_PAGE_SIZE`, `JWT_ACCESS_TOKEN_MINUTES`, `JWT_REFRESH_TOKEN_DAYS` |
 | **Caching TTLs** | `STOCK_CACHE_TTL_SECONDS`, `DASHBOARD_CACHE_TTL_SECONDS` |
@@ -1108,7 +1106,7 @@ If you're stuck:
 - Redis/Cache: `REDIS_URL`, `CELERY_BROKER_URL`, `CELERY_TASK_ALWAYS_EAGER`
 - URLs: `FRONTEND_URL`, `PUBLIC_BASE_URL`, `WAGTAILADMIN_BASE_URL`, `WAGTAIL_SITE_NAME`
 - Tenants: `ENABLE_PUBLIC_TENANT_REGISTRATION`, `AUDIT_TENANT_ACCESS`
-- CORS/CSRF: `CORS_ALLOWED_ORIGINS`, `CORS_ALLOW_ALL_ORIGINS`, `CORS_ALLOW_CREDENTIALS`, `CORS_EXTRA_HEADERS`, `CSRF_TRUSTED_ORIGINS`, `SESSION_COOKIE_SAMESITE`, `SESSION_COOKIE_SECURE`, `CSRF_COOKIE_SAMESITE`, `CSRF_COOKIE_SECURE`, `USE_X_FORWARDED_PROTO`
+- CORS/CSRF: `CORS_ALLOWED_ORIGINS`, `CORS_ALLOW_ALL_ORIGINS`, `CORS_ALLOW_CREDENTIALS`, `CORS_EXTRA_HEADERS`, `CSRF_TRUSTED_ORIGINS`, `JWT_COOKIE_SAMESITE`, `JWT_COOKIE_SECURE`, `USE_X_FORWARDED_PROTO`
 - API: `API_PAGE_SIZE`, `JWT_ACCESS_TOKEN_MINUTES`, `JWT_REFRESH_TOKEN_DAYS`
 - Cache TTLs: `STOCK_CACHE_TTL_SECONDS`, `DASHBOARD_CACHE_TTL_SECONDS`
 - Docs: `API_DOC_TITLE`, `API_DOC_DESCRIPTION`, `API_DOC_VERSION`

@@ -27,7 +27,6 @@ export function TenantSwitcher() {
   const queryClient = useQueryClient();
   const memberships = useAuthStore((s) => s.memberships);
   const tenantSlug = useAuthStore((s) => s.tenantSlug);
-  const accessToken = useAuthStore((s) => s.accessToken);
   const setTenant = useAuthStore((s) => s.setTenant);
 
   const { data: meData, isPending, isFetching } = useMe();
@@ -39,8 +38,7 @@ export function TenantSwitcher() {
     ? orgList.find((m) => m.tenant__slug === effectiveSlug)
     : undefined;
 
-  const bootstrapping =
-    !!accessToken && orgList.length === 0 && (isPending || isFetching);
+  const bootstrapping = orgList.length === 0 && (isPending || isFetching);
 
   const displayName = bootstrapping
     ? t("tenantLoading")

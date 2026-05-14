@@ -35,8 +35,6 @@ describe("DashboardPage rendering", () => {
   beforeEach(() => {
     resetClientTestState();
     useAuthStore.setState({
-      accessToken: "fake-access",
-      refreshToken: "fake-refresh",
       user: {
         id: 1,
         username: "demo",

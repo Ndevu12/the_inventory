@@ -826,7 +826,7 @@ Production settings automatically:
 - Set `DEBUG = False` (enforce security)
 - Require `SECRET_KEY` (raises error if missing)
 - Use `ManifestStaticFilesStorage` (hash-based static file caching)
-- Default `SESSION_COOKIE_SECURE` / `CSRF_COOKIE_SECURE` to true
+- Default `JWT_COOKIE_SECURE` to true
 - Set `SECURE_PROXY_SSL_HEADER` when `USE_X_FORWARDED_PROTO` is true (default)
 
 **For full documentation:**

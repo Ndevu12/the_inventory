@@ -61,7 +61,7 @@ esac
 
 # Start Gunicorn (access + error logs to stdout/stderr for platform log drains)
 exec gunicorn the_inventory.wsgi:application \
-  --bind "0.0.0.0:$PORT" \
+  --bind "[::]:$PORT" \
   --workers 4 \
   --access-logfile - \
   --error-logfile - \

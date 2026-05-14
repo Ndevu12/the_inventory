@@ -52,6 +52,24 @@ from tenants.permissions import IsTenantGovernanceMember, IsTenantMember
 User = get_user_model()
 
 
+def _jwt_cookie_security() -> tuple[bool, str]:
+    secure = getattr(django_settings, "JWT_COOKIE_SECURE", not django_settings.DEBUG)
+    samesite = getattr(django_settings, "JWT_COOKIE_SAMESITE", "Lax")
+    return secure, samesite
+
+
+def _set_jwt_cookie(response: Response, key: str, value: str, max_age: int) -> None:
+    secure, samesite = _jwt_cookie_security()
+    response.set_cookie(
+        key,
+        value=value,
+        max_age=max_age,
+        httponly=True,
+        secure=secure,
+        samesite=samesite,
+    )
+
+
 class InvitationListCreateView(ListAPIView):
     """List or create invitations for the current tenant.
 
@@ -214,7 +232,7 @@ class AcceptInvitationView(APIView):
         )
 
         refresh = RefreshToken.for_user(user)
-        return Response(
+        response = Response(
             {
                 "detail": f"Welcome to {invitation.tenant.name}!",
                 "access": str(refresh.access_token),
@@ -237,6 +255,19 @@ class AcceptInvitationView(APIView):
             },
             status=status.HTTP_200_OK,
         )
+        _set_jwt_cookie(
+            response=response,
+            key="access_token",
+            value=str(refresh.access_token),
+            max_age=getattr(django_settings, "JWT_ACCESS_TOKEN_COOKIE_MAX_AGE", 300),
+        )
+        _set_jwt_cookie(
+            response=response,
+            key="refresh_token",
+            value=str(refresh),
+            max_age=getattr(django_settings, "JWT_REFRESH_TOKEN_COOKIE_MAX_AGE", 604800),
+        )
+        return response
 
 
 class PlatformInvitationFilter(FilterSet):

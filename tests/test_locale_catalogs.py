@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -12,6 +13,8 @@ from django.test import SimpleTestCase
 
 class LocaleCatalogTests(SimpleTestCase):
     def test_django_po_files_compile(self) -> None:
+        if shutil.which("msgfmt") is None:
+            self.skipTest("msgfmt is not installed in this environment")
         repo_root = Path(__file__).resolve().parent.parent
         for lang in ("fr", "sw", "rw", "es", "ar"):
             po = repo_root / "src" / "locale" / lang / "LC_MESSAGES" / "django.po"
