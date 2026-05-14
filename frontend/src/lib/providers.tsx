@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  dehydrate,
   HydrationBoundary,
   QueryClientProvider,
   type DehydratedState,
@@ -9,7 +8,6 @@ import {
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { authKeys } from "@/features/auth/auth-query-keys";
 import { AuthProvider } from "@/features/auth/context/auth-context";
 import type { MeResponse } from "@/features/auth/types/auth.types";
 import { makeQueryClient } from "./query-client";
@@ -29,17 +27,6 @@ function getQueryClient() {
 /** Clears the browser QueryClient cache (e.g. between Vitest cases that share Providers). */
 export function clearQueryClientCache(): void {
   browserQueryClient?.clear();
-}
-
-/** Build TanStack dehydrate payload for RSC (per-request QueryClient). */
-export function dehydrateAuthMe(
-  queryClient: ReturnType<typeof makeQueryClient>,
-  me: MeResponse | null,
-): DehydratedState {
-  if (me) {
-    queryClient.setQueryData(authKeys.me, me);
-  }
-  return dehydrate(queryClient);
 }
 
 export function Providers({

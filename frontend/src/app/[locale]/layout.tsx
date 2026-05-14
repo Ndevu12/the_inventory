@@ -7,8 +7,9 @@ import { getMessages, getTranslations, setRequestLocale } from "next-intl/server
 import { LocaleLayoutShell } from "./locale-layout-shell";
 import type { MeResponse } from "@/features/auth/types/auth.types";
 import { makeQueryClient } from "@/lib/query-client";
-import { dehydrateAuthMe, Providers } from "@/lib/providers";
+import { Providers } from "@/lib/providers";
 import { JWT_ACCESS_COOKIE_NAME } from "@/lib/auth-paths";
+import { dehydrateAuthMe } from "@/lib/server/dehydrate-auth";
 import { fetchAuthMeOnServer } from "@/lib/server/fetch-auth-me";
 import { APP_NAME } from "@/lib/utils/constants";
 import { localeEntries, routing } from "@/i18n/routing";
