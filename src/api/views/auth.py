@@ -406,13 +406,17 @@ class ImpersonateEndView(APIView):
     def post(self, request):
         from rest_framework_simplejwt.tokens import AccessToken
         from rest_framework_simplejwt.exceptions import InvalidToken
+        from api.authentication import CookieJWTAuthentication
 
-        # Decode JWT from Authorization header to get impersonated_by claim
+        auth = CookieJWTAuthentication()
+
+        # Decode JWT from cookie or Authorization header to get impersonated_by claim
         real_user_id = None
         try:
-            auth_header = request.META.get("HTTP_AUTHORIZATION", "")
-            if auth_header.startswith("Bearer "):
-                token = AccessToken(auth_header[7:])
+            access_token = auth.extract_token(request)
+        
+            if access_token:
+                token = AccessToken(access_token)
                 real_user_id = token.get("impersonated_by")
         except (InvalidToken, KeyError, TypeError):
             pass
