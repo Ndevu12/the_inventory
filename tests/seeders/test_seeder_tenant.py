@@ -8,10 +8,7 @@ Tests:
 - Database integrity: No orphaned data, unique constraints work
 """
 
-from io import StringIO
-from django.test import TestCase, TransactionTestCase
-from django.core.management import call_command
-from django.core.management.base import CommandError
+from django.test import TransactionTestCase, tag
 
 from tenants.models import Tenant
 from seeders.tenant_seeder import TenantSeeder
@@ -26,6 +23,7 @@ from inventory.models import (
 )
 
 
+@tag('seeder')
 class TenantSeederTestCase(TransactionTestCase):
     """Tests for the TenantSeeder class.
 
@@ -160,6 +158,7 @@ class TenantSeederTestCase(TransactionTestCase):
         self.assertEqual(count, 1)
 
 
+@tag('seeder')
 class CategorySeederTenantTestCase(TransactionTestCase):
     """Tests verifying CategorySeeder respects tenant context."""
 
@@ -207,6 +206,7 @@ class CategorySeederTenantTestCase(TransactionTestCase):
             self.assertEqual(child.tenant_id, self.tenant.id)
 
 
+@tag('seeder')
 class ProductSeederTenantTestCase(TransactionTestCase):
     """Tests verifying ProductSeeder respects tenant context."""
 
@@ -275,6 +275,7 @@ class ProductSeederTenantTestCase(TransactionTestCase):
         tenant2.delete()
 
 
+@tag('seeder')
 class StockLocationSeederTenantTestCase(TransactionTestCase):
     """Tests verifying StockLocationSeeder respects tenant context."""
 
@@ -355,6 +356,7 @@ class StockLocationSeederTenantTestCase(TransactionTestCase):
             )
 
 
+@tag('seeder')
 class StockRecordSeederTenantTestCase(TransactionTestCase):
     """Tests verifying StockRecordSeeder respects tenant context."""
 
@@ -419,6 +421,7 @@ class StockRecordSeederTenantTestCase(TransactionTestCase):
             self.assertEqual(record.location.tenant_id, self.tenant.id)
 
 
+@tag('seeder')
 class StockMovementSeederTenantTestCase(TransactionTestCase):
     """Tests verifying StockMovementSeeder respects tenant context."""
 
@@ -475,6 +478,7 @@ class StockMovementSeederTenantTestCase(TransactionTestCase):
             self.assertEqual(movement.tenant_id, self.tenant.id)
 
 
+@tag('seeder')
 class DataIntegrityTenantTestCase(TransactionTestCase):
     """Tests verifying data integrity: no orphaned data, constraints work."""
 

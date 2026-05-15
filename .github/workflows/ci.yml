@@ -82,8 +82,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run functionality tests
-        working-directory: src
-        run: pytest --ignore=../tests/seeders --ignore=../tests/integration/seeders -v
+        run: python src/manage.py test --exclude-tag=seeder
 
   test-seeders:
     name: Tests - Seeders (Python 3.12)
