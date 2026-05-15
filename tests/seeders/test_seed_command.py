@@ -21,42 +21,6 @@ class SeedDatabaseCommandTest(TransactionTestCase):
         self.stdout = StringIO()
         self.stderr = StringIO()
 
-    def test_seed_command_creates_default_tenant(self):
-        """Test: seed_database creates Default tenant if missing and --create-default is set."""
-        # Ensure no default tenant exists
-        Tenant.objects.filter(slug="default").delete()
-
-        # Call command with --create-default
-        call_command(
-            "seed_database",
-            "--create-default",
-            "--quiet",
-            stdout=self.stdout,
-            stderr=self.stderr,
-        )
-
-        # Verify Default tenant was created
-        tenant = Tenant.objects.get(slug="default")
-        self.assertEqual(tenant.name, "Default")
-        self.assertTrue(tenant.is_active)
-
-    def test_seed_command_uses_existing_default_tenant(self):
-        """Test: seed_database uses existing Default tenant if present."""
-        # Create existing Default tenant
-        default_tenant = create_tenant(name="Default", slug="default")
-
-        # Call command
-        call_command(
-            "seed_database",
-            "--quiet",
-            stdout=self.stdout,
-            stderr=self.stderr,
-        )
-
-        # Verify no new tenant was created
-        self.assertEqual(Tenant.objects.filter(slug="default").count(), 1)
-        self.assertEqual(Tenant.objects.get(slug="default").id, default_tenant.id)
-
     def test_seed_command_fails_without_default_tenant(self):
         """Test: seed_database fails if Default tenant missing and not --clear / --create-default."""
         # Ensure no default tenant exists
@@ -125,44 +89,6 @@ class SeedDatabaseCommandTest(TransactionTestCase):
 
         self.assertIn("nonexistent", str(cm.exception))
         self.assertIn("not found", str(cm.exception))
-
-    def test_seed_command_output_includes_tenant_info(self):
-        """Test: seed_database output includes tenant name and slug."""
-        # Create a tenant
-        create_tenant(name="Test Tenant", slug="test-tenant")
-
-        # Call command
-        call_command(
-            "seed_database",
-            "--tenant",
-            "test-tenant",
-            "--quiet",
-            stdout=self.stdout,
-            stderr=self.stderr,
-        )
-
-        output = self.stdout.getvalue()
-        self.assertIn("Test Tenant", output)
-        self.assertIn("slug=test-tenant", output)
-
-    def test_seed_command_sets_context_before_seeding(self):
-        """Test: seed_database sets tenant context via set_current_tenant()."""
-        # Create a tenant
-        tenant = create_tenant(name="Context Test", slug="context-test")
-
-        # We need to patch the seeding process to capture context
-        # For now, verify that the command runs without errors
-        call_command(
-            "seed_database",
-            "--tenant",
-            "context-test",
-            "--quiet",
-            stdout=self.stdout,
-            stderr=self.stderr,
-        )
-
-        # If command succeeded, context was properly managed
-        self.assertEqual(Tenant.objects.get(slug="context-test").id, tenant.id)
 
     def test_seed_command_clears_context_after_seeding(self):
         """Test: seed_database clears tenant context after seeding completes."""

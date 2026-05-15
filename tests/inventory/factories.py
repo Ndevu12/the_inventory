@@ -24,7 +24,7 @@ from inventory.models import (
     UnitOfMeasure,
     Warehouse,
 )
-from tenants.context import get_current_tenant, set_current_tenant
+from tenants.context import clear_current_tenant, get_current_tenant, set_current_tenant
 from tenants.models import Tenant
 
 User = get_user_model()
@@ -34,9 +34,14 @@ def _ensure_tenant(tenant):
     """Honor explicit *tenant*, else thread-local from a prior factory call, else a new tenant."""
     if tenant is not None:
         return tenant
+
     current = get_current_tenant()
     if current is not None:
-        return current
+        if Tenant.objects.filter(pk=current.pk).exists():
+            return current
+
+        clear_current_tenant()
+
     created = create_tenant()
     set_current_tenant(created)
     return created

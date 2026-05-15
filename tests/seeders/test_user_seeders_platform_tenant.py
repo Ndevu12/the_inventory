@@ -9,39 +9,17 @@ from seeders.seeder_manager import SeederManager
 User = get_user_model()
 
 
-def _clear_inventory_and_default_tenant():
-    from inventory.models import (
-        Category,
-        Product,
-        StockLocation,
-        StockRecord,
-        StockMovement,
-        Warehouse,
-    )
-
-    StockMovement.objects.all().delete()
-    StockRecord.objects.all().delete()
-    Product.objects.all().delete()
-    StockLocation.objects.all().delete()
-    Warehouse.objects.all().delete()
-    Category.objects.all().delete()
-    Tenant.objects.filter(slug="default").delete()
-
-
 class PlatformTenantUserSeederTestCase(TransactionTestCase):
-    """Assert seeded platform accounts have no org memberships; tenant users do."""
-
-    def setUp(self):
-        _clear_inventory_and_default_tenant()
-
-    def tearDown(self):
-        _clear_inventory_and_default_tenant()
+    """Assert seeded platform accounts have no org memberships; tenant users do.
+    
+    Cleanup handled by reset_tenant_scoped_models (autouse) fixture.
+    """
 
     def test_full_seed_platform_users_have_no_tenant_membership(self):
         manager = SeederManager(verbose=False, clear_data=False)
         result = manager.seed()
-        tenant = result["tenant"]
-
+        tenant = result['tenant']
+        
         platform_super = User.objects.get(username="platform_super")
         self.assertTrue(platform_super.is_superuser)
         self.assertTrue(platform_super.is_staff)
@@ -64,7 +42,7 @@ class PlatformTenantUserSeederTestCase(TransactionTestCase):
     def test_full_seed_tenant_users_have_memberships_and_no_staff_flag(self):
         manager = SeederManager(verbose=False, clear_data=False)
         result = manager.seed()
-        tenant = result["tenant"]
+        tenant = result['tenant']
 
         specs = [
             ("owner", TenantRole.OWNER, True),
@@ -94,3 +72,4 @@ class PlatformTenantUserSeederTestCase(TransactionTestCase):
         owner = User.objects.get(username="owner")
         m = TenantMembership.objects.get(user=owner, tenant=custom)
         self.assertEqual(m.role, TenantRole.OWNER)
+

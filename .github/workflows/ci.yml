@@ -59,8 +59,8 @@ jobs:
         working-directory: src
         run: python manage.py makemigrations --check --dry-run
 
-  test:
-    name: Tests (Python 3.12)
+  test-functionality:
+    name: Tests - Functionality (Python 3.12)
     runs-on: ubuntu-latest
 
     env:
@@ -81,7 +81,33 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run tests
+      - name: Run functionality tests
         working-directory: src
-        run: python manage.py test tests --parallel auto
+        run: pytest --ignore=../tests/seeders --ignore=../tests/integration/seeders -v
+
+  test-seeders:
+    name: Tests - Seeders (Python 3.12)
+    runs-on: ubuntu-latest
+
+    env:
+      DJANGO_SETTINGS_MODULE: the_inventory.settings.dev
+      PYTHONPATH: ${{ github.workspace }}/src:${{ github.workspace }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run seeder tests
+        working-directory: src
+        run: python manage.py test tests.seeders
 
