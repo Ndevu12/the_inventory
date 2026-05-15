@@ -33,12 +33,10 @@ class TimeStampedModelNonNullableTenantTestCase(TestCase):
     @classmethod
     def setUpTestData(cls):
         """Create a default tenant for testing."""
-        cls.default_tenant, _ = Tenant.objects.get_or_create(
+        cls.default_tenant = Tenant.objects.create(
             slug="default",
-            defaults={
-                "name": "Default",
-                "is_active": True,
-            }
+            name="Default",
+            is_active=True,
         )
     
     def test_tenant_field_is_non_nullable(self):
@@ -267,12 +265,10 @@ class TimeStampedModelSaveValidationTestCase(TestCase):
     @classmethod
     def setUpTestData(cls):
         """Create a default tenant for testing."""
-        cls.default_tenant, _ = Tenant.objects.get_or_create(
-            slug="default",
-            defaults={
-                "name": "Default",
-                "is_active": True,
-            }
+        cls.default_tenant = Tenant.objects.create(
+            slug="default-save-validation",
+            name="Default Save Validation",
+            is_active=True,
         )
 
     def test_save_raises_validation_error_without_tenant(self):
@@ -323,19 +319,15 @@ class TenantAwareManagerTestCase(TestCase):
     @classmethod
     def setUpTestData(cls):
         """Create test tenants and data."""
-        cls.tenant_a, _ = Tenant.objects.get_or_create(
+        cls.tenant_a = Tenant.objects.create(
             slug="tenant-a",
-            defaults={
-                "name": "Tenant A",
-                "is_active": True,
-            }
+            name="Tenant A",
+            is_active=True,
         )
-        cls.tenant_b, _ = Tenant.objects.get_or_create(
+        cls.tenant_b = Tenant.objects.create(
             slug="tenant-b",
-            defaults={
-                "name": "Tenant B",
-                "is_active": True,
-            }
+            name="Tenant B",
+            is_active=True,
         )
         
         # Create products for each tenant

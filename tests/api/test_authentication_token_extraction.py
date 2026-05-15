@@ -100,7 +100,7 @@ class CookieJWTAuthenticationTokenExtractionTests(TestCase):
         """Verify extract_token prioritizes cookies when both are present."""
         request = self.factory.get(
             '/api/test/',
-            HTTP_AUTHORIZATION=f'Bearer different-token'
+            HTTP_AUTHORIZATION='Bearer different-token'
         )
         request.COOKIES = {"access_token": self.valid_token}
         

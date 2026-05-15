@@ -13,7 +13,7 @@ from inventory.services.stock import (
     validate_movement_location_scope,
 )
 
-from ..factories import create_location, create_product, create_stock_record, create_tenant
+from ..factories import create_product, create_stock_record, create_tenant
 
 
 class StockServiceWarehouseScopeTests(TestCase):
