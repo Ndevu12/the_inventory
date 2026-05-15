@@ -32,12 +32,6 @@ from inventory.models.product import TrackingMode
 from inventory.models.stock import MovementType, StockMovement, StockRecord
 from inventory.services.audit import AuditService
 from inventory.services.cache import invalidate_dashboard, invalidate_stock_record
-from inventory.utils.warehouse_scope import (
-    WAREHOUSE_SCOPE_UNSPECIFIED,
-    movement_to_location_scope_q,
-    parse_report_warehouse_scope,
-    stock_record_location_scope_q,
-)
 
 logger = logging.getLogger(__name__)
 

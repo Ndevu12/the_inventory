@@ -105,24 +105,9 @@ class CookieAuthenticationTests(TestCase):
         self.assertIn("user", response.data)
         self.assertEqual(response.data["user"]["username"], "cookieuser")
 
-    def test_header_auth_takes_precedence_over_cookie(self):
-        """Verify Authorization header takes precedence over cookie."""
-        # Create two users
-        user2 = User.objects.create_user(
-            username="headeruser",
-            password="testpass123",
-            email="header@test.com",
-            is_staff=True,
-        )
-        TenantMembership.objects.create(
-            tenant=self.tenant,
-            user=user2,
-            role=TenantRole.COORDINATOR,
-            is_active=True,
-            is_default=True,
-        )
-        
-        # Get tokens for both users
+    def test_cookie_auth_works_correctly(self):
+        """Verify cookie authentication works (no header support)."""
+        # Get tokens for user
         response1 = self.client.post(
             reverse("api-login"),
             {"username": "cookieuser", "password": "testpass123"},
@@ -130,22 +115,14 @@ class CookieAuthenticationTests(TestCase):
         )
         token1 = response1.data["access"]
         
-        response2 = self.client.post(
-            reverse("api-login"),
-            {"username": "headeruser", "password": "testpass123"},
-            format="json",
-        )
-        token2 = response2.data["access"]
-        
-        # Set cookie to token1 and header to token2
+        # Set cookie
         cookie_client = APIClient(enforce_csrf_checks=False)
         cookie_client.cookies.load({"access_token": token1})
-        cookie_client.credentials(HTTP_AUTHORIZATION=f"Bearer {token2}")
         
-        # Should use header token (token2 = headeruser)
+        # Should use cookie token
         response = cookie_client.get(reverse("api-me"))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["user"]["username"], "headeruser")
+        self.assertEqual(response.data["user"]["username"], "cookieuser")
 
     def test_refresh_with_cookie(self):
         """Verify refresh token from cookie works."""

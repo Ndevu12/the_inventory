@@ -24,22 +24,27 @@ from reports.services.inventory_reports import InventoryReportService
 class InventoryReportServiceSetupMixin:
     """Shared setUp that creates products with stock."""
 
+    @classmethod
+    def setUpTestData(cls):
+        """Create shared test fixtures that don't need isolation."""
+        cls.tenant = create_tenant()
+        cls.warehouse = create_location(name="Warehouse", tenant=cls.tenant)
+        cls.store = create_location(name="Store", tenant=cls.tenant)
+
+        cls.product_a = create_product(
+            sku="RPT-A", name="Widget A",
+            unit_cost=Decimal("10.00"), reorder_point=20, tenant=cls.tenant,
+        )
+        cls.product_b = create_product(
+            sku="RPT-B", name="Widget B",
+            unit_cost=Decimal("25.00"), reorder_point=10, tenant=cls.tenant,
+        )
+
     def setUp(self):
+        """Create per-test service instances and set tenant context."""
         self.service = InventoryReportService()
         self.stock_service = StockService()
-        self.tenant = create_tenant()
         set_current_tenant(self.tenant)
-        self.warehouse = create_location(name="Warehouse", tenant=self.tenant)
-        self.store = create_location(name="Store", tenant=self.tenant)
-
-        self.product_a = create_product(
-            sku="RPT-A", name="Widget A",
-            unit_cost=Decimal("10.00"), reorder_point=20, tenant=self.tenant,
-        )
-        self.product_b = create_product(
-            sku="RPT-B", name="Widget B",
-            unit_cost=Decimal("25.00"), reorder_point=10, tenant=self.tenant,
-        )
 
 
 # =====================================================================
@@ -813,27 +818,30 @@ class LotHistoryTests(InventoryReportServiceSetupMixin, TestCase):
 class InventoryReportTenantSecurityTests(TestCase):
     """Test that report methods enforce tenant isolation."""
 
+    @classmethod
+    def setUpTestData(cls):
+        cls.tenant1 = create_tenant(name="Tenant 1", slug="tenant-1")
+        cls.tenant2 = create_tenant(name="Tenant 2", slug="tenant-2")
+
+        set_current_tenant(cls.tenant1)
+        cls.loc1 = create_location(name="WH1", tenant=cls.tenant1)
+        cls.prod1 = create_product(
+            sku="T1-P1", name="Tenant1 Product",
+            unit_cost=Decimal("10.00"), reorder_point=10, tenant=cls.tenant1,
+        )
+        create_stock_record(cls.prod1, cls.loc1, quantity=50)
+
+        set_current_tenant(cls.tenant2)
+        cls.loc2 = create_location(name="WH2", tenant=cls.tenant2)
+        cls.prod2 = create_product(
+            sku="T2-P1", name="Tenant2 Product",
+            unit_cost=Decimal("20.00"), reorder_point=5, tenant=cls.tenant2,
+        )
+        create_stock_record(cls.prod2, cls.loc2, quantity=100)
+
     def setUp(self):
         self.service = InventoryReportService()
         self.stock_service = StockService()
-        self.tenant1 = create_tenant(name="Tenant 1", slug="tenant-1")
-        self.tenant2 = create_tenant(name="Tenant 2", slug="tenant-2")
-
-        set_current_tenant(self.tenant1)
-        self.loc1 = create_location(name="WH1", tenant=self.tenant1)
-        self.prod1 = create_product(
-            sku="T1-P1", name="Tenant1 Product",
-            unit_cost=Decimal("10.00"), reorder_point=10, tenant=self.tenant1,
-        )
-        create_stock_record(self.prod1, self.loc1, quantity=50)
-
-        set_current_tenant(self.tenant2)
-        self.loc2 = create_location(name="WH2", tenant=self.tenant2)
-        self.prod2 = create_product(
-            sku="T2-P1", name="Tenant2 Product",
-            unit_cost=Decimal("20.00"), reorder_point=5, tenant=self.tenant2,
-        )
-        create_stock_record(self.prod2, self.loc2, quantity=100)
 
     def test_no_tenant_raises_value_error(self):
         """Raises ValueError when no tenant in context and none provided."""

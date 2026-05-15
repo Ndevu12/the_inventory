@@ -3,7 +3,6 @@
 from datetime import date
 
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError
 from django.test import TestCase
 from tenants.models import Tenant
 from tenants.context import set_current_tenant, get_current_tenant, clear_current_tenant
@@ -31,15 +30,13 @@ class TimeStampedModelNonNullableTenantTestCase(TestCase):
     3. All TimeStampedModel subclasses enforce tenant non-nullability
     """
     
-    @classmethod
-    def setUpTestData(cls):
+    def setUp(self):
         """Create a default tenant for testing."""
-        cls.default_tenant, _ = Tenant.objects.get_or_create(
+        super().setUp()
+        self.default_tenant = Tenant.objects.create(
             slug="default",
-            defaults={
-                "name": "Default",
-                "is_active": True,
-            }
+            name="Default",
+            is_active=True,
         )
     
     def test_tenant_field_is_non_nullable(self):
@@ -265,15 +262,13 @@ class TimeStampedModelNonNullableTenantTestCase(TestCase):
 class TimeStampedModelSaveValidationTestCase(TestCase):
     """Tests for TimeStampedModel save() validation."""
 
-    @classmethod
-    def setUpTestData(cls):
+    def setUp(self):
         """Create a default tenant for testing."""
-        cls.default_tenant, _ = Tenant.objects.get_or_create(
-            slug="default",
-            defaults={
-                "name": "Default",
-                "is_active": True,
-            }
+        super().setUp()
+        self.default_tenant = Tenant.objects.create(
+            slug="default-save-validation",
+            name="Default Save Validation",
+            is_active=True,
         )
 
     def test_save_raises_validation_error_without_tenant(self):
@@ -321,44 +316,41 @@ class TimeStampedModelSaveValidationTestCase(TestCase):
 class TenantAwareManagerTestCase(TestCase):
     """Tests for TenantAwareManager and TenantAwareQuerySet."""
 
-    @classmethod
-    def setUpTestData(cls):
+    def setUp(self):
         """Create test tenants and data."""
-        cls.tenant_a, _ = Tenant.objects.get_or_create(
+        super().setUp()
+        self.tenant_a = Tenant.objects.create(
             slug="tenant-a",
-            defaults={
-                "name": "Tenant A",
-                "is_active": True,
-            }
+            name="Tenant A",
+            is_active=True,
         )
-        cls.tenant_b, _ = Tenant.objects.get_or_create(
+        self.tenant_b = Tenant.objects.create(
             slug="tenant-b",
-            defaults={
-                "name": "Tenant B",
-                "is_active": True,
-            }
+            name="Tenant B",
+            is_active=True,
         )
         
         # Create products for each tenant
-        cls.product_a1 = Product.objects.create(
+        self.product_a1 = Product.objects.create(
             name="Product A1",
             sku="SKU-A1",
-            tenant=cls.tenant_a,
+            tenant=self.tenant_a,
         )
-        cls.product_a2 = Product.objects.create(
+        self.product_a2 = Product.objects.create(
             name="Product A2",
             sku="SKU-A2",
-            tenant=cls.tenant_a,
+            tenant=self.tenant_a,
         )
-        cls.product_b1 = Product.objects.create(
+        self.product_b1 = Product.objects.create(
             name="Product B1",
             sku="SKU-B1",
-            tenant=cls.tenant_b,
+            tenant=self.tenant_b,
         )
 
     def tearDown(self):
         """Clear tenant context after each test."""
         clear_current_tenant()
+        super().tearDown()
 
     def test_filter_by_current_tenant_returns_correct_records(self):
         """Test that filter_by_current_tenant() returns only current tenant's data."""

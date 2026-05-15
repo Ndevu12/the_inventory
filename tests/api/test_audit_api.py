@@ -498,42 +498,42 @@ class AuditLogTenantIsolationTests(APITestCase):
 class PlatformAuditLogAPITests(APITestCase):
     """Cross-tenant platform audit API: superuser or Wagtail admin."""
 
-    @classmethod
-    def setUpTestData(cls):
-        cls.tenant_a = create_tenant(name="Plat A", slug="platform-audit-api-a")
-        cls.tenant_b = create_tenant(name="Plat B", slug="platform-audit-api-b")
-        cls.coord_user = User.objects.create_user(
+    def setUp(self):
+        super().setUp()
+        self.tenant_a = create_tenant(name="Plat A", slug="platform-audit-api-a")
+        self.tenant_b = create_tenant(name="Plat B", slug="platform-audit-api-b")
+        self.coord_user = User.objects.create_user(
             username="platform_audit_coord_api",
             password="testpass123",
             is_staff=False,
         )
         create_membership(
-            tenant=cls.tenant_a,
-            user=cls.coord_user,
+            tenant=self.tenant_a,
+            user=self.coord_user,
             role=TenantRole.COORDINATOR,
             is_default=True,
         )
-        cls.owner_user = User.objects.create_user(
+        self.owner_user = User.objects.create_user(
             username="platform_audit_owner_api",
             password="testpass123",
             is_staff=False,
         )
         create_membership(
-            tenant=cls.tenant_a,
-            user=cls.owner_user,
+            tenant=self.tenant_a,
+            user=self.owner_user,
             role=TenantRole.OWNER,
             is_default=True,
         )
-        cls.log_a = ComplianceAuditLog.objects.create(
-            tenant=cls.tenant_a,
+        self.log_a = ComplianceAuditLog.objects.create(
+            tenant=self.tenant_a,
             action=AuditAction.STOCK_RECEIVED,
-            user=cls.coord_user,
+            user=self.coord_user,
             details={},
         )
-        cls.log_b = ComplianceAuditLog.objects.create(
-            tenant=cls.tenant_b,
+        self.log_b = ComplianceAuditLog.objects.create(
+            tenant=self.tenant_b,
             action=AuditAction.STOCK_ISSUED,
-            user=cls.coord_user,
+            user=self.coord_user,
             details={},
         )
 

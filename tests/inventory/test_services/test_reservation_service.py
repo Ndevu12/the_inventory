@@ -42,7 +42,8 @@ class ReservationServiceSetupMixin:
     """Shared setUp for ReservationService tests."""
 
     def setUp(self):
-        self.service = ReservationService()
+        """Create per-test service instance and test fixtures."""
+        super().setUp()
         self.tenant = create_tenant()
         self.product = create_product(sku="RSV-001", unit_cost=Decimal("10.00"), tenant=self.tenant)
         self.warehouse = create_location(name="Warehouse", tenant=self.tenant)
@@ -50,6 +51,7 @@ class ReservationServiceSetupMixin:
         create_stock_record(
             product=self.product, location=self.warehouse, quantity=100,
         )
+        self.service = ReservationService()
 
 
 # =====================================================================
@@ -654,6 +656,7 @@ class FilterReservationsByWarehouseScopeTests(TestCase):
     """Tests for :func:`filter_stock_reservations_by_warehouse_scope`."""
 
     def setUp(self):
+        super().setUp()
         self.tenant = create_tenant()
         self.product = create_product(sku="WH-RSV-001", tenant=self.tenant)
         self.wh = Warehouse.objects.create(tenant=self.tenant, name="DC North")

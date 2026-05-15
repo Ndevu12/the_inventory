@@ -12,14 +12,13 @@ This ensures:
 6. Response data is formatted correctly
 """
 
-from unittest.mock import MagicMock, patch, call
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
-from rest_framework_simplejwt.tokens import RefreshToken
 
 from tenants.models import TenantMembership, TenantRole, TenantInvitation, InvitationStatus
 from tests.fixtures.factories import create_tenant
@@ -144,7 +143,7 @@ class LoginViewTests(TestCase):
     @patch("api.views.auth.set_jwt_cookie")
     def test_login_calls_set_jwt_cookie_for_access_token(self, mock_set_cookie):
         """Verify LoginView calls set_jwt_cookie for access_token."""
-        response = self.client.post(
+        self.client.post(
             reverse("api-login"),
             {"username": "logintest", "password": "testpass123"},
             format="json",
@@ -159,7 +158,7 @@ class LoginViewTests(TestCase):
     def test_login_calls_set_jwt_cookie_with_correct_max_age_for_access_token(self, mock_set_cookie):
         """Verify access_token cookie has correct max_age."""
         with override_settings(JWT_ACCESS_TOKEN_COOKIE_MAX_AGE=300):
-            response = self.client.post(
+            self.client.post(
                 reverse("api-login"),
                 {"username": "logintest", "password": "testpass123"},
                 format="json",
@@ -174,7 +173,7 @@ class LoginViewTests(TestCase):
     @patch("api.views.auth.set_jwt_cookie")
     def test_login_calls_set_jwt_cookie_for_refresh_token(self, mock_set_cookie):
         """Verify LoginView calls set_jwt_cookie for refresh_token."""
-        response = self.client.post(
+        self.client.post(
             reverse("api-login"),
             {"username": "logintest", "password": "testpass123"},
             format="json",
@@ -189,7 +188,7 @@ class LoginViewTests(TestCase):
     def test_login_calls_set_jwt_cookie_with_correct_max_age_for_refresh_token(self, mock_set_cookie):
         """Verify refresh_token cookie has correct max_age."""
         with override_settings(JWT_REFRESH_TOKEN_COOKIE_MAX_AGE=604800):
-            response = self.client.post(
+            self.client.post(
                 reverse("api-login"),
                 {"username": "logintest", "password": "testpass123"},
                 format="json",
@@ -314,7 +313,7 @@ class RefreshViewTests(TestCase):
     def test_refresh_calls_set_jwt_cookie_with_correct_max_age(self, mock_set_cookie):
         """Verify refresh sets access_token with correct max_age."""
         with override_settings(JWT_ACCESS_TOKEN_COOKIE_MAX_AGE=300):
-            response = self.client.post(
+            self.client.post(
                 reverse("api-token-refresh"),
                 {"refresh": self.refresh_token},
                 format="json",
@@ -357,7 +356,7 @@ class LogoutViewTests(TestCase):
     @patch("api.views.auth.delete_jwt_cookie")
     def test_logout_calls_delete_jwt_cookie_for_access_token(self, mock_delete):
         """Verify LogoutView calls delete_jwt_cookie for access_token."""
-        response = self.client.post(reverse("api-logout"))
+        self.client.post(reverse("api-logout"))
         
         # Verify delete_jwt_cookie was called with access_token
         calls = mock_delete.call_args_list
@@ -367,7 +366,7 @@ class LogoutViewTests(TestCase):
     @patch("api.views.auth.delete_jwt_cookie")
     def test_logout_calls_delete_jwt_cookie_for_refresh_token(self, mock_delete):
         """Verify LogoutView calls delete_jwt_cookie for refresh_token."""
-        response = self.client.post(reverse("api-logout"))
+        self.client.post(reverse("api-logout"))
         
         # Verify delete_jwt_cookie was called with refresh_token
         calls = mock_delete.call_args_list
@@ -544,7 +543,7 @@ class AcceptInvitationViewTests(TestCase):
         """Verify accepting invitation creates new user account."""
         self.assertFalse(User.objects.filter(username="newuser").exists())
         
-        response = self.client.post(
+        self.client.post(
             reverse("api-invitation-accept", args=[self.invitation.token]),
             {
                 "username": "newuser",
@@ -559,7 +558,7 @@ class AcceptInvitationViewTests(TestCase):
 
     def test_accept_invitation_adds_user_to_tenant(self):
         """Verify accepting invitation adds user to tenant."""
-        response = self.client.post(
+        self.client.post(
             reverse("api-invitation-accept", args=[self.invitation.token]),
             {
                 "username": "newuser",
@@ -577,7 +576,7 @@ class AcceptInvitationViewTests(TestCase):
         """Verify accepting invitation updates invitation status."""
         self.assertEqual(self.invitation.status, InvitationStatus.PENDING)
         
-        response = self.client.post(
+        self.client.post(
             reverse("api-invitation-accept", args=[self.invitation.token]),
             {
                 "username": "newuser",

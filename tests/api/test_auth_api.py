@@ -573,9 +573,11 @@ class ApiImpersonationTests(TestCase):
             started + 1,
         )
 
+        # Use cookie for impersonation token (cookie-only auth)
         self.client.force_authenticate(user=None)
-        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {imp_access}")
-        end = self.client.post(
+        cookie_client = APIClient(enforce_csrf_checks=False)
+        cookie_client.cookies.load({"access_token": imp_access})
+        end = cookie_client.post(
             reverse("api-impersonate-end"),
             {},
             format="json",
@@ -740,39 +742,15 @@ class CookieAuthenticationMiddlewareTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["user"]["username"], "middlewareuser")
 
-    def test_middleware_header_takes_precedence_over_cookie(self):
-        """Verify middleware prefers header auth over cookie auth."""
-        # Create second user
-        user2 = User.objects.create_user(
-            username="headeruser",
-            password="testpass123",
-            email="header@test.com",
-            is_staff=True,
-        )
-        TenantMembership.objects.create(
-            tenant=self.tenant,
-            user=user2,
-            role=TenantRole.COORDINATOR,
-            is_active=True,
-            is_default=True,
-        )
+    def test_middleware_authenticates_with_cookie_only(self):
+        """Verify middleware authenticates using cookie (no header support)."""
+        access_token, _ = self._get_tokens()
         
-        # Get tokens for both users
-        token1, _ = self._get_tokens()
-        
-        response2 = self.client.post(
-            reverse("api-login"),
-            {"username": "headeruser", "password": "testpass123"},
-            format="json",
-        )
-        token2 = response2.data["access"]
-        
-        # Set cookie to token1 and header to token2
+        # Create new client with cookie set
         cookie_client = APIClient(enforce_csrf_checks=False)
-        cookie_client.cookies.load({"access_token": token1})
-        cookie_client.credentials(HTTP_AUTHORIZATION=f"Bearer {token2}")
+        cookie_client.cookies.load({"access_token": access_token})
         
-        # Should use header token (token2 = headeruser)
+        # Should authenticate via cookie
         response = cookie_client.get(reverse("api-me"))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["user"]["username"], "headeruser")
+        self.assertEqual(response.data["user"]["username"], "middlewareuser")

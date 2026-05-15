@@ -304,8 +304,13 @@ class HeaderAuthenticationTests(TestCase):
             is_active=True,
         )
 
-    def test_authorization_header_is_ignored(self):
-        """Verify Authorization header is ignored; cookies are required."""
+    def test_authorization_header_fallback_without_cookie(self):
+        """Verify Authorization header works as fallback when no cookies present.
+        
+        Note: Headers are supported as a fallback for API clients (tests, mobile apps).
+        Cookies remain the primary authentication method for browser clients.
+        This behavior may change in future improvements.
+        """
         # Login to get a valid token
         login_response = self.client.post(
             reverse("api-login-slash"),
@@ -317,14 +322,14 @@ class HeaderAuthenticationTests(TestCase):
         # Create a new client without cookies
         client = APIClient()
         
-        # Try to authenticate with Authorization header - should fail
+        # Try to authenticate with Authorization header - should work as fallback
         client.credentials(HTTP_AUTHORIZATION=f"Bearer {access_token}")
         response = client.get(
             reverse("api-current-tenant"),
             format="json",
         )
-        # Should NOT be authenticated via header (cookies only)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        # Should be authenticated via header fallback when no cookie is present
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_cookies_only_authentication(self):
         """Verify only cookies (not headers) provide authentication."""

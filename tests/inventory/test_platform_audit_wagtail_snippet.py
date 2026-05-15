@@ -28,35 +28,33 @@ def grant_wagtail_admin_access(user):
 
 
 class PlatformAuditLogSnippetTests(TestCase):
-    @classmethod
-    def setUpTestData(cls):
-        cls.tenant_a = create_tenant(name="Alpha Org", slug="alpha-audit-wagtail")
-        cls.tenant_b = create_tenant(name="Beta Org", slug="beta-audit-wagtail")
-        cls.user_a = User.objects.create_user(
+    def setUp(self):
+        super().setUp()
+        self.tenant_a = create_tenant(name="Alpha Org", slug="alpha-audit-wagtail")
+        self.tenant_b = create_tenant(name="Beta Org", slug="beta-audit-wagtail")
+        self.user_a = User.objects.create_user(
             username="audit-wagtail-user-a",
             password="pass12345",
             is_staff=False,
         )
-        cls.log_a = ComplianceAuditLog.objects.create(
-            tenant=cls.tenant_a,
+        self.log_a = ComplianceAuditLog.objects.create(
+            tenant=self.tenant_a,
             action=AuditAction.PRODUCT_CREATED,
-            user=cls.user_a,
+            user=self.user_a,
             details={"sku": "SKU-A"},
         )
-        cls.log_b = ComplianceAuditLog.objects.create(
-            tenant=cls.tenant_b,
+        self.log_b = ComplianceAuditLog.objects.create(
+            tenant=self.tenant_b,
             action=AuditAction.STOCK_ADJUSTED,
-            user=cls.user_a,
+            user=self.user_a,
             details={"sku": "SKU-B"},
         )
-        cls.log_tenant_accessed = ComplianceAuditLog.objects.create(
-            tenant=cls.tenant_a,
+        self.log_tenant_accessed = ComplianceAuditLog.objects.create(
+            tenant=self.tenant_a,
             action=AuditAction.TENANT_ACCESSED,
-            user=cls.user_a,
+            user=self.user_a,
             details={"tenant_slug": "alpha-audit-wagtail", "previous_tenant_slug": "other"},
         )
-
-    def setUp(self):
         self.viewset = ComplianceAuditLog.snippet_viewset
         self.list_url = reverse(self.viewset.get_url_name("list"))
         self.inspect_url_a = reverse(
