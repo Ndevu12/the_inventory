@@ -19,28 +19,26 @@ from ..factories import create_product, create_stock_record, create_tenant
 class StockServiceWarehouseScopeTests(TestCase):
     """Tenant alignment and mixed retail vs facility movement rules."""
 
-    @classmethod
-    def setUpTestData(cls):
-        cls.tenant = create_tenant()
-        cls.product = create_product(tenant=cls.tenant, sku="SCOPE-001")
-        cls.wh_a = Warehouse.objects.create(tenant=cls.tenant, name="DC A")
-        cls.wh_b = Warehouse.objects.create(tenant=cls.tenant, name="DC B")
-        cls.loc_a = StockLocation.add_root(
-            name="Bin A",
-            tenant=cls.tenant,
-            warehouse=cls.wh_a,
-        )
-        cls.loc_b = StockLocation.add_root(
-            name="Bin B",
-            tenant=cls.tenant,
-            warehouse=cls.wh_b,
-        )
-        cls.loc_retail = StockLocation.add_root(
-            name="Shop floor",
-            tenant=cls.tenant,
-        )
-
     def setUp(self):
+        super().setUp()
+        self.tenant = create_tenant()
+        self.product = create_product(tenant=self.tenant, sku="SCOPE-001")
+        self.wh_a = Warehouse.objects.create(tenant=self.tenant, name="DC A")
+        self.wh_b = Warehouse.objects.create(tenant=self.tenant, name="DC B")
+        self.loc_a = StockLocation.add_root(
+            name="Bin A",
+            tenant=self.tenant,
+            warehouse=self.wh_a,
+        )
+        self.loc_b = StockLocation.add_root(
+            name="Bin B",
+            tenant=self.tenant,
+            warehouse=self.wh_b,
+        )
+        self.loc_retail = StockLocation.add_root(
+            name="Shop floor",
+            tenant=self.tenant,
+        )
         self.service = StockService()
 
     def test_cross_warehouse_transfer_succeeds(self):
@@ -149,22 +147,22 @@ class StockServiceWarehouseScopeTests(TestCase):
 class StockServiceWarehouseScopeQueryTests(TestCase):
     """Queryset helpers for (tenant, warehouse_id) partitions."""
 
-    @classmethod
-    def setUpTestData(cls):
-        cls.tenant = create_tenant()
-        cls.product = create_product(tenant=cls.tenant, sku="Q-SCOPE-1")
-        cls.wh = Warehouse.objects.create(tenant=cls.tenant, name="Main DC")
-        cls.loc_dc = StockLocation.add_root(
+    def setUp(self):
+        super().setUp()
+        self.tenant = create_tenant()
+        self.product = create_product(tenant=self.tenant, sku="Q-SCOPE-1")
+        self.wh = Warehouse.objects.create(tenant=self.tenant, name="Main DC")
+        self.loc_dc = StockLocation.add_root(
             name="Dock",
-            tenant=cls.tenant,
-            warehouse=cls.wh,
+            tenant=self.tenant,
+            warehouse=self.wh,
         )
-        cls.loc_shop = StockLocation.add_root(
+        self.loc_shop = StockLocation.add_root(
             name="Till",
-            tenant=cls.tenant,
+            tenant=self.tenant,
         )
-        create_stock_record(product=cls.product, location=cls.loc_dc, quantity=3)
-        create_stock_record(product=cls.product, location=cls.loc_shop, quantity=7)
+        create_stock_record(product=self.product, location=self.loc_dc, quantity=3)
+        create_stock_record(product=self.product, location=self.loc_shop, quantity=7)
 
     def test_filter_locations_by_scope(self):
         qs = StockLocation.objects.all()

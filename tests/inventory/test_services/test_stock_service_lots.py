@@ -30,19 +30,17 @@ from ..factories import (
 class LotServiceSetupMixin:
     """Shared setUp for lot-aware StockService tests."""
 
-    @classmethod
-    def setUpTestData(cls):
-        cls.tenant = create_tenant()
-        cls.product = create_product(
+    def setUp(self):
+        super().setUp()
+        self.tenant = create_tenant()
+        self.product = create_product(
             sku="LOT-001",
             unit_cost=Decimal("10.00"),
             tracking_mode="optional",
-            tenant=cls.tenant,
+            tenant=self.tenant,
         )
-        cls.warehouse = create_location(name="Lot Warehouse", tenant=cls.tenant)
-        cls.store = create_location(name="Lot Store", tenant=cls.tenant)
-
-    def setUp(self):
+        self.warehouse = create_location(name="Lot Warehouse", tenant=self.tenant)
+        self.store = create_location(name="Lot Store", tenant=self.tenant)
         self.service = StockService()
 
 
@@ -519,12 +517,10 @@ class LotAdjustmentTests(LotServiceSetupMixin, TestCase):
 class TrackingModeTests(TestCase):
     """Test tracking_mode enforcement."""
 
-    @classmethod
-    def setUpTestData(cls):
-        cls.tenant = create_tenant()
-        cls.warehouse = create_location(name="TM Warehouse", tenant=cls.tenant)
-
     def setUp(self):
+        super().setUp()
+        self.tenant = create_tenant()
+        self.warehouse = create_location(name="TM Warehouse", tenant=self.tenant)
         self.service = StockService()
 
     def test_tracking_none_ignores_lot_info(self):

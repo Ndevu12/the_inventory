@@ -30,10 +30,10 @@ class TimeStampedModelNonNullableTenantTestCase(TestCase):
     3. All TimeStampedModel subclasses enforce tenant non-nullability
     """
     
-    @classmethod
-    def setUpTestData(cls):
+    def setUp(self):
         """Create a default tenant for testing."""
-        cls.default_tenant = Tenant.objects.create(
+        super().setUp()
+        self.default_tenant = Tenant.objects.create(
             slug="default",
             name="Default",
             is_active=True,
@@ -262,10 +262,10 @@ class TimeStampedModelNonNullableTenantTestCase(TestCase):
 class TimeStampedModelSaveValidationTestCase(TestCase):
     """Tests for TimeStampedModel save() validation."""
 
-    @classmethod
-    def setUpTestData(cls):
+    def setUp(self):
         """Create a default tenant for testing."""
-        cls.default_tenant = Tenant.objects.create(
+        super().setUp()
+        self.default_tenant = Tenant.objects.create(
             slug="default-save-validation",
             name="Default Save Validation",
             is_active=True,
@@ -316,40 +316,41 @@ class TimeStampedModelSaveValidationTestCase(TestCase):
 class TenantAwareManagerTestCase(TestCase):
     """Tests for TenantAwareManager and TenantAwareQuerySet."""
 
-    @classmethod
-    def setUpTestData(cls):
+    def setUp(self):
         """Create test tenants and data."""
-        cls.tenant_a = Tenant.objects.create(
+        super().setUp()
+        self.tenant_a = Tenant.objects.create(
             slug="tenant-a",
             name="Tenant A",
             is_active=True,
         )
-        cls.tenant_b = Tenant.objects.create(
+        self.tenant_b = Tenant.objects.create(
             slug="tenant-b",
             name="Tenant B",
             is_active=True,
         )
         
         # Create products for each tenant
-        cls.product_a1 = Product.objects.create(
+        self.product_a1 = Product.objects.create(
             name="Product A1",
             sku="SKU-A1",
-            tenant=cls.tenant_a,
+            tenant=self.tenant_a,
         )
-        cls.product_a2 = Product.objects.create(
+        self.product_a2 = Product.objects.create(
             name="Product A2",
             sku="SKU-A2",
-            tenant=cls.tenant_a,
+            tenant=self.tenant_a,
         )
-        cls.product_b1 = Product.objects.create(
+        self.product_b1 = Product.objects.create(
             name="Product B1",
             sku="SKU-B1",
-            tenant=cls.tenant_b,
+            tenant=self.tenant_b,
         )
 
     def tearDown(self):
         """Clear tenant context after each test."""
         clear_current_tenant()
+        super().tearDown()
 
     def test_filter_by_current_tenant_returns_correct_records(self):
         """Test that filter_by_current_tenant() returns only current tenant's data."""

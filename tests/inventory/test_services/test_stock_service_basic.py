@@ -22,20 +22,17 @@ from ..factories import create_location, create_product, create_stock_record, cr
 class StockServiceSetupMixin:
     """Shared setUp for StockService tests."""
 
-    @classmethod
-    def setUpTestData(cls):
-        """Create shared test fixtures that don't need isolation."""
-        cls.tenant = create_tenant()
-        cls.product = create_product(
+    def setUp(self):
+        """Create test fixtures and service instance."""
+        super().setUp()
+        self.tenant = create_tenant()
+        self.product = create_product(
             sku="SVC-001",
             unit_cost=Decimal("10.00"),
-            tenant=cls.tenant,
+            tenant=self.tenant,
         )
-        cls.warehouse = create_location(name="Warehouse", tenant=cls.tenant)
-        cls.store = create_location(name="Store", tenant=cls.tenant)
-
-    def setUp(self):
-        """Create per-test service instance."""
+        self.warehouse = create_location(name="Warehouse", tenant=self.tenant)
+        self.store = create_location(name="Store", tenant=self.tenant)
         self.service = StockService()
 
 
@@ -303,18 +300,16 @@ class StockServiceAdjustmentTests(StockServiceSetupMixin, TestCase):
 class StockServiceCapacityTests(TestCase):
     """Test that StockService prevents exceeding location capacity."""
 
-    @classmethod
-    def setUpTestData(cls):
-        cls.tenant = create_tenant()
-        cls.product = create_product(sku="CAP-SVC-001", tenant=cls.tenant)
-        cls.limited = create_location(
-            name="Limited Bin", max_capacity=100, tenant=cls.tenant,
-        )
-        cls.unlimited = create_location(
-            name="Unlimited Warehouse", tenant=cls.tenant,
-        )
-
     def setUp(self):
+        super().setUp()
+        self.tenant = create_tenant()
+        self.product = create_product(sku="CAP-SVC-001", tenant=self.tenant)
+        self.limited = create_location(
+            name="Limited Bin", max_capacity=100, tenant=self.tenant,
+        )
+        self.unlimited = create_location(
+            name="Unlimited Warehouse", tenant=self.tenant,
+        )
         self.service = StockService()
 
     def test_receive_within_capacity_succeeds(self):

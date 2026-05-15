@@ -41,19 +41,16 @@ from ..factories import (
 class ReservationServiceSetupMixin:
     """Shared setUp for ReservationService tests."""
 
-    @classmethod
-    def setUpTestData(cls):
-        """Create shared test fixtures that don't need isolation."""
-        cls.tenant = create_tenant()
-        cls.product = create_product(sku="RSV-001", unit_cost=Decimal("10.00"), tenant=cls.tenant)
-        cls.warehouse = create_location(name="Warehouse", tenant=cls.tenant)
-        cls.user = create_user(username="reservist")
-        create_stock_record(
-            product=cls.product, location=cls.warehouse, quantity=100,
-        )
-
     def setUp(self):
-        """Create per-test service instance."""
+        """Create per-test service instance and test fixtures."""
+        super().setUp()
+        self.tenant = create_tenant()
+        self.product = create_product(sku="RSV-001", unit_cost=Decimal("10.00"), tenant=self.tenant)
+        self.warehouse = create_location(name="Warehouse", tenant=self.tenant)
+        self.user = create_user(username="reservist")
+        create_stock_record(
+            product=self.product, location=self.warehouse, quantity=100,
+        )
         self.service = ReservationService()
 
 
@@ -658,19 +655,19 @@ class GetAvailableQuantityTests(ReservationServiceSetupMixin, TestCase):
 class FilterReservationsByWarehouseScopeTests(TestCase):
     """Tests for :func:`filter_stock_reservations_by_warehouse_scope`."""
 
-    @classmethod
-    def setUpTestData(cls):
-        cls.tenant = create_tenant()
-        cls.product = create_product(sku="WH-RSV-001", tenant=cls.tenant)
-        cls.wh = Warehouse.objects.create(tenant=cls.tenant, name="DC North")
-        cls.loc_dc = StockLocation.add_root(
+    def setUp(self):
+        super().setUp()
+        self.tenant = create_tenant()
+        self.product = create_product(sku="WH-RSV-001", tenant=self.tenant)
+        self.wh = Warehouse.objects.create(tenant=self.tenant, name="DC North")
+        self.loc_dc = StockLocation.add_root(
             name="Pick face",
-            tenant=cls.tenant,
-            warehouse=cls.wh,
+            tenant=self.tenant,
+            warehouse=self.wh,
         )
-        cls.loc_retail = StockLocation.add_root(
+        self.loc_retail = StockLocation.add_root(
             name="Shop floor",
-            tenant=cls.tenant,
+            tenant=self.tenant,
         )
 
     def test_facility_partition_excludes_retail_locations(self):
