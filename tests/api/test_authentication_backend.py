@@ -1,14 +1,16 @@
 """Unit tests for CookieJWTAuthentication backend.
 
-Tests the api.authentication module which provides JWT authentication
-using HttpOnly cookies exclusively (header-based authentication removed).
+Tests the api.authentication module which provides JWT authentication with:
+- Primary method: HttpOnly cookies (preferred for browser-based clients)
+- Fallback method: Authorization headers (for API clients, tests, mobile apps)
 
 This ensures:
-1. Authentication reads from cookies only
-2. Authorization headers are NOT supported
+1. Authentication prioritizes cookies over headers
+2. Authorization headers work as a fallback when no cookie is present
 3. Invalid tokens are handled gracefully
 4. User objects are retrieved correctly from valid tokens
 5. Authentication returns None when no token is found
+6. Token extraction logic is centralized and reusable
 """
 
 
@@ -94,21 +96,30 @@ class CookieJWTAuthenticationTests(TestCase):
         self.assertIsNone(result)
 
 
-    def test_authenticate_ignores_authorization_header(self):
-        """Verify Authorization header is NOT used for authentication."""
+    def test_authenticate_header_fallback_when_no_cookie(self):
+        """Verify Authorization header is used as fallback when no cookie present.
+        
+        Note: This is a fallback feature for API clients, not the primary method.
+        Future improvements may adjust or remove this behavior.
+        """
         request = self.factory.get(
             '/api/test/',
             HTTP_AUTHORIZATION=f'Bearer {self.valid_token}'
         )
-        # No cookies set
+        # No cookies set - should use header as fallback
         
         result = self.auth.authenticate(request)
         
-        # Should return None because authorization header is ignored
-        self.assertIsNone(result)
+        # Should authenticate via header when no cookie is present
+        self.assertIsNotNone(result)
+        user, token = result
+        self.assertEqual(user.id, self.user.id)
 
-    def test_authenticate_uses_cookie_not_header(self):
-        """Verify cookies are used even when header is present."""
+    def test_authenticate_prioritizes_cookie_over_header(self):
+        """Verify cookies are prioritized over Authorization headers.
+        
+        When both cookie and header are present, cookie takes precedence.
+        """
         # Create two users with different tokens
         user2 = User.objects.create_user(
             username="headeruser",
@@ -137,7 +148,6 @@ class CookieJWTAuthenticationTests(TestCase):
         result = self.auth.authenticate(request)
         
         # Should authenticate as user1 (from cookie), not user2 (from header)
-        # But since header auth is removed, it uses only the cookie
         self.assertIsNotNone(result)
         user, token = result
         self.assertEqual(user.id, self.user.id)
@@ -414,3 +424,5 @@ class CookieJWTAuthenticationIntegrationTests(TestCase):
         self.assertEqual(authenticated_user.email, self.user.email)
         self.assertEqual(authenticated_user.is_staff, self.user.is_staff)
         self.assertEqual(authenticated_user.is_active, self.user.is_active)
+
+

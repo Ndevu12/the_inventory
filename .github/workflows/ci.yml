@@ -83,5 +83,5 @@ jobs:
 
       - name: Run tests
         working-directory: src
-        run: python manage.py test tests
+        run: python manage.py test tests --parallel auto
 

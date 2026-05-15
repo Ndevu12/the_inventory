@@ -203,14 +203,23 @@ class AuditServiceLogFromRequestTests(TestCase):
         self.assertEqual(entry.details["operation"], "import")
 
     def test_missing_tenant_on_request(self):
-        """When request has no tenant attr, None is passed to log()."""
+        """When request has no tenant attr, None is passed to log().
+        
+        Verifies that missing tenant in request raises IntegrityError
+        (tenant FK is non-nullable).
+        """
+        from django.db import IntegrityError
+        from tenants.context import clear_current_tenant
+        
+        # Ensure no tenant in thread-local context
+        clear_current_tenant()
+        
         request = SimpleNamespace(
             user=self.user,
             META={"REMOTE_ADDR": "10.0.0.1"},
         )
         # ComplianceAuditLog.tenant is required (non-nullable FK),
         # so this should raise an IntegrityError.
-        from django.db import IntegrityError
 
         with self.assertRaises(IntegrityError):
             self.service.log_from_request(

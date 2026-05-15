@@ -136,7 +136,7 @@ From the **repository root** (with your venv activated and `requirements.txt` / 
 ```bash
 cd src
 python manage.py check
-python manage.py test tests
+python manage.py test tests --parallel auto
 python manage.py makemigrations --check --dry-run
 cd ..
 ruff check src tests
@@ -145,10 +145,16 @@ ruff check src tests
 One-line equivalent from the **repository root** (ends back at the repo root for Ruff):
 
 ```bash
-cd src && python manage.py check && python manage.py test tests && python manage.py makemigrations --check --dry-run && cd .. && ruff check src tests
+cd src && python manage.py check && python manage.py test tests --parallel auto && python manage.py makemigrations --check --dry-run && cd .. && ruff check src tests
 ```
 
 The test suite lives in the top-level **`tests`** package (repo root), not inside an installed app, so pass the **`tests`** label (or a dotted path such as `tests.api`) so Django discovers `TestCase` modules.
+
+**Parallel Testing:** The `--parallel auto` flag runs tests across multiple CPU cores, significantly reducing test time. For faster iteration during development, you can also use `--keepdb` to reuse the test database between runs:
+
+```bash
+python manage.py test tests --parallel auto --keepdb
+```
 
 **Ruff** must be run from the **repository root** so paths match CI. If you edited **`seeders/`**, also run:
 
@@ -186,7 +192,7 @@ A full build can take several minutes the first time. See [README — Docker](RE
 
 ### PR Checklist
 
-- [ ] Tests pass (`cd src && python manage.py test tests`)
+- [ ] Tests pass (`cd src && python manage.py test tests --parallel auto`)
 - [ ] No missing migrations (`cd src && python manage.py makemigrations --check --dry-run`)
 - [ ] `cd src && python manage.py check` reports no issues
 - [ ] Ruff passes from repo root (`ruff check src tests`, plus `ruff check seeders` if you touched that app)
