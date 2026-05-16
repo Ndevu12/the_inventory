@@ -1,6 +1,6 @@
 """Tests for BaseSeeder and its tenant context functionality."""
 
-from django.test import TransactionTestCase, tag
+from django.test import TransactionTestCase
 from wagtail.models import Locale
 from tenants.models import Tenant
 from inventory.models.product import Product
@@ -17,7 +17,6 @@ class ConcreteSeeder(BaseSeeder):
             self.log(f"Seeding for tenant: {self.tenant.name}")
 
 
-@tag('seeder')
 class BaseSeederTestCase(TransactionTestCase):
     """Tests for the BaseSeeder class with tenant context.
 

@@ -82,7 +82,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run functionality tests
-        run: python src/manage.py test --exclude-tag=seeder
+        run: python src/manage.py test
 
   test-seeders:
     name: Tests - Seeders (Python 3.12)
@@ -107,6 +107,5 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run seeder tests
-        working-directory: src
-        run: python manage.py test tests.seeders
+        run: python src/manage.py test tests.seeders
 
