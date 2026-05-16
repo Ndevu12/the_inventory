@@ -107,7 +107,35 @@ yarn install
 
 ---
 
-## Quick Reference
+## Testing
+
+**Tests not discovered?**
+
+Ensure you're running from the `src/` directory:
+```bash
+cd src
+python manage.py test
+```
+
+**Want to run only seeder tests?**
+```bash
+python manage.py test tests.seeders
+```
+
+**Want to run a specific test?**
+```bash
+python manage.py test tests.api.test_auth.AuthTestCase.test_login
+```
+
+**Understanding test output:**
+
+The custom test runner automatically excludes seeder tests by default. You'll see:
+- ~1487 tests when running `python manage.py test` (seeders excluded)
+- ~34 tests when running `python manage.py test tests.seeders` (seeders only)
+
+This is intentional — seeder tests are only included when explicitly requested.
+
+---
 
 ```bash
 # Backend
