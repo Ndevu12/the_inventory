@@ -147,16 +147,73 @@ Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md)
 
 This project follows the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.md).
 
-Our CI workflow runs on pushes and pull requests to `main` and `develop`, and will:
+## Testing
+
+The project uses a **custom test runner** that automatically excludes seeder tests by default. Seeder tests are only included when explicitly requested.
+
+### Running Tests
+
+From the `src/` directory:
+
+```bash
+# Run all functionality tests (seeder tests excluded automatically)
+python manage.py test
+
+# Run all tests including seeders
+python manage.py test tests.seeders
+
+# Run specific test module
+python manage.py test tests.api
+python manage.py test tests.inventory
+
+# Run specific test class
+python manage.py test tests.api.test_auth.AuthTestCase
+
+# Run specific test method
+python manage.py test tests.api.test_auth.AuthTestCase.test_login
+```
+
+### Test Architecture
+
+The custom `DiscoverRunner` (in `tests/runner.py`) implements smart filtering:
+
+- **Default behavior** (`python manage.py test`): Discovers all tests from the `tests/` package and automatically excludes seeder tests (~1487 tests)
+- **Explicit seeder request** (`python manage.py test tests.seeders`): Includes seeder tests (~34 tests)
+- **Logging**: Tracks how many seeder tests were excluded for transparency
+
+This approach eliminates the need for manual test lists or decorators—filtering is based on module path.
+
+### CI Workflow
+
+Our CI runs on pushes and pull requests to `main` and `develop`:
 
 - Set `PYTHONPATH` to `<repo>/src:<repo>` (so `seeders` and `tests` import correctly)
-- From **`src/`** (i.e. `working-directory: src` in the workflow):
+- From **`src/`**:
     - Run `python manage.py check`
-    - Run `python manage.py test tests`
+    - Run `python manage.py test` (functionality tests, seeders excluded)
+    - Run `python manage.py test tests.seeders` (seeder tests, explicit)
     - Run `python manage.py makemigrations --check --dry-run`
 - From the repo root: `ruff check src tests`
 
-You can mirror that locally from the repository root: `cd src` for Django commands, then `ruff check src tests` after `cd ..` (or open a second shell). If you change code under `seeders/`, also run `ruff check seeders`. Install dev tools from `requirements-dev.txt`. See [Contributing](CONTRIBUTING.md) for a full copy-paste checklist, including `docker build`.
+### Local Development
+
+Mirror CI locally from the repository root:
+
+```bash
+cd src
+
+# Functionality tests (seeders excluded)
+python manage.py test
+
+# Seeder tests (explicit)
+python manage.py test tests.seeders
+
+# Linting
+cd ..
+ruff check src tests
+```
+
+If you change code under `seeders/`, also run `ruff check seeders`. Install dev tools from `requirements-dev.txt`. See [Contributing](CONTRIBUTING.md) for a full copy-paste checklist, including `docker build`.
 
 ## License
 

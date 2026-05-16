@@ -12,7 +12,7 @@ from inventory.models import (
     CycleStatus, ReservationStatus, Warehouse,
 )
 from tenants.models import Tenant, TenantMembership, TenantRole
-from tenants.context import get_current_tenant, set_current_tenant
+from tenants.context import clear_current_tenant, get_current_tenant, set_current_tenant
 from procurement.models import GoodsReceivedNote, PurchaseOrder, PurchaseOrderLine, Supplier
 from sales.models import Customer, Dispatch, SalesOrder, SalesOrderLine
 
@@ -25,7 +25,16 @@ def _resolve_tenant(tenant):
     """Return given tenant, or fall back to thread-local tenant context."""
     if tenant is not None:
         return tenant
-    return get_current_tenant()
+
+    current = get_current_tenant()
+    if current is None:
+        return None
+
+    if Tenant.objects.filter(pk=current.pk).exists():
+        return current
+
+    clear_current_tenant()
+    return None
 
 
 def create_tenant(name=None, slug=None, **kwargs):

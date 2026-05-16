@@ -158,6 +158,104 @@ The backend is a **headless API** for **tenant** applications: the **[frontend/]
 
 ---
 
+## Testing Architecture
+
+The project uses a **custom Django test runner** (`tests/runner.py`) that implements intelligent seeder test filtering.
+
+### Test Organization
+
+```
+tests/                          ← Test suite (repo root)
+├── runner.py                   ← Custom DiscoverRunner with seeder filtering
+├── __init__.py
+├── api/                        ← API endpoint tests
+├── inventory/                  ← Inventory domain tests
+├── procurement/                ← Procurement domain tests
+├── sales/                      ← Sales domain tests
+├── reports/                    ← Reporting tests
+├── tenants/                    ← Multi-tenancy tests
+├── seeders/                    ← Database seeding tests (auto-excluded by default)
+│   ├── test_base_seeder.py
+│   └── test_seeder_tenant.py
+└── fixtures/                   ← Shared test data
+```
+
+### Custom Test Runner
+
+The `DiscoverRunner` class in `tests/runner.py` provides:
+
+1. **Automatic seeder exclusion** — Seeder tests are excluded by default unless explicitly requested
+2. **Smart filtering** — Based on module path (`tests.seeders.*`), not decorators
+3. **Logging** — Tracks how many tests were excluded for transparency
+4. **Default discovery** — When no test labels provided, defaults to discovering from `tests/` package
+
+**Key methods:**
+
+| Method | Purpose |
+|---|---|
+| `build_suite()` | Intercepts test suite building; applies filtering logic |
+| `_seeders_explicitly_requested()` | Checks if test labels contain 'seeders' |
+| `_filter_out_seeders()` | Recursively removes seeder tests from suite |
+
+### Running Tests
+
+```bash
+cd src
+
+# Functionality tests (seeder tests excluded automatically)
+python manage.py test
+# Result: ~1487 tests
+
+# All tests including seeders
+python manage.py test tests.seeders
+# Result: ~34 seeder tests
+
+# Specific test module
+python manage.py test tests.api
+python manage.py test tests.inventory
+
+# Specific test class or method
+python manage.py test tests.api.test_auth.AuthTestCase
+python manage.py test tests.api.test_auth.AuthTestCase.test_login
+```
+
+### Test Behavior
+
+| Command | Seeder Tests | Count | Use Case |
+|---------|--------------|-------|----------|
+| `python manage.py test` | ❌ Excluded | ~1487 | CI/CD, local development |
+| `python manage.py test tests` | ❌ Excluded | ~1487 | Explicit package label |
+| `python manage.py test tests.api` | ❌ Excluded | API tests only | Test specific domain |
+| `python manage.py test tests.seeders` | ✅ Included | ~34 | Verify seeding logic |
+| `python manage.py test tests.seeders.test_base_seeder` | ✅ Included | Specific seeder | Debug seeding |
+
+### Tenant Context Isolation
+
+The custom runner also extends Django's result class to clear tenant thread-locals between tests:
+
+```python
+class _ClearTenantTextTestResult(unittest.TextTestResult):
+    def startTest(self, test):
+        clear_current_tenant()  # Reset tenant context
+        super().startTest(test)
+
+    def stopTest(self, test):
+        super().stopTest(test)
+        clear_current_tenant()  # Clean up after test
+```
+
+This ensures multi-tenant tests don't leak state between test cases.
+
+### Why This Approach?
+
+- **No decorators needed** — Filtering is automatic based on module path
+- **Scalable** — New seeder tests are automatically excluded without code changes
+- **Semantic** — Commands are intuitive: "ask for seeders, get seeders"
+- **CI-friendly** — Simple, clear commands with predictable behavior
+- **Developer-friendly** — No manual test lists to maintain
+
+---
+
 ## Design Conventions
 
 The project uses **object-oriented programming (OOP) as its standard paradigm**. This applies across all layers:
