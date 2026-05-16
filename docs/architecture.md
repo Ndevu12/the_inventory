@@ -1,6 +1,8 @@
 # Architecture
 
-This document describes the technical design of **The Inventory** — an open-source inventory management system built on [Wagtail CMS](https://wagtail.org/) and [Django](https://djangoproject.com/).
+This document describes the technical design of **The Inventory** backend API — an open-source REST API for inventory management built on [Django](https://djangoproject.com/) and [Wagtail CMS](https://wagtail.org/).
+
+> **Note:** This is the **backend API only**. The frontend is a separate repository: [the-inventory-ui](https://github.com/Ndevu12/the-inventory-ui). See [Integration Guide](integration.md) for how to connect any frontend to this API.
 
 ---
 
@@ -8,40 +10,71 @@ This document describes the technical design of **The Inventory** — an open-so
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│                     Browser / clients                         │
-└─────────────┬───────────────────────────────┬────────────────┘
-              │                               │
-   ┌──────────▼──────────┐         ┌──────────▼──────────┐
-   │  Next.js frontend   │         │  Wagtail / Django   │
-   │  (tenant inventory) │  JSON   │  admin (platform)   │
-   └──────────┬──────────┘  REST   └──────────┬──────────┘
-              │          ┌─────────────────────┘
-              └──────────┤  Django / Wagtail (WSGI)
-                         │
-     ┌───────────┬───────┴───────┬───────────┐
-     │           │               │           │
-  Wagtail     Django          Search      Static /
-   Admin      Admin          Backend      Media
-     │           │               │        Storage
-     └───────────┴───────┬───────┘
-                         │
-                    ┌────┴────┐
-                    │   DB    │
-                    │ SQLite  │
-                    │  / PG   │
-                    └─────────┘
+│                    Any Frontend / Client                      │
+│         (Next.js, React, Vue, Mobile App, etc.)              │
+└────────────────────┬────────────────────────────────────────┘
+                     │
+                     │ HTTP/REST
+                     │ JSON
+                     │
+┌────────────────────▼────────────────────────────────────────┐
+│         The Inventory Backend API                            │
+│              (Django REST Framework)                         │
+│                                                              │
+│  ├── /api/v1/products/                                      │
+│  ├── /api/v1/stock-movements/                               │
+│  ├── /api/v1/purchase-orders/                               │
+│  ├── /api/v1/sales-orders/                                  │
+│  └── /api/v1/reports/                                       │
+│                                                              │
+│  Wagtail Admin: /admin/ (for platform staff)                │
+└────────────────────┬────────────────────────────────────────┘
+                     │
+                     │ SQL
+                     │
+┌────────────────────▼────────────────────────────────────────┐
+│              PostgreSQL Database                             │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-**Who uses which surface**
+**API Consumers**
 
-| Audience | Primary UI | Protocol |
-| -------- | ---------- | -------- |
-| **Tenant companies** (inventory operators) | [frontend/](../frontend/) (Next.js) | **DRF** at `/api/v1/` (JWT and related auth) |
-| **Platform / internal staff** | **Wagtail admin** at `/admin/` | Session, reports, tenant management, imports; **optional** registered snippets for inventory entities when you want monitoring or support tooling in admin |
+| Consumer | Protocol | Purpose |
+| -------- | -------- | ------- |
+| **Frontend (Next.js, React, Vue, etc.)** | REST API at `/api/v1/` | Tenant inventory operations via JWT |
+| **Mobile Apps** | REST API at `/api/v1/` | Native mobile apps via JWT |
+| **Third-Party Services** | REST API at `/api/v1/` | Integrations via API tokens |
+| **Platform Staff** | Wagtail Admin at `/admin/` | Tenant management, reporting, imports |
 
-**Current default:** inventory listing menus are not in Wagtail ([inventory/wagtail_hooks.py](../inventory/wagtail_hooks.py)). **Evolving the architecture** to register Product, Category, or related models as **tenant-scoped** snippets (see [tenants/snippets.py](../tenants/snippets.py)) is fine for **staff monitoring, audits, or translation workflows**—as long as **tenant companies** still treat the **Next.js app + `/api/v1/`** as their **primary** place for day-to-day inventory operations. Domain models use Wagtail-friendly patterns (`panels`, `ClusterableModel`, images) because the stack is Wagtail-based; that does not imply admin is the main operator UI.
+---
 
-The standard Django admin remains at `/django-admin/` for low-level access when needed.
+## API Integration
+
+This backend is designed as a **headless API** to be consumed by any frontend application.
+
+### How Frontends Connect
+
+1. **Authenticate** — Login via `/api/v1/auth/login/` to get JWT tokens
+2. **Make Requests** — Call API endpoints with JWT in Authorization header
+3. **Handle Responses** — Process JSON responses and errors
+
+### Example Frontend Integration
+
+```javascript
+// Login
+const response = await fetch('http://localhost:8000/api/v1/auth/login/', {
+  method: 'POST',
+  body: JSON.stringify({ username: 'user', password: 'pass' })
+});
+const { access } = await response.json();
+
+// Make API request
+const products = await fetch('http://localhost:8000/api/v1/products/', {
+  headers: { 'Authorization': `Bearer ${access}` }
+});
+```
+
+See [Integration Guide](integration.md) for complete examples in React, Next.js, and other frameworks.
 
 ---
 

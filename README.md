@@ -1,145 +1,171 @@
-# The Inventory
+# The Inventory — Backend API
 
 [![License: BSD-3-Clause](https://img.shields.io/badge/License-BSD_3--Clause-blue.svg)](LICENSE)
 [![Python 3.12+](https://img.shields.io/badge/Python-3.12+-3776AB.svg)](https://www.python.org/)
 [![Django 6.0](https://img.shields.io/badge/Django-6.0-092E20.svg)](https://djangoproject.com/)
 [![Wagtail 7.3](https://img.shields.io/badge/Wagtail-7.3-43B1B0.svg)](https://wagtail.org/)
 
-An open-source inventory management system built with [Wagtail CMS](https://wagtail.org/) and [Django](https://djangoproject.com/). Manage products, stock levels, warehouses, purchases, and sales — all through Wagtail's powerful admin interface.
+A comprehensive **REST API** for inventory management built with [Django](https://djangoproject.com/) and [Wagtail CMS](https://wagtail.org/). Manage products, stock levels, warehouses, purchases, sales, and reporting through a powerful headless API.
+
+**This is the backend API only.** For the frontend UI, see [the-inventory-ui](https://github.com/Ndevu12/the-inventory-ui).
+
+---
+
+## Features
+
+- 📦 **Inventory Management** — Products, categories, stock locations, and movements
+- 🛒 **Procurement** — Suppliers, purchase orders, goods received notes
+- 💳 **Sales** — Customers, sales orders, dispatch tracking
+- 📊 **Reporting** — Stock valuation, movement history, analytics
+- 🌍 **Multi-Tenancy** — Support multiple organizations on one deployment
+- 🔐 **Security** — JWT authentication, RBAC, audit logging
+- 🔌 **REST API** — Comprehensive API with OpenAPI documentation
+- 🌐 **Internationalization** — Support for multiple languages
+
+---
 
 ## Tech Stack
 
 | Layer | Technology |
 |---|---|
 | Language | Python 3.12+ |
-| Web framework | Django 6.0 |
-| CMS / Admin UI | Wagtail 7.3 |
+| Web Framework | Django 6.0 |
+| API | Django REST Framework |
+| Admin UI | Wagtail 7.3 |
 | Database | SQLite (dev) / PostgreSQL (production) |
-| Search | Wagtail search backend (database or Elasticsearch) |
+| Search | Wagtail search backend |
 | Containerization | Docker |
+
+---
 
 ## Quick Start
 
-**For detailed environment configuration (local, Docker, production), see the [Environment Configuration Guide](docs/ENVIRONMENT.md).**
+**For detailed setup instructions, see the [Getting Started Guide](docs/getting-started.md).**
 
 ### Prerequisites
 
 - Python 3.12 or later
 - Git
 
-### 1. Clone the repository
+### Installation
 
 ```bash
+# Clone repository
 git clone https://github.com/Ndevu12/the_inventory.git
 cd the_inventory
-```
 
-### 2. Create a virtual environment
-
-```bash
+# Create virtual environment
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
 
-### 3. Install dependencies
-
-```bash
+# Install dependencies
 pip install -r requirements.txt
-```
 
-Django’s `manage.py` and the project package live under **`src/`**. The repository root also holds `seeders/` and `tests/`; run Django from `src` so imports resolve correctly (this matches CI and Docker).
-
-```bash
+# Navigate to backend
 cd src
-```
 
-### 4. Run database migrations
-
-```bash
+# Run migrations
 python manage.py migrate
-```
 
-### 5. Build the search index
-
-Enable full-text search functionality by indexing all searchable models (Products, Categories, Stock Locations):
-
-```bash
-python manage.py update_index
-```
-
-### 6. Seed the database
-
-Seed the database with sample data for testing and development. By default, this creates a "Default" tenant and seeds all data to it:
-
-```bash
-python manage.py seed_database --clear --create-default
-```
-
-For multi-tenant setups or to seed a specific tenant, see the [Seeding Guide](docs/SEEDING_GUIDE.md).
-
-### 7. Create a superuser
-
-```bash
+# Create superuser
 python manage.py createsuperuser
-```
 
-### 8. Start the development server
-
-```bash
+# Start development server
 python manage.py runserver
 ```
 
-Visit [http://localhost:8000](http://localhost:8000) for the site, or [http://localhost:8000/admin/](http://localhost:8000/admin/) for the Wagtail admin.
+### Access the API
 
-## Docker
+- **API Root:** http://localhost:8000/api/v1/
+- **API Documentation:** http://localhost:8000/api/schema/swagger/
+- **Wagtail Admin:** http://localhost:8000/admin/
 
-The image copies the full repository to `/app`, sets `PYTHONPATH=/app/src:/app`, and the entrypoint runs migrations and Gunicorn from **`/app/src`** (same layout as local `cd src`).
+---
 
-Build and run using Docker:
+## Documentation
 
-```bash
-docker build -t the_inventory .
-docker run -p 8000:8000 the_inventory
-```
+| Guide | Purpose |
+|-------|---------|
+| [Getting Started](docs/getting-started.md) | Installation and first steps |
+| [Features](docs/features.md) | What this API provides |
+| [API Reference](docs/api.md) | REST API endpoints and examples |
+| [Deployment](docs/deployment.md) | Production deployment (Docker, Render, K8s) |
+| [Integration](docs/integration.md) | How to integrate with frontend |
+| [Development](docs/development.md) | For contributors |
+| [Operations](docs/operations.md) | For platform operators |
+| [Security](docs/security.md) | Security best practices |
+| [Troubleshooting](docs/troubleshooting.md) | Common issues and solutions |
+| [FAQ](docs/faq.md) | Frequently asked questions |
+| [Architecture](docs/architecture.md) | Technical design |
+| [Environment Variables](docs/environment.md) | Configuration reference |
+| [Roadmap](docs/roadmap.md) | Development roadmap |
 
-Optional **database seeding** on container start uses **environment variables** (not extra CLI arguments to gunicorn). Example:
-
-```bash
-docker run -p 8000:8000 -e AUTO_SEED_DATABASE=true -e DATABASE_URL=… the_inventory
-```
-
-For complete environment variable documentation and deployment guides (Docker, Render, K8s), see the [Environment Configuration Guide](docs/ENVIRONMENT.md). Quick reference also in `.env.example` (section **AUTO-SEED**), [seeders/README.md](seeders/README.md).
+---
 
 ## Project Structure
 
 ```
 src/
-├── manage.py           # Django entry point (run commands from this directory)
-├── the_inventory/      # Project configuration (settings, URLs, WSGI)
-│   ├── settings/
-│   ├── templates/
-│   └── static/
-├── api/, home/, inventory/, procurement/, reports/, sales/, search/, tenants/  # Django apps
-└── locale/             # Backend translation catalogs
+├── manage.py                    # Django entry point
+├── the_inventory/               # Project configuration
+│   ├── settings/                # base, dev, production
+│   ├── urls.py                  # URL routing
+│   └── wsgi.py                  # WSGI application
+├── api/                         # REST API
+├── inventory/                   # Core inventory app
+├── procurement/                 # Procurement app
+├── sales/                        # Sales app
+├── reports/                     # Reporting app
+├── tenants/                     # Multi-tenancy
+└── locale/                      # Translations
 
-seeders/                # Seeding app (management commands) — repo root
-tests/                  # Test suite — repo root
-frontend/               # Next.js tenant UI
-docs/                   # Project documentation (Architecture, Roadmap)
+seeders/                         # Database seeding
+tests/                           # Test suite
+docs/                            # Documentation
 ```
 
-See [Architecture](docs/ARCHITECTURE.md) for the full technical design, including the Phase 1 schema and app boundaries.
+See [Architecture](docs/architecture.md) for the full technical design.
 
-## Project Docs & Meta
+---
 
-- [Environment Configuration Guide](docs/ENVIRONMENT.md) — Complete environment variables and setup for all deployment contexts
-- [Architecture](docs/ARCHITECTURE.md) — Technical design and system overview
-- [Seeding Guide](docs/SEEDING_GUIDE.md) — Quick reference for tenant-scoped database seeding
-- [Seeder Documentation](seeders/README.md) — Comprehensive seeding system documentation
-- [Roadmap](docs/ROADMAP.md) — Development roadmap and phases
-- [Contributing Guide](CONTRIBUTING.md) — How to contribute
-- [Code of Conduct](CODE_OF_CONDUCT.md) — Community guidelines
-- [Changelog](CHANGELOG.md) — Release history
+## Docker
+
+Build and run with Docker:
+
+```bash
+# Build image
+docker build -t the_inventory .
+
+# Run container
+docker run -p 8000:8000 \
+  -e SECRET_KEY="your-secret-key" \
+  -e DATABASE_URL="postgresql://user:pass@db:5432/inventory" \
+  the_inventory
+```
+
+For complete deployment instructions, see [Deployment Guide](docs/deployment.md).
+
+---
+
+## Testing
+
+```bash
+cd src
+
+# Run all tests (seeders excluded)
+python manage.py test
+
+# Run specific test module
+python manage.py test tests.api
+
+# Run with coverage
+coverage run --source='.' manage.py test
+coverage report
+```
+
+See [Development Guide](docs/development.md) for more testing details.
+
+---
 
 ## Contributing
 
@@ -147,76 +173,41 @@ Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md)
 
 This project follows the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.md).
 
-## Testing
+---
 
-The project uses a **custom test runner** that automatically excludes seeder tests by default. Seeder tests are only included when explicitly requested.
+## Frontend
 
-### Running Tests
+The official frontend is a separate repository:
 
-From the `src/` directory:
+**[the-inventory-ui](https://github.com/Ndevu12/the-inventory-ui)** — Next.js UI for The Inventory
 
-```bash
-# Run all functionality tests (seeder tests excluded automatically)
-python manage.py test
+You can also build your own frontend using any framework (React, Vue, Angular, etc.) by consuming this REST API.
 
-# Run all tests including seeders
-python manage.py test tests.seeders
-
-# Run specific test module
-python manage.py test tests.api
-python manage.py test tests.inventory
-
-# Run specific test class
-python manage.py test tests.api.test_auth.AuthTestCase
-
-# Run specific test method
-python manage.py test tests.api.test_auth.AuthTestCase.test_login
-```
-
-### Test Architecture
-
-The custom `DiscoverRunner` (in `tests/runner.py`) implements smart filtering:
-
-- **Default behavior** (`python manage.py test`): Discovers all tests from the `tests/` package and automatically excludes seeder tests (~1487 tests)
-- **Explicit seeder request** (`python manage.py test tests.seeders`): Includes seeder tests (~34 tests)
-- **Logging**: Tracks how many seeder tests were excluded for transparency
-
-This approach eliminates the need for manual test lists or decorators—filtering is based on module path.
-
-### CI Workflow
-
-Our CI runs on pushes and pull requests to `main` and `develop`:
-
-- Set `PYTHONPATH` to `<repo>/src:<repo>` (so `seeders` and `tests` import correctly)
-- From **`src/`**:
-    - Run `python manage.py check`
-    - Run `python manage.py test` (functionality tests, seeders excluded)
-    - Run `python manage.py test tests.seeders` (seeder tests, explicit)
-    - Run `python manage.py makemigrations --check --dry-run`
-- From the repo root: `ruff check src tests`
-
-### Local Development
-
-Mirror CI locally from the repository root:
-
-```bash
-cd src
-
-# Functionality tests (seeders excluded)
-python manage.py test
-
-# Seeder tests (explicit)
-python manage.py test tests.seeders
-
-# Linting
-cd ..
-ruff check src tests
-```
-
-If you change code under `seeders/`, also run `ruff check seeders`. Install dev tools from `requirements-dev.txt`. See [Contributing](CONTRIBUTING.md) for a full copy-paste checklist, including `docker build`.
+---
 
 ## License
 
 This project is licensed under the **BSD 3-Clause License** — see the [LICENSE](LICENSE) file for details.
 
 Copyright (c) 2026, Jean Paul Elisa NIYOKWIZERWA.
+
+---
+
+## Support
+
+- 📖 **Documentation:** See [docs/](docs/)
+- 🐛 **Issues:** [GitHub Issues](https://github.com/Ndevu12/the_inventory/issues)
+- 💬 **Discussions:** [GitHub Discussions](https://github.com/Ndevu12/the_inventory/discussions)
+- 📧 **Email:** support@example.com
+
+---
+
+## Roadmap
+
+See [Roadmap](docs/roadmap.md) for planned features and development phases.
+
+---
+
+## Changelog
+
+See [Changelog](CHANGELOG.md) for release notes and version history.

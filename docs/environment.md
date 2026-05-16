@@ -1,6 +1,8 @@
 # Environment Configuration Guide
 
-This guide explains how to configure **The Inventory** for different environments using environment variables. It covers both the **Django backend** and **Next.js frontend**, with setup instructions for local development, Docker deployment, and production.
+This guide explains how to configure **The Inventory** backend API for different environments using environment variables.
+
+> **Note:** This covers the **backend API only**. For frontend configuration, see [the-inventory-ui](https://github.com/Ndevu12/the-inventory-ui).
 
 ---
 
@@ -9,10 +11,8 @@ This guide explains how to configure **The Inventory** for different environment
 - [Quick Start](#quick-start)
 - [Configuration Overview](#configuration-overview)
 - [Backend Environment Variables](#backend-environment-variables)
-- [Frontend Environment Variables](#frontend-environment-variables)
 - [Environment-Specific Defaults](#environment-specific-defaults)
 - [Setup Guides](#setup-guides)
-- [Translations (Django & Next.js)](#translations-django--nextjs)
 - [Troubleshooting](#troubleshooting)
 
 ---
@@ -22,22 +22,24 @@ This guide explains how to configure **The Inventory** for different environment
 ### Local Development (5 minutes)
 
 ```bash
-# 1. Copy backend template (root directory)
+# 1. Copy environment template (root directory)
 cp .env.example .env.local
 
-# 2. Copy frontend template (frontend directory)
-cp frontend/.env.local.example frontend/.env.local
+# 2. Navigate to backend
+cd src
 
-# 3. Start Django (uses dev defaults, SQLite)
+# 3. Run migrations
+python manage.py migrate
+
+# 4. Create superuser
+python manage.py createsuperuser
+
+# 5. Start Django
 python manage.py runserver
-
-# 4. In another terminal, start Next.js frontend
-cd frontend && yarn dev
 ```
 
 **That's it!** Default values work for local development:
 - Django runs on `http://localhost:8000`
-- Frontend runs on `http://localhost:3000`
 - SQLite database used automatically
 - Redis/Celery disabled (tasks run synchronously)
 - CORS configured for localhost
@@ -53,7 +55,6 @@ docker run -p 8000:8000 \
   -e SECRET_KEY="your-secret-key" \
   -e DATABASE_URL="postgresql://user:pass@db:5432/inventory" \
   -e REDIS_URL="redis://redis:6379/0" \
-  -e FRONTEND_URL="https://app.example.com" \
   the_inventory
 ```
 
@@ -76,17 +77,6 @@ Environment variables are read from your orchestration platform (**Render**, **D
 ```
 
 Priority: **OS environment** > **.env file** > **code defaults**
-
-**Frontend (Next.js):**
-
-```
-┌─────────────────────────────────────────┐
-│  NEXT_PUBLIC_* environment variables    │ ← Build-time and runtime
-│  .env.local (frontend directory)        │ ← Development/local config
-│  .env.production.local (opt.)           │ ← Production-specific override
-│  Code defaults (next.config.ts)         │ ← Fallback defaults
-└─────────────────────────────────────────┘
-```
 
 > **Note:** Files in `.gitignore` (`.env`, `.env.local`) are **never committed** — you must set environment variables on your platform (Render, Docker, K8s, etc.) for production.
 
@@ -706,64 +696,7 @@ JWT_REFRESH_TOKEN_COOKIE_MAX_AGE=604800
 - **Example:**
   ```bash
   DEFAULT_FROM_EMAIL=noreply@example.com
-  ```
-
----
-
-## Frontend Environment Variables
-
-### Required Variables
-
-Frontend variables are prefixed with `NEXT_PUBLIC_` to make them accessible in the browser.
-
-#### `NEXT_PUBLIC_API_URL`
-
-- **Type:** string (full URL)
-- **Required:** Yes
-- **Purpose:** Base URL for Django REST API calls from the browser
-- **Default:** None — must be explicitly set
-- **Format:** Must include `/api/v1` path
-- **Examples:**
-  ```bash
-  # Local development
-  NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
-  
-  # Production
-  NEXT_PUBLIC_API_URL=https://api.example.com/api/v1
-  
-  # Vercel with backend on Render
-  NEXT_PUBLIC_API_URL=https://my-api.onrender.com/api/v1
-  ```
-
-#### `NEXT_PUBLIC_APP_NAME`
-
-- **Type:** string
-- **Default:** `The Inventory (Local)`
-- **Purpose:** Application display name in browser title and UI
-- **Examples:**
-  ```bash
-  NEXT_PUBLIC_APP_NAME="The Inventory (Local)"
-  NEXT_PUBLIC_APP_NAME="My Company Inventory"
-  NEXT_PUBLIC_APP_NAME="Inventory - Production"
-  ```
-
-### Setup
-
-**File location:** `frontend/.env.local` (development) or `frontend/.env.production.local` (production)
-
-**Example `frontend/.env.local`:**
-
-```dotenv
-NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
-NEXT_PUBLIC_APP_NAME="The Inventory (Local)"
-```
-
-**For production deployment:**
-- Set these variables in your hosting platform (Vercel, Netlify, etc.)
-- Or create `frontend/.env.production.local` with production values
-- The `.local` files are in `.gitignore` — never committed
-
----
+  ```---
 
 ## Environment-Specific Defaults
 
@@ -807,9 +740,7 @@ NEXT_PUBLIC_APP_NAME="The Inventory (Local)"
 - ✅ Required secrets are enforced (raises `ValueError` if missing)
 - ❌ Requires careful configuration
 
----
-
-## Setup Guides
+---## Setup Guides
 
 ### Local Development Setup
 
