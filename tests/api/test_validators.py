@@ -1,27 +1,31 @@
-import pytest
 from django.core.exceptions import ValidationError
+from django.test import SimpleTestCase
 
-from api.validators import validate_phone_number
-
-
-@pytest.mark.parametrize("phone", [
-    "9876543210",
-    "+919876543210",
-    "+91 98765 43210",
-    "98765-43210",
-])
-
-def test_valid_phone_numbers(phone):
-    validate_phone_number(phone)
+from src.api.validators import validate_phone_number
 
 
-@pytest.mark.parametrize("phone", [
-    "abc123",
-    "123",
-    "phone-number",
-    "!!!!",
-])
+class PhoneNumberValidatorTests(SimpleTestCase):
+    def test_valid_phone_numbers(self):
+        valid_numbers = [
+            "9876543210",
+            "+919876543210",
+            "+91 98765 43210",
+            "98765-43210",
+        ]
 
-def test_invalid_phone_numbers(phone):
-    with pytest.raises(ValidationError):
-        validate_phone_number(phone)
+        for phone in valid_numbers:
+            with self.subTest(phone=phone):
+                validate_phone_number(phone)
+
+    def test_invalid_phone_numbers(self):
+        invalid_numbers = [
+            "abc123",
+            "123",
+            "phone-number",
+            "!!!!",
+        ]
+
+        for phone in invalid_numbers:
+            with self.subTest(phone=phone):
+                with self.assertRaises(ValidationError):
+                    validate_phone_number(phone)
