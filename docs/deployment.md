@@ -136,16 +136,37 @@ docker-compose up -d
 
 In Render dashboard, add these environment variables:
 
+**Required Variables:**
 ```
 DEBUG=False
 DJANGO_SETTINGS_MODULE=the_inventory.settings.production
 SECRET_KEY=<generate-and-paste>
 ALLOWED_HOSTS=your-service.onrender.com
 DATABASE_URL=<PostgreSQL-connection-string>
-REDIS_URL=<Redis-connection-string>
-FRONTEND_URL=https://your-frontend.vercel.app
-CORS_ALLOWED_ORIGINS=https://your-frontend.vercel.app
 ```
+
+**Critical for JWT Authentication (MUST SET - prevents 401 errors):**
+```
+CORS_ALLOWED_ORIGINS=https://your-frontend.vercel.app
+FRONTEND_URL=https://your-frontend.vercel.app
+CSRF_TRUSTED_ORIGINS=https://your-frontend.vercel.app
+```
+
+**JWT Cookie Configuration:**
+```
+JWT_COOKIE_SECURE=true
+JWT_COOKIE_SAMESITE=Lax
+JWT_COOKIE_DOMAIN=
+```
+
+**Optional but Recommended:**
+```
+REDIS_URL=<Redis-connection-string>
+DJANGO_LOG_LEVEL=INFO
+AUTO_SEED_DATABASE=false
+```
+
+**⚠️ Important:** If you skip the "Critical for JWT Authentication" variables, users will get `401 Unauthorized` errors after login. See [Troubleshooting Guide](troubleshooting.md#jwt-authentication-401-errors-production) for details.
 
 ### 4. Create PostgreSQL Database
 

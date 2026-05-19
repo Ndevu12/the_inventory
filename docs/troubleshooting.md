@@ -76,6 +76,52 @@ python manage.py seed_database --create-default
 
 ---
 
+## JWT Authentication 401 Errors (Production)
+
+**Symptom:** Login works but subsequent requests fail with `401 Unauthorized`
+
+**Most Common Cause:** Missing environment variables on Render (or other production platform)
+
+**Solution:**
+
+1. **Check Render Environment Variables:**
+   - Go to Render Dashboard → Your Web Service → Environment
+   - Verify these variables are set:
+     - `CORS_ALLOWED_ORIGINS` — Must include your frontend URL
+     - `FRONTEND_URL` — Must match your frontend domain
+     - `CSRF_TRUSTED_ORIGINS` — Must match your frontend domain
+
+2. **Verify Frontend URL:**
+   - Frontend: `https://your-frontend.vercel.app`
+   - Backend: `https://your-service.onrender.com`
+   - These should be different domains (that's normal)
+
+3. **Check Browser DevTools:**
+   - Open DevTools → Application → Cookies
+   - After login, verify `access_token` and `refresh_token` cookies are present
+   - If cookies are missing, the issue is cookie configuration
+   - If cookies are present but requests still fail, the issue is CORS
+
+4. **Check Network Tab:**
+   - Look at the failed request to `/api/v1/auth/me/`
+   - Check Response Headers for `Set-Cookie` headers
+   - Check Request Headers for `Cookie` header
+   - If `Cookie` header is missing, cookies aren't being sent
+
+5. **Common Causes:**
+   - `CORS_ALLOWED_ORIGINS` not set or incorrect
+   - `FRONTEND_URL` not set
+   - `CSRF_TRUSTED_ORIGINS` not set
+   - Frontend not sending credentials with requests
+   - Domain mismatch between frontend and backend
+
+**Still not working?**
+- See [Environment Configuration Guide](environment.md#jwt-cookie-configuration) for detailed JWT cookie settings
+- Check [Deployment Guide](deployment.md#render-deployment) for complete Render setup
+- Check [Architecture Guide](architecture.md) for JWT authentication flow details
+
+---
+
 ## Development Environment
 
 **Port already in use:**

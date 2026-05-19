@@ -10,8 +10,35 @@ export DJANGO_SETTINGS_MODULE="${DJANGO_SETTINGS_MODULE:-the_inventory.settings.
 export DATABASE_URL="${DATABASE_URL}"
 export PORT="${PORT:-8000}"
 
+# Validate critical environment variables
+_validate_env() {
+  local var=$1
+  local is_required=$2
+  local value="${!var}"
+  
+  if [ -z "$value" ]; then
+    if [ "$is_required" = "true" ]; then
+      echo "ERROR: Required environment variable '$var' is not set"
+      exit 1
+    else
+      echo "WARNING: Optional environment variable '$var' is not set"
+    fi
+  fi
+}
+
 # Log safe startup context without leaking credentials.
 echo "=== Startup Environment Status ==="
+
+# Validate required variables (fail if missing)
+_validate_env "SECRET_KEY" "true"
+_validate_env "ALLOWED_HOSTS" "true"
+_validate_env "DATABASE_URL" "true"
+
+# Validate recommended variables (warn but don't fail)
+_validate_env "CORS_ALLOWED_ORIGINS" "false"
+_validate_env "FRONTEND_URL" "false"
+_validate_env "CSRF_TRUSTED_ORIGINS" "false"
+
 echo "DJANGO_SETTINGS_MODULE loaded"
 if [ -n "${DATABASE_URL:-}" ]; then
   echo "DATABASE_URL loaded"
@@ -60,9 +87,19 @@ case "$_auto_seed" in
 esac
 
 # Start Gunicorn (access + error logs to stdout/stderr for platform log drains)
+# Configuration tuned for production:
+#   --workers 4: Appropriate for small-medium deployments
+#   --worker-class sync: Synchronous workers (suitable for I/O-bound Django)
+#   --max-requests 1000: Recycle workers every 1000 requests to prevent memory leaks
+#   --max-requests-jitter 100: Stagger worker recycling to avoid simultaneous restarts
+#   --timeout 60: Request timeout (increased from default 30s for longer operations)
 exec gunicorn the_inventory.wsgi:application \
   --bind "[::]:$PORT" \
   --workers 4 \
+  --worker-class sync \
+  --max-requests 1000 \
+  --max-requests-jitter 100 \
+  --timeout 60 \
   --access-logfile - \
   --error-logfile - \
   --log-level info \

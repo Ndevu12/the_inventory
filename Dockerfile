@@ -23,6 +23,7 @@ RUN apt-get update --yes --quiet && apt-get install --yes --quiet --no-install-r
     libjpeg62-turbo-dev \
     zlib1g-dev \
     libwebp-dev \
+    curl \
  && rm -rf /var/lib/apt/lists/*
 
 # Install the project requirements (includes gunicorn).
@@ -52,6 +53,11 @@ WORKDIR /app/src
 RUN DJANGO_SETTINGS_MODULE=the_inventory.settings.production \
     SECRET_KEY=collectstatic-build-only-not-used-at-runtime \
     python manage.py collectstatic --noinput --clear
+
+# Health check for container orchestration (Render, K8s, etc.)
+# Verifies the app is responding to requests on the configured PORT
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:${PORT:-8000}/api/v1/ || exit 1
 
 # Runtime command that executes when "docker run" is called.
 # entrypoint.sh: migrate → optional seed (env AUTO_SEED_DATABASE / SEED_*) → gunicorn.
