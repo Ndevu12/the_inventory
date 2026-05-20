@@ -28,8 +28,8 @@ class CookieJWTAuthentication(JWTAuthentication):
         """Validate JWT token with proper error handling."""
         try:
             return super().get_validated_token(raw_token)
-        except InvalidToken as e:
-            raise InvalidToken(f"Invalid token: {str(e)}")
+        except InvalidToken:
+            raise InvalidToken("Invalid token")
 
     def extract_token_from_cookie(self, request):
         """Extract JWT token from HttpOnly cookie.
