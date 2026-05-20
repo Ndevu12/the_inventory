@@ -168,7 +168,11 @@ class InventoryCycleViewSet(TranslatableAPIReadMixin,
         try:
             service.complete_cycle(cycle)
         except ValueError as e:
-            return Response({"detail": str(e)}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+            logger.warning("Failed to complete inventory cycle %s: %s", cycle.id, e, exc_info=True)
+            return Response(
+                {"detail": "Unable to complete this cycle."},
+                status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            )
 
         cycle.refresh_from_db()
         output = InventoryCycleDetailSerializer(
