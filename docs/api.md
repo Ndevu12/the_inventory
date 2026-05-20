@@ -13,6 +13,7 @@
 - [Common Workflows](#common-workflows)
 - [Endpoint Reference](#endpoint-reference)
 - [Error Handling](#error-handling)
+- [Phone Number Validation](#phone-number-validation)
 - [Pagination & Filtering](#pagination--filtering)
 - [Rate Limiting](#rate-limiting)
 
@@ -398,6 +399,27 @@ curl -X POST http://localhost:8000/api/v1/products/ \
 }
 ```
 
+### Phone Number Validation
+
+Customer and Supplier phone fields validate phone number formats at the API level. Valid phone numbers may include an optional country code, spaces, hyphens, and parentheses.
+
+Examples of accepted formats:
+
+```text
+9876543210
++919876543210
++91 98765 43210
+98765-43210
+(123) 456-7890
+```
+
+Invalid phone values return a `400` validation error:
+
+```json
+{
+  "phone": ["Enter a valid phone number."]
+}
+```
 ---
 
 ## Pagination & Filtering
