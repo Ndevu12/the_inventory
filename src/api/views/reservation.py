@@ -95,14 +95,14 @@ class StockReservationViewSet(TranslatableAPIReadMixin,
                 reserved_by=reserved_by,
                 notes=data.get("notes", ""),
             )
-        except InsufficientStockError as e:
+        except InsufficientStockError:
             return Response(
-                {"detail": str(e)},
+                {"detail": "Insufficient stock to complete this reservation."},
                 status=status.HTTP_409_CONFLICT,
             )
-        except (ValueError, InventoryError) as e:
+        except (ValueError, InventoryError):
             return Response(
-                {"detail": str(e)},
+                {"detail": "Unable to create reservation with the provided data."},
                 status=status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
 
@@ -120,14 +120,14 @@ class StockReservationViewSet(TranslatableAPIReadMixin,
 
         try:
             service.fulfill_reservation(reservation, created_by=created_by)
-        except ReservationConflictError as e:
+        except ReservationConflictError:
             return Response(
-                {"detail": str(e)},
+                {"detail": "Reservation cannot be fulfilled in its current state."},
                 status=status.HTTP_409_CONFLICT,
             )
-        except InsufficientStockError as e:
+        except InsufficientStockError:
             return Response(
-                {"detail": str(e)},
+                {"detail": "Insufficient stock to fulfill this reservation."},
                 status=status.HTTP_409_CONFLICT,
             )
 
@@ -145,9 +145,9 @@ class StockReservationViewSet(TranslatableAPIReadMixin,
 
         try:
             service.cancel_reservation(reservation)
-        except ReservationConflictError as e:
+        except ReservationConflictError:
             return Response(
-                {"detail": str(e)},
+                {"detail": "Reservation cannot be canceled in its current state."},
                 status=status.HTTP_409_CONFLICT,
             )
 
