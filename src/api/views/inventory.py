@@ -532,9 +532,9 @@ class StockMovementViewSet(TranslatableAPIReadMixin,
                 {"detail": str(e)},
                 status=status.HTTP_409_CONFLICT,
             )
-        except InventoryError as e:
+        except InventoryError:
             return Response(
-                {"detail": str(e)},
+                {"detail": "Unable to process stock movement."},
                 status=status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
         except DjangoValidationError:
