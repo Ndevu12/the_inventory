@@ -1,5 +1,5 @@
 #!/bin/bash
-set -xe
+set -e
 
 # Django lives in src/ (repo root is parent of this script in Docker: /app).
 APP_ROOT=$(cd "$(dirname "$0")" && pwd)
