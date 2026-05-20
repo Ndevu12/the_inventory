@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -xe
 
 # Django lives in src/ (repo root is parent of this script in Docker: /app).
