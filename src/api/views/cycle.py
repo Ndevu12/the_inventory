@@ -151,7 +151,11 @@ class InventoryCycleViewSet(TranslatableAPIReadMixin,
                 notes=data.get("notes", ""),
             )
         except ValueError as e:
-            return Response({"detail": str(e)}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+            logger.warning("Failed to record count for inventory cycle %s: %s", cycle.id, e, exc_info=True)
+            return Response(
+                {"detail": "Unable to record count for this cycle."},
+                status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            )
 
         cycle.refresh_from_db()
         output = InventoryCycleDetailSerializer(
