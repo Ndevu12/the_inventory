@@ -78,40 +78,93 @@ python manage.py seed_database --create-default
 
 ## JWT Authentication 401 Errors (Production)
 
-**Symptom:** Login works (200) but subsequent requests fail with `401 Unauthorized`
+**Symptom:** Login works (200) but subsequent requests fail with `401 Unauthorized`. Cookies appear in DevTools but aren't being sent.
 
-**Root Cause:** `JWT_COOKIE_DOMAIN` set to frontend domain (e.g., `.vercel.app`) when backend is on different domain (e.g., `.onrender.com`)
+### Root Cause Analysis
+
+The issue depends on your domain setup:
+
+#### Scenario 1: Different Domains (No Shared Parent)
+**Example:** Frontend on `vercel.app`, Backend on `onrender.com`
 
 **Why it fails:**
-- Backend on `.onrender.com` cannot set cookies on `.vercel.app` domain
-- Browsers enforce same-origin policy: cookies can only be set by the domain that serves them
-- Result: Cookies are rejected by browser, not stored, subsequent requests have no auth
+- Backend cannot set cookies on a different domain
+- Browsers enforce same-origin policy
+- Cookies set by `onrender.com` won't be sent to `vercel.app`
 
-**Quick Fix:**
+**Solution:** Use token-based auth (Authorization header) instead of cookies
+```python
+# Backend settings.py
+JWT_COOKIE_DOMAIN = None  # Disable cookie-based auth
+```
 
-1. Go to Render Dashboard → Your Web Service → Environment
-2. Find `JWT_COOKIE_DOMAIN` 
-3. **Clear the value** (leave empty)
-4. Save and redeploy
+#### Scenario 2: Shared Parent Domain (Recommended)
+**Example:** Frontend on `theinventory.ndevuspace.com`, Backend on `api.theinventory.ndevuspace.com`
+
+**Why it fails initially:**
+- `JWT_COOKIE_DOMAIN = None` means cookies are only valid for exact domain match
+- Cookies set by backend aren't sent to frontend because domain doesn't match
+
+**Solution:** Set cookie domain to shared parent domain
+```python
+# Backend settings.py
+JWT_COOKIE_DOMAIN = ".ndevuspace.com"  # Leading dot = all subdomains
+JWT_COOKIE_SECURE = True               # Required for HTTPS
+JWT_COOKIE_SAMESITE = "Lax"            # Safe for same parent domain
+```
 
 **Why this works:**
-- Empty `JWT_COOKIE_DOMAIN` = same-domain only (safe default)
-- Frontend must use `Authorization: Bearer <token>` headers instead of cookies
-- Your backend already supports this via `CookieJWTAuthentication`
+- `.ndevuspace.com` allows cookies to be shared between all subdomains
+- Browser will include cookies in requests from `theinventory.ndevuspace.com` to `api.theinventory.ndevuspace.com`
 
-**Verify the fix:**
+### Configuration Checklist
 
-1. After login, check browser DevTools → Network tab
-2. Look at request to `/api/v1/auth/me/`
-3. Should see: `Authorization: Bearer eyJ...` header
-4. Should NOT see: `Cookie:` header (that's expected for cross-domain)
-5. Response should be 200 (not 401)
+**For shared parent domain setup:**
 
-**If still failing:**
-- Verify `CORS_ALLOWED_ORIGINS` includes your frontend URL
-- Verify `CSRF_TRUSTED_ORIGINS` matches `CORS_ALLOWED_ORIGINS`
-- Check frontend is sending `Authorization` header (not relying on cookies)
-- Check Render logs for CORS errors
+1. ✅ Frontend and backend share parent domain
+   ```
+   Frontend:  theinventory.ndevuspace.com
+   Backend:   api.theinventory.ndevuspace.com
+   Parent:    ndevuspace.com (shared)
+   ```
+
+2. ✅ Backend environment variables set correctly
+   ```bash
+   JWT_COOKIE_DOMAIN=.ndevuspace.com
+   JWT_COOKIE_SECURE=True
+   JWT_COOKIE_SAMESITE=Lax
+   ```
+
+3. ✅ Frontend API URL points to backend
+   ```bash
+   NEXT_PUBLIC_API_URL=https://api.theinventory.ndevuspace.com/api/v1
+   ```
+
+4. ✅ CORS configured correctly
+   ```python
+   CORS_ALLOWED_ORIGINS = [
+       "https://theinventory.ndevuspace.com",
+   ]
+   CORS_ALLOW_CREDENTIALS = True
+   ```
+
+### Verify the Fix
+
+1. After login, check browser DevTools → Application → Cookies
+2. Find `access_token` cookie
+3. Verify `Domain` column shows `.ndevuspace.com` (with leading dot)
+4. Verify `Secure` is checked (for HTTPS)
+5. Check Network tab → `/api/v1/auth/me/` request
+6. Should see `Cookie: access_token=...` header
+7. Response should be 200 (not 401)
+
+### If Still Failing
+
+- Verify `JWT_COOKIE_DOMAIN` matches your domain setup
+- Clear browser cookies and log in again
+- Check backend logs for CORS errors
+- Verify `CORS_ALLOW_CREDENTIALS = True` in backend
+- Ensure frontend and backend are on HTTPS in production
 
 ---
 
