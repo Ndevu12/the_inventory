@@ -78,47 +78,40 @@ python manage.py seed_database --create-default
 
 ## JWT Authentication 401 Errors (Production)
 
-**Symptom:** Login works but subsequent requests fail with `401 Unauthorized`
+**Symptom:** Login works (200) but subsequent requests fail with `401 Unauthorized`
 
-**Most Common Cause:** Missing environment variables on Render (or other production platform)
+**Root Cause:** `JWT_COOKIE_DOMAIN` set to frontend domain (e.g., `.vercel.app`) when backend is on different domain (e.g., `.onrender.com`)
 
-**Solution:**
+**Why it fails:**
+- Backend on `.onrender.com` cannot set cookies on `.vercel.app` domain
+- Browsers enforce same-origin policy: cookies can only be set by the domain that serves them
+- Result: Cookies are rejected by browser, not stored, subsequent requests have no auth
 
-1. **Check Render Environment Variables:**
-   - Go to Render Dashboard → Your Web Service → Environment
-   - Verify these variables are set:
-     - `CORS_ALLOWED_ORIGINS` — Must include your frontend URL
-     - `FRONTEND_URL` — Must match your frontend domain
-     - `CSRF_TRUSTED_ORIGINS` — Must match your frontend domain
+**Quick Fix:**
 
-2. **Verify Frontend URL:**
-   - Frontend: `https://your-frontend.vercel.app`
-   - Backend: `https://your-service.onrender.com`
-   - These should be different domains (that's normal)
+1. Go to Render Dashboard → Your Web Service → Environment
+2. Find `JWT_COOKIE_DOMAIN` 
+3. **Clear the value** (leave empty)
+4. Save and redeploy
 
-3. **Check Browser DevTools:**
-   - Open DevTools → Application → Cookies
-   - After login, verify `access_token` and `refresh_token` cookies are present
-   - If cookies are missing, the issue is cookie configuration
-   - If cookies are present but requests still fail, the issue is CORS
+**Why this works:**
+- Empty `JWT_COOKIE_DOMAIN` = same-domain only (safe default)
+- Frontend must use `Authorization: Bearer <token>` headers instead of cookies
+- Your backend already supports this via `CookieJWTAuthentication`
 
-4. **Check Network Tab:**
-   - Look at the failed request to `/api/v1/auth/me/`
-   - Check Response Headers for `Set-Cookie` headers
-   - Check Request Headers for `Cookie` header
-   - If `Cookie` header is missing, cookies aren't being sent
+**Verify the fix:**
 
-5. **Common Causes:**
-   - `CORS_ALLOWED_ORIGINS` not set or incorrect
-   - `FRONTEND_URL` not set
-   - `CSRF_TRUSTED_ORIGINS` not set
-   - Frontend not sending credentials with requests
-   - Domain mismatch between frontend and backend
+1. After login, check browser DevTools → Network tab
+2. Look at request to `/api/v1/auth/me/`
+3. Should see: `Authorization: Bearer eyJ...` header
+4. Should NOT see: `Cookie:` header (that's expected for cross-domain)
+5. Response should be 200 (not 401)
 
-**Still not working?**
-- See [Environment Configuration Guide](environment.md#jwt-cookie-configuration) for detailed JWT cookie settings
-- Check [Deployment Guide](deployment.md#render-deployment) for complete Render setup
-- Check [Architecture Guide](architecture.md) for JWT authentication flow details
+**If still failing:**
+- Verify `CORS_ALLOWED_ORIGINS` includes your frontend URL
+- Verify `CSRF_TRUSTED_ORIGINS` matches `CORS_ALLOWED_ORIGINS`
+- Check frontend is sending `Authorization` header (not relying on cookies)
+- Check Render logs for CORS errors
 
 ---
 
