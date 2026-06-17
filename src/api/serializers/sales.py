@@ -21,6 +21,7 @@ from tenants.middleware import get_effective_tenant
 from api.serializers.translatable_representation import TranslatableRepresentationMixin
 from api.serializers.translatable_writable import TranslatableWritableMixin
 
+from api.validators import validate_phone_number
 
 def _derived_warehouse_from_sales_order(sales_order):
     """Derive facility warehouse from dispatches when unambiguous.
@@ -98,6 +99,10 @@ class CustomerSerializer(
             raise serializers.ValidationError(
                 "A customer with this code already exists for this tenant."
             )
+        return value
+
+    def validate_phone(self, value):
+        validate_phone_number(value)
         return value
 
     def create(self, validated_data):
