@@ -1,5 +1,7 @@
 """API views for inventory models."""
 
+import logging
+
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import IntegrityError
 from django.db.models import Count
@@ -51,6 +53,9 @@ from api.serializers.inventory import (
     WarehouseSerializer,
 )
 from api.views.reservation import product_availability_action
+
+
+logger = logging.getLogger(__name__)
 
 
 class TenantScopedInventoryMixin:
@@ -528,13 +533,14 @@ class StockMovementViewSet(TranslatableAPIReadMixin,
                     created_by=created_by,
                 )
         except (InsufficientStockError, MovementImmutableError) as e:
+            logger.warning("Stock movement conflict: %s", e, exc_info=True)
             return Response(
-                {"detail": str(e)},
+                {"detail": "Unable to process stock movement due to a conflict."},
                 status=status.HTTP_409_CONFLICT,
             )
-        except InventoryError as e:
+        except InventoryError:
             return Response(
-                {"detail": str(e)},
+                {"detail": "Unable to process stock movement."},
                 status=status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
         except DjangoValidationError:

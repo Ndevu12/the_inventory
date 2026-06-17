@@ -20,6 +20,7 @@ from tenants.middleware import get_effective_tenant
 from api.serializers.translatable_representation import TranslatableRepresentationMixin
 from api.serializers.translatable_writable import TranslatableWritableMixin
 
+from api.validators import validate_phone_number
 
 class SupplierSerializer(
     TranslatableWritableMixin,
@@ -59,6 +60,10 @@ class SupplierSerializer(
             raise serializers.ValidationError(
                 "A supplier with this code already exists for this tenant."
             )
+        return value
+
+    def validate_phone(self, value):
+        validate_phone_number(value)
         return value
 
 
