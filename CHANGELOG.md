@@ -28,6 +28,10 @@ For major updates with breaking changes, see the [Deployment Guide - Updates](do
 
 ## [Unreleased]
 
+### Added
+
+- Expanded REST API documentation with request/response examples, error response samples, and Python/JavaScript usage examples for authentication, API requests, pagination, and filtering.
+
 ### Changed
 
 - **⚠️ Tenant RBAC vocabulary (Breaking Change):** second-tier governance role renamed from `admin` / `TenantRole.ADMIN` to **`coordinator` / `TenantRole.COORDINATOR`** (data migration `0009_tenant_role_coordinator`). 
