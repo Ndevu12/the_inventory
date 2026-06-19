@@ -117,7 +117,16 @@ class InventoryCycleViewSet(TranslatableAPIReadMixin,
                 started_by=request.user,
             )
         except ValueError as e:
-            return Response({"detail": str(e)}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+            logger.warning(
+                "Failed to start inventory cycle for tenant %s: %s",
+                tenant.id,
+                e,
+                exc_info=True,
+            )
+            return Response(
+                {"detail": "Unable to start this cycle."},
+                status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            )
 
         if data.get("notes"):
             cycle.notes = data["notes"]
