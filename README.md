@@ -13,14 +13,14 @@ A comprehensive **REST API** for inventory management built with [Django](https:
 
 ## Features
 
-- 📦 **Inventory Management** — Products, categories, stock locations, and movements
-- 🛒 **Procurement** — Suppliers, purchase orders, goods received notes
-- 💳 **Sales** — Customers, sales orders, dispatch tracking
-- 📊 **Reporting** — Stock valuation, movement history, analytics
-- 🌍 **Multi-Tenancy** — Support multiple organizations on one deployment
-- 🔐 **Security** — JWT authentication, RBAC, audit logging
-- 🔌 **REST API** — Comprehensive API with OpenAPI documentation
-- 🌐 **Internationalization** — Support for multiple languages
+- **Inventory Management** — Products, categories, stock locations, and movements
+- **Procurement** — Suppliers, purchase orders, goods received notes
+- **Sales** — Customers, sales orders, dispatch tracking
+- **Reporting** — Stock valuation, movement history, analytics
+- **Multi-Tenancy** — Support multiple organizations on one deployment
+- **Security** — JWT authentication, RBAC, audit logging
+- **REST API** — Comprehensive API with OpenAPI documentation
+- **Internationalization** — Support for multiple languages
 
 ---
 
@@ -175,16 +175,6 @@ This project follows the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.
 
 ---
 
-## Frontend
-
-The official frontend is a separate repository:
-
-**[the-inventory-ui](https://github.com/Ndevu12/the-inventory-ui)** — Next.js UI for The Inventory
-
-You can also build your own frontend using any framework (React, Vue, Angular, etc.) by consuming this REST API.
-
----
-
 ## License
 
 This project is licensed under the **BSD 3-Clause License** — see the [LICENSE](LICENSE) file for details.
@@ -198,7 +188,7 @@ Copyright (c) 2026, Jean Paul Elisa NIYOKWIZERWA.
 - 📖 **Documentation:** See [docs/](docs/)
 - 🐛 **Issues:** [GitHub Issues](https://github.com/Ndevu12/the_inventory/issues)
 - 💬 **Discussions:** [GitHub Discussions](https://github.com/Ndevu12/the_inventory/discussions)
-- 📧 **Email:** support@example.com
+- 📧 **Email:** hello@ndevuspace.com
 
 ---
 

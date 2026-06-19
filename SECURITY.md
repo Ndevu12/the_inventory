@@ -62,7 +62,7 @@ EMAIL_HOST_PASSWORD=<strong-password>
 
 **Do not** open public GitHub issues for security vulnerabilities.
 
-**Email:** Send details to [security@ndevu.com](mailto:security@ndevu.com) with:
+**Email:** Send details to [hello@ndevuspace.com](mailto:hello@ndevuspace.com) with:
 - Vulnerability description
 - Steps to reproduce
 - Affected versions
