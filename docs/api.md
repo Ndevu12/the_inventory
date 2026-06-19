@@ -47,6 +47,42 @@ curl -X POST http://localhost:8000/api/v1/auth/login/ \
   }
 }
 ```
+**Python example:**
+```python
+import requests
+
+url = "http://localhost:8000/api/v1/auth/login/"
+payload = {
+    "username": "your_username",
+    "password": "your_password"
+}
+
+response = requests.post(url, json=payload)
+data = response.json()
+
+access_token = data["access"]
+print(access_token)
+```
+**JavaScript example:**
+```javascript
+(async () => {
+  const response = await fetch("http://localhost:8000/api/v1/auth/login/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      username: "your_username",
+      password: "your_password"
+    })
+  });
+
+  const data = await response.json();
+  const accessToken = data.access;
+
+  console.log(accessToken);
+})();
+```
 
 ### 2. Make an API Request
 
@@ -55,6 +91,36 @@ curl -X POST http://localhost:8000/api/v1/auth/login/ \
 ```bash
 curl http://localhost:8000/api/v1/products/ \
   -H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGc..."
+```
+**Python example:**
+```python
+import requests
+
+url = "http://localhost:8000/api/v1/products/"
+headers = {
+    "Authorization": "Bearer your_access_token"
+}
+
+response = requests.get(url, headers=headers)
+products = response.json()
+
+print(products)
+```
+
+**JavaScript example:**
+```javascript
+(async () => {
+  const response = await fetch("http://localhost:8000/api/v1/products/", {
+    method: "GET",
+    headers: {
+      "Authorization": "Bearer your_access_token"
+    }
+  });
+
+  const products = await response.json();
+
+  console.log(products);
+})();
 ```
 
 ### 3. Explore the API
@@ -421,6 +487,28 @@ Invalid phone values return a `400` validation error:
 }
 ```
 ---
+### Error Response Examples
+
+**401 Unauthorized**
+```json
+{
+  "detail": "Authentication credentials were not provided."
+}
+```
+
+**404 Not Found**
+```json
+{
+  "detail": "Product not found."
+}
+```
+
+**400 Bad Request**
+```json
+{
+  "detail": "Invalid request data."
+}
+```
 
 ## Pagination & Filtering
 
@@ -430,6 +518,44 @@ All list endpoints support pagination:
 
 ```bash
 GET /api/v1/products/?page=1&page_size=25
+```
+**Python example:**
+```python
+import requests
+
+url = "http://localhost:8000/api/v1/products/"
+headers = {
+    "Authorization": "Bearer your_access_token"
+}
+params = {
+    "page": 1,
+    "page_size": 25
+}
+
+response = requests.get(url, headers=headers, params=params)
+data = response.json()
+
+print(data)
+```
+
+**JavaScript example:**
+```javascript
+(async () => {
+  const url = new URL("http://localhost:8000/api/v1/products/");
+  url.searchParams.set("page", "1");
+  url.searchParams.set("page_size", "25");
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      "Authorization": "Bearer your_access_token"
+    }
+  });
+
+  const data = await response.json();
+
+  console.log(data);
+})();
 ```
 
 **Response:**
@@ -456,7 +582,44 @@ GET /api/v1/products/?is_active=true
 # Filter by date range
 GET /api/v1/stock-movements/?created_at__gte=2026-01-01&created_at__lte=2026-12-31
 ```
+**Python example:**
+```python
+import requests
 
+url = "http://localhost:8000/api/v1/products/"
+headers = {
+    "Authorization": "Bearer your_access_token"
+}
+params = {
+    "category": 1,
+    "is_active": "true"
+}
+
+response = requests.get(url, headers=headers, params=params)
+products = response.json()
+
+print(products)
+```
+
+**JavaScript example:**
+```javascript
+(async () => {
+  const url = new URL("http://localhost:8000/api/v1/products/");
+  url.searchParams.set("category", "1");
+  url.searchParams.set("is_active", "true");
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      "Authorization": "Bearer your_access_token"
+    }
+  });
+
+  const products = await response.json();
+
+  console.log(products);
+})();
+```
 ### Searching
 
 Search across multiple fields:
