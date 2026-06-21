@@ -29,7 +29,9 @@ class CookieJWTAuthentication(JWTAuthentication):
         try:
             return super().get_validated_token(raw_token)
         except InvalidToken:
-            raise InvalidToken("Invalid token")
+            # Re-raise with a generic message and suppress the original
+            # exception context so token internals are never leaked to clients.
+            raise InvalidToken("Invalid token") from None
 
     def extract_token_from_cookie(self, request):
         """Extract JWT token from HttpOnly cookie.
