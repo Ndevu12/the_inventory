@@ -8,7 +8,11 @@ Supports both header-based JWT (Authorization: Bearer) and cookie-based JWT
 for browser clients.
 """
 
+import logging
+
 from api.authentication import CookieJWTAuthentication
+
+logger = logging.getLogger(__name__)
 
 
 class JWTAuthMiddleware:
@@ -27,4 +31,7 @@ class JWTAuthMiddleware:
             if result is not None:
                 request.user, request.auth = result
         except Exception:
-            pass
+            # Authentication is best-effort here: DRF re-runs it at the view
+            # layer and returns a proper 401. Leave request.user anonymous and
+            # log for diagnostics rather than failing the whole request.
+            logger.debug("JWT middleware authentication failed", exc_info=True)
