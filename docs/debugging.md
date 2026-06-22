@@ -1,8 +1,8 @@
-Debugging Guide for Developers
+# Debugging Guide for Developers
 
 This guide helps developers troubleshoot common issues while working on The Inventory project. It covers debugging techniques, useful tools, API debugging, database issues, authentication problems, cache issues, and performance profiling.
 
-Quick Debugging Checklist
+ ## Quick Debugging Checklist
 
 Before debugging deeply, check the basics first:
 
@@ -14,7 +14,34 @@ Before debugging deeply, check the basics first:
 6. Identify whether the issue is related to API, database, authentication, cache, or frontend behavior.
 7. Test one change at a time.
 
-Debugging Techniques
+ ## Debugging Techniques
+
+ ### Using Django Debug Toolbar
+
+Django Debug Toolbar helps developers inspect requests, SQL queries, cache usage, templates, and timing information while debugging locally.
+
+To use it during development:
+
+1. Install the package if it is not already available:
+
+```bash
+pip install django-debug-toolbar
+```
+
+2. Add `debug_toolbar` to `INSTALLED_APPS` in the development settings.
+3. Add the debug toolbar middleware near the top of `MIDDLEWARE`.
+4. Include the debug toolbar URLs in the development URL configuration.
+5. Run the development server and open the application in the browser.
+
+Use the toolbar to inspect:
+
+- SQL queries and duplicate queries
+- Request and response details
+- Cache usage
+- Template rendering
+- Request timing and performance issues
+
+Do not enable Django Debug Toolbar in production.
 
 1. Using Logging
 
@@ -22,18 +49,18 @@ Logging helps track application behavior without stopping execution.
 
 Example:
 
-import logging
+    import logging
 
-logger = logging.getLogger(__name__)
+    logger = logging.getLogger(__name__)
 
-def get_products():
-    logger.info("Fetching products from the database")
-    try:
-        # product query logic
-        logger.info("Products fetched successfully")
-    except Exception as exc:
-        logger.error("Failed to fetch products: %s", exc)
-        raise
+    def get_products():
+        logger.info("Fetching products from the database")
+        try:
+            # product query logic
+            logger.info("Products fetched successfully")
+        except Exception as exc:
+            logger.error("Failed to fetch products: %s", exc)
+            raise
 
 Use logging when you want to inspect runtime behavior, request data, database results, or unexpected errors.
 
@@ -76,18 +103,19 @@ Django shell is useful for testing models, queries, and utility functions.
 
 Run:
 
-python manage.py shell
-
+    cd src
+    python manage.py shell
 Example:
 
-from src.api.models import Product
+from inventory.models import Product
 
 products = Product.objects.all()
 print(products.count())
 
+
 Use Django shell to verify database records, test queries, and inspect model behavior.
 
-Debugging API Endpoints
+## Debugging API Endpoints
 
 When an API endpoint fails, follow these steps:
 
@@ -113,21 +141,24 @@ curl -X POST http://localhost:8000/api/v1/products/ \
 
 Common API status codes:
 
-Status Code| Meaning| Common Cause
-400| Bad Request| Invalid request data
-401| Unauthorized| Missing or invalid token
-403| Forbidden| User does not have permission
-404| Not Found| Resource or endpoint does not exist
-500| Server Error| Unhandled backend error
+ | Status Code | Meaning | Common Cause |
+ |------------|---------|--------------|
+ | 400 | Bad Request | Invalid request data |
+ | 401 | Unauthorized | Missing or invalid token |
+ | 403 | Forbidden | User does not have permission |
+ | 404 | Not Found | Resource or endpoint does not exist |
+ | 500 | Server Error | Unhandled backend error |
 
-Debugging Database Issues
+## Debugging Database Issues
 
 Common database issues include missing migrations, incorrect queries, connection failures, and invalid data.
 
 Check migrations
 
-python manage.py makemigrations
-python manage.py migrate
+     cd src
+     python manage.py showmigrations
+     python manage.py migrate --plan
+     python manage.py migrate
 
 Inspect database queries
 
@@ -139,14 +170,15 @@ Product.objects.filter(is_active=True)
 
 Common database problems
 
-Problem| Possible Solution
-Migration error| Run migrations again and check model changes
-Table does not exist| Confirm migrations were applied
-Empty query result| Check filters and test data
-Slow query| Add indexes or optimize filters
-Connection error| Check database settings and environment variables
+ | Problem | Possible Solution |
+ |---------|-------------------|
+ | Migration error | Run migrations again and check model changes |
+ | Table does not exist | Confirm migrations were applied |
+ | Empty query result | Check filters and test data |
+ | Slow query | Add indexes or optimize filters |
+ | Connection error | Check database settings and environment variables |
 
-Debugging Authentication Issues
+## Debugging Authentication Issues
 
 Authentication issues usually happen because of missing tokens, expired tokens, invalid cookies, or incorrect headers.
 
@@ -164,12 +196,13 @@ Authorization: Bearer your_access_token
 
 Common authentication errors:
 
-Error| Possible Cause| Fix
-Invalid token| Token expired or malformed| Generate a new token
-Authentication credentials were not provided| Missing header or cookie| Send valid credentials
-Permission denied| User lacks required role| Check user permissions
+ | Error | Possible Cause | Fix |
+ |-------|----------------|-----|
+ | Invalid token | Token expired or malformed | Generate a new token |
+ | Authentication credentials were not provided | Missing header or cookie | Send valid credentials |
+ | Permission denied | User lacks required role | Check user permissions |
 
-Debugging Cache Issues
+## Debugging Cache Issues
 
 Cache issues can cause stale or outdated data.
 
@@ -182,26 +215,26 @@ Steps to debug cache problems:
 
 Example:
 
-from django.core.cache import cache
+    from django.core.cache import cache
 
-cache.clear()
+    cache.clear()
 
-Performance Profiling
+## Performance Profiling
 
 Performance profiling helps identify slow code, expensive queries, and memory issues.
 
-Measure execution time
+### Measure execution time
 
-import time
+    import time
 
-start = time.time()
+    start = time.perf_counter()
 
-# code to measure
+    # code to measure
 
-end = time.time()
-print(f"Execution time: {end - start} seconds")
+    end = time.perf_counter()
+    print(f"Execution time: {end - start} seconds")
 
-Query optimization tips
+### Query optimization tips
 
 - Avoid unnecessary database queries.
 - Use "select_related()" for foreign key relationships.
@@ -211,47 +244,35 @@ Query optimization tips
 
 Example:
 
+```python
+from inventory.models import Product
+
 products = Product.objects.select_related("category").filter(is_active=True)
+```
 
-Troubleshooting Flowchart
+## Troubleshooting Flowchart
 
+```text
 Issue occurs
-   |
-   v
+    |
+    v
 Can you reproduce it?
-   |
-   |-- No --> Collect more details and logs
-   |
-   |-- Yes
-        |
-        v
-Check error message and logs
-        |
-        v
-Is it an API issue?
-        |
-        |-- Yes --> Check endpoint, method, headers, body, and response
-        |
-        |-- No
-             |
-             v
-Is it a database issue?
-        |
-        |-- Yes --> Check migrations, queries, and database connection
-        |
-        |-- No
-             |
-             v
-Is it an authentication issue?
-        |
-        |-- Yes --> Check token, cookie, permissions, and headers
-        |
-        |-- No
-             |
-             v
-Check cache, environment variables, and recent code changes
+    |
+    +-- No --> Collect logs, request details, and document the steps.
+    |
+    +-- Yes --> Identify the affected layer.
+                    |
+                    v
+          API / Database / Authentication / Cache / Performance
+                    |
+                    v
+          Run the relevant debugging tool or command.
+                    |
+                    v
+          Fix the issue, add tests if needed, and verify again.
+```
 
-Best Practices
+## Best Practices
 
 - Read the full error message before changing code.
 - Reproduce the issue consistently.
@@ -261,7 +282,7 @@ Best Practices
 - Add tests when fixing bugs.
 - Document repeated issues for future developers.
 
-Related Files
+## Related Files
 
 - "docs/troubleshooting.md"
 - "docs/api.md"
