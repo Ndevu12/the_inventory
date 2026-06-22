@@ -66,6 +66,10 @@ local_settings.py
 db.sqlite3
 db.sqlite3-journal
 
+# User-uploaded media (runtime MEDIA_ROOT); keep the dir, ignore its contents.
+src/media/*
+!src/media/.gitkeep
+
 # Frontend generated artifacts
 frontend/.next/
 frontend/.turbo/
