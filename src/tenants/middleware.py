@@ -78,7 +78,7 @@ class TenantMiddleware:
     def _audit_tenant_access(request, tenant):
         """Log an audit entry when the resolved tenant changes within a session.
 
-        Controlled by ``settings.AUDIT_TENANT_ACCESS`` (default ``False``).
+        Controlled by ``settings.AUDIT_TENANT_ACCESS`` (default ``True``).
         Uses the Django session to track the previously-accessed tenant slug;
         a log entry is created only when the slug differs (including the
         very first tenant access in a new session).
