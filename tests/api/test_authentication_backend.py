@@ -172,14 +172,25 @@ class CookieJWTAuthenticationTests(TestCase):
         with self.assertRaises(InvalidToken):
             self.auth.get_validated_token("")
 
-    def test_get_validated_token_error_message_includes_details(self):
-        """Verify InvalidToken exception includes error details."""
+    def test_get_validated_token_error_message_hides_details(self):
+        """Verify InvalidToken exception does not leak token internals.
+
+        The backend deliberately raises a generic ``"Invalid token"`` message
+        (without underlying validation details) to avoid information exposure
+        through exceptions. See the security hardening in
+        ``CookieJWTAuthentication.get_validated_token``.
+        """
         try:
             self.auth.get_validated_token(self.invalid_token)
             self.fail("Expected InvalidToken to be raised")
         except InvalidToken as e:
-            # Error message should include "Invalid token:"
-            self.assertIn("Invalid token:", str(e))
+            message = str(e)
+            # Generic, non-revealing message only.
+            self.assertIn("Invalid token", message)
+            # Must not leak parsing/validation specifics back to the client.
+            self.assertNotIn("Invalid token:", message)
+            self.assertNotIn("Token is invalid", message)
+            self.assertNotIn("expired", message.lower())
 
     def test_authenticate_with_empty_string_token(self):
         """Verify authenticate handles empty string token gracefully."""
