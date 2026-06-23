@@ -92,6 +92,7 @@ python manage.py runserver
 | [Deployment](docs/deployment.md) | Production deployment (Docker, Render, K8s) |
 | [Integration](docs/integration.md) | How to integrate with frontend |
 | [Development](docs/development.md) | For contributors |
+| [Plugins](docs/plugins.md) | Extend the system with plugins |
 | [Operations](docs/operations.md) | For platform operators |
 | [Security](docs/security.md) | Security best practices |
 | [Troubleshooting](docs/troubleshooting.md) | Common issues and solutions |
