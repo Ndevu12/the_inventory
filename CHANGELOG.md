@@ -30,6 +30,8 @@ For major updates with breaking changes, see the [Deployment Guide - Updates](do
 
 ### Added
 
+- Added favicon.ico static asset and route to reduce repeated favicon 404 errors in production logs.
+
 - Added a developer debugging guide with debugging techniques, tools, common issues, API debugging, database troubleshooting, authentication debugging, cache checks, and performance profiling.
 
 - Expanded REST API documentation with request/response examples, error response samples, and Python/JavaScript usage examples for authentication, API requests, pagination, and filtering.
