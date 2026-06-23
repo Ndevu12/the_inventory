@@ -13,6 +13,16 @@ dynamic = ["dependencies"]
 where = ["src"]
 exclude = ["tests*"]
 
+# Third-party, pip-installable plugins advertise themselves to The Inventory by
+# exposing an entry point in the ``the_inventory.plugins`` group whose value is
+# the dotted path of the Django app to install, e.g. in the plugin's own
+# pyproject.toml:
+#
+#   [project.entry-points."the_inventory.plugins"]
+#   barcodes = "inventory_barcodes"
+#
+# Discovered apps are appended to INSTALLED_APPS at startup. See docs/plugins.md.
+
 [tool.ruff.lint.per-file-ignores]
 "src/the_inventory/__init__.py" = ["E402"]
 
