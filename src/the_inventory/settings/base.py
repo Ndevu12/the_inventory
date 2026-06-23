@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     "sales",
     "reports",
     "api",
+    "plugins",
     "seeders",
     "rest_framework",
     "rest_framework.authtoken",
@@ -84,6 +85,19 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 ]
+
+# Plugin apps discovered from the ``PLUGINS`` env var and the
+# ``the_inventory.plugins`` entry-point group are appended here so they load
+# like any other Django app (models, migrations, tasks, wagtail_hooks, and
+# api_register modules are all auto-discovered). See ``plugins.discovery`` and
+# ``docs/plugins.md``.
+from plugins.discovery import discover_plugin_apps  # noqa: E402
+
+INSTALLED_APPS += discover_plugin_apps(already_installed=INSTALLED_APPS)
+
+# Per-plugin configuration, namespaced by plugin name. Read via
+# ``plugins.settings.plugin_setting(name, key, default)``.
+PLUGIN_SETTINGS: dict[str, dict] = {}
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

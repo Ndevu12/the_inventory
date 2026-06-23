@@ -118,6 +118,13 @@ router.register("customers", CustomerViewSet, basename="customer")
 router.register("sales-orders", SalesOrderViewSet, basename="salesorder")
 router.register("dispatches", DispatchViewSet, basename="dispatch")
 
+# Plugin-contributed ViewSets (populated by each plugin's ``api_register``
+# module, discovered at startup). Routers must be fully populated before
+# ``router.urls`` / ``platform_router.urls`` are read below.
+from plugins.registry import registry  # noqa: E402
+
+registry.apply(router, platform_router)
+
 urlpatterns = [
     # Auth
     path("auth/config/", AuthConfigView.as_view(), name="api-auth-config"),
@@ -193,4 +200,4 @@ urlpatterns = [
     path("schema/", SpectacularAPIView.as_view(), name="schema"),
     path("docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
     path("redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
-] + router.urls
+] + registry.get_url_patterns() + router.urls
