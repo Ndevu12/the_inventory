@@ -10,7 +10,11 @@ from search import views as search_views
 from tenants.django_admin_site import superuser_admin_site
 from tenants.wagtail_views import ImpersonateEndView, ImpersonateStartView
 
+from django.templatetags.static import static
+from django.views.generic.base import RedirectView
+
 urlpatterns = [
+    path("favicon.ico", RedirectView.as_view(url=static("favicon.ico"), permanent=True)),
     path("django-admin/", superuser_admin_site.urls),
     path("admin/impersonate/start/<int:user_id>/", ImpersonateStartView.as_view(), name="wagtail_impersonate_start"),
     path("admin/impersonate/end/", ImpersonateEndView.as_view(), name="wagtail_impersonate_end"),
