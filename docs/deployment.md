@@ -553,3 +553,21 @@ python -c "from django.core.management.utils import get_random_secret_key; print
 - **Update regularly** — Keep dependencies updated for security
 
 See [Troubleshooting Guide](troubleshooting.md) for more help.
+
+### Configure Gunicorn Workers
+
+The Gunicorn worker count can be configured using the `GUNICORN_WORKERS` environment variable.
+
+By default, the application uses 4 workers.
+
+Example:
+
+    GUNICORN_WORKERS=4
+
+For smaller deployments, use fewer workers:
+
+    GUNICORN_WORKERS=1
+
+For larger deployments, increase the worker count based on CPU and memory:
+
+    GUNICORN_WORKERS=8

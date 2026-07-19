@@ -88,14 +88,15 @@ esac
 
 # Start Gunicorn (access + error logs to stdout/stderr for platform log drains)
 # Configuration tuned for production:
-#   --workers 4: Appropriate for small-medium deployments
+#   --workers ${GUNICORN_WORKERS:-4}: Configurable worker count with default 4
 #   --worker-class sync: Synchronous workers (suitable for I/O-bound Django)
 #   --max-requests 1000: Recycle workers every 1000 requests to prevent memory leaks
 #   --max-requests-jitter 100: Stagger worker recycling to avoid simultaneous restarts
 #   --timeout 60: Request timeout (increased from default 30s for longer operations)
+GUNICORN_WORKERS="${GUNICORN_WORKERS:-4}"
 exec gunicorn the_inventory.wsgi:application \
   --bind "[::]:$PORT" \
-  --workers 4 \
+  --workers "$GUNICORN_WORKERS" \
   --worker-class sync \
   --max-requests 1000 \
   --max-requests-jitter 100 \
