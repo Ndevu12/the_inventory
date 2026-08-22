@@ -111,6 +111,7 @@ ipython_config.py
 #   install all needed dependencies.
 #Pipfile.lock
 
+temp_auto_push.bat
 # UV
 #   Similar to Pipfile.lock, it is generally recommended to include uv.lock in version control.
 #   This is especially recommended for binary packages to ensure reproducibility, and is more
@@ -226,5 +227,3 @@ __marimo__/
 .malware-quarantine/
 *.malware-bak
 branch_structure.json
-temp_auto_push.bat
-temp_interactive_push.bat
