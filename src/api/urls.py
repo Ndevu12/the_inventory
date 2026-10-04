@@ -32,6 +32,11 @@ from api.views import (
     SupplierViewSet,
     WarehouseViewSet,
 )
+from api.views.account_recovery import (
+    EmailVerificationConfirmView,
+    PasswordResetConfirmView,
+    PasswordResetRequestView,
+)
 from api.views.auth import (
     AuthConfigView,
     ChangePasswordView,
@@ -135,6 +140,17 @@ urlpatterns = [
     path("auth/refresh/", RefreshView.as_view(), name="api-token-refresh"),
     path("auth/me/", MeView.as_view(), name="api-me"),
     path("auth/change-password/", ChangePasswordView.as_view(), name="api-change-password"),
+    path("auth/password-reset/", PasswordResetRequestView.as_view(), name="api-password-reset"),
+    path(
+        "auth/password-reset/confirm/",
+        PasswordResetConfirmView.as_view(),
+        name="api-password-reset-confirm",
+    ),
+    path(
+        "auth/email-verification/confirm/",
+        EmailVerificationConfirmView.as_view(),
+        name="api-email-verification-confirm",
+    ),
     path("auth/impersonate/start/", ImpersonateStartView.as_view(), name="api-impersonate-start"),
     path("auth/impersonate/end/", ImpersonateEndView.as_view(), name="api-impersonate-end"),
 
