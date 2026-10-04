@@ -1,5 +1,7 @@
 """Password reset and email confirmation for accounts that can receive mail."""
 
+from binascii import Error as BinasciiError
+
 from django.conf import settings as django_settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
@@ -36,16 +38,13 @@ def _frontend_url(path: str) -> str:
 
 
 def _deliver(subject: str, message: str, recipient: str) -> None:
-    try:
-        send_mail(
-            subject=subject,
-            message=message,
-            from_email=None,
-            recipient_list=[recipient],
-            fail_silently=True,
-        )
-    except Exception:
-        return
+    send_mail(
+        subject=subject,
+        message=message,
+        from_email=None,
+        recipient_list=[recipient],
+        fail_silently=True,
+    )
 
 
 def _user_from_uid(uid: str):
@@ -53,7 +52,7 @@ def _user_from_uid(uid: str):
     try:
         pk = force_str(urlsafe_base64_decode(uid))
         return User.objects.get(pk=pk, is_active=True)
-    except Exception:
+    except (User.DoesNotExist, ValueError, TypeError, BinasciiError, UnicodeError):
         return None
 
 
