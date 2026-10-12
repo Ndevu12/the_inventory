@@ -20,6 +20,7 @@ from api.serializers.auth import (
     memberships_payload_for_user,
 )
 from api.utils.cookies import set_jwt_cookie, delete_jwt_cookie
+from api.views.account_recovery import send_email_verification
 from tenants.models import Tenant, TenantMembership, TenantRole
 
 
@@ -223,6 +224,8 @@ class RegisterTenantView(APIView):
                 is_active=True,
                 is_default=True,
             )
+
+        send_email_verification(user)
 
         refresh = RefreshToken.for_user(user)
         memberships = memberships_payload_for_user(user)
